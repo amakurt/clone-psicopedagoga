@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String   @default("SECRETARIA")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  prontuarios       Prontuario[]
+  anamneses         Anamnese[]
+  laudos            Laudo[]
+  sessoes           Sessao[]
+  comunicacoes      Comunicacao[]
+  encaminhamentosDe Encaminhamento[] @relation("EncaminhamentoDe")
+  encaminhamentosPara Encaminhamento[] @relation("EncaminhamentoPara")
+}
+
+model Paciente {
+  id            String   @id @default(cuid())
+  name          String
+  email         String?
+  phone         String?
+  cpf           String?
+  birthDate     String?
+  guardianName  String?
+  guardianPhone String?
+  school        String?
+  grade         String?
+  notes         String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  prontuarios     Prontuario[]
+  anamneses       Anamnese[]
+  sessoes         Sessao[]
+  laudos          Laudo[]
+  encaminhamentos Encaminhamento[]
+  financeiro      FinanceiroSessao[]
+}
+
+model Prontuario {
+  id          String   @id @default(cuid())
+  titulo      String
+  conteudo    String
+  pacienteId  String
+  autorId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+  autor    User     @relation(fields: [autorId], references: [id])
+}
+
+model Anamnese {
+  id              String   @id @default(cuid())
+  pacienteId      String
+  autorId         String
+  queixaPrincipal String?
+  historico       String?
+  desenvolvimento String?
+  comportamento    String?
+  escolaridade    String?
+  familial        String?
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+  autor    User     @relation(fields: [autorId], references: [id])
+}
+
+model Sessao {
+  id              String   @id @default(cuid())
+  pacienteId      String
+  psicopedagogoId String
+  date            DateTime
+  duration        Int?
+  tipo            String?
+  status          String   @default("AGENDADA")
+  valor           Float?
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paciente      Paciente @relation(fields: [pacienteId], references: [id])
+  psicopedagogo User     @relation(fields: [psicopedagogoId], references: [id])
+  financeiro    FinanceiroSessao[]
+}
+
+model Laudo {
+  id          String   @id @default(cuid())
+  titulo      String
+  type        String   @default("LAUDO")
+  content     String
+  status      String   @default("RASCUNHO")
+  pacienteId  String
+  autorId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+  autor    User     @relation(fields: [autorId], references: [id])
+}
+
+model Encaminhamento {
+  id          String   @id @default(cuid())
+  pacienteId  String
+  deUserId    String
+  paraUserId  String?
+  motivo      String
+  resposta    String?
+  status      String   @default("PENDENTE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+  deUser   User     @relation("EncaminhamentoDe", fields: [deUserId], references: [id])
+  paraUser User?    @relation("EncaminhamentoPara", fields: [paraUserId], references: [id])
+}
+
+model Comunicacao {
+  id        String   @id @default(cuid())
+  titulo    String
+  mensagem  String
+  tipo      String   @default("AVISO")
+  autorId   String?
+  createdAt DateTime @default(now())
+
+  autor User? @relation(fields: [autorId], references: [id])
+}
+
+model FinanceiroSessao {
+  id          String   @id @default(cuid())
+  pacienteId  String
+  sessaoId    String?
+  valor       Float
+  status      String   @default("PENDENTE")
+  dataPagamento DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+  sessao   Sessao?  @relation(fields: [sessaoId], references: [id])
+}
