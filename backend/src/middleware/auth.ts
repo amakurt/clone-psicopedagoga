@@ -8,7 +8,15 @@ export const authenticate = (req: AuthenticatedRequest, res: Response, next: Nex
   }
   const token = authHeader.split(' ')[1];
   try {
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    let payload: any;
+
+    if (token.includes('.')) {
+      const parts = token.split('.');
+      payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    } else {
+      payload = JSON.parse(Buffer.from(token, 'base64').toString());
+    }
+
     req.user = {
       uid: payload.sub || payload.user_id,
       email: payload.email || '',

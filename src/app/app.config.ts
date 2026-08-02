@@ -6,6 +6,9 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),

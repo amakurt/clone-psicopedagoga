@@ -7,7 +7,7 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
-  const token = Buffer.from(JSON.stringify({ sub: user.id, email: user.email, role: user.role, schoolId: user.schoolId })).toString('base64');
+  const token = Buffer.from(JSON.stringify({ sub: user.id, email: user.email, role: user.role })).toString('base64');
   res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 });
 

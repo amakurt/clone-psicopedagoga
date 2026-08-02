@@ -18,6 +18,14 @@ export const routes: Routes = [
       { path: 'comunicacao', loadChildren: () => import('./modules/comunicacao/comunicacao.routes').then(m => m.default) },
       { path: 'financeiro', loadChildren: () => import('./modules/financeiro/financeiro.routes').then(m => m.default) },
       { path: 'configuracoes', loadChildren: () => import('./modules/configuracoes/configuracoes.routes').then(m => m.default) },
+      { path: 'evolucoes', loadChildren: () => import('./modules/evolucoes/evolucoes.routes').then(m => m.default) },
+      { path: 'responsaveis', loadChildren: () => import('./modules/responsaveis/responsaveis.routes').then(m => m.default) },
+      { path: 'escolas', loadChildren: () => import('./modules/escolas/escolas.routes').then(m => m.default) },
+      { path: 'agenda', loadChildren: () => import('./modules/agenda/agenda.routes').then(m => m.default) },
+      { path: 'documentos', loadChildren: () => import('./modules/documentos/documentos.routes').then(m => m.default) },
+      { path: 'biblioteca', loadChildren: () => import('./modules/biblioteca/biblioteca.routes').then(m => m.default) },
+      { path: 'protocolos', loadChildren: () => import('./modules/protocolos/protocolos.routes').then(m => m.default) },
+      { path: 'planos', loadChildren: () => import('./modules/planos/planos.routes').then(m => m.default) },
     ]
   }
 ];

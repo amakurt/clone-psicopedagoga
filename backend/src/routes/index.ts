@@ -10,6 +10,17 @@ import encaminhamentosRoutes from './encaminhamentos';
 import comunicacaoRoutes from './comunicacao';
 import financeiroRoutes from './financeiro';
 import dashboardRoutes from './dashboard';
+import responsaveisRoutes from './responsaveis';
+import escolasRoutes from './escolas';
+import documentosRoutes from './documentos';
+import appointmentsRoutes from './appointments';
+import libraryRoutes from './library';
+import transactionsRoutes from './transactions';
+import notificationsRoutes from './notifications';
+import sessionRecordsRoutes from './session-records';
+import protocolEvaluationsRoutes from './protocol-evaluations';
+import interventionPlansRoutes from './intervention-plans';
+import chatRoutes from './chat';
 
 const router = Router();
 
@@ -24,5 +35,16 @@ router.use('/encaminhamentos', encaminhamentosRoutes);
 router.use('/comunicacao', comunicacaoRoutes);
 router.use('/financeiro', financeiroRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/responsaveis', responsaveisRoutes);
+router.use('/escolas', escolasRoutes);
+router.use('/documentos', documentosRoutes);
+router.use('/appointments', appointmentsRoutes);
+router.use('/library', libraryRoutes);
+router.use('/transactions', transactionsRoutes);
+router.use('/notifications', notificationsRoutes);
+router.use('/session-records', sessionRecordsRoutes);
+router.use('/protocol-evaluations', protocolEvaluationsRoutes);
+router.use('/intervention-plans', interventionPlansRoutes);
+router.use('/chat', chatRoutes);
 
 export default router;

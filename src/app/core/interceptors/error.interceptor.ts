@@ -7,7 +7,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   return next(req).pipe(
     catchError(err => {
-      if (err.status === 401) {
+      if (err.status === 401 && !req.url.includes('/auth/')) {
         localStorage.clear();
         router.navigate(['/login']);
       }
