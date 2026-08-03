@@ -1,8 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./modules/auth/pages/login/login.component').then(m => m.LoginComponent) },
+  { path: 'auth/callback', loadComponent: () => import('./modules/auth/pages/callback/auth-callback.component').then(m => m.AuthCallbackComponent) },
   {
     path: '',
     loadComponent: () => import('./layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),
@@ -14,18 +16,50 @@ export const routes: Routes = [
       { path: 'anamnese', loadChildren: () => import('./modules/anamnese/anamnese.routes').then(m => m.default) },
       { path: 'sessoes', loadChildren: () => import('./modules/sessoes/sessoes.routes').then(m => m.default) },
       { path: 'laudos', loadChildren: () => import('./modules/laudos/laudos.routes').then(m => m.default) },
-      { path: 'encaminhamentos', loadChildren: () => import('./modules/encaminhamentos/encaminhamentos.routes').then(m => m.default) },
+      { 
+        path: 'encaminhamentos', 
+        loadChildren: () => import('./modules/encaminhamentos/encaminhamentos.routes').then(m => m.default),
+        canActivate: [roleGuard],
+        data: { roles: ['GESTOR', 'PSICOPEDAGOGO'] }
+      },
       { path: 'comunicacao', loadChildren: () => import('./modules/comunicacao/comunicacao.routes').then(m => m.default) },
-      { path: 'financeiro', loadChildren: () => import('./modules/financeiro/financeiro.routes').then(m => m.default) },
+      { 
+        path: 'financeiro', 
+        loadChildren: () => import('./modules/financeiro/financeiro.routes').then(m => m.default),
+        canActivate: [roleGuard],
+        data: { roles: ['GESTOR', 'SECRETARIA'] }
+      },
       { path: 'configuracoes', loadChildren: () => import('./modules/configuracoes/configuracoes.routes').then(m => m.default) },
       { path: 'evolucoes', loadChildren: () => import('./modules/evolucoes/evolucoes.routes').then(m => m.default) },
-      { path: 'responsaveis', loadChildren: () => import('./modules/responsaveis/responsaveis.routes').then(m => m.default) },
-      { path: 'escolas', loadChildren: () => import('./modules/escolas/escolas.routes').then(m => m.default) },
+      { 
+        path: 'responsaveis', 
+        loadChildren: () => import('./modules/responsaveis/responsaveis.routes').then(m => m.default),
+        canActivate: [roleGuard],
+        data: { roles: ['GESTOR', 'PSICOPEDAGOGO'] }
+      },
+      { 
+        path: 'escolas', 
+        loadChildren: () => import('./modules/escolas/escolas.routes').then(m => m.default),
+        canActivate: [roleGuard],
+        data: { roles: ['GESTOR'] }
+      },
       { path: 'agenda', loadChildren: () => import('./modules/agenda/agenda.routes').then(m => m.default) },
       { path: 'documentos', loadChildren: () => import('./modules/documentos/documentos.routes').then(m => m.default) },
       { path: 'biblioteca', loadChildren: () => import('./modules/biblioteca/biblioteca.routes').then(m => m.default) },
       { path: 'protocolos', loadChildren: () => import('./modules/protocolos/protocolos.routes').then(m => m.default) },
       { path: 'planos', loadChildren: () => import('./modules/planos/planos.routes').then(m => m.default) },
+      { 
+        path: 'users', 
+        loadChildren: () => import('./modules/users/users.routes').then(m => m.default),
+        canActivate: [roleGuard],
+        data: { roles: ['GESTOR'] }
+      },
     ]
+  },
+  {
+    path: 'guardian',
+    loadComponent: () => import('./layout/guardian-layout/guardian-layout.component').then(m => m.GuardianLayoutComponent),
+    canActivate: [authGuard],
+    loadChildren: () => import('./modules/guardian/guardian.routes').then(m => m.default)
   }
 ];

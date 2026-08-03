@@ -21,6 +21,8 @@ import sessionRecordsRoutes from './session-records';
 import protocolEvaluationsRoutes from './protocol-evaluations';
 import interventionPlansRoutes from './intervention-plans';
 import chatRoutes from './chat';
+import guardianRoutes from './guardian';
+import uploadRoutes from './upload';
 
 const router = Router();
 
@@ -46,5 +48,7 @@ router.use('/session-records', sessionRecordsRoutes);
 router.use('/protocol-evaluations', protocolEvaluationsRoutes);
 router.use('/intervention-plans', interventionPlansRoutes);
 router.use('/chat', chatRoutes);
+router.use('/guardian', guardianRoutes);
+router.use('/upload', uploadRoutes);
 
 export default router;

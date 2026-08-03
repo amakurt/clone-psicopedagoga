@@ -7,7 +7,7 @@ export class ApiService {
   private http = inject(HttpClient);
   private baseUrl = environment.apiUrl;
 
-  get(path: string, params?: any) {
+  get<T = any>(path: string, params?: any) {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
@@ -16,18 +16,18 @@ export class ApiService {
         }
       });
     }
-    return this.http.get(`${this.baseUrl}${path}`, { params: httpParams });
+    return this.http.get<T>(`${this.baseUrl}${path}`, { params: httpParams });
   }
 
-  post(path: string, body: any) {
-    return this.http.post(`${this.baseUrl}${path}`, body);
+  post<T = any>(path: string, body: any) {
+    return this.http.post<T>(`${this.baseUrl}${path}`, body);
   }
 
-  put(path: string, body: any) {
-    return this.http.put(`${this.baseUrl}${path}`, body);
+  put<T = any>(path: string, body: any) {
+    return this.http.put<T>(`${this.baseUrl}${path}`, body);
   }
 
-  delete(path: string) {
-    return this.http.delete(`${this.baseUrl}${path}`);
+  delete<T = any>(path: string) {
+    return this.http.delete<T>(`${this.baseUrl}${path}`);
   }
 }

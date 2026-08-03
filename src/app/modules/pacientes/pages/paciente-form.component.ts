@@ -5,11 +5,14 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { PacientesService } from '../services/pacientes.service';
 import { ResponsaveisService } from '../../responsaveis/services/responsaveis.service';
 import { EscolasService } from '../../escolas/services/escolas.service';
+import { AddressFormComponent, Address } from '@core/components/address-form.component';
+import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
+import { ApiService } from '@core/services/api.service';
 
 @Component({
   selector: 'app-paciente-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent],
   template: `
     <div class="space-y-8 animate-in">
       <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -82,15 +85,54 @@ import { EscolasService } from '../../escolas/services/escolas.service';
                 }
               </select>
             </div>
-            <div>
+            <div class="md:col-span-2">
               <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
-              <select class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [(ngModel)]="form.responsavelId">
-                <option value="">Selecione o responsável</option>
-                @for (r of responsaveis(); track r.id) {
-                  <option [value]="r.id">{{ r.name }}</option>
-                }
-              </select>
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                  <input class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                    [(ngModel)]="responsavelSearch" (input)="filterResponsaveis()" placeholder="Buscar responsável..."
+                    (focus)="showResponsavelDropdown.set(true)" (blur)="hideResponsavelDropdown()">
+                  @if (showResponsavelDropdown() && filteredResponsaveis().length > 0) {
+                    <div class="absolute z-10 w-full mt-1 bg-white dark:bg-slate-700 rounded-xl shadow-lg border border-slate-200 dark:border-slate-600 max-h-48 overflow-y-auto">
+                      @for (r of filteredResponsaveis(); track r.id) {
+                        <button type="button" class="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors flex items-center gap-3"
+                          (mousedown)="selectResponsavel(r)">
+                          <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span class="material-icons text-primary text-sm">person</span>
+                          </div>
+                          <div>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white">{{ r.name }}</p>
+                            <p class="text-xs text-slate-500">{{ r.phones || r.phone || 'Sem telefone' }}</p>
+                          </div>
+                        </button>
+                      }
+                    </div>
+                  }
+                  @if (form.responsavelId) {
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"
+                      (click)="clearResponsavel()">
+                      <span class="material-icons text-[18px]">close</span>
+                    </button>
+                  }
+                </div>
+                <button type="button" class="px-4 py-3 bg-primary/10 text-primary rounded-2xl hover:bg-primary/20 transition-all flex items-center gap-2"
+                  (click)="showNewResponsavelModal.set(true)">
+                  <span class="material-icons text-[20px]">add</span>
+                  <span class="text-sm font-medium hidden sm:inline">Novo</span>
+                </button>
+              </div>
+              @if (selectedResponsavel()) {
+                <div class="mt-2 p-3 bg-primary/5 rounded-xl flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span class="material-icons text-primary">person</span>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ selectedResponsavel()?.name }}</p>
+                    <p class="text-xs text-slate-500">{{ selectedResponsavel()?.relationship }} • {{ selectedResponsavel()?.phones || selectedResponsavel()?.phone }}</p>
+                  </div>
+                </div>
+              }
             </div>
           </div>
 
@@ -133,45 +175,31 @@ import { EscolasService } from '../../escolas/services/escolas.service';
           <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Contato</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Telefone Principal</label>
-              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [value]="form.phone" (input)="formatPhone($event, 'phone')" placeholder="(00) 00000-0000" maxlength="15">
+              <app-phone-input 
+                [phone]="form.phone" 
+                [isWhatsApp]="form.phoneIsWhatsApp"
+                label="Telefone Principal"
+                (phoneChange)="onPhoneChange($event, 'phone')">
+              </app-phone-input>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Telefone Secundário</label>
-              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [value]="form.phone2" (input)="formatPhone($event, 'phone2')" placeholder="(00) 00000-0000" maxlength="15">
+              <app-phone-input 
+                [phone]="form.phone2" 
+                [isWhatsApp]="form.phone2IsWhatsApp"
+                label="Telefone Secundário"
+                (phoneChange)="onPhoneChange($event, 'phone2')">
+              </app-phone-input>
             </div>
           </div>
 
           <!-- Endereço -->
           <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Endereço</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">CEP</label>
-              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [value]="form.address.cep" (input)="formatCEP($event)" placeholder="00000-000" maxlength="9">
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Rua</label>
-              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [(ngModel)]="form.address.street" placeholder="Rua, Avenida...">
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Bairro</label>
-              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [(ngModel)]="form.address.neighborhood" placeholder="Bairro">
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Número</label>
-              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [(ngModel)]="form.address.number" placeholder="Nº">
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Complemento</label>
-              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [(ngModel)]="form.address.complement" placeholder="Apto, Bloco...">
-            </div>
+          <div class="mb-8">
+            <app-address-form 
+              [address]="form.address" 
+              label=""
+              (addressChange)="onAddressChange($event)">
+            </app-address-form>
           </div>
         </div>
 
@@ -185,6 +213,73 @@ import { EscolasService } from '../../escolas/services/escolas.service';
         </div>
       </div>
     </div>
+
+    <!-- Modal Novo Responsável -->
+    @if (showNewResponsavelModal()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" (click)="showNewResponsavelModal.set(false)"></div>
+        <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Novo Responsável</h3>
+            <button (click)="showNewResponsavelModal.set(false)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome *</label>
+              <input [(ngModel)]="newResponsavel.name" 
+                class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
+                placeholder="Nome completo">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Parentesco</label>
+                <select [(ngModel)]="newResponsavel.relationship" 
+                  class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary">
+                  <option value="">Selecione</option>
+                  <option value="Mãe">Mãe</option>
+                  <option value="Pai">Pai</option>
+                  <option value="Avó/Avô">Avó/Avô</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">CPF</label>
+                <input [(ngModel)]="newResponsavel.cpf" 
+                  class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
+                  placeholder="000.000.000-00" maxlength="14">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Telefone</label>
+              <input [(ngModel)]="newResponsavel.phone" 
+                class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
+                placeholder="(00) 00000-0000" maxlength="15">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+              <input [(ngModel)]="newResponsavel.email" type="email"
+                class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
+                placeholder="email@exemplo.com">
+            </div>
+          </div>
+          <div class="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+            <button (click)="showNewResponsavelModal.set(false)" 
+              class="px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+              Cancelar
+            </button>
+            <button (click)="createResponsavel()" [disabled]="!newResponsavel.name || savingNewResponsavel()"
+              class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-all flex items-center gap-2">
+              @if (savingNewResponsavel()) {
+                <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              }
+              {{ savingNewResponsavel() ? 'Salvando...' : 'Salvar Responsável' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     :host { display: block; }
@@ -194,6 +289,7 @@ export class PacienteFormComponent implements OnInit {
   private service = inject(PacientesService);
   private responsaveisService = inject(ResponsaveisService);
   private escolasService = inject(EscolasService);
+  private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -201,30 +297,55 @@ export class PacienteFormComponent implements OnInit {
   id = '';
   saving = signal(false);
   responsaveis = signal<any[]>([]);
+  filteredResponsaveis = signal<any[]>([]);
   escolas = signal<any[]>([]);
   avatarPreview = signal<string | null>(null);
   avatarFile: File | null = null;
+  
+  responsavelSearch = '';
+  showResponsavelDropdown = signal(false);
+  showNewResponsavelModal = signal(false);
+  savingNewResponsavel = signal(false);
+  selectedResponsavel = signal<any>(null);
+  
+  newResponsavel = {
+    name: '',
+    relationship: '',
+    cpf: '',
+    phone: '',
+    email: ''
+  };
 
   form: any = {
     name: '', birthDate: '', grade: '', active: true, schoolId: '', responsavelId: '',
-    cpf: '', rg: '', accessCode: '', phone: '', phone2: '',
-    address: { cep: '', street: '', neighborhood: '', number: '', complement: '' }
+    cpf: '', rg: '', accessCode: '', 
+    phone: '', phoneIsWhatsApp: false, 
+    phone2: '', phone2IsWhatsApp: false,
+    address: { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' }
   };
 
   ngOnInit() {
     this.id = this.route.snapshot.params['id'] || '';
     this.isEdit = !!this.id;
 
-    this.responsaveisService.list().subscribe((res: any) => this.responsaveis.set(res.data || []));
+    this.responsaveisService.list().subscribe((res: any) => {
+      const data = res.data || [];
+      this.responsaveis.set(data);
+      this.filteredResponsaveis.set(data);
+    });
     this.escolasService.list().subscribe((res: any) => this.escolas.set(res.data || []));
 
     if (this.isEdit) {
       this.service.get(this.id).subscribe((res: any) => {
         this.form = {
           ...res,
-          address: res.address || { cep: '', street: '', neighborhood: '', number: '', complement: '' }
+          address: res.address || { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' }
         };
         if (res.avatar) this.avatarPreview.set(res.avatar);
+        if (res.responsavelId && res.responsavel) {
+          this.selectedResponsavel.set(res.responsavel);
+          this.responsavelSearch = res.responsavel.name;
+        }
       });
     } else {
       this.generateAccessCode();
@@ -264,23 +385,75 @@ export class PacienteFormComponent implements OnInit {
     input.value = value;
   }
 
-  formatPhone(event: Event, field: string) {
-    const input = event.target as HTMLInputElement;
-    let value = input.value.replace(/\D/g, '');
-    if (value.length > 11) value = value.slice(0, 11);
-    if (value.length > 7) value = value.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3');
-    else if (value.length > 2) value = value.replace(/(\d{2})(\d{1,5})/, '($1) $2');
-    this.form[field] = value;
-    input.value = value;
+  onPhoneChange(phone: PhoneNumber, field: string) {
+    this.form[field] = phone.number;
+    this.form[field + 'IsWhatsApp'] = phone.isWhatsApp;
   }
 
-  formatCEP(event: Event) {
-    const input = event.target as HTMLInputElement;
-    let value = input.value.replace(/\D/g, '');
-    if (value.length > 8) value = value.slice(0, 8);
-    if (value.length > 5) value = value.replace(/(\d{5})(\d{1,3})/, '$1-$2');
-    this.form.address.cep = value;
-    input.value = value;
+  onAddressChange(address: Address) {
+    this.form.address = address;
+  }
+
+  filterResponsaveis() {
+    const search = this.responsavelSearch.toLowerCase();
+    if (!search) {
+      this.filteredResponsaveis.set(this.responsaveis());
+      return;
+    }
+    const filtered = this.responsaveis().filter(r => 
+      r.name.toLowerCase().includes(search) || 
+      r.phones?.includes(search) ||
+      r.email?.toLowerCase().includes(search)
+    );
+    this.filteredResponsaveis.set(filtered);
+  }
+
+  selectResponsavel(responsavel: any) {
+    this.form.responsavelId = responsavel.id;
+    this.selectedResponsavel.set(responsavel);
+    this.responsavelSearch = responsavel.name;
+    this.showResponsavelDropdown.set(false);
+  }
+
+  clearResponsavel() {
+    this.form.responsavelId = '';
+    this.selectedResponsavel.set(null);
+    this.responsavelSearch = '';
+  }
+
+  hideResponsavelDropdown() {
+    setTimeout(() => this.showResponsavelDropdown.set(false), 200);
+  }
+
+  createResponsavel() {
+    if (!this.newResponsavel.name) return;
+    this.savingNewResponsavel.set(true);
+
+    const data = {
+      name: this.newResponsavel.name,
+      relationship: this.newResponsavel.relationship,
+      cpf: this.newResponsavel.cpf,
+      phones: this.newResponsavel.phone,
+      email: this.newResponsavel.email
+    };
+
+    this.responsaveisService.create(data).subscribe({
+      next: (res: any) => {
+        this.responsaveis.update(list => [...list, res]);
+        this.selectResponsavel(res);
+        this.showNewResponsavelModal.set(false);
+        this.savingNewResponsavel.set(false);
+        this.resetNewResponsavel();
+      },
+      error: () => {
+        this.savingNewResponsavel.set(false);
+        alert('Erro ao criar responsável');
+      }
+    });
+  }
+
+  resetNewResponsavel() {
+    this.newResponsavel = { name: '', relationship: '', cpf: '', phone: '', email: '' };
   }
 
   onAvatarChange(event: Event) {

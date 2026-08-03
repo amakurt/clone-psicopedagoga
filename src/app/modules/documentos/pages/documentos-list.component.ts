@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DocumentosService } from '../services/documentos.service';
-
-declare var html2pdf: any;
+import { UploadService } from '@core/services/upload.service';
 
 @Component({
   selector: 'app-documentos-list',
@@ -21,7 +20,7 @@ declare var html2pdf: any;
         <div class="flex items-center gap-3">
           <label class="flex items-center gap-2 px-5 py-3 bg-white dark:bg-slate-900 rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all cursor-pointer">
             <span class="material-icons text-lg">upload_file</span> Upload
-            <input type="file" class="hidden" (change)="onFileUpload($event)" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+            <input type="file" class="hidden" (change)="onFileUpload($event)" accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.csv">
           </label>
           <a routerLink="/documentos/novo"
             class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
@@ -89,12 +88,12 @@ declare var html2pdf: any;
                       <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                           <div class="size-10 rounded-xl flex items-center justify-center"
-                            [class]="getCategoryStyle(d.category)">
-                            <span class="material-icons text-lg">{{ getCategoryIcon(d.category) }}</span>
+                            [class]="getFileStyle(d)">
+                            <span class="material-icons text-lg">{{ getFileIcon(d) }}</span>
                           </div>
                           <div>
                             <p class="text-sm font-bold text-slate-900 dark:text-white">{{ d.name }}</p>
-                            <p class="text-xs text-slate-400">{{ d.type || 'PDF' }}</p>
+                            <p class="text-xs text-slate-400">{{ getFileType(d) }}</p>
                           </div>
                         </div>
                       </td>
@@ -149,6 +148,7 @@ declare var html2pdf: any;
 })
 export class DocumentosListComponent implements OnInit {
   private service = inject(DocumentosService);
+  private uploadService = inject(UploadService);
   items = signal<any[]>([]);
   loading = signal(true);
   uploading = signal(false);
@@ -184,6 +184,43 @@ export class DocumentosListComponent implements OnInit {
   onSearch() {
     clearTimeout(this.timeout);
     this.timeout = setTimeout(() => this.load(), 300);
+  }
+
+  getFileIcon(doc: any): string {
+    if (doc.fileUrl) {
+      const ext = doc.fileUrl.split('.').pop()?.toLowerCase();
+      if (ext === 'pdf') return 'picture_as_pdf';
+      if (['doc', 'docx'].includes(ext || '')) return 'article';
+      if (['xls', 'xlsx'].includes(ext || '')) return 'table_chart';
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) return 'image';
+      if (ext === 'csv') return 'table_chart';
+    }
+    switch (doc.category) {
+      case 'RELATORIO': return 'description';
+      case 'ANAMNESE': return 'assignment';
+      case 'FEEDBACK': return 'feedback';
+      case 'CONSENTIMENTO': return 'gavel';
+      default: return 'insert_drive_file';
+    }
+  }
+
+  getFileType(doc: any): string {
+    if (doc.fileUrl) {
+      const ext = doc.fileUrl.split('.').pop()?.toUpperCase();
+      return ext || 'FILE';
+    }
+    return doc.type || 'FILE';
+  }
+
+  getFileStyle(doc: any): string {
+    if (doc.fileUrl) {
+      const ext = doc.fileUrl.split('.').pop()?.toLowerCase();
+      if (ext === 'pdf') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+      if (['doc', 'docx'].includes(ext || '')) return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+      if (['xls', 'xlsx'].includes(ext || '')) return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) return 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400';
+    }
+    return this.getCategoryStyle(doc.category);
   }
 
   getCategoryIcon(category: string): string {
@@ -222,20 +259,29 @@ export class DocumentosListComponent implements OnInit {
     const file = input.files[0];
     this.uploading.set(true);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('name', file.name);
-    formData.append('category', 'RELATORIO');
-
-    this.service.create(formData).subscribe({
-      next: () => {
-        this.uploading.set(false);
-        this.showNotification('Documento enviado com sucesso!', 'success');
-        this.load();
+    this.uploadService.uploadFile(file).subscribe({
+      next: (res) => {
+        this.service.create({
+          name: file.name,
+          category: 'RELATORIO',
+          status: 'RASCUNHO',
+          fileUrl: res.url,
+          size: res.size.toString()
+        }).subscribe({
+          next: () => {
+            this.uploading.set(false);
+            this.showNotification('Documento enviado com sucesso!', 'success');
+            this.load();
+          },
+          error: () => {
+            this.uploading.set(false);
+            this.showNotification('Erro ao salvar documento', 'error');
+          }
+        });
       },
       error: () => {
         this.uploading.set(false);
-        this.showNotification('Erro ao enviar documento', 'error');
+        this.showNotification('Erro ao enviar arquivo', 'error');
       }
     });
 
@@ -243,10 +289,10 @@ export class DocumentosListComponent implements OnInit {
   }
 
   downloadDocument(doc: any) {
-    if (doc.url) {
-      window.open(doc.url, '_blank');
+    if (doc.fileUrl) {
+      window.open(doc.fileUrl, '_blank');
     } else {
-      this.showNotification('Documento não disponível para download', 'info');
+      this.showNotification('Arquivo não disponível para download', 'info');
     }
   }
 

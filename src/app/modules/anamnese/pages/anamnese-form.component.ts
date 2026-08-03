@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AnamneseService } from '../services/anamnese.service';
 import { ApiService } from '@core/services/api.service';
+import { AddressFormComponent, Address } from '@core/components/address-form.component';
 
 @Component({
   selector: 'app-anamnese-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent],
   template: `
     <div class="min-h-screen bg-gray-50 p-6">
       <div class="max-w-4xl mx-auto">
@@ -75,9 +76,11 @@ import { ApiService } from '@core/services/api.service';
                       [(ngModel)]="form.telefoneEscola" placeholder="(00) 0000-0000">
                   </div>
                   <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Endereço da Escola</label>
-                    <input class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      [(ngModel)]="form.enderecoEscola" placeholder="Endereço completo">
+                    <app-address-form 
+                      [address]="form.enderecoEscola" 
+                      label="Endereço da Escola"
+                      (addressChange)="onSchoolAddressChange($event)">
+                    </app-address-form>
                   </div>
                   <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Indicação para Tratamento</label>
@@ -343,7 +346,9 @@ export class AnamneseFormComponent implements OnInit {
 
   form: any = {
     pacienteId: '',
-    turno: '', telefoneEscola: '', enderecoEscola: '', indicacaoTratamento: '', diagnostico: '',
+    turno: '', telefoneEscola: '', 
+    enderecoEscola: { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' },
+    indicacaoTratamento: '', diagnostico: '',
     profissaoPai: '', idadePai: '', escolaridadePai: '',
     profissaoMae: '', idadeMae: '', escolaridadeMae: '',
     queixaPrincipal: '', historiaQueixa: '',
@@ -389,12 +394,21 @@ export class AnamneseFormComponent implements OnInit {
     this.form.constelacaoFamiliar.splice(index, 1);
   }
 
+  onSchoolAddressChange(address: Address) {
+    this.form.enderecoEscola = address;
+  }
+
   save() {
     if (!this.form.pacienteId) return alert('Selecione um paciente');
     if (!this.form.queixaPrincipal) return alert('Preencha a queixa principal');
     this.saving.set(true);
 
-    const obs = this.isEdit ? this.service.update(this.id, this.form) : this.service.create(this.form);
+    const data = {
+      ...this.form,
+      enderecoEscola: JSON.stringify(this.form.enderecoEscola)
+    };
+
+    const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
       next: () => this.router.navigate(['/anamnese']),
       error: () => { this.saving.set(false); alert('Erro ao salvar'); }

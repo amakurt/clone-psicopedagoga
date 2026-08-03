@@ -1,43 +1,341 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { ProtocolosService } from '../services/protocolos.service';
 import { ApiService } from '@core/services/api.service';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
+
+interface Subcategory {
+  id: string;
+  name: string;
+  items: string[];
+}
+
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  subcategories: Subcategory[];
+}
 
 @Component({
   selector: 'app-protocolo-form',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="page">
-      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Nova' }} Avaliação Protocolo</h1></div><a routerLink="/protocolos" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
-      <div class="card"><div class="card-body">
-        <div class="form-grid">
-          <div class="form-group"><label>Paciente *</label><select class="form-control" [(ngModel)]="form.pacienteId"><option value="">Selecione</option>@for (p of pacientes(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }</select></div>
-          <div class="form-group"><label>Data *</label><input class="form-control" type="date" [(ngModel)]="form.date"></div>
-          <div class="form-group"><label>Pontuação Média</label><input class="form-control" type="number" [(ngModel)]="form.averageScore"></div>
-          <div class="form-group full"><label>Observações</label><textarea class="form-control" rows="3" [(ngModel)]="form.observations"></textarea></div>
+    <div class="space-y-6">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <a routerLink="/protocolos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+            <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
+          </a>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Protocolo TEA</h1>
+            <p class="text-sm text-gray-500 dark:text-slate-400">Avaliação de Habilidades Essenciais</p>
+          </div>
         </div>
-        <div class="form-actions"><a routerLink="/protocolos" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
-      </div></div>
+        <button (click)="save()" [disabled]="saving() || !selectedPatientId()"
+          class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
+          <span class="material-icons">save</span>
+          {{ saving() ? 'Salvando...' : 'Salvar Avaliação' }}
+        </button>
+      </div>
+
+      <!-- Patient & Date Selection -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Paciente *</label>
+            <select [(ngModel)]="selectedPatientId" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+              <option value="">Selecione um paciente</option>
+              @for (p of patients(); track p.id) {
+                <option [value]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Data da Avaliação</label>
+            <input type="date" [(ngModel)]="evaluationDate" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Buscar Habilidade</label>
+            <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="filterItems()" placeholder="Buscar..."
+              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Categories Sidebar -->
+        <div class="lg:col-span-1">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden sticky top-4">
+            <div class="p-4 border-b border-gray-200 dark:border-slate-700">
+              <h3 class="font-semibold text-gray-900 dark:text-white">Categorias</h3>
+            </div>
+            <div class="p-2">
+              @for (cat of categories(); track cat.id) {
+                <button (click)="selectCategory(cat)"
+                  class="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
+                  [class]="selectedCategory()?.id === cat.id ? 'bg-primary/10 text-primary' : 'hover:bg-gray-50 dark:hover:bg-slate-700'">
+                  <span class="material-icons" [style.color]="cat.icon === selectedCategory()?.id ? cat.color : ''">{{ cat.icon }}</span>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium" [class]="selectedCategory()?.id === cat.id ? 'text-primary' : 'text-gray-900 dark:text-white'">{{ cat.name }}</p>
+                    <p class="text-xs text-gray-500">{{ getCategoryScore(cat) }}/{{ getCategoryMax(cat) }}</p>
+                  </div>
+                  <span class="text-xs font-bold" [style.color]="cat.color">{{ getCategoryPercent(cat) }}%</span>
+                </button>
+              }
+            </div>
+
+            <!-- Overall Stats -->
+            <div class="p-4 border-t border-gray-200 dark:border-slate-700">
+              <div class="text-center">
+                <p class="text-3xl font-bold text-primary">{{ overallPercentage() }}%</p>
+                <p class="text-sm text-gray-500 dark:text-slate-400">Pontuação Geral</p>
+                <p class="text-xs text-gray-400 mt-1">{{ totalScore() }}/{{ totalMax() }} pontos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+          @if (selectedCategory()) {
+            <!-- Radar Chart -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gráfico de Radar</h3>
+              <div class="flex justify-center">
+                <canvas #radarChart width="400" height="400"></canvas>
+              </div>
+            </div>
+
+            <!-- Subcategories -->
+            @for (sub of selectedCategory()!.subcategories; track sub.id) {
+              <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+                <div class="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+                  <h4 class="font-semibold text-gray-900 dark:text-white">{{ sub.name }}</h4>
+                  <span class="px-3 py-1 rounded-full text-sm font-bold" 
+                    [style.background]="selectedCategory()!.color + '20'" 
+                    [style.color]="selectedCategory()!.color">
+                    {{ getSubcategoryScore(sub) }}/20
+                  </span>
+                </div>
+                <div class="divide-y divide-gray-100 dark:divide-slate-700">
+                  @for (item of sub.items; track $index; let i = $index) {
+                    @if (!searchTerm || item.toLowerCase().includes(searchTerm.toLowerCase())) {
+                      <div class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <span class="text-sm font-medium text-gray-500 dark:text-slate-400 w-8">{{ i + 1 }}</span>
+                        <p class="flex-1 text-sm text-gray-700 dark:text-slate-300">{{ item }}</p>
+                        <div class="flex gap-1">
+                          @for (score of [0, 1, 2]; track score) {
+                            <button (click)="setScore(selectedCategory()!.id, sub.id, i, score)"
+                              class="w-10 h-10 rounded-lg font-bold text-sm transition-all"
+                              [class]="getScore(selectedCategory()!.id, sub.id, i) === score 
+                                ? getScoreButtonClass(score) 
+                                : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-200'">
+                              {{ score }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-12 border border-gray-200 dark:border-slate-700 text-center">
+              <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">touch_app</span>
+              <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Selecione uma categoria</h3>
+              <p class="mt-2 text-gray-500 dark:text-slate-400">Escolha uma categoria ao lado para iniciar a avaliação</p>
+            </div>
+          }
+        </div>
+      </div>
     </div>
   `,
-  styles: [`.page { max-width: 900px; } .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; } .header h1 { margin: 0; font-size: 24px; } .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); } .card-body { padding: 24px; } .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; } .form-group { display: flex; flex-direction: column; gap: 4px; } .form-group label { font-size: 13px; font-weight: 500; color: var(--gray-700); } .full { grid-column: 1 / -1; } .form-control { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; width: 100%; box-sizing: border-box; } textarea.form-control { resize: vertical; } .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); } .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; } .btn-primary { background: var(--primary); color: white; } .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); } select.form-control { appearance: auto; }`]
+  styles: [`
+    :host { display: block; }
+  `]
 })
 export class ProtocoloFormComponent implements OnInit {
-  private service = inject(ProtocolosService); private api = inject(ApiService); private router = inject(Router); private route = inject(ActivatedRoute);
-  isEdit = false; id = ''; saving = signal(false); pacientes = signal<any[]>([]);
-  form: any = { pacienteId: '', date: '', averageScore: null, observations: '' };
+  @ViewChild('radarChart') radarChartRef!: ElementRef<HTMLCanvasElement>;
+
+  private api = inject(ApiService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  patients = signal<any[]>([]);
+  categories = signal<Category[]>([]);
+  selectedCategory = signal<Category | null>(null);
+  selectedPatientId = signal('');
+  evaluationDate = new Date().toISOString().split('T')[0];
+  searchTerm = '';
+  saving = signal(false);
+
+  evaluations: Record<string, number> = {};
+  private chart: Chart | null = null;
+
   ngOnInit() {
-    this.id = this.route.snapshot.params['id'] || ''; this.isEdit = !!this.id;
-    this.api.get('/pacientes').subscribe((res: any) => this.pacientes.set(res.data));
-    if (this.isEdit) this.service.get(this.id).subscribe((res: any) => this.form = res);
+    this.api.get('/pacientes').subscribe((res: any) => this.patients.set(res.data || []));
+    this.api.get('/protocol-evaluations/protocol-data').subscribe((res: any) => {
+      this.categories.set(res.categories || []);
+      if (res.categories?.length > 0) {
+        this.selectCategory(res.categories[0]);
+      }
+    });
   }
+
+  selectCategory(cat: Category) {
+    this.selectedCategory.set(cat);
+    setTimeout(() => this.updateChart(), 100);
+  }
+
+  getScore(catId: string, subId: string, itemIdx: number): number {
+    return this.evaluations[`${catId}_${subId}_${itemIdx}`] ?? -1;
+  }
+
+  setScore(catId: string, subId: string, itemIdx: number, score: number) {
+    this.evaluations[`${catId}_${subId}_${itemIdx}`] = score;
+    this.updateChart();
+  }
+
+  getScoreButtonClass(score: number): string {
+    switch (score) {
+      case 0: return 'bg-red-100 text-red-700 ring-2 ring-red-300';
+      case 1: return 'bg-amber-100 text-amber-700 ring-2 ring-amber-300';
+      case 2: return 'bg-green-100 text-green-700 ring-2 ring-green-300';
+      default: return '';
+    }
+  }
+
+  getCategoryScore(cat: Category): number {
+    let score = 0;
+    cat.subcategories.forEach(sub => {
+      sub.items.forEach((_, idx) => {
+        score += this.evaluations[`${cat.id}_${sub.id}_${idx}`] || 0;
+      });
+    });
+    return score;
+  }
+
+  getCategoryMax(cat: Category): number {
+    return cat.subcategories.length * 10 * 2;
+  }
+
+  getCategoryPercent(cat: Category): number {
+    const max = this.getCategoryMax(cat);
+    return max > 0 ? Math.round((this.getCategoryScore(cat) / max) * 100) : 0;
+  }
+
+  getSubcategoryScore(sub: Subcategory): number {
+    const cat = this.selectedCategory();
+    if (!cat) return 0;
+    let score = 0;
+    sub.items.forEach((_, idx) => {
+      score += this.evaluations[`${cat.id}_${sub.id}_${idx}`] || 0;
+    });
+    return score;
+  }
+
+  totalScore(): number {
+    return Object.values(this.evaluations).reduce((sum, v) => sum + v, 0);
+  }
+
+  totalMax(): number {
+    return this.categories().reduce((sum, cat) => sum + this.getCategoryMax(cat), 0);
+  }
+
+  overallPercentage(): number {
+    const max = this.totalMax();
+    return max > 0 ? Math.round((this.totalScore() / max) * 100) : 0;
+  }
+
+  filterItems() {
+    // Reactive filtering happens via template
+  }
+
+  updateChart() {
+    if (!this.radarChartRef || !this.selectedCategory()) return;
+
+    if (this.chart) {
+      this.chart.destroy();
+    }
+
+    const cat = this.selectedCategory()!;
+    const labels = cat.subcategories.map(s => s.name);
+    const data = cat.subcategories.map(s => {
+      const score = this.getSubcategoryScore(s);
+      return Math.round((score / 20) * 100);
+    });
+
+    this.chart = new Chart(this.radarChartRef.nativeElement, {
+      type: 'radar',
+      data: {
+        labels,
+        datasets: [{
+          label: cat.name,
+          data,
+          backgroundColor: cat.color + '30',
+          borderColor: cat.color,
+          borderWidth: 2,
+          pointBackgroundColor: cat.color,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { stepSize: 20, display: false },
+            grid: { color: '#e5e7eb' },
+            pointLabels: { font: { size: 12 } }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
   save() {
-    if (!this.form.pacienteId) return alert('Selecione um paciente');
+    if (!this.selectedPatientId()) return;
     this.saving.set(true);
-    const obs = this.isEdit ? this.service.update(this.id, this.form) : this.service.create(this.form);
-    obs.subscribe({ next: () => this.router.navigate(['/protocolos']), error: () => { this.saving.set(false); alert('Erro ao salvar'); } });
+
+    const data = {
+      pacienteId: this.selectedPatientId(),
+      professionalId: '',
+      date: this.evaluationDate,
+      evaluations: JSON.stringify(this.evaluations),
+      totalEvaluations: Object.keys(this.evaluations).length,
+      averageScore: this.overallPercentage(),
+      maxScore: this.totalMax(),
+      minScore: 0
+    };
+
+    const req = this.route.snapshot.paramMap.get('id')
+      ? this.api.put(`/protocol-evaluations/${this.route.snapshot.paramMap.get('id')}`, data)
+      : this.api.post('/protocol-evaluations', data);
+
+    req.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.router.navigate(['/protocolos']);
+      },
+      error: () => {
+        this.saving.set(false);
+        alert('Erro ao salvar avaliação');
+      }
+    });
   }
 }

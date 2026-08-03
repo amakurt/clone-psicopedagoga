@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
+import { AddressFormComponent, Address } from '@core/components/address-form.component';
+import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 
 @Component({
   selector: 'app-configuracoes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Header -->
@@ -66,9 +68,12 @@ import { ApiService } from '@core/services/api.service';
                   [(ngModel)]="profileForm.email" placeholder="seu@email.com" type="email">
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Telefone</label>
-                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                  [(ngModel)]="profileForm.phone" placeholder="(00) 00000-0000">
+                <app-phone-input 
+                  [phone]="profileForm.phone" 
+                  [isWhatsApp]="profileForm.phoneIsWhatsApp"
+                  label="Telefone"
+                  (phoneChange)="onProfilePhoneChange($event)">
+                </app-phone-input>
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Registro Profissional</label>
@@ -137,15 +142,22 @@ import { ApiService } from '@core/services/api.service';
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="clinicForm.name" placeholder="Nome da clínica">
               </div>
-              <div class="md:col-span-2">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Endereço</label>
-                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                  [(ngModel)]="clinicForm.address" placeholder="Endereço completo">
-              </div>
+            </div>
+
+            <app-address-form 
+              [address]="clinicForm.address" 
+              label="Endereço da Clínica"
+              (addressChange)="onClinicAddressChange($event)">
+            </app-address-form>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Telefone</label>
-                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                  [(ngModel)]="clinicForm.phone" placeholder="(00) 0000-0000">
+                <app-phone-input 
+                  [phone]="clinicForm.phone" 
+                  [isWhatsApp]="clinicForm.phoneIsWhatsApp"
+                  label="Telefone da Clínica"
+                  (phoneChange)="onClinicPhoneChange($event)">
+                </app-phone-input>
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</label>
@@ -240,9 +252,15 @@ export class ConfiguracoesComponent implements OnInit {
     { id: 'notificacoes' as const, label: 'Notificações' },
   ];
 
-  profileForm = { name: '', email: '', phone: '', registration: '', bio: '' };
+  profileForm = { name: '', email: '', phone: '', phoneIsWhatsApp: false, registration: '', bio: '' };
   passwordForm = { current: '', newPassword: '', confirm: '' };
-  clinicForm = { name: '', address: '', phone: '', email: '' };
+  clinicForm: any = { 
+    name: '', 
+    phone: '', 
+    phoneIsWhatsApp: false,
+    email: '',
+    address: { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' }
+  };
 
   notificationOptions = [
     { id: 'email', label: 'Notificações por Email', description: 'Receber alertas importantes por email', enabled: true },
@@ -258,6 +276,7 @@ export class ConfiguracoesComponent implements OnInit {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
+        phoneIsWhatsApp: user.phoneIsWhatsApp || false,
         registration: user.registration || '',
         bio: user.bio || '',
       };
@@ -266,7 +285,12 @@ export class ConfiguracoesComponent implements OnInit {
 
     const savedClinic = localStorage.getItem('clinic_config');
     if (savedClinic) {
-      this.clinicForm = JSON.parse(savedClinic);
+      const parsed = JSON.parse(savedClinic);
+      this.clinicForm = {
+        ...this.clinicForm,
+        ...parsed,
+        address: parsed.address || this.clinicForm.address
+      };
     }
   }
 
@@ -288,6 +312,20 @@ export class ConfiguracoesComponent implements OnInit {
       reader.onload = (e) => this.avatarPreview.set(e.target?.result as string);
       reader.readAsDataURL(input.files[0]);
     }
+  }
+
+  onClinicAddressChange(address: Address) {
+    this.clinicForm.address = address;
+  }
+
+  onProfilePhoneChange(phone: PhoneNumber) {
+    this.profileForm.phone = phone.number;
+    this.profileForm.phoneIsWhatsApp = phone.isWhatsApp;
+  }
+
+  onClinicPhoneChange(phone: PhoneNumber) {
+    this.clinicForm.phone = phone.number;
+    this.clinicForm.phoneIsWhatsApp = phone.isWhatsApp;
   }
 
   saveProfile() {

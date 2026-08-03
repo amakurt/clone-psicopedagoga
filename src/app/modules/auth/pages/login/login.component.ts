@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -36,21 +37,33 @@ import { AuthService } from '../../../../core/services/auth.service';
             @if (isRegister()) {
               <div class="mb-5">
                 <label class="block text-sm font-semibold text-slate-600 mb-2">Nome Completo</label>
-                <input class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                <input class="w-full px-4 py-3 border rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all"
+                  [class.border-red-300]="nameError()" [class.border-slate-200]="!nameError()"
                   type="text" [(ngModel)]="name" name="name" placeholder="Seu nome completo">
+                @if (nameError()) {
+                  <p class="text-red-500 text-xs mt-1">{{ nameError() }}</p>
+                }
               </div>
             }
 
             <div class="mb-5">
               <label class="block text-sm font-semibold text-slate-600 mb-2">Email</label>
-              <input class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+              <input class="w-full px-4 py-3 border rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all"
+                [class.border-red-300]="emailError()" [class.border-slate-200]="!emailError()"
                 type="email" [(ngModel)]="email" name="email" placeholder="seu@email.com" autocomplete="off">
+              @if (emailError()) {
+                <p class="text-red-500 text-xs mt-1">{{ emailError() }}</p>
+              }
             </div>
 
             <div class="mb-5">
               <label class="block text-sm font-semibold text-slate-600 mb-2">Senha</label>
-              <input class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
-                type="password" [(ngModel)]="password" name="password" placeholder="Sua senha" autocomplete="new-password">
+              <input class="w-full px-4 py-3 border rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all"
+                [class.border-red-300]="passwordError()" [class.border-slate-200]="!passwordError()"
+                type="password" [(ngModel)]="password" name="password" [placeholder]="isRegister() ? 'Mínimo 6 caracteres' : 'Sua senha'" autocomplete="new-password">
+              @if (passwordError()) {
+                <p class="text-red-500 text-xs mt-1">{{ passwordError() }}</p>
+              }
             </div>
 
             @if (isRegister()) {
@@ -58,8 +71,8 @@ import { AuthService } from '../../../../core/services/auth.service';
                 <label class="block text-sm font-semibold text-slate-600 mb-2">Tipo de Conta</label>
                 <div class="grid grid-cols-2 gap-3">
                   <button type="button" class="p-4 border-2 rounded-xl text-center transition-all"
-                    [class]="selectedRole() === 'PROFISSIONAL' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500 hover:border-slate-300'"
-                    (click)="selectedRole.set('PROFISSIONAL')">
+                    [class]="selectedRole() === 'PSICOPEDAGOGO' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500 hover:border-slate-300'"
+                    (click)="selectedRole.set('PSICOPEDAGOGO')">
                     <span class="material-icons text-2xl mb-1">science</span>
                     <p class="text-xs font-bold">Profissional</p>
                   </button>
@@ -98,26 +111,14 @@ import { AuthService } from '../../../../core/services/auth.service';
               </svg>
               Continuar com Google
             </button>
-            <button class="w-full py-3 bg-[#0078D4] rounded-xl text-sm font-semibold text-white hover:bg-[#006CBE] transition-all flex items-center justify-center gap-3"
-              (click)="socialLogin('azure')">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white">
-                <path d="M11.4 2L2 11.4V22h7.6V14h4.8v8H22V11.4L11.4 2z"/>
-              </svg>
-              Continuar com Microsoft
-            </button>
           </div>
 
           <!-- Toggle Mode -->
           <div class="text-center mt-6">
             <button class="text-sm text-primary font-semibold hover:underline"
-              (click)="isRegister.set(!isRegister())">
+              (click)="toggleMode()">
               {{ isRegister() ? 'Já tem conta? Entrar' : 'Não tem conta? Criar agora' }}
             </button>
-          </div>
-
-          <!-- Help -->
-          <div class="text-center mt-6 text-xs text-slate-400 leading-relaxed">
-            <p>Use o email <strong class="text-primary">sarah&#64;edupsych.com</strong> para testar</p>
           </div>
         </div>
       </div>
@@ -138,13 +139,56 @@ export class LoginComponent {
   error = signal('');
   success = signal('');
   isRegister = signal(false);
-  selectedRole = signal('PROFISSIONAL');
+  selectedRole = signal('PSICOPEDAGOGO');
+
+  emailError = signal('');
+  passwordError = signal('');
+  nameError = signal('');
+
+  toggleMode() {
+    this.isRegister.set(!this.isRegister());
+    this.error.set('');
+    this.success.set('');
+    this.clearErrors();
+  }
+
+  clearErrors() {
+    this.emailError.set('');
+    this.passwordError.set('');
+    this.nameError.set('');
+  }
+
+  validate(): boolean {
+    this.clearErrors();
+    let valid = true;
+
+    if (!this.email) {
+      this.emailError.set('Email é obrigatório');
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email)) {
+      this.emailError.set('Email inválido');
+      valid = false;
+    }
+
+    if (!this.password) {
+      this.passwordError.set('Senha é obrigatória');
+      valid = false;
+    } else if (this.isRegister() && this.password.length < 6) {
+      this.passwordError.set('A senha deve ter pelo menos 6 caracteres');
+      valid = false;
+    }
+
+    if (this.isRegister() && !this.name) {
+      this.nameError.set('Nome é obrigatório');
+      valid = false;
+    }
+
+    return valid;
+  }
 
   onSubmit() {
-    if (!this.email) {
-      this.error.set('Informe o email');
-      return;
-    }
+    if (!this.validate()) return;
+
     this.loading.set(true);
     this.error.set('');
     this.success.set('');
@@ -157,8 +201,7 @@ export class LoginComponent {
   }
 
   login() {
-    const url = 'http://localhost:3000/api/auth/login';
-    fetch(url, {
+    fetch(`${environment.apiUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: this.email, password: this.password })
@@ -178,13 +221,13 @@ export class LoginComponent {
   }
 
   register() {
-    const url = 'http://localhost:3000/api/auth/register';
-    fetch(url, {
+    fetch(`${environment.apiUrl}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: this.name || this.email.split('@')[0],
+        name: this.name,
         email: this.email,
+        password: this.password,
         role: this.selectedRole()
       })
     })
@@ -192,12 +235,9 @@ export class LoginComponent {
       if (!res.ok) return res.json().then(data => { throw new Error(data.error || 'Erro ao cadastrar'); });
       return res.json();
     })
-    .then(() => {
-      this.success.set('Conta criada! Fazendo login...');
-      setTimeout(() => {
-        this.isRegister.set(false);
-        this.login();
-      }, 1000);
+    .then(data => {
+      this.auth.login(data.token, data.user);
+      this.router.navigate(['/dashboard']);
     })
     .catch(err => {
       this.error.set(err.message || 'Erro ao conectar com o servidor');
@@ -206,6 +246,10 @@ export class LoginComponent {
   }
 
   socialLogin(provider: string) {
-    this.error.set(`Login com ${provider === 'google' ? 'Google' : 'Microsoft'} será configurado em breve.`);
+    if (provider === 'google') {
+      window.location.href = `${environment.apiUrl}/auth/google`;
+    } else {
+      this.error.set(`Login com Microsoft será configurado em breve.`);
+    }
   }
 }

@@ -12,7 +12,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
-  const comunicacao = await prisma.comunicacao.create({ data: { ...req.body, autorId: req.user?.uid } });
+  const comunicacao = await prisma.comunicacao.create({ data: { ...req.body, autorId: req.user?.id } });
   res.status(201).json(comunicacao);
 });
 
