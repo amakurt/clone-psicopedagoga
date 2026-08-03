@@ -1,5 +1,6 @@
 import { Component, inject, signal, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { Chart, registerables } from 'chart.js';
 
@@ -13,7 +14,8 @@ Chart.register(...registerables);
     <div class="space-y-8 animate-in">
       <!-- Stats Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        <div class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all">
+        <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
+          (click)="navigateTo('/pacientes')">
           <div class="size-14 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">people</span>
           </div>
@@ -21,9 +23,10 @@ Chart.register(...registerables);
             <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">Pacientes Ativos</p>
             <p class="text-3xl font-black text-slate-900 dark:text-white leading-tight">{{ stats()?.totalPacientes || 0 }}</p>
           </div>
-        </div>
+        </button>
 
-        <div class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all">
+        <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
+          (click)="navigateTo('/documentos')">
           <div class="size-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shadow-lg shadow-amber-100 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">description</span>
           </div>
@@ -31,9 +34,10 @@ Chart.register(...registerables);
             <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">Documentos Pendentes</p>
             <p class="text-3xl font-black text-slate-900 dark:text-white leading-tight">{{ stats()?.documentosPendentes || 0 }}</p>
           </div>
-        </div>
+        </button>
 
-        <div class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all">
+        <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
+          (click)="navigateTo('/sessoes')">
           <div class="size-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shadow-lg shadow-slate-100 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">archive</span>
           </div>
@@ -41,9 +45,10 @@ Chart.register(...registerables);
             <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">Casos Arquivados</p>
             <p class="text-3xl font-black text-slate-900 dark:text-white leading-tight">{{ stats()?.casosArquivados || 0 }}</p>
           </div>
-        </div>
+        </button>
 
-        <div class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all">
+        <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
+          (click)="navigateTo('/protocolos')">
           <div class="size-14 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shadow-lg shadow-purple-100 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">psychology</span>
           </div>
@@ -51,7 +56,7 @@ Chart.register(...registerables);
             <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">Protocolos TEA</p>
             <p class="text-3xl font-black text-slate-900 dark:text-white leading-tight">{{ stats()?.protocolosTEA || 0 }}</p>
           </div>
-        </div>
+        </button>
       </div>
 
       <!-- Charts + Activity -->
@@ -142,6 +147,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
   private api = inject(ApiService);
+  private router = inject(Router);
   private chart: Chart | null = null;
 
   stats = signal<any>({});
@@ -340,6 +346,10 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (type.includes('pagamento') || type.includes('Pagamento') || type.includes('Financeiro')) return 'bg-purple-100 text-purple-600';
     if (type.includes('agendamento') || type.includes('Agendamento')) return 'bg-cyan-100 text-cyan-600';
     return 'bg-slate-100 text-slate-600';
+  }
+
+  navigateTo(path: string) {
+    this.router.navigate([path]);
   }
 
   createTestNotification(message: string, type: string) {

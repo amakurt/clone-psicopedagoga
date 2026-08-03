@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { AuthService } from '@core/services/auth.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -166,6 +167,7 @@ export class ProtocoloFormComponent implements OnInit {
   @ViewChild('radarChart') radarChartRef!: ElementRef<HTMLCanvasElement>;
 
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -177,15 +179,52 @@ export class ProtocoloFormComponent implements OnInit {
   searchTerm = '';
   saving = signal(false);
 
-  evaluations: Record<string, number> = {};
+  evaluations = signal<Record<string, number>>({});
   private chart: Chart | null = null;
 
+  isEdit = false;
+  evaluationId = '';
+
   ngOnInit() {
-    this.api.get('/pacientes').subscribe((res: any) => this.patients.set(res.data || []));
-    this.api.get('/protocol-evaluations/protocol-data').subscribe((res: any) => {
-      this.categories.set(res.categories || []);
-      if (res.categories?.length > 0) {
-        this.selectCategory(res.categories[0]);
+    this.evaluationId = this.route.snapshot.paramMap.get('id') || '';
+    this.isEdit = !!this.evaluationId;
+
+    this.api.get('/pacientes').subscribe((res: any) => {
+      this.patients.set(res.data || []);
+
+      this.api.get('/protocol-evaluations/protocol-data').subscribe((res: any) => {
+        this.categories.set(res.categories || []);
+
+        if (this.isEdit) {
+          this.loadEvaluation();
+        } else if (res.categories?.length > 0) {
+          this.selectCategory(res.categories[0]);
+        }
+      });
+    });
+  }
+
+  loadEvaluation() {
+    this.api.get(`/protocol-evaluations/${this.evaluationId}`).subscribe({
+      next: (res: any) => {
+        this.selectedPatientId.set(res.pacienteId || '');
+        this.evaluationDate = res.date || new Date().toISOString().split('T')[0];
+
+        if (res.evaluations) {
+          try {
+            this.evaluations.set(JSON.parse(res.evaluations));
+          } catch {
+            this.evaluations.set({});
+          }
+        }
+
+        if (this.categories().length > 0) {
+          this.selectCategory(this.categories()[0]);
+        }
+      },
+      error: () => {
+        alert('Avaliação não encontrada');
+        this.router.navigate(['/protocolos']);
       }
     });
   }
@@ -196,11 +235,12 @@ export class ProtocoloFormComponent implements OnInit {
   }
 
   getScore(catId: string, subId: string, itemIdx: number): number {
-    return this.evaluations[`${catId}_${subId}_${itemIdx}`] ?? -1;
+    return this.evaluations()[`${catId}_${subId}_${itemIdx}`] ?? -1;
   }
 
   setScore(catId: string, subId: string, itemIdx: number, score: number) {
-    this.evaluations[`${catId}_${subId}_${itemIdx}`] = score;
+    const key = `${catId}_${subId}_${itemIdx}`;
+    this.evaluations.update(evals => ({ ...evals, [key]: score }));
     this.updateChart();
   }
 
@@ -215,9 +255,10 @@ export class ProtocoloFormComponent implements OnInit {
 
   getCategoryScore(cat: Category): number {
     let score = 0;
+    const evals = this.evaluations();
     cat.subcategories.forEach(sub => {
       sub.items.forEach((_, idx) => {
-        score += this.evaluations[`${cat.id}_${sub.id}_${idx}`] || 0;
+        score += evals[`${cat.id}_${sub.id}_${idx}`] || 0;
       });
     });
     return score;
@@ -236,14 +277,15 @@ export class ProtocoloFormComponent implements OnInit {
     const cat = this.selectedCategory();
     if (!cat) return 0;
     let score = 0;
+    const evals = this.evaluations();
     sub.items.forEach((_, idx) => {
-      score += this.evaluations[`${cat.id}_${sub.id}_${idx}`] || 0;
+      score += evals[`${cat.id}_${sub.id}_${idx}`] || 0;
     });
     return score;
   }
 
   totalScore(): number {
-    return Object.values(this.evaluations).reduce((sum, v) => sum + v, 0);
+    return Object.values(this.evaluations()).reduce((sum, v) => sum + v, 0);
   }
 
   totalMax(): number {
@@ -312,12 +354,13 @@ export class ProtocoloFormComponent implements OnInit {
     if (!this.selectedPatientId()) return;
     this.saving.set(true);
 
+    const evals = this.evaluations();
     const data = {
       pacienteId: this.selectedPatientId(),
-      professionalId: '',
+      professionalId: this.auth.user()?.id || '',
       date: this.evaluationDate,
-      evaluations: JSON.stringify(this.evaluations),
-      totalEvaluations: Object.keys(this.evaluations).length,
+      evaluations: JSON.stringify(evals),
+      totalEvaluations: Object.keys(evals).length,
       averageScore: this.overallPercentage(),
       maxScore: this.totalMax(),
       minScore: 0

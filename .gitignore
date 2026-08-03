@@ -3,7 +3,8 @@ dist/
 .angular/
 *.db
 *.db-journal
-.env
+.DS_Store
+
 backend/node_modules/
 backend/dist/
 .agent/

@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
   const where: any = {};
   if (search) where.name = { contains: search };
   if (active !== undefined) where.active = active === 'true';
-  const pacientes = await prisma.paciente.findMany({ where, orderBy: { name: 'asc' }, include: { prontuarios: true, sessoes: true } });
+  const pacientes = await prisma.paciente.findMany({ where, orderBy: { name: 'asc' }, include: { prontuarios: true, sessoes: true, responsible: true } });
   res.json({ data: pacientes, total: pacientes.length });
 });
 

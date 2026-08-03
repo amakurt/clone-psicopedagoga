@@ -23,6 +23,9 @@ import interventionPlansRoutes from './intervention-plans';
 import chatRoutes from './chat';
 import guardianRoutes from './guardian';
 import uploadRoutes from './upload';
+import sessionDiariesRoutes from './session-diaries';
+import frequencySheetsRoutes from './frequency-sheets';
+import interventionDocumentsRoutes from './intervention-documents';
 
 const router = Router();
 
@@ -50,5 +53,8 @@ router.use('/intervention-plans', interventionPlansRoutes);
 router.use('/chat', chatRoutes);
 router.use('/guardian', guardianRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/session-diaries', sessionDiariesRoutes);
+router.use('/frequency-sheets', frequencySheetsRoutes);
+router.use('/intervention-documents', interventionDocumentsRoutes);
 
 export default router;

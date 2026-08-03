@@ -79,6 +79,9 @@ model Paciente {
   protocolEvaluations ProtocolEvaluation[]
   interventionPlans InterventionPlan[]
   chatMessages      ChatMessage[]
+  sessionDiaries    SessionDiary[]
+  frequencySheets   FrequencySheet[]
+  interventionDocuments InterventionDocument[]
 }
 
 model Responsible {
@@ -445,4 +448,58 @@ model SocialAccount {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([provider, providerId])
+}
+
+model SessionDiary {
+  id              String   @id @default(cuid())
+  pacienteId      String
+  sessionNumber   Int
+  date            String
+  professionalId  String?
+  professionalName String?
+  objective       String?
+  instruments     String?
+  studentBehavior String?
+  activities      String?
+  observations    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+}
+
+model FrequencySheet {
+  id              String   @id @default(cuid())
+  pacienteId      String
+  date            String
+  entryTime       String?
+  exitTime        String?
+  activities      String?
+  instruments     String?
+  observations    String?
+  guardianSignature String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
+}
+
+model InterventionDocument {
+  id              String   @id @default(cuid())
+  pacienteId      String
+  professionalId  String?
+  professionalName String?
+  step1           String?
+  step2           String?
+  step3           String?
+  sessionCount    Int      @default(0)
+  sessionValue    String?
+  totalValue      String?
+  frequency       String?
+  duration        String?
+  status          String   @default("RASCUNHO")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paciente Paciente @relation(fields: [pacienteId], references: [id])
 }

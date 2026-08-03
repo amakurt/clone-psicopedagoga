@@ -3,7 +3,7 @@
 ## Sessão: 03/08/2026
 
 ### Resumo
-Migração completa de um sistema React/Supabase para Angular 18 + Express.js + Prisma + SQLite.
+Migração completa de um sistema React/Supabase para Angular 18 + Express.js + Prisma + SQLite. Implementação de documentos clínicos e correções.
 
 ---
 
@@ -66,6 +66,29 @@ Migração completa de um sistema React/Supabase para Angular 18 + Express.js + 
 
 ---
 
+## Fase 11: Dados de Teste (03/08/2026)
+- Cadastrados 2 responsáveis fictícios
+- Cadastrados 2 pacientes fictícios vinculados aos responsáveis
+- Credenciais: admin@test.com / 123456
+
+## Fase 12: Dashboard - Cards Clicáveis
+- Cards do dashboard convertidos de `<div>` para `<button>`
+- Navegação para módulos relacionados
+- Efeito hover com `hover:-translate-y-1`
+
+## Fase 13: Documentos Clínicos (03/08/2026)
+- **Diário de Sessões**: Formulário + preview + export PDF
+- **Ficha de Frequência**: Formulário + horários + export PDF
+- **Plano de Intervenção**: Multi-step (3 passos) + cálculos financeiros + export PDF
+- Novas tabelas no Prisma: SessionDiary, FrequencySheet, InterventionDocument
+- Rotas CRUD: /api/session-diaries, /api/frequency-sheets, /api/intervention-documents
+
+## Fase 14: Correção - Protocolo TEA
+- Corrigido bug: `professionalId` vazio causava erro de foreign key
+- Solução: Injetar AuthService para obter ID do usuário logado
+
+---
+
 ## Stack Utilizada
 
 ### Frontend
@@ -73,11 +96,11 @@ Migração completa de um sistema React/Supabase para Angular 18 + Express.js + 
 - Angular Material
 - Tailwind CSS
 - html2pdf.js
-- Chart.js (gráfico radar)
+- Chart.js (gráfico radar + bar)
 
 ### Backend
 - Express.js + TypeScript
-- Prisma ORM
+- Prisma ORM (20+ models)
 - SQLite
 - Passport.js (Google OAuth)
 - Multer (upload)
@@ -100,7 +123,12 @@ Migração completa de um sistema React/Supabase para Angular 18 + Express.js + 
 - `backend/src/routes/upload.ts` - Rotas de upload
 - `backend/src/config/passport.ts` - Google OAuth
 - `backend/src/routes/guardian.ts` - Portal do responsável
+- `backend/src/routes/session-diaries.ts` - Diário de sessões
+- `backend/src/routes/frequency-sheets.ts` - Fichas de frequência
+- `backend/src/routes/intervention-documents.ts` - Planos de intervenção
 - `backend/src/seed.ts` - Seed do banco
+- `backend/prisma/schema.prisma` - Schema do banco (20+ models)
+- `src/app/modules/documentos-clinicos/` - Módulo de documentos clínicos
 - `src/app/core/components/address-form.component.ts` - Componente endereço
 - `src/app/core/components/phone-input.component.ts` - Componente telefone
 - `src/app/core/guards/role.guard.ts` - Guard de permissões
