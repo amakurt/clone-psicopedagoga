@@ -2,7 +2,7 @@
 
 ## Data: 03/08/2026 (Atualizado)
 
-## Status: ✅ 100% Implementado + Documentos Clínicos
+## Status: 100% Implementado + Documentos Clínicos + Bug Fix Signal
 
 ---
 
@@ -23,19 +23,19 @@
 
 | Módulo | Features | Status |
 |--------|----------|--------|
-| **Login** | Social buttons, seleção de perfil, JWT tokens | ✅ |
-| **Dashboard** | Chart.js bar, activity feed, toast, cards clicáveis | ✅ |
-| **Pacientes** | CPF/Phone/CEP masks, avatar, batch codes | ✅ |
-| **Agenda** | 4 views (Day/Week/Month/Year) | ✅ |
-| **Financeiro** | PDF receipts, monthly reports, confirm payment | ✅ |
-| **Documentos** | Upload, categories, download, sign, share | ✅ |
-| **Evoluções** | Star ratings, frequency PDF | ✅ |
-| **Configurações** | Full page (profile, password, clinic) | ✅ |
-| **Protocolos** | 200 items TEA, radar chart, classification, PDF | ✅ |
-| **Planos** | Financial calc, frequency/duration, PDF | ✅ |
-| **Biblioteca** | Grid view, filters, upload | ✅ |
-| **Documentos Clínicos** | Diário, Fichas, Planos com export PDF | ✅ NOVO |
-| **Guardian Portal** | Layout separado para responsáveis | ✅ |
+| **Login** | Social buttons, seleção de perfil, JWT tokens | OK |
+| **Dashboard** | Chart.js bar, activity feed, toast, cards clicáveis | OK |
+| **Pacientes** | CPF/Phone/CEP masks, avatar, batch codes | OK |
+| **Agenda** | 4 views (Day/Week/Month/Year) | OK |
+| **Financeiro** | PDF receipts, monthly reports, confirm payment | OK |
+| **Documentos** | Upload, categories, download, sign, share | OK |
+| **Evoluções** | Star ratings, frequency PDF | OK |
+| **Configurações** | Full page (profile, password, clinic) | OK |
+| **Protocolos** | 200 items TEA, radar chart, classification, PDF | OK |
+| **Planos** | Financial calc, frequency/duration, PDF | OK |
+| **Biblioteca** | Grid view, filters, upload | OK |
+| **Documentos Clínicos** | Diário, Fichas, Planos com export PDF | OK NOVO |
+| **Guardian Portal** | Layout separado para responsáveis | OK |
 
 ---
 
@@ -83,6 +83,26 @@
 
 ---
 
+## Correções nesta Sessão
+
+### 1. Protocolo TEA - professionalId vazio
+- **Bug:** Erro `Foreign key constraint violated` ao salvar avaliação
+- **Causa:** `professionalId` sendo enviado como string vazia `''`
+- **Correção:** Injetado `AuthService` no componente para usar `this.auth.user()?.id`
+
+### 2. Dashboard - Cards Clicáveis
+- Cards do dashboard agora são botões clicáveis com navegação
+
+### 3. Protocolo TEA - evaluations signal (CORREÇÃO CRÍTICA)
+- **Bug:** Ao editar avaliação, apenas 2 itens apareciam quando todos foram preenchidos
+- **Causa:** `evaluations` era um objeto plain `Record<string, number>`. Angular's change detection nao rastreia mutacoes em objetos plain, entao o `setScore()` nao atualizava a UI e o objeto nao acumulava corretamente
+- **Correcao:** Convertido `evaluations` de plain object para `signal<Record<string, number>>({})`
+- **Metodos atualizados:** `getScore()`, `setScore()`, `getCategoryScore()`, `getSubcategoryScore()`, `totalScore()`, `loadEvaluation()`, `save()`
+- **Antes:** `this.evaluations[key] = score` (plain mutation)
+- **Depois:** `this.evaluations.update(evals => ({ ...evals, [key]: score }))` (immutable signal update)
+
+---
+
 ## Usuário de Teste
 - Email: `admin@test.com` ou `sarah@edupsych.com`
 - Senha: `123456`
@@ -118,7 +138,8 @@ npm start
 
 ### Frontend
 - `src/app/modules/*/pages/*.component.ts` - Todos os módulos
-- `src/app/modules/documentos-clinicos/` - NOVO módulo
+- `src/app/modules/protocolos/pages/protocolo-form.component.ts` - Protocolo TEA (corrigido com signal)
+- `src/app/modules/documentos-clinicos/` - Módulo de documentos clínicos
 - `src/app/shared/components/` - Componentes reutilizáveis
 - `src/app/core/services/` - Serviços (API, Auth)
 - `src/app/core/interceptors/` - Error interceptor
@@ -128,13 +149,6 @@ npm start
 - `backend/src/routes/` - 28 rotas REST
 - `backend/src/middleware/auth.ts` - Auth middleware
 - `backend/prisma/schema.prisma` - 20+ models
-
----
-
-## Correções nesta Sessão
-
-1. **Protocolo TEA** - Corrigido `professionalId` vazio (usava string `''` em vez do ID do usuário logado)
-2. **Dashboard** - Cards agora são clicáveis com navegação
 
 ---
 

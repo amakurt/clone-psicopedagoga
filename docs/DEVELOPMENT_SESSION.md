@@ -83,9 +83,23 @@ Migração completa de um sistema React/Supabase para Angular 18 + Express.js + 
 - Novas tabelas no Prisma: SessionDiary, FrequencySheet, InterventionDocument
 - Rotas CRUD: /api/session-diaries, /api/frequency-sheets, /api/intervention-documents
 
-## Fase 14: Correção - Protocolo TEA
+## Fase 14: Correção - Protocolo TEA - professionalId
 - Corrigido bug: `professionalId` vazio causava erro de foreign key
 - Solução: Injetar AuthService para obter ID do usuário logado
+
+## Fase 15: Correção CRÍTICA - Protocolo TEA - evaluations signal
+- **Bug:** Ao editar avaliação, apenas 2 itens apareciam quando todos foram preenchidos. Backend confirmava que apenas 2 itens foram salvos
+- **Causa raiz:** `evaluations` era um objeto plain `Record<string, number>`. Angular's change detection nao rastreia mutacoes em objetos plain, entao as mutacoes de `setScore()` nao eram refletidas na UI e o objeto nao acumulava corretamente antes do save
+- **Correcao:** Convertido `evaluations` de plain object para `signal<Record<string, number>>({})`
+- **Metodos atualizados:**
+  - `getScore()` - leitura: `this.evaluations()[key]`
+  - `setScore()` - escrita: `this.evaluations.update(evals => ({ ...evals, [key]: score }))`
+  - `getCategoryScore()` - leitura: `const evals = this.evaluations()`
+  - `getSubcategoryScore()` - leitura: `const evals = this.evaluations()`
+  - `totalScore()` - leitura: `Object.values(this.evaluations())`
+  - `loadEvaluation()` - set: `this.evaluations.set(JSON.parse(res.evaluations))`
+  - `save()` - leitura: `const evals = this.evaluations()`
+- **Build:** Compila sem erros
 
 ---
 
@@ -128,6 +142,7 @@ Migração completa de um sistema React/Supabase para Angular 18 + Express.js + 
 - `backend/src/routes/intervention-documents.ts` - Planos de intervenção
 - `backend/src/seed.ts` - Seed do banco
 - `backend/prisma/schema.prisma` - Schema do banco (20+ models)
+- `src/app/modules/protocolos/pages/protocolo-form.component.ts` - Protocolo TEA (corrigido com signal)
 - `src/app/modules/documentos-clinicos/` - Módulo de documentos clínicos
 - `src/app/core/components/address-form.component.ts` - Componente endereço
 - `src/app/core/components/phone-input.component.ts` - Componente telefone

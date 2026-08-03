@@ -47,10 +47,24 @@
 
 **Navegação:** Menu lateral → "Docs Clínicos" (ícone `clinical_notes`)
 
-#### 4. Correção - Protocolo TEA
+#### 4. Correção - Protocolo TEA - professionalId
 - **Bug:** Erro `Foreign key constraint violated` ao salvar avaliação
 - **Causa:** `professionalId` sendo enviado como string vazia `''`
 - **Correção:** Injetado `AuthService` no componente para usar `this.auth.user()?.id`
+
+#### 5. Correção CRÍTICA - Protocolo TEA - evaluations signal
+- **Bug:** Ao editar avaliação, apenas 2 itens apareciam quando todos foram preenchidos. Backend confirmava que apenas 2 itens foram salvos
+- **Causa raiz:** `evaluations` era um objeto plain `Record<string, number>`. Angular's change detection nao rastreia mutacoes em objetos plain, entao as mutacoes de `setScore()` nao eram refletidas na UI e o objeto nao acumulava corretamente antes do save
+- **Correcao:** Convertido `evaluations` de plain object para `signal<Record<string, number>>({})`
+- **Metodos atualizados:**
+  - `getScore()` - leitura: `this.evaluations()[key]`
+  - `setScore()` - escrita: `this.evaluations.update(evals => ({ ...evals, [key]: score }))`
+  - `getCategoryScore()` - leitura: `const evals = this.evaluations()`
+  - `getSubcategoryScore()` - leitura: `const evals = this.evaluations()`
+  - `totalScore()` - leitura: `Object.values(this.evaluations())`
+  - `loadEvaluation()` - set: `this.evaluations.set(JSON.parse(res.evaluations))`
+  - `save()` - leitura: `const evals = this.evaluations()`
+- **Build:** Compila sem erros
 
 ---
 
