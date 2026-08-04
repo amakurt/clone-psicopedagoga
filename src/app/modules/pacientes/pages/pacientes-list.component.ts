@@ -46,7 +46,7 @@ import { PacientesService } from '../services/pacientes.service';
             <option value="active">Ativos</option>
             <option value="inactive">Inativos</option>
           </select>
-          <a routerLink="/pacientes/novo"
+          <a routerLink="/app/pacientes/novo"
             class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
             <span>Novo Paciente</span>
@@ -112,10 +112,10 @@ import { PacientesService } from '../services/pacientes.service';
                     </td>
                     <td class="px-6 py-4">
                       <div class="flex items-center justify-end gap-1">
-                        <a [routerLink]="['/pacientes', p.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
+                        <a [routerLink]="['/app/pacientes', p.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
                           <span class="material-icons text-lg">visibility</span>
                         </a>
-                        <a [routerLink]="['/pacientes', p.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                        <a [routerLink]="['/app/pacientes', p.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                           <span class="material-icons text-lg">edit</span>
                         </a>
                         <button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir" (click)="confirmDelete(p)">

@@ -10,6 +10,7 @@ export interface User {
   bio?: string;
   clinicName?: string;
   clinicAddress?: string;
+  permissions?: Record<string, string[]>;
   createdAt: Date;
   updatedAt?: Date;
 }

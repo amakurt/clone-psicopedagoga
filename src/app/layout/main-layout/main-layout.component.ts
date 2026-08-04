@@ -58,7 +58,7 @@ import { ApiService } from '../../core/services/api.service';
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Administrativo</p>
           </div>
 
-          <a routerLink="/configuracoes"
+          <a routerLink="/app/configuracoes"
              routerLinkActive="bg-primary/10 text-primary"
              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group"
              [class.justify-center]="!sidebarOpen()"
@@ -161,18 +161,25 @@ export class MainLayoutComponent implements OnInit {
   notifCount = signal(0);
 
   navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/dashboard', count: signal(0) },
-    { id: 'pacientes', label: 'Pacientes', icon: 'people', route: '/pacientes', count: signal(0) },
-    { id: 'evolucoes', label: 'Evoluções', icon: 'show_chart', route: '/evolucoes', count: signal(0) },
-    { id: 'responsaveis', label: 'Responsáveis', icon: 'person_add', route: '/responsaveis', count: signal(0) },
-    { id: 'escolas', label: 'Escolas', icon: 'school', route: '/escolas', count: signal(0) },
-    { id: 'agenda', label: 'Agenda', icon: 'calendar_month', route: '/agenda', count: signal(0) },
-    { id: 'financeiro', label: 'Financeiro', icon: 'account_balance_wallet', route: '/financeiro', count: signal(0) },
-    { id: 'documentos', label: 'Documentos', icon: 'folder_open', route: '/documentos', count: signal(0) },
-    { id: 'documentos-clinicos', label: 'Docs Clínicos', icon: 'clinical_notes', route: '/documentos-clinicos', count: signal(0) },
-    { id: 'biblioteca', label: 'Biblioteca', icon: 'menu_book', route: '/biblioteca', count: signal(0) },
-    { id: 'protocolos', label: 'Protocolos', icon: 'fact_check', route: '/protocolos', count: signal(0) },
-    { id: 'planos', label: 'Planos', icon: 'description', route: '/planos', count: signal(0) },
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', count: signal(0) },
+    { id: 'pacientes', label: 'Pacientes', icon: 'people', route: '/app/pacientes', count: signal(0) },
+    { id: 'evolucoes', label: 'Evoluções', icon: 'show_chart', route: '/app/evolucoes', count: signal(0) },
+    { id: 'responsaveis', label: 'Responsáveis', icon: 'person_add', route: '/app/responsaveis', count: signal(0) },
+    { id: 'escolas', label: 'Escolas', icon: 'school', route: '/app/escolas', count: signal(0) },
+    { id: 'agenda', label: 'Agenda', icon: 'calendar_month', route: '/app/agenda', count: signal(0) },
+    { id: 'sala-espera', label: 'Sala de Espera', icon: 'event_seat', route: '/app/agenda/sala-espera', count: signal(0) },
+    { id: 'tv-sala', label: 'Painel TV', icon: 'tv', route: '/app/agenda/tv', count: signal(0) },
+    { id: 'financeiro', label: 'Financeiro', icon: 'account_balance_wallet', route: '/app/financeiro', count: signal(0) },
+    { id: 'nfse', label: 'NFS-e', icon: 'receipt_long', route: '/app/financeiro/nfse', count: signal(0) },
+    { id: 'documentos', label: 'Documentos', icon: 'folder_open', route: '/app/documentos', count: signal(0) },
+    { id: 'documentos-clinicos', label: 'Docs Clínicos', icon: 'clinical_notes', route: '/app/documentos-clinicos', count: signal(0) },
+    { id: 'biblioteca', label: 'Biblioteca', icon: 'menu_book', route: '/app/biblioteca', count: signal(0) },
+    { id: 'protocolos', label: 'Protocolos', icon: 'fact_check', route: '/app/protocolos', count: signal(0) },
+    { id: 'protocolos-aba', label: 'Protocolos ABA', icon: 'psychology', route: '/app/protocolos-aba', count: signal(0) },
+    { id: 'planos', label: 'Planos', icon: 'description', route: '/app/planos', count: signal(0) },
+    { id: 'planos-ia', label: 'Plano IA', icon: 'auto_awesome', route: '/app/planos/ia', count: signal(0) },
+    { id: 'whatsapp', label: 'WhatsApp', icon: 'chat', route: '/app/whatsapp', count: signal(0) },
+    { id: 'lgpd', label: 'LGPD', icon: 'gpp_good', route: '/app/lgpd', count: signal(0) },
   ];
 
   currentPageTitle = signal('Dashboard');
@@ -205,13 +212,19 @@ export class MainLayoutComponent implements OnInit {
       responsaveis: 'Responsáveis',
       escolas: 'Escolas',
       agenda: 'Agenda',
+      'sala-espera': 'Sala de Espera',
       financeiro: 'Financeiro',
+      nfse: 'NFS-e',
       documentos: 'Documentos',
       'documentos-clinicos': 'Documentos Clínicos',
       biblioteca: 'Biblioteca',
       protocolos: 'Protocolos',
+      'protocolos-aba': 'Protocolos ABA',
       planos: 'Planos',
+      'planos-ia': 'Plano IA',
       configuracoes: 'Configurações',
+      whatsapp: 'WhatsApp',
+      lgpd: 'LGPD',
     };
     this.currentPageTitle.set(titles[path] || 'Dashboard');
   }

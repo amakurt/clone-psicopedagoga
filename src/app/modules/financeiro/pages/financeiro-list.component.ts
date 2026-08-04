@@ -23,7 +23,7 @@ declare var html2pdf: any;
             (click)="exportMonthlyReport()">
             <span class="material-icons text-lg">picture_as_pdf</span> Relatório Mensal
           </button>
-          <a routerLink="/financeiro/novo"
+          <a routerLink="/app/financeiro/novo"
             class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
             <span>Nova Transação</span>
@@ -149,7 +149,7 @@ declare var html2pdf: any;
                           <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Gerar recibo" (click)="generateReceipt(item)">
                             <span class="material-icons text-lg">receipt</span>
                           </button>
-                          <a [routerLink]="['/financeiro', item.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                          <a [routerLink]="['/app/financeiro', item.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
                           <button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir" (click)="confirmDelete(item)">

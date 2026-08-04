@@ -27,7 +27,7 @@ import { UsersService } from '../services/users.service';
   template: `
     <div class="p-6">
       <div class="flex items-center gap-4 mb-6">
-        <a mat-icon-button routerLink="/users">
+        <a mat-icon-button routerLink="/app/users">
           <mat-icon>arrow_back</mat-icon>
         </a>
         <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
@@ -82,7 +82,7 @@ import { UsersService } from '../services/users.service';
                 <mat-icon>save</mat-icon>
                 {{ isEditing ? 'Atualizar' : 'Salvar' }}
               </button>
-              <a mat-raised-button routerLink="/users">Cancelar</a>
+              <a mat-raised-button routerLink="/app/users">Cancelar</a>
             </div>
           </form>
         </mat-card-content>

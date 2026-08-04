@@ -206,15 +206,24 @@ router.post('/appointments', async (req, res) => {
     }
   });
 
-  // Create notification for professional
-  await prisma.notification.create({
-    data: {
-      userId: patient.responsibleId ? '' : '',
-      title: 'Nova solicitação de agendamento',
-      message: `${responsible.name} solicitou agendamento para ${patient.name}`,
-      type: 'appointment'
-    }
+  // Create notification for professional - find the professional from patient's sessions
+  const patientSessions = await prisma.sessao.findMany({
+    where: { pacienteId },
+    select: { psicopedagogoId: true },
+    take: 1
   });
+  const professionalId = patientSessions[0]?.psicopedagogoId;
+  
+  if (professionalId) {
+    await prisma.notification.create({
+      data: {
+        userId: professionalId,
+        title: 'Nova solicitação de agendamento',
+        message: `${responsible.name} solicitou agendamento para ${patient.name}`,
+        type: 'appointment'
+      }
+    });
+  }
 
   res.status(201).json(appointment);
 });
@@ -309,6 +318,82 @@ router.post('/chat', async (req, res) => {
   });
 
   res.status(201).json(chatMessage);
+});
+
+// Get all upcoming appointments for guardian's patients
+router.get('/appointments', async (req, res) => {
+  const userId = req.user?.id;
+  const responsible = await prisma.responsible.findFirst({ where: { userId } });
+  if (!responsible) return res.json({ data: [], total: 0 });
+
+  const patients = await prisma.paciente.findMany({
+    where: { responsibleId: responsible.id, active: true }
+  });
+  const patientIds = patients.map(p => p.id);
+
+  const today = new Date().toISOString().split('T')[0];
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      pacienteId: { in: patientIds },
+      date: { gte: today },
+      status: { in: ['CONFIRMADO', 'PENDENTE'] }
+    },
+    orderBy: { date: 'asc' },
+    include: { paciente: true }
+  });
+
+  res.json({ data: appointments, total: appointments.length });
+});
+
+// Request new appointment
+router.post('/appointments/request', async (req, res) => {
+  const userId = req.user?.id;
+  const { pacienteId, date, startTime, notes } = req.body;
+
+  const responsible = await prisma.responsible.findFirst({ where: { userId } });
+  if (!responsible) return res.status(403).json({ error: 'Acesso negado' });
+
+  const patient = await prisma.paciente.findFirst({
+    where: { id: pacienteId, responsibleId: responsible.id }
+  });
+  if (!patient) return res.status(403).json({ error: 'Acesso negado a este paciente' });
+
+  const appointment = await prisma.appointment.create({
+    data: {
+      pacienteId,
+      patientName: patient.name,
+      date,
+      startTime: startTime || '09:00',
+      endTime: startTime ? String(parseInt(startTime.split(':')[0]) + 1).padStart(2, '0') + ':' + startTime.split(':')[1] : '10:00',
+      notes: `Solicitado pelo responsável: ${notes || ''}`,
+      status: 'PENDENTE',
+      autorId: userId
+    }
+  });
+
+  res.status(201).json(appointment);
+});
+
+// Get recent session summaries for a patient
+router.get('/sessions/:patientId', async (req, res) => {
+  const { patientId } = req.params;
+  const userId = req.user?.id;
+
+  const responsible = await prisma.responsible.findFirst({ where: { userId } });
+  if (!responsible) return res.status(403).json({ error: 'Acesso negado' });
+
+  const patient = await prisma.paciente.findFirst({
+    where: { id: patientId, responsibleId: responsible.id }
+  });
+  if (!patient) return res.status(403).json({ error: 'Acesso negado a este paciente' });
+
+  const records = await prisma.sessionRecord.findMany({
+    where: { pacienteId: patientId, sharedWithGuardian: true },
+    orderBy: { date: 'desc' },
+    take: 5
+  });
+
+  res.json({ data: records, total: records.length });
 });
 
 // Guardian dashboard stats

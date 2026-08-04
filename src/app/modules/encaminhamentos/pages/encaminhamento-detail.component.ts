@@ -9,7 +9,7 @@ import { EncaminhamentoService } from '../services/encaminhamento.service';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="page">
-      <div class="header"><div><h1>Encaminhamento</h1><p class="subtitle">{{ item()?.paciente?.name }}</p></div><a routerLink="/encaminhamentos" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
+      <div class="header"><div><h1>Encaminhamento</h1><p class="subtitle">{{ item()?.paciente?.name }}</p></div><a routerLink="/app/encaminhamentos" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
       @if (item()) { <div class="card"><div class="card-body">
         <div class="info-grid">
           <div class="info-section"><h3>Dados</h3><p><strong>Status:</strong> {{ item()?.status }}</p><p><strong>De:</strong> {{ item()?.deUser?.name }}</p><p><strong>Para:</strong> {{ item()?.paraUser?.name || 'Não atribuído' }}</p></div>

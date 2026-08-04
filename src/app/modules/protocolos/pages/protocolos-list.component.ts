@@ -17,7 +17,7 @@ declare var html2pdf: any;
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">Protocolos TEA</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Avaliações com protocolos estruturados</p>
         </div>
-        <a routerLink="/protocolos/novo"
+        <a routerLink="/app/protocolos/novo"
           class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
           <span class="material-icons text-[18px]">add</span>
           <span>Nova Avaliação</span>
@@ -82,10 +82,10 @@ declare var html2pdf: any;
                           <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Exportar PDF" (click)="exportPDF(p)">
                             <span class="material-icons text-lg">picture_as_pdf</span>
                           </button>
-                          <a [routerLink]="['/protocolos', p.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
+                          <a [routerLink]="['/app/protocolos', p.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
                             <span class="material-icons text-lg">visibility</span>
                           </a>
-                          <a [routerLink]="['/protocolos', p.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                          <a [routerLink]="['/app/protocolos', p.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
                         </div>

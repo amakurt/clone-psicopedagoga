@@ -15,7 +15,7 @@ Chart.register(...registerables);
       <!-- Stats Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
-          (click)="navigateTo('/pacientes')">
+          (click)="navigateTo('/app/pacientes')">
           <div class="size-14 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">people</span>
           </div>
@@ -26,7 +26,7 @@ Chart.register(...registerables);
         </button>
 
         <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
-          (click)="navigateTo('/documentos')">
+          (click)="navigateTo('/app/documentos')">
           <div class="size-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shadow-lg shadow-amber-100 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">description</span>
           </div>
@@ -37,7 +37,7 @@ Chart.register(...registerables);
         </button>
 
         <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
-          (click)="navigateTo('/sessoes')">
+          (click)="navigateTo('/app/sessoes')">
           <div class="size-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shadow-lg shadow-slate-100 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">archive</span>
           </div>
@@ -48,7 +48,7 @@ Chart.register(...registerables);
         </button>
 
         <button class="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-6 group hover:-translate-y-1 transition-all cursor-pointer text-left w-full"
-          (click)="navigateTo('/protocolos')">
+          (click)="navigateTo('/app/protocolos')">
           <div class="size-14 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center shadow-lg shadow-purple-100 group-hover:scale-110 transition-transform">
             <span class="material-icons text-[28px]">psychology</span>
           </div>

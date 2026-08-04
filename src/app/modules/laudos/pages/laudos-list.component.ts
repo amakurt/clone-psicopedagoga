@@ -8,18 +8,91 @@ import { LaudoService } from '../services/laudo.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="page">
-      <div class="header"><div><h1>Laudos</h1><p class="subtitle">Laudos e pareceres</p></div><a routerLink="/laudos/novo" class="btn btn-primary"><span class="material-icons">add</span> Novo</a></div>
-      @if (loading()) { <p>Carregando...</p> }
-      @else if (items().length === 0) { <div class="empty"><span class="material-icons" style="font-size:48px;color:var(--gray-400)">description</span><p>Nenhum laudo</p></div> }
-      @else { <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Data</th><th>Paciente</th><th>Título</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead><tbody>
-        @for (l of items(); track l.id) { <tr><td>{{ l.createdAt | date:'dd/MM/yyyy' }}</td><td><strong>{{ l.paciente?.name }}</strong></td><td>{{ l.titulo }}</td><td>{{ l.type }}</td><td><span class="badge" [class]="l.status === 'RASCUNHO' ? 'badge-warn' : 'badge-success'">{{ l.status }}</span></td><td class="actions"><a [routerLink]="['/laudos', l.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/laudos', l.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
-      </tbody></table></div></div> }
+    <div class="max-w-[1200px]">
+      <div class="flex justify-between items-start mb-5">
+        <div>
+          <h1 class="text-2xl font-bold m-0">Laudos</h1>
+          <p class="text-sm text-slate-500 mt-1">Laudos e pareceres</p>
+        </div>
+        <a routerLink="/app/laudos/novo" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all shadow-sm no-underline">
+          <span class="material-icons text-[18px]">add</span>
+          Novo
+        </a>
+      </div>
+
+      @if (loading()) {
+        <div class="text-center py-10 text-slate-500">Carregando...</div>
+      } @else if (items().length === 0) {
+        <div class="text-center py-10">
+          <span class="material-icons text-[48px] text-slate-300">description</span>
+          <p class="text-slate-500 mt-2">Nenhum laudo encontrado</p>
+        </div>
+      } @else {
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+          <div class="p-4">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Data</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Paciente</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Título</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tipo</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (l of items(); track l.id) {
+                  <tr class="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td class="px-3 py-3 text-sm text-slate-600">{{ l.createdAt | date:'dd/MM/yyyy' }}</td>
+                    <td class="px-3 py-3 text-sm font-semibold text-slate-900">{{ l.paciente?.name }}</td>
+                    <td class="px-3 py-3 text-sm text-slate-700">{{ l.titulo }}</td>
+                    <td class="px-3 py-3 text-sm text-slate-600">{{ l.type }}</td>
+                    <td class="px-3 py-3">
+                      @if (l.status === 'ASSINADO') {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700">
+                          <span class="material-icons text-[12px]">verified</span>
+                          Assinado
+                        </span>
+                      } @else {
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                          [class]="l.status === 'RASCUNHO' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'">
+                          {{ l.status }}
+                        </span>
+                      }
+                    </td>
+                    <td class="px-3 py-3">
+                      <div class="flex gap-1">
+                        <a [routerLink]="['/app/laudos', l.id]" class="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
+                          <span class="material-icons text-[16px]">visibility</span>
+                        </a>
+                        <a [routerLink]="['/app/laudos', l.id, 'editar']" class="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
+                          <span class="material-icons text-[16px]">edit</span>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
     </div>
-  `,
-  styles: [`.page { max-width: 1200px; } .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; } .header h1 { margin: 0; font-size: 24px; } .subtitle { color: var(--gray-500); font-size: 14px; margin: 4px 0 0; } .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); } .card-body { padding: 16px; } .table { width: 100%; border-collapse: collapse; } .table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--gray-200); font-size: 14px; } .table th { color: var(--gray-500); font-size: 12px; text-transform: uppercase; } .actions { display: flex; gap: 4px; } .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; } .btn-primary { background: var(--primary); color: white; } .btn-sm { padding: 4px 8px; font-size: 12px; } .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); } .btn-sm .material-icons { font-size: 16px; } .badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; } .badge-warn { background: #FEF3C7; color: #92400E; } .badge-success { background: #D1FAE5; color: #065F46; } .empty { text-align: center; padding: 40px; color: var(--gray-500); }`]
+  `
 })
 export class LaudosListComponent implements OnInit {
-  private service = inject(LaudoService); items = signal<any[]>([]); loading = signal(true);
-  ngOnInit() { this.service.list().subscribe({ next: (res: any) => { this.items.set(res.data); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  private service = inject(LaudoService);
+  items = signal<any[]>([]);
+  loading = signal(true);
+
+  ngOnInit() {
+    this.service.list().subscribe({
+      next: (res: any) => {
+        this.items.set(res.data);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
 }

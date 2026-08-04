@@ -13,7 +13,7 @@ import { ApiService } from '@core/services/api.service';
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <a routerLink="/documentos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/documentos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
             <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>

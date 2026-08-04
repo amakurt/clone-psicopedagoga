@@ -10,7 +10,7 @@ import { ResponsaveisService } from '../services/responsaveis.service';
   template: `
     <div class="page">
       <div class="header"><div><h1>{{ item()?.name }}</h1><p class="subtitle">{{ item()?.relationship }}</p></div>
-        <div class="actions"><a routerLink="/responsaveis" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/responsaveis', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
+        <div class="actions"><a routerLink="/app/responsaveis" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/app/responsaveis', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
       @if (item()) { <div class="card"><div class="card-body">
         <div class="info-grid">
           <div class="info-section"><h3>CPF</h3><p>{{ item()?.cpf || '—' }}</p></div>

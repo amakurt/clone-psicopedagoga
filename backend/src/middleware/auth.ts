@@ -34,3 +34,24 @@ export const authorize = (...roles: string[]) => {
     next();
   };
 };
+
+export const checkPermission = (module: string, action: string) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) return res.status(401).json({ error: 'Não autenticado' });
+    if (req.user.role === 'GESTOR') return next();
+
+    try {
+      const prisma = (await import('../lib/prisma')).default;
+      const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+      const permissions = (user as any)?.permissions || {};
+      const modulePerms = permissions[module] || [];
+
+      if (!modulePerms.includes(action)) {
+        return res.status(403).json({ error: 'Sem permissão para esta ação' });
+      }
+      next();
+    } catch {
+      return res.status(500).json({ error: 'Erro ao verificar permissões' });
+    }
+  };
+};

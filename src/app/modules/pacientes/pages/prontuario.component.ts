@@ -12,7 +12,7 @@ import { ApiService } from '@core/services/api.service';
     <div class="page">
       <div class="header">
         <div><h1>Prontuário</h1><p class="subtitle">Registro de evolução do paciente</p></div>
-        <a [routerLink]="['/pacientes', pacienteId]" class="btn btn-outline"><span class="material-icons">arrow_back</span></a>
+        <a [routerLink]="['/app/pacientes', pacienteId]" class="btn btn-outline"><span class="material-icons">arrow_back</span></a>
       </div>
       <div class="card" style="margin-bottom:16px"><div class="card-body">
         <h3 style="margin-bottom:12px">Nova Anotação</h3>

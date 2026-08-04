@@ -18,7 +18,7 @@ import { AddressFormComponent, Address } from '@core/components/address-form.com
             <h1 class="text-2xl font-bold text-gray-900">{{ isEdit ? 'Editar' : 'Nova' }} Anamnese</h1>
             <p class="text-sm text-gray-500 mt-1">Preencha os dados do paciente etapa por etapa</p>
           </div>
-          <a routerLink="/anamnese" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <a routerLink="/app/anamnese" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             <span class="material-icons text-lg">arrow_back</span> Voltar
           </a>
         </div>
@@ -410,7 +410,7 @@ export class AnamneseFormComponent implements OnInit {
 
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
-      next: () => this.router.navigate(['/anamnese']),
+      next: () => this.router.navigate(['/app/anamnese']),
       error: () => { this.saving.set(false); alert('Erro ao salvar'); }
     });
   }

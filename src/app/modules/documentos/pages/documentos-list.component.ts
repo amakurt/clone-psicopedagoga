@@ -22,7 +22,7 @@ import { UploadService } from '@core/services/upload.service';
             <span class="material-icons text-lg">upload_file</span> Upload
             <input type="file" class="hidden" (change)="onFileUpload($event)" accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.csv">
           </label>
-          <a routerLink="/documentos/novo"
+          <a routerLink="/app/documentos/novo"
             class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
             <span>Novo Documento</span>
@@ -119,7 +119,7 @@ import { UploadService } from '@core/services/upload.service';
                           <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar com pais" (click)="shareWithGuardian(d)">
                             <span class="material-icons text-lg">share</span>
                           </button>
-                          <a [routerLink]="['/documentos', d.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                          <a [routerLink]="['/app/documentos', d.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
                         </div>

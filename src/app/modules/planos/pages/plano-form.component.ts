@@ -15,7 +15,7 @@ declare var html2pdf: any;
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <a routerLink="/planos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/planos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
             <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
@@ -358,7 +358,7 @@ export class PlanoFormComponent implements OnInit {
     req.subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/planos']);
+        this.router.navigate(['/app/planos']);
       },
       error: () => {
         this.saving.set(false);

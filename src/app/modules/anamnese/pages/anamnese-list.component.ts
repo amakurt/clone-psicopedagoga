@@ -9,11 +9,11 @@ import { AnamneseService } from '../services/anamnese.service';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="page">
-      <div class="header"><div><h1>Anamnese</h1><p class="subtitle">Histórico clínico</p></div><a routerLink="/anamnese/novo" class="btn btn-primary"><span class="material-icons">add</span> Nova</a></div>
+      <div class="header"><div><h1>Anamnese</h1><p class="subtitle">Histórico clínico</p></div><a routerLink="/app/anamnese/novo" class="btn btn-primary"><span class="material-icons">add</span> Nova</a></div>
       @if (loading()) { <p>Carregando...</p> }
       @else if (items().length === 0) { <div class="empty"><span class="material-icons" style="font-size:48px;color:var(--gray-400)">description</span><p>Nenhuma anamnese</p></div> }
       @else { <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Data</th><th>Paciente</th><th>Autor</th><th>Ações</th></tr></thead><tbody>
-        @for (a of items(); track a.id) { <tr><td>{{ a.createdAt | date:'dd/MM/yyyy' }}</td><td><strong>{{ a.paciente?.name }}</strong></td><td>{{ a.autor?.name }}</td><td class="actions"><a [routerLink]="['/anamnese', a.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/anamnese', a.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
+        @for (a of items(); track a.id) { <tr><td>{{ a.createdAt | date:'dd/MM/yyyy' }}</td><td><strong>{{ a.paciente?.name }}</strong></td><td>{{ a.autor?.name }}</td><td class="actions"><a [routerLink]="['/app/anamnese', a.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/app/anamnese', a.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
       </tbody></table></div></div> }
     </div>
   `,

@@ -1,8 +1,9 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { GuardianService } from '../services/guardian.service';
+import { ApiService } from '@core/services/api.service';
 import { Document } from '@core/models';
 
 @Component({
@@ -41,12 +42,21 @@ import { Document } from '@core/models';
               </select>
             </div>
           </div>
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Arquivo</label>
+            <input #fileInput type="file" (change)="onFileSelected($event)" 
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.csv"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-white file:font-semibold file:cursor-pointer">
+            @if (selectedFile()) {
+              <p class="text-sm text-gray-500 dark:text-slate-400 mt-2">{{ selectedFile()!.name }} ({{ formatSize(selectedFile()!.size) }})</p>
+            }
+          </div>
           <div class="mt-4 flex gap-3">
-            <button (click)="uploadDocument()" [disabled]="!newDoc.name || uploading()"
+            <button (click)="uploadDocument()" [disabled]="!newDoc.name || !selectedFile() || uploading()"
               class="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all">
               {{ uploading() ? 'Enviando...' : 'Enviar' }}
             </button>
-            <button (click)="showUpload.set(false)" class="px-6 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold">
+            <button (click)="cancelUpload()" class="px-6 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold">
               Cancelar
             </button>
           </div>
@@ -89,11 +99,15 @@ import { Document } from '@core/models';
 })
 export class GuardianDocumentsComponent implements OnInit {
   private guardianService = inject(GuardianService);
+  private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   documents = signal<Document[]>([]);
   showUpload = signal(false);
   uploading = signal(false);
+  selectedFile = signal<File | null>(null);
   patientId = '';
 
   newDoc = {
@@ -116,20 +130,56 @@ export class GuardianDocumentsComponent implements OnInit {
     });
   }
 
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile.set(input.files[0]);
+    }
+  }
+
+  formatSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  cancelUpload() {
+    this.showUpload.set(false);
+    this.selectedFile.set(null);
+    this.newDoc = { name: '', category: 'ESCOLA' };
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
+  }
+
   uploadDocument() {
-    if (!this.newDoc.name || !this.patientId) return;
+    if (!this.newDoc.name || !this.patientId || !this.selectedFile()) return;
     this.uploading.set(true);
 
-    this.guardianService.uploadDocument({
-      pacienteId: this.patientId,
-      name: this.newDoc.name,
-      category: this.newDoc.category
-    }).subscribe({
-      next: () => {
-        this.uploading.set(false);
-        this.showUpload.set(false);
-        this.newDoc = { name: '', category: 'ESCOLA' };
-        this.loadDocuments();
+    const formData = new FormData();
+    formData.append('file', this.selectedFile()!);
+
+    this.api.post<{ url: string; filename: string; size: number }>('/upload', formData).subscribe({
+      next: (uploadRes) => {
+        this.guardianService.uploadDocument({
+          pacienteId: this.patientId,
+          name: this.newDoc.name,
+          category: this.newDoc.category,
+          fileUrl: uploadRes.url,
+          size: String(uploadRes.size)
+        }).subscribe({
+          next: () => {
+            this.uploading.set(false);
+            this.showUpload.set(false);
+            this.selectedFile.set(null);
+            this.newDoc = { name: '', category: 'ESCOLA' };
+            if (this.fileInput) {
+              this.fileInput.nativeElement.value = '';
+            }
+            this.loadDocuments();
+          },
+          error: () => this.uploading.set(false)
+        });
       },
       error: () => this.uploading.set(false)
     });

@@ -46,7 +46,8 @@ export class AuthCallbackComponent implements OnInit {
         try {
           const user = JSON.parse(decodeURIComponent(userStr));
           this.auth.login(token, user);
-          this.router.navigate(['/dashboard']);
+          const redirectPath = user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
+          this.router.navigate([redirectPath]);
         } catch (e) {
           this.error.set('Erro ao processar dados de autenticação');
           this.loading.set(false);

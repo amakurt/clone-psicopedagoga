@@ -3,10 +3,11 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
+  { path: '', loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) },
   { path: 'login', loadComponent: () => import('./modules/auth/pages/login/login.component').then(m => m.LoginComponent) },
   { path: 'auth/callback', loadComponent: () => import('./modules/auth/pages/callback/auth-callback.component').then(m => m.AuthCallbackComponent) },
   {
-    path: '',
+    path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),
     canActivate: [authGuard],
     children: [
@@ -31,6 +32,7 @@ export const routes: Routes = [
       },
       { path: 'configuracoes', loadChildren: () => import('./modules/configuracoes/configuracoes.routes').then(m => m.default) },
       { path: 'evolucoes', loadChildren: () => import('./modules/evolucoes/evolucoes.routes').then(m => m.default) },
+      { path: 'lgpd', loadChildren: () => import('./modules/lgpd/lgpd.routes').then(m => m.default) },
       { 
         path: 'responsaveis', 
         loadChildren: () => import('./modules/responsaveis/responsaveis.routes').then(m => m.default),
@@ -47,8 +49,10 @@ export const routes: Routes = [
       { path: 'documentos', loadChildren: () => import('./modules/documentos/documentos.routes').then(m => m.default) },
       { path: 'biblioteca', loadChildren: () => import('./modules/biblioteca/biblioteca.routes').then(m => m.default) },
       { path: 'protocolos', loadChildren: () => import('./modules/protocolos/protocolos.routes').then(m => m.default) },
+      { path: 'protocolos-aba', loadChildren: () => import('./modules/protocolos-aba/protocolos-aba.routes').then(m => m.default) },
       { path: 'planos', loadChildren: () => import('./modules/planos/planos.routes').then(m => m.default) },
       { path: 'documentos-clinicos', loadChildren: () => import('./modules/documentos-clinicos/documentos-clinicos.routes').then(m => m.default) },
+      { path: 'whatsapp', loadChildren: () => import('./modules/whatsapp/whatsapp.routes').then(m => m.default) },
       { 
         path: 'users', 
         loadChildren: () => import('./modules/users/users.routes').then(m => m.default),
@@ -60,7 +64,9 @@ export const routes: Routes = [
   {
     path: 'guardian',
     loadComponent: () => import('./layout/guardian-layout/guardian-layout.component').then(m => m.GuardianLayoutComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['RESPONSAVEL'] },
     loadChildren: () => import('./modules/guardian/guardian.routes').then(m => m.default)
-  }
+  },
+  { path: '**', redirectTo: '' }
 ];

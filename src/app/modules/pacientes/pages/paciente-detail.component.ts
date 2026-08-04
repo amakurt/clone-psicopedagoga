@@ -11,14 +11,14 @@ import { PacientesService } from '../services/pacientes.service';
     <div class="min-h-screen bg-gray-50 p-6">
       <div class="max-w-5xl mx-auto">
         <div class="flex justify-between items-start mb-6">
-          <a routerLink="/pacientes" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <a routerLink="/app/pacientes" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             <span class="material-icons text-lg">arrow_back</span> Voltar
           </a>
           <div class="flex gap-2">
-            <a [routerLink]="['/pacientes', id, 'editar']" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <a [routerLink]="['/app/pacientes', id, 'editar']" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               <span class="material-icons text-lg">edit</span> Editar
             </a>
-            <a [routerLink]="['/pacientes', id, 'prontuario']" class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+            <a [routerLink]="['/app/pacientes', id, 'prontuario']" class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
               <span class="material-icons text-lg">description</span> Prontuário
             </a>
           </div>

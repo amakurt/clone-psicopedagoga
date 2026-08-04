@@ -12,7 +12,7 @@ import { EscolasService } from '../services/escolas.service';
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <a routerLink="/escolas" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/escolas" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
             <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
@@ -29,7 +29,7 @@ import { EscolasService } from '../services/escolas.service';
             </div>
           </div>
         </div>
-        <a [routerLink]="['/escolas', id, 'editar']" 
+        <a [routerLink]="['/app/escolas', id, 'editar']" 
           class="px-5 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold flex items-center gap-2 transition-all">
           <span class="material-icons text-[18px]">edit</span>
           Editar

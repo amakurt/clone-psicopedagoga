@@ -132,13 +132,18 @@ export class GuardianSettingsComponent implements OnInit {
     }
 
     this.changingPassword.set(true);
-    // TODO: Implement change password endpoint
-    setTimeout(() => {
-      this.changingPassword.set(false);
-      this.currentPassword = '';
-      this.newPassword = '';
-      this.confirmPassword = '';
-      this.saveSuccess.set('Senha alterada com sucesso!');
-    }, 1000);
+    this.guardianService.changePassword(this.currentPassword, this.newPassword).subscribe({
+      next: () => {
+        this.changingPassword.set(false);
+        this.currentPassword = '';
+        this.newPassword = '';
+        this.confirmPassword = '';
+        this.saveSuccess.set('Senha alterada com sucesso!');
+      },
+      error: (err: any) => {
+        this.changingPassword.set(false);
+        this.passwordError.set(err.error?.error || 'Erro ao alterar senha');
+      }
+    });
   }
 }

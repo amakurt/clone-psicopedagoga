@@ -11,7 +11,7 @@ import { ApiService } from '@core/services/api.service';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page">
-      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Nova' }} Sessão</h1></div><a routerLink="/sessoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
+      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Nova' }} Sessão</h1></div><a routerLink="/app/sessoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
       <div class="card"><div class="card-body">
         <div class="form-grid">
           <div class="form-group"><label>Paciente *</label><select class="form-control" [(ngModel)]="form.pacienteId"><option value="">Selecione</option>@for (p of pacientes(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }</select></div>
@@ -22,7 +22,7 @@ import { ApiService } from '@core/services/api.service';
           <div class="form-group"><label>Status</label><select class="form-control" [(ngModel)]="form.status"><option value="AGENDADA">Agendada</option><option value="EM_ANDAMENTO">Em Andamento</option><option value="CONCLUIDA">Concluída</option><option value="CANCELADA">Cancelada</option></select></div>
           <div class="form-group full"><label>Observações</label><textarea class="form-control" rows="3" [(ngModel)]="form.observacoes"></textarea></div>
         </div>
-        <div class="form-actions"><a routerLink="/sessoes" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
+        <div class="form-actions"><a routerLink="/app/sessoes" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
       </div></div>
     </div>
   `,
@@ -42,6 +42,6 @@ export class SessaoFormComponent implements OnInit {
     this.saving.set(true);
     this.form.psicopedagogoId = 'system';
     const obs = this.isEdit ? this.service.update(this.id, this.form) : this.service.create(this.form);
-    obs.subscribe({ next: () => this.router.navigate(['/sessoes']), error: () => { this.saving.set(false); alert('Erro'); } });
+    obs.subscribe({ next: () => this.router.navigate(['/app/sessoes']), error: () => { this.saving.set(false); alert('Erro'); } });
   }
 }

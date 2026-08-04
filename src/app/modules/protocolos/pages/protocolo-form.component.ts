@@ -31,7 +31,7 @@ interface Category {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <a routerLink="/protocolos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/protocolos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
             <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
@@ -224,7 +224,7 @@ export class ProtocoloFormComponent implements OnInit {
       },
       error: () => {
         alert('Avaliação não encontrada');
-        this.router.navigate(['/protocolos']);
+        this.router.navigate(['/app/protocolos']);
       }
     });
   }
@@ -373,7 +373,7 @@ export class ProtocoloFormComponent implements OnInit {
     req.subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/protocolos']);
+        this.router.navigate(['/app/protocolos']);
       },
       error: () => {
         this.saving.set(false);

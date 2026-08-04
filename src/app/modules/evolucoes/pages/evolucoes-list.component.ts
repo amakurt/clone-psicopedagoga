@@ -17,7 +17,7 @@ declare var html2pdf: any;
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">Evoluções</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Registros de sessões</p>
         </div>
-        <a routerLink="/evolucoes/novo"
+        <a routerLink="/app/evolucoes/novo"
           class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
           <span class="material-icons text-[18px]">add</span>
           <span>Nova Evolução</span>
@@ -79,10 +79,10 @@ declare var html2pdf: any;
                           <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar" (click)="shareSession(e)">
                             <span class="material-icons text-lg">share</span>
                           </button>
-                          <a [routerLink]="['/evolucoes', e.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
+                          <a [routerLink]="['/app/evolucoes', e.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
                             <span class="material-icons text-lg">visibility</span>
                           </a>
-                          <a [routerLink]="['/evolucoes', e.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                          <a [routerLink]="['/app/evolucoes', e.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
                         </div>

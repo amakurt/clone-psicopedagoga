@@ -15,7 +15,7 @@ import { EscolasService } from '../services/escolas.service';
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Escolas</h1>
           <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Cadastro de instituições de ensino</p>
         </div>
-        <a routerLink="/escolas/novo"
+        <a routerLink="/app/escolas/novo"
           class="px-5 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold flex items-center gap-2 transition-all">
           <span class="material-icons">add</span>
           Nova Escola
@@ -43,7 +43,7 @@ import { EscolasService } from '../services/escolas.service';
                       <span class="material-icons text-primary">school</span>
                     </div>
                     <div>
-                      <a [routerLink]="['/escolas', e.id]" class="font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors">
+                      <a [routerLink]="['/app/escolas', e.id]" class="font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors">
                         {{ e.name }}
                       </a>
                       <div class="flex flex-wrap gap-1 mt-1">
@@ -64,11 +64,11 @@ import { EscolasService } from '../services/escolas.service';
                       </span>
                     </div>
                     <div class="flex items-center gap-1">
-                      <a [routerLink]="['/escolas', e.id]" 
+                      <a [routerLink]="['/app/escolas', e.id]" 
                         class="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all">
                         <span class="material-icons text-[20px]">visibility</span>
                       </a>
-                      <a [routerLink]="['/escolas', e.id, 'editar']" 
+                      <a [routerLink]="['/app/escolas', e.id, 'editar']" 
                         class="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all">
                         <span class="material-icons text-[20px]">edit</span>
                       </a>

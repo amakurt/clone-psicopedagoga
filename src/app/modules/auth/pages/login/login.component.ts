@@ -212,7 +212,8 @@ export class LoginComponent {
     })
     .then(data => {
       this.auth.login(data.token, data.user);
-      this.router.navigate(['/dashboard']);
+      const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
+      this.router.navigate([redirectPath]);
     })
     .catch(err => {
       this.error.set(err.message || 'Erro ao conectar com o servidor');
@@ -237,7 +238,8 @@ export class LoginComponent {
     })
     .then(data => {
       this.auth.login(data.token, data.user);
-      this.router.navigate(['/dashboard']);
+      const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
+      this.router.navigate([redirectPath]);
     })
     .catch(err => {
       this.error.set(err.message || 'Erro ao conectar com o servidor');

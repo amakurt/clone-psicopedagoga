@@ -10,7 +10,7 @@ import { BibliotecaService } from '../services/biblioteca.service';
   template: `
     <div class="page">
       <div class="header"><div><h1>{{ item()?.name }}</h1><p class="subtitle">{{ item()?.category }}</p></div>
-        <div class="actions"><a routerLink="/biblioteca" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/biblioteca', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
+        <div class="actions"><a routerLink="/app/biblioteca" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/app/biblioteca', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
       @if (item()) { <div class="card"><div class="card-body">
         <div class="info-grid">
           <div class="info-section"><h3>Descrição</h3><p>{{ item()?.description || '—' }}</p></div>

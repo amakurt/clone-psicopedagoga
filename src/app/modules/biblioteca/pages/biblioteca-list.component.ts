@@ -21,7 +21,7 @@ import { BibliotecaService } from '../services/biblioteca.service';
             <span class="material-icons text-lg">upload_file</span> Upload
             <input type="file" class="hidden" (change)="onFileUpload($event)" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx">
           </label>
-          <a routerLink="/biblioteca/novo"
+          <a routerLink="/app/biblioteca/novo"
             class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
             <span>Novo Recurso</span>
@@ -69,7 +69,7 @@ import { BibliotecaService } from '../services/biblioteca.service';
               <div class="flex items-center justify-between">
                 <span class="text-[10px] font-bold text-slate-400">{{ r.ageRange || 'Todas as idades' }}</span>
                 <div class="flex gap-1">
-                  <a [routerLink]="['/biblioteca', r.id, 'editar']" class="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" (click)="$event.stopPropagation()">
+                  <a [routerLink]="['/app/biblioteca', r.id, 'editar']" class="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" (click)="$event.stopPropagation()">
                     <span class="material-icons text-sm">edit</span>
                   </a>
                 </div>

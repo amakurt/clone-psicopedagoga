@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { GuardianService } from '@modules/guardian/services/guardian.service';
 
 @Component({
   selector: 'app-guardian-layout',
@@ -72,9 +73,10 @@ import { AuthService } from '@core/services/auth.service';
     </div>
   `
 })
-export class GuardianLayoutComponent {
+export class GuardianLayoutComponent implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private guardianService = inject(GuardianService);
 
   patients = signal<any[]>([]);
   selectedPatientId = signal<string>('');
@@ -83,17 +85,37 @@ export class GuardianLayoutComponent {
   navItems = [
     { route: '/guardian', label: 'Início', icon: 'home' },
     { route: '/guardian/evolutions', label: 'Evoluções', icon: 'trending_up' },
+    { route: '/guardian/appointments', label: 'Agendamentos', icon: 'event' },
     { route: '/guardian/financial', label: 'Financeiro', icon: 'payments' },
     { route: '/guardian/documents', label: 'Documentos', icon: 'description' },
     { route: '/guardian/chat', label: 'Mensagens', icon: 'chat' },
     { route: '/guardian/settings', label: 'Configurações', icon: 'settings' },
   ];
 
-  constructor() {
+  ngOnInit() {
     const user = this.auth.user();
     if (user) {
       this.userName.set(user.name);
     }
+
+    const savedPatientId = localStorage.getItem('guardian_patient_id');
+    if (savedPatientId) {
+      this.selectedPatientId.set(savedPatientId);
+    }
+
+    this.loadPatients();
+  }
+
+  loadPatients() {
+    this.guardianService.getPatients().subscribe({
+      next: (res: any) => {
+        const patientList = res.data || res || [];
+        this.patients.set(patientList);
+        if (patientList.length > 0 && !this.selectedPatientId()) {
+          this.selectPatient(patientList[0]);
+        }
+      }
+    });
   }
 
   selectPatient(patient: any) {

@@ -6,13 +6,16 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', async (req, res) => {
-  const [totalPacientes, totalSessoes, totalLaudos, totalEncaminhamentos] = await Promise.all([
+  const [totalPacientes, totalSessoes, totalLaudos, totalEncaminhamentos, documentosPendentes, casosArquivados, protocolosTEA] = await Promise.all([
     prisma.paciente.count({ where: { active: true } }),
     prisma.sessao.count(),
     prisma.laudo.count(),
     prisma.encaminhamento.count(),
+    prisma.document.count({ where: { status: 'PENDENTE' } }),
+    prisma.sessao.count({ where: { status: 'CONCLUIDA' } }),
+    prisma.protocolEvaluation.count(),
   ]);
-  res.json({ totalPacientes, totalSessoes, totalLaudos, totalEncaminhamentos });
+  res.json({ totalPacientes, totalSessoes, totalLaudos, totalEncaminhamentos, documentosPendentes, casosArquivados, protocolosTEA });
 });
 
 export default router;

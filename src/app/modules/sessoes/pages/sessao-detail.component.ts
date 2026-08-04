@@ -10,7 +10,7 @@ import { SessaoService } from '../services/sessao.service';
   template: `
     <div class="page">
       <div class="header"><div><h1>Sessão</h1><p class="subtitle">{{ item()?.paciente?.name }} — {{ item()?.date | date:'dd/MM/yyyy HH:mm' }}</p></div>
-        <div class="actions"><a routerLink="/sessoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/sessoes', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
+        <div class="actions"><a routerLink="/app/sessoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/app/sessoes', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
       @if (item()) { <div class="card"><div class="card-body">
         <div class="info-grid">
           <div class="info-section"><h3>Dados</h3><p><strong>Status:</strong> {{ item()?.status }}</p><p><strong>Tipo:</strong> {{ item()?.tipo || '—' }}</p><p><strong>Duração:</strong> {{ item()?.duration ? item()?.duration + ' min' : '—' }}</p><p><strong>Valor:</strong> {{ item()?.valor | currency:'BRL' }}</p></div>

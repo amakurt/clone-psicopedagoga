@@ -20,7 +20,7 @@ import { ApiService } from '@core/services/api.service';
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">{{ isEdit ? 'Editar' : 'Novo' }} Paciente</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ isEdit ? 'Atualize os dados do paciente' : 'Preencha os dados para cadastrar' }}</p>
         </div>
-        <a routerLink="/pacientes" class="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all">
+        <a routerLink="/app/pacientes" class="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all">
           <span class="material-icons text-lg">arrow_back</span> Voltar
         </a>
       </div>
@@ -205,7 +205,7 @@ import { ApiService } from '@core/services/api.service';
 
         <!-- Actions -->
         <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-          <a routerLink="/pacientes" class="px-6 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancelar</a>
+          <a routerLink="/app/pacientes" class="px-6 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancelar</a>
           <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
             (click)="save()" [disabled]="saving()">
             {{ saving() ? 'Salvando...' : 'Salvar' }}
@@ -482,7 +482,7 @@ export class PacienteFormComponent implements OnInit {
 
     const obs = this.isEdit ? this.service.update(this.id, formData) : this.service.create(formData);
     obs.subscribe({
-      next: () => this.router.navigate(['/pacientes']),
+      next: () => this.router.navigate(['/app/pacientes']),
       error: () => { this.saving.set(false); alert('Erro ao salvar'); }
     });
   }

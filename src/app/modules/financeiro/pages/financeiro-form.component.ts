@@ -16,7 +16,7 @@ import { ApiService } from '@core/services/api.service';
             <h1 class="text-2xl font-bold text-gray-900">{{ isEdit ? 'Editar' : 'Nova' }} Transação</h1>
             <p class="text-sm text-gray-500 mt-1">{{ isEdit ? 'Atualize os dados da transação' : 'Registre uma nova transação financeira' }}</p>
           </div>
-          <a routerLink="/financeiro" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <a routerLink="/app/financeiro" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             <span class="material-icons text-lg">arrow_back</span> Voltar
           </a>
         </div>
@@ -77,7 +77,7 @@ import { ApiService } from '@core/services/api.service';
           </div>
 
           <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <a routerLink="/financeiro" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">Cancelar</a>
+            <a routerLink="/app/financeiro" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">Cancelar</a>
             <button class="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
               (click)="save()" [disabled]="saving()">
               {{ saving() ? 'Salvando...' : 'Salvar' }}
@@ -126,7 +126,7 @@ export class FinanceiroFormComponent implements OnInit {
     this.saving.set(true);
     const obs = this.isEdit ? this.api.put(`/financeiro/${this.id}`, this.form) : this.api.post('/financeiro', this.form);
     obs.subscribe({
-      next: () => this.router.navigate(['/financeiro']),
+      next: () => this.router.navigate(['/app/financeiro']),
       error: () => { this.saving.set(false); alert('Erro ao salvar'); }
     });
   }

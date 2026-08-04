@@ -26,6 +26,15 @@ import uploadRoutes from './upload';
 import sessionDiariesRoutes from './session-diaries';
 import frequencySheetsRoutes from './frequency-sheets';
 import interventionDocumentsRoutes from './intervention-documents';
+import whatsappRoutes from './whatsapp';
+import signatureRoutes from './signatures';
+import abaProtocolsRoutes from './aba-protocols';
+import evolutionComparisonRoutes from './evolution-comparison';
+import consentsRoutes from './consents';
+import permissionsRoutes from './permissions';
+import nfseRoutes from './nfse';
+import waitingRoomRoutes from './waiting-room';
+import aiSuggestionsRoutes from './ai-suggestions';
 
 const router = Router();
 
@@ -56,5 +65,14 @@ router.use('/upload', uploadRoutes);
 router.use('/session-diaries', sessionDiariesRoutes);
 router.use('/frequency-sheets', frequencySheetsRoutes);
 router.use('/intervention-documents', interventionDocumentsRoutes);
+router.use('/whatsapp', whatsappRoutes);
+router.use('/signatures', signatureRoutes);
+router.use('/aba', abaProtocolsRoutes);
+router.use('/evolution', evolutionComparisonRoutes);
+router.use('/consents', consentsRoutes);
+router.use('/permissions', permissionsRoutes);
+router.use('/nfse', nfseRoutes);
+router.use('/waiting-room', waitingRoomRoutes);
+router.use('/ai', aiSuggestionsRoutes);
 
 export default router;

@@ -11,7 +11,7 @@ import { ApiService } from '@core/services/api.service';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page">
-      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Nova' }} Evolução</h1></div><a routerLink="/evolucoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
+      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Nova' }} Evolução</h1></div><a routerLink="/app/evolucoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
       <div class="card"><div class="card-body">
         <div class="form-grid">
           <div class="form-group"><label>Paciente *</label><select class="form-control" [(ngModel)]="form.pacienteId"><option value="">Selecione</option>@for (p of pacientes(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }</select></div>
@@ -22,7 +22,7 @@ import { ApiService } from '@core/services/api.service';
           <div class="form-group full"><label>Evolução Clínica</label><textarea class="form-control" rows="3" [(ngModel)]="form.clinicalEvolution"></textarea></div>
           <div class="form-group full"><label>Conduta</label><textarea class="form-control" rows="3" [(ngModel)]="form.conduct"></textarea></div>
         </div>
-        <div class="form-actions"><a routerLink="/evolucoes" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
+        <div class="form-actions"><a routerLink="/app/evolucoes" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
       </div></div>
     </div>
   `,
@@ -41,6 +41,6 @@ export class EvolucaoFormComponent implements OnInit {
     if (!this.form.pacienteId) return alert('Selecione um paciente');
     this.saving.set(true);
     const obs = this.isEdit ? this.service.update(this.id, this.form) : this.service.create(this.form);
-    obs.subscribe({ next: () => this.router.navigate(['/evolucoes']), error: () => { this.saving.set(false); alert('Erro ao salvar'); } });
+    obs.subscribe({ next: () => this.router.navigate(['/app/evolucoes']), error: () => { this.saving.set(false); alert('Erro ao salvar'); } });
   }
 }

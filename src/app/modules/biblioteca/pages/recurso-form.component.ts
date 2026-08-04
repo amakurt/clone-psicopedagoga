@@ -10,7 +10,7 @@ import { BibliotecaService } from '../services/biblioteca.service';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page">
-      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Novo' }} Recurso</h1></div><a routerLink="/biblioteca" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
+      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Novo' }} Recurso</h1></div><a routerLink="/app/biblioteca" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
       <div class="card"><div class="card-body">
         <div class="form-grid">
           <div class="form-group"><label>Nome *</label><input class="form-control" [(ngModel)]="form.name"></div>
@@ -20,7 +20,7 @@ import { BibliotecaService } from '../services/biblioteca.service';
           <div class="form-group"><label>Link</label><input class="form-control" [(ngModel)]="form.link"></div>
           <div class="form-group full"><label>Observações</label><textarea class="form-control" rows="3" [(ngModel)]="form.notes"></textarea></div>
         </div>
-        <div class="form-actions"><a routerLink="/biblioteca" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
+        <div class="form-actions"><a routerLink="/app/biblioteca" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
       </div></div>
     </div>
   `,
@@ -38,6 +38,6 @@ export class RecursoFormComponent implements OnInit {
     if (!this.form.name) return alert('Nome é obrigatório');
     this.saving.set(true);
     const obs = this.isEdit ? this.service.update(this.id, this.form) : this.service.create(this.form);
-    obs.subscribe({ next: () => this.router.navigate(['/biblioteca']), error: () => { this.saving.set(false); alert('Erro ao salvar'); } });
+    obs.subscribe({ next: () => this.router.navigate(['/app/biblioteca']), error: () => { this.saving.set(false); alert('Erro ao salvar'); } });
   }
 }

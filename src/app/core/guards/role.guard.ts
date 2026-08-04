@@ -13,10 +13,17 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     return false;
   }
 
+  // Redirect RESPONSAVEL to guardian portal
+  if (auth.hasRole('RESPONSAVEL') && !route.url.some(seg => seg.path === 'guardian')) {
+    router.navigate(['/guardian']);
+    return false;
+  }
+
   if (requiredRoles && requiredRoles.length > 0) {
     const hasRole = auth.hasRole(...requiredRoles);
     if (!hasRole) {
-      router.navigate(['/dashboard']);
+      const redirectPath = auth.hasRole('RESPONSAVEL') ? '/guardian' : '/app/dashboard';
+      router.navigate([redirectPath]);
       return false;
     }
   }

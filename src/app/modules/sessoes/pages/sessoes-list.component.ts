@@ -9,11 +9,11 @@ import { SessaoService } from '../services/sessao.service';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="page">
-      <div class="header"><div><h1>Sessões</h1><p class="subtitle">Agendamento e acompanhamento</p></div><a routerLink="/sessoes/nova" class="btn btn-primary"><span class="material-icons">add</span> Nova Sessão</a></div>
+      <div class="header"><div><h1>Sessões</h1><p class="subtitle">Agendamento e acompanhamento</p></div><a routerLink="/app/sessoes/nova" class="btn btn-primary"><span class="material-icons">add</span> Nova Sessão</a></div>
       @if (loading()) { <p>Carregando...</p> }
       @else if (items().length === 0) { <div class="empty"><span class="material-icons" style="font-size:48px;color:var(--gray-400)">event</span><p>Nenhuma sessão</p></div> }
       @else { <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Data</th><th>Paciente</th><th>Tipo</th><th>Duração</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead><tbody>
-        @for (s of items(); track s.id) { <tr><td>{{ s.date | date:'dd/MM/yyyy HH:mm' }}</td><td><strong>{{ s.paciente?.name }}</strong></td><td>{{ s.tipo || '—' }}</td><td>{{ s.duration ? s.duration + ' min' : '—' }}</td><td><span class="badge" [class]="'badge-' + s.status.toLowerCase()">{{ s.status }}</span></td><td>{{ s.valor ? (s.valor | currency:'BRL') : '—' }}</td><td class="actions"><a [routerLink]="['/sessoes', s.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/sessoes', s.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
+        @for (s of items(); track s.id) { <tr><td>{{ s.date | date:'dd/MM/yyyy HH:mm' }}</td><td><strong>{{ s.paciente?.name }}</strong></td><td>{{ s.tipo || '—' }}</td><td>{{ s.duration ? s.duration + ' min' : '—' }}</td><td><span class="badge" [class]="'badge-' + s.status.toLowerCase()">{{ s.status }}</span></td><td>{{ s.valor ? (s.valor | currency:'BRL') : '—' }}</td><td class="actions"><a [routerLink]="['/app/sessoes', s.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/app/sessoes', s.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
       </tbody></table></div></div> }
     </div>
   `,

@@ -16,7 +16,7 @@ import { PacientesService } from '../../pacientes/services/pacientes.service';
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <a routerLink="/responsaveis" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/responsaveis" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
             <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
@@ -71,11 +71,18 @@ import { PacientesService } from '../../pacientes/services/pacientes.service';
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Pacientes Vinculados</h3>
-          <button type="button" class="px-4 py-2 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-all flex items-center gap-2"
-            (click)="showNewPacienteModal.set(true)">
-            <span class="material-icons text-[18px]">person_add</span>
-            <span class="text-sm font-medium">Novo Paciente</span>
-          </button>
+          <div class="flex gap-2">
+            <button type="button" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-all flex items-center gap-2"
+              (click)="showLinkPacienteModal.set(true)">
+              <span class="material-icons text-[18px]">link</span>
+              <span class="text-sm font-medium">Vincular Existente</span>
+            </button>
+            <button type="button" class="px-4 py-2 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-all flex items-center gap-2"
+              (click)="showNewPacienteModal.set(true)">
+              <span class="material-icons text-[18px]">person_add</span>
+              <span class="text-sm font-medium">Novo Paciente</span>
+            </button>
+          </div>
         </div>
 
         @if (selectedPacientes().length > 0) {
@@ -100,7 +107,7 @@ import { PacientesService } from '../../pacientes/services/pacientes.service';
           <div class="text-center py-6 bg-gray-50 dark:bg-slate-700 rounded-xl">
             <span class="material-icons text-3xl text-gray-300 dark:text-slate-600">people</span>
             <p class="mt-2 text-sm text-gray-500 dark:text-slate-400">Nenhum paciente vinculado</p>
-            <p class="text-xs text-gray-400 dark:text-slate-500">Clique em "Novo Paciente" para adicionar</p>
+            <p class="text-xs text-gray-400 dark:text-slate-500">Clique em "Vincular Existente" ou "Novo Paciente"</p>
           </div>
         }
       </div>
@@ -179,6 +186,58 @@ import { PacientesService } from '../../pacientes/services/pacientes.service';
         </div>
       </div>
     }
+
+    <!-- Modal Vincular Paciente Existente -->
+    @if (showLinkPacienteModal()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" (click)="showLinkPacienteModal.set(false)"></div>
+        <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Vincular Paciente Existente</h3>
+            <button (click)="showLinkPacienteModal.set(false)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+          <div class="p-6">
+            <div class="relative mb-4">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+              <input [(ngModel)]="pacienteSearch" (input)="filterPacientes()"
+                class="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
+                placeholder="Buscar por nome, telefone...">
+            </div>
+            
+            @if (filteredPacientes().length > 0) {
+              <div class="space-y-2 max-h-64 overflow-y-auto">
+                @for (p of filteredPacientes(); track p.id) {
+                  <button type="button" class="w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-600 rounded-xl transition-colors flex items-center gap-3 border border-slate-200 dark:border-slate-600"
+                    (click)="linkPaciente(p)">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span class="material-icons text-primary text-sm">person</span>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-slate-900 dark:text-white">{{ p.name }}</p>
+                      <p class="text-xs text-slate-500">{{ p.grade || 'Sem série' }} • {{ p.phone || 'Sem telefone' }}</p>
+                    </div>
+                    <span class="material-icons text-slate-400">add_circle_outline</span>
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="text-center py-8">
+                <span class="material-icons text-4xl text-slate-300">search_off</span>
+                <p class="mt-2 text-sm text-slate-500">{{ pacienteSearch ? 'Nenhum paciente encontrado' : 'Digite para buscar' }}</p>
+              </div>
+            }
+          </div>
+          <div class="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+            <button (click)="showLinkPacienteModal.set(false)" 
+              class="px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     :host { display: block; }
@@ -196,6 +255,10 @@ export class ResponsavelFormComponent implements OnInit {
   selectedPacientes = signal<any[]>([]);
   showNewPacienteModal = signal(false);
   savingNewPaciente = signal(false);
+  showLinkPacienteModal = signal(false);
+  allPacientes = signal<any[]>([]);
+  filteredPacientes = signal<any[]>([]);
+  pacienteSearch = '';
 
   newPaciente = {
     name: '',
@@ -226,6 +289,13 @@ export class ResponsavelFormComponent implements OnInit {
     this.id = this.route.snapshot.params['id'] || '';
     this.isEdit = !!this.id;
 
+    // Load all patients for linking
+    this.pacientesService.list().subscribe((res: any) => {
+      const data = res.data || [];
+      this.allPacientes.set(data);
+      this.filteredPacientes.set(data);
+    });
+
     if (this.isEdit) {
       this.service.get(this.id).subscribe((res: any) => {
         this.form = {
@@ -252,6 +322,31 @@ export class ResponsavelFormComponent implements OnInit {
 
   removePaciente(id: string) {
     this.selectedPacientes.update(list => list.filter(p => p.id !== id));
+  }
+
+  filterPacientes() {
+    const search = this.pacienteSearch.toLowerCase();
+    if (!search) {
+      this.filteredPacientes.set(this.allPacientes());
+      return;
+    }
+    const filtered = this.allPacientes().filter(p => 
+      p.name.toLowerCase().includes(search) || 
+      p.phone?.includes(search) ||
+      p.grade?.toLowerCase().includes(search)
+    );
+    this.filteredPacientes.set(filtered);
+  }
+
+  linkPaciente(paciente: any) {
+    // Check if already linked
+    if (this.selectedPacientes().some(p => p.id === paciente.id)) {
+      alert('Este paciente já está vinculado');
+      return;
+    }
+    this.selectedPacientes.update(list => [...list, paciente]);
+    this.showLinkPacienteModal.set(false);
+    this.pacienteSearch = '';
   }
 
   createPaciente() {
@@ -308,7 +403,7 @@ export class ResponsavelFormComponent implements OnInit {
 
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
-      next: () => this.router.navigate(['/responsaveis']),
+      next: () => this.router.navigate(['/app/responsaveis']),
       error: () => {
         this.saving.set(false);
         alert('Erro ao salvar responsável');

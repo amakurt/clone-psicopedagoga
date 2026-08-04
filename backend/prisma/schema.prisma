@@ -20,6 +20,7 @@ model User {
   bio           String?
   clinicName    String?
   clinicAddress String?
+  permissions   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -36,6 +37,10 @@ model User {
   protocolEvaluations ProtocolEvaluation[]
   interventionPlans  InterventionPlan[]
   socialAccounts     SocialAccount[]
+  signatures         Signature[]
+  abaAssessments     ABAAssessment[]
+  abaPrograms        ABAProgram[]
+  nfseIssued         Nfse[]
 }
 
 model Paciente {
@@ -82,6 +87,44 @@ model Paciente {
   sessionDiaries    SessionDiary[]
   frequencySheets   FrequencySheet[]
   interventionDocuments InterventionDocument[]
+  whatsappLogs         WhatsAppLog[]
+  abaAssessments       ABAAssessment[]
+  abaPrograms          ABAProgram[]
+  nfse                 Nfse[]
+  waitingRoom          WaitingRoom[]
+  consentLogs          ConsentLog[]
+}
+
+model Signature {
+  id           String   @id @default(cuid())
+  userId       String
+  imageBase64  String
+  documentType String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model WhatsAppConfig {
+  id              String   @id @default(cuid())
+  apiUrl          String
+  token           String
+  phoneNumberId   String?
+  autoSendReminders Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model WhatsAppLog {
+  id        String   @id @default(cuid())
+  patientId String
+  phone     String
+  message   String
+  status    String   @default("SENT")
+  sentBy    String
+  createdAt DateTime @default(now())
+
+  paciente Paciente? @relation(fields: [patientId], references: [id])
 }
 
 model Responsible {
@@ -381,10 +424,57 @@ model SessionRecord {
   engagement         Int?
   skillProgress      Int?
   behavior           Int?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   paciente Paciente @relation(fields: [pacienteId], references: [id])
+}
+
+model ABAAssessment {
+  id             String   @id @default(cuid())
+  patientId      String
+  professionalId String
+  protocolType   String
+  evaluations    String
+  totalScore     Float?
+  domainScores   String?
+  notes          String?
+  assessedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  paciente     Paciente @relation(fields: [patientId], references: [id])
+  professional User     @relation(fields: [professionalId], references: [id])
+}
+
+model ABAProgram {
+  id                     String   @id @default(cuid())
+  patientId              String
+  professionalId         String
+  targetBehavior         String
+  interventionStrategy   String
+  dataCollectionMethod   String?
+  status                 String   @default("ATIVO")
+  startDate              DateTime @default(now())
+  endDate                DateTime?
+  notes                  String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  paciente     Paciente      @relation(fields: [patientId], references: [id])
+  professional User          @relation(fields: [professionalId], references: [id])
+  dataPoints   ABADataPoint[]
+}
+
+model ABADataPoint {
+  id        String   @id @default(cuid())
+  programId String
+  date      DateTime @default(now())
+  value     Float
+  note      String?
+  createdAt DateTime @default(now())
+
+  program ABAProgram @relation(fields: [programId], references: [id])
 }
 
 model ProtocolEvaluation {
@@ -502,4 +592,54 @@ model InterventionDocument {
   updatedAt       DateTime @updatedAt
 
   paciente Paciente @relation(fields: [pacienteId], references: [id])
+}
+
+model ConsentLog {
+  id           String   @id @default(cuid())
+  patientId    String
+  responsibleId String?
+  consentType  String
+  status       String
+  details      String?
+  ipAddress    String?
+  recordedAt   DateTime @default(now())
+
+  paciente Paciente? @relation(fields: [patientId], references: [id])
+}
+
+model Nfse {
+  id              String   @id @default(cuid())
+  number          Int      @unique
+  patientId       String
+  professionalId  String
+  description     String
+  value           Float
+  taxRate         Float    @default(0)
+  taxValue        Float    @default(0)
+  totalValue      Float
+  status          String   @default("PENDENTE")
+  issuedAt        DateTime?
+  cancelledAt     DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paciente     Paciente @relation(fields: [patientId], references: [id])
+  professional User     @relation(fields: [professionalId], references: [id])
+}
+
+model WaitingRoom {
+  id            String    @id @default(cuid())
+  patientId     String
+  appointmentId String?
+  status        String    @default("AGUARDANDO")
+  checkInAt     DateTime  @default(now())
+  calledAt      DateTime?
+  sessionAt     DateTime?
+  completedAt   DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  paciente Paciente? @relation(fields: [patientId], references: [id])
 }

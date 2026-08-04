@@ -15,7 +15,7 @@ import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.c
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <a routerLink="/escolas" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/escolas" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
             <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
@@ -202,7 +202,7 @@ export class EscolaFormComponent implements OnInit {
 
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
-      next: () => this.router.navigate(['/escolas']),
+      next: () => this.router.navigate(['/app/escolas']),
       error: () => {
         this.saving.set(false);
         alert('Erro ao salvar escola');

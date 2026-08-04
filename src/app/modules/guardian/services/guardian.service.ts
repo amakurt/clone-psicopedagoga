@@ -39,12 +39,24 @@ export class GuardianService {
     return this.api.get<{ data: Appointment[]; total: number }>(`${this.base}/appointments/${patientId}`);
   }
 
-  requestAppointment(data: { pacienteId: string; date: string; startTime: string; endTime: string; notes?: string }) {
-    return this.api.post<Appointment>(`${this.base}/appointments`, data);
+  getAppointmentsList() {
+    return this.api.get<{ data: Appointment[]; total: number }>(`${this.base}/appointments`);
+  }
+
+  requestAppointment(data: { pacienteId: string; date: string; startTime?: string; notes?: string }) {
+    return this.api.post<Appointment>(`${this.base}/appointments/request`, data);
+  }
+
+  getPatientSessions(patientId: string) {
+    return this.api.get<{ data: SessionRecord[]; total: number }>(`${this.base}/sessions/${patientId}`);
   }
 
   updateProfile(name: string) {
     return this.api.put(`${this.base}/profile`, { name });
+  }
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.api.post('/auth/change-password', { currentPassword, newPassword });
   }
 
   getChatMessages(patientId: string) {
