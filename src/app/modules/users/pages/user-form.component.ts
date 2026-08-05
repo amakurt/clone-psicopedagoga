@@ -130,11 +130,11 @@ export class UserFormComponent implements OnInit {
       if (this.isEditing && this.userId) {
         delete data.password;
         this.usersService.update(this.userId, data).subscribe(() => {
-          this.router.navigate(['/users']);
+          this.router.navigate(['/app/users']);
         });
       } else {
         this.usersService.create(data).subscribe(() => {
-          this.router.navigate(['/users']);
+          this.router.navigate(['/app/users']);
         });
       }
     }

@@ -51,8 +51,12 @@ router.put('/assessments/:id', async (req, res) => {
 });
 
 router.delete('/assessments/:id', async (req, res) => {
-  await prisma.aBAAssessment.delete({ where: { id: req.params.id } });
-  res.status(204).send();
+  try {
+    await prisma.aBAAssessment.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  } catch (error) {
+    res.status(404).json({ error: 'Avaliação não encontrada' });
+  }
 });
 
 // --- ABA Programs ---

@@ -38,6 +38,9 @@ model User {
   abaAssessments     ABAAssessment[]
   abaPrograms        ABAProgram[]
   nfseIssued         Nfse[]
+  permissions        String?
+  whatsappLogsSent   WhatsAppLog[]
+  signatures         Signature[]
 }
 
 model Paciente {
@@ -85,6 +88,8 @@ model Paciente {
   abaPrograms       ABAProgram[]
   nfse              Nfse[]
   waitingRoom       WaitingRoom[]
+  whatsappLogs      WhatsAppLog[]
+  consentLogs       ConsentLog[]
 }
 
 model ABAAssessment {
@@ -505,4 +510,49 @@ model WaitingRoom {
   updatedAt     DateTime  @updatedAt
 
   paciente Paciente? @relation(fields: [patientId], references: [id])
+}
+
+model WhatsAppConfig {
+  id            String   @id @default(cuid())
+  apiUrl        String
+  token         String
+  phoneNumberId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WhatsAppLog {
+  id        String   @id @default(cuid())
+  patientId String
+  phone     String
+  message   String
+  status    String   @default("SENT")
+  sentBy    String
+  createdAt DateTime @default(now())
+
+  paciente Paciente @relation(fields: [patientId], references: [id])
+  sender   User     @relation(fields: [sentBy], references: [id])
+}
+
+model Signature {
+  id           String   @id @default(cuid())
+  imageBase64  String
+  userId       String
+  documentType String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model ConsentLog {
+  id            String   @id @default(cuid())
+  patientId     String
+  responsibleId String?
+  consentType   String
+  status        String
+  details       String?
+  ipAddress     String?
+  recordedAt    DateTime @default(now())
+
+  paciente Paciente @relation(fields: [patientId], references: [id])
 }

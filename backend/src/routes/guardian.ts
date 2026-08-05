@@ -228,6 +228,31 @@ router.post('/appointments', async (req, res) => {
   res.status(201).json(appointment);
 });
 
+// Get all upcoming appointments for guardian's patients
+router.get('/appointments', async (req, res) => {
+  const userId = req.user?.id;
+  const responsible = await prisma.responsible.findFirst({ where: { userId } });
+  if (!responsible) return res.json({ data: [], total: 0 });
+
+  const patients = await prisma.paciente.findMany({
+    where: { responsibleId: responsible.id, active: true }
+  });
+  const patientIds = patients.map(p => p.id);
+
+  const today = new Date().toISOString().split('T')[0];
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      pacienteId: { in: patientIds },
+      date: { gte: today },
+      status: { in: ['CONFIRMADO', 'PENDENTE'] }
+    },
+    orderBy: { date: 'asc' },
+    include: { paciente: true }
+  });
+
+  res.json({ data: appointments, total: appointments.length });
+});
+
 // Get appointments for patient
 router.get('/appointments/:patientId', async (req, res) => {
   const { patientId } = req.params;
@@ -318,31 +343,6 @@ router.post('/chat', async (req, res) => {
   });
 
   res.status(201).json(chatMessage);
-});
-
-// Get all upcoming appointments for guardian's patients
-router.get('/appointments', async (req, res) => {
-  const userId = req.user?.id;
-  const responsible = await prisma.responsible.findFirst({ where: { userId } });
-  if (!responsible) return res.json({ data: [], total: 0 });
-
-  const patients = await prisma.paciente.findMany({
-    where: { responsibleId: responsible.id, active: true }
-  });
-  const patientIds = patients.map(p => p.id);
-
-  const today = new Date().toISOString().split('T')[0];
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      pacienteId: { in: patientIds },
-      date: { gte: today },
-      status: { in: ['CONFIRMADO', 'PENDENTE'] }
-    },
-    orderBy: { date: 'asc' },
-    include: { paciente: true }
-  });
-
-  res.json({ data: appointments, total: appointments.length });
 });
 
 // Request new appointment
