@@ -21,10 +21,25 @@
 - **Correção:** 11 ocorrências em `backend/src/routes/whatsapp.ts`
 - **Verificação:** rotas `/api/whatsapp/*` → HTTP 200
 
-### 4. Testes de endpoints
+### 4. Bugs críticos corrigidos (05/08)
+- **Modelos Prisma ausentes:** Adicionados `WhatsAppConfig`, `WhatsAppLog`, `Signature`, `ConsentLog` + campo `permissions` no `User`
+- **Guardian rotas:** `GET /appointments` movido antes de `GET /appointments/:patientId` para evitar colisão
+- **UserForm:** Navegação corrigida de `/users` para `/app/users`
+- **ABA DELETE:** Adicionado try/catch para evitar crash
+
+### 5. Rotas /app/app/ duplicadas (11 links corrigidos)
+- 9 componentes tinham `[routerLink]="['/app/app/...']"` (duplicado)
+- Corrigidos: protocolo-detail, recurso-detail, sessao-detail, agenda-detail, anamnese-detail, responsavel-detail, plano-detail, evolucao-detail, responsaveis-list
+
+### 6. Melhoria gráfica Protocolo TEA
+- **Detalhe:** Radar global (5 categorias), bar chart horizontal, progress bars, card de classificação com interpretação, PDF com dados reais
+- **Formulário:** Radar global no topo, painel de resumo com círculo de progresso e indicadores por categoria
+- **Lista:** PDF export corrigido com dados reais via `protocol-stats` API (não mais hardcoded com Math.random)
+
+### 7. Testes de endpoints
 - Todos os endpoints testados com sucesso (login, dashboard, pacientes, ABA, waiting-room, consents, nfse, permissions, evolution/compare, guardian, ai-suggestions)
 
-### 5. Ambiente (fora do repo)
+### 8. Ambiente (fora do repo)
 - `opencode.exe` global corrompido (stub de 479 bytes por postinstall bloqueado) → restaurado binário real de 174 MB
 
 ---
