@@ -4,6 +4,79 @@
 
 ---
 
+## Sessão 4 - 05/08/2026 (Continuação)
+
+### O que foi feito
+
+#### 1. Análise completa das 10 funcionalidades competitivas
+- Verificação de todos os componentes frontend e rotas backend
+- Identificação de bugs críticos em 4 funcionalidades
+
+#### 2. Bugs críticos corrigidos
+
+##### 2.1 Modelos Prisma ausentes (CRÍTICO)
+- **Problema:** 4 modelos não existiam no schema: `WhatsAppConfig`, `WhatsAppLog`, `Signature`, `ConsentLog`
+- **Impacto:** Backend crashava ao acessar qualquer rota dessas funcionalidades
+- **Correção:** Modelos adicionados ao `prisma/schema.prisma` + campo `permissions` no modelo `User`
+- **Verificação:** `prisma db push` executado com sucesso
+
+##### 2.2 Guardian - Colisão de rotas (ALTO)
+- **Problema:** `GET /appointments` e `GET /appointments/:patientId` colidiam
+- **Causa:** Rota sem parâmetro registrada DEPOIS da rota com parâmetro
+- **Correção:** `GET /appointments` movido para ANTES de `GET /appointments/:patientId`
+
+##### 2.3 UserForm - Navegação incorreta (ALTO)
+- **Problema:** Após salvar/editar, navegava para `/users` em vez de `/app/users`
+- **Correção:** `this.router.navigate(['/users'])` → `this.router.navigate(['/app/users'])`
+
+##### 2.4 ABA DELETE sem tratamento de erro (MÉDIO)
+- **Problema:** `DELETE /assessments/:id` não tinha try/catch
+- **Correção:** Adicionado try/catch com retorno 404
+
+#### 3. Testes de endpoints (todos OK)
+- WhatsApp Config/History, Signatures, Consents, Permissions (GET/PUT)
+- ABA Assessments/Programs, NFS-e, Waiting Room, AI Suggestions
+- Dashboard (5 pacientes, 4 sessões)
+
+#### 4. Rotas /app/app/ duplicadas (11 links corrigidos)
+- **Problema:** 9 componentes tinham `[routerLink]="['/app/app/...']"` (prefixo duplicado)
+- **Impacto:** Botões de editar/detalhe redirecionavam para landing page
+- **Componentes afetados:**
+  - protocolo-detail, recurso-detail, sessao-detail, agenda-detail
+  - anamnese-detail, responsavel-detail, plano-detail, evolucao-detail
+  - responsaveis-list (2 links)
+
+#### 5. Melhoria gráfica Protocolo TEA
+
+##### 5.1 Página de Detalhe (REESCRITA)
+- **Antes:** Só texto (paciente, data, pontuação)
+- **Agora:**
+  - Círculo de progresso com % geral e cor dinâmica
+  - Radar chart global (5 categorias)
+  - Bar chart comparativo horizontal
+  - 5 progress bars detalhadas por categoria
+  - Card de classificação com interpretação clínica
+  - Botão PDF com dados reais via API `protocol-stats`
+
+##### 5.2 Página de Formulário (MELHORADA)
+- **Adicionado no topo:**
+  - Radar global com todas as 5 categorias
+  - Painel de resumo com círculo de progresso
+  - Indicadores visuais por categoria com progress bars
+  - Atualização em tempo real ao marcar itens
+
+##### 5.3 Página de Lista (PDF CORRIGIDO)
+- **Antes:** PDF usava dados hardcoded com `Math.random()`
+- **Agora:** PDF busca dados reais via `GET /api/protocol-evaluations/protocol-stats/:id`
+- Tabela com categorias, cores e status reais
+
+#### 6. Commits realizados
+- `dea7387` - fix: corrigir bugs críticos - modelos Prisma ausentes, rotas Guardian, navegação users
+- `e4ddd46` - feat: melhorar gráficos Protocolo TEA + corrigir rotas /app/app/ duplicadas
+- `ef81f07` - docs: atualizar notas da sessão 05/08
+
+---
+
 ## Sessão 3 - 05/08/2026
 
 ### O que foi feito

@@ -1,11 +1,39 @@
 # Histórico de Desenvolvimento - Clone Psicopedagoga
 
-## Última Atualização: 04/08/2026
+## Última Atualização: 05/08/2026
 
 ---
 
 ## Resumo Geral
-Migração completa de um sistema React/Supabase para Angular 18 + Express.js + Prisma + SQLite. Implementação de 10 funcionalidades competitivas, Painel TV para sala de espera e correções críticas.
+Migração completa de um sistema React/Supabase para Angular 18 + Express.js + Prisma + SQLite. Implementação de 10 funcionalidades competitivas, Painel TV para sala de espera, correções críticas e melhoria gráfica do Protocolo TEA.
+
+---
+
+## Fase 27-30: Correções e Melhorias (05/08/2026)
+
+### Fase 27: Análise e Correção de Bugs Críticos
+- **4 modelos Prisma ausentes** adicionados ao schema:
+  - `WhatsAppConfig` (configuração da API WhatsApp)
+  - `WhatsAppLog` (histórico de mensagens)
+  - `Signature` (assinaturas digitais)
+  - `ConsentLog` (logs de consentimento LGPD)
+- Campo `permissions` (JSON) adicionado ao modelo `User`
+- `prisma db push` executado com sucesso
+
+### Fase 28: Correção de Rotas
+- **Guardian:** `GET /appointments` movido antes de `GET /appointments/:patientId`
+- **UserForm:** Navegação corrigida `/users` → `/app/users`
+- **ABA DELETE:** Adicionado try/catch com retorno 404
+- **11 links duplicados** `/app/app/` corrigidos em 9 componentes
+
+### Fase 29: Melhoria Gráfica Protocolo TEA
+- **Detalhe:** Reescrito com radar global, bar chart, progress bars, classificação e PDF real
+- **Formulário:** Adicionado radar global no topo e painel de resumo
+- **Lista:** PDF corrigido com dados reais via API `protocol-stats`
+
+### Fase 30: Testes e Validação
+- Todos os 10 endpoints das funcionalidades competitivas testados
+- Backend e frontend funcionando sem erros
 
 ---
 
