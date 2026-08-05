@@ -10,7 +10,7 @@ import { EvolucoesService } from '../services/evolucoes.service';
   template: `
     <div class="page">
       <div class="header"><div><h1>Evolução</h1><p class="subtitle">{{ item()?.paciente?.name }} — {{ item()?.date | date:'dd/MM/yyyy' }}</p></div>
-        <div class="actions"><a routerLink="/app/evolucoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/app/evolucoes', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
+        <div class="actions"><a routerLink="/app/evolucoes" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/evolucoes', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
       @if (item()) { <div class="card"><div class="card-body">
         <div class="info-grid">
           <div class="info-section"><h3>Resumo</h3><p>{{ item()?.summary || '—' }}</p></div>

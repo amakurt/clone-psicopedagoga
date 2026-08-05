@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProtocolosService } from '../services/protocolos.service';
+import { ApiService } from '@core/services/api.service';
 
 declare var html2pdf: any;
 
@@ -113,6 +114,7 @@ declare var html2pdf: any;
 })
 export class ProtocolosListComponent implements OnInit {
   private service = inject(ProtocolosService);
+  private api = inject(ApiService);
   items = signal<any[]>([]);
   loading = signal(true);
   showToast = signal(false);
@@ -158,57 +160,77 @@ export class ProtocolosListComponent implements OnInit {
   }
 
   exportPDF(protocolo: any) {
-    const categories = [
-      { name: 'Comunicação', items: ['Linguagem verbal', 'Linguagem não-verbal', 'Comunicação funcional', 'Imitação', 'Brincadeira simbólica'] },
-      { name: 'Interação Social', items: ['Contato visual', 'Resposta ao nome', 'Interação com pares', 'Compartilhamento de interesses', 'Empatia'] },
-      { name: 'Comportamento', items: ['Rotinas', 'Flexibilidade', 'Interesses restritos', 'Comportamentos repetitivos', 'Resposta a mudanças'] },
-      { name: 'Autonomia', items: ['Autocuidado', 'Independência', 'Regulação emocional', 'Adaptação', 'Vida cotidiana'] },
-      { name: 'Cognição', items: ['Atenção', 'Memória', 'Resolução de problemas', 'Generalização', 'Aprendizagem'] },
-    ];
+    this.api.get(`/protocol-evaluations/protocol-stats/${protocolo.id}`).subscribe({
+      next: (data: any) => {
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #007F80; margin: 0;">EduPsych Pro</h1>
+              <h2 style="color: #333; margin: 10px 0 0;">Avaliação Protocolo TEA</h2>
+            </div>
+            <hr style="border: 1px solid #eee; margin: 20px 0;">
+            <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
+              <tr><td style="padding: 8px 0; color: #666; width: 140px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${protocolo.paciente?.name || '—'}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(protocolo.date).toLocaleDateString('pt-BR')}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Pontuação Geral:</td><td style="padding: 8px 0; font-weight: bold; font-size: 18px; color: #007F80;">${data.totalScore}/${data.totalMax} (${data.overallPercentage}%)</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Classificação:</td><td style="padding: 8px 0; font-weight: bold;">${this.getClassification(protocolo.averageScore)}</td></tr>
+            </table>
+            <h3 style="color: #007F80; font-size: 16px; margin: 30px 0 15px; border-bottom: 2px solid #007F80; padding-bottom: 8px;">Resultado por Categoria</h3>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 20px;">
+              <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                  <th style="padding: 10px; text-align: left; font-weight: bold;">Categoria</th>
+                  <th style="padding: 10px; text-align: center; font-weight: bold;">Pontuação</th>
+                  <th style="padding: 10px; text-align: center; font-weight: bold;">%</th>
+                  <th style="padding: 10px; text-align: center; font-weight: bold;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.categories.map((cat: any) => `
+                  <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${cat.color};"></div>
+                        <span style="font-weight: 500;">${cat.name}</span>
+                      </div>
+                    </td>
+                    <td style="padding: 10px; text-align: center; font-weight: bold;">${cat.score}/${cat.maxScore}</td>
+                    <td style="padding: 10px; text-align: center; font-weight: bold; color: ${cat.color};">${cat.percentage}%</td>
+                    <td style="padding: 10px; text-align: center;">
+                      <span style="background: ${cat.color}20; color: ${cat.color}; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                        ${cat.percentage >= 67 ? 'Bom' : cat.percentage >= 34 ? 'Regular' : 'Baixo'}
+                      </span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <hr style="border: 1px solid #eee; margin: 30px 0 20px;">
+            <p style="text-align: center; color: #999; font-size: 11px;">Documento gerado em ${new Date().toLocaleString('pt-BR')} — EduPsych Pro</p>
+          </div>
+        `;
 
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #007F80; margin: 0;">EduPsych Pro</h1>
-          <h2 style="color: #333; margin: 10px 0 0;">Avaliação Protocolo TEA</h2>
-        </div>
-        <hr style="border: 1px solid #eee; margin: 20px 0;">
-        <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #666; width: 120px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${protocolo.paciente?.name || '—'}</td></tr>
-          <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(protocolo.date).toLocaleDateString('pt-BR')}</td></tr>
-          <tr><td style="padding: 8px 0; color: #666;">Pontuação:</td><td style="padding: 8px 0; font-weight: bold; font-size: 18px; color: #007F80;">${protocolo.averageScore || 0}</td></tr>
-          <tr><td style="padding: 8px 0; color: #666;">Classificação:</td><td style="padding: 8px 0; font-weight: bold;">${this.getClassification(protocolo.averageScore)}</td></tr>
-        </table>
-        ${categories.map(cat => `
-          <h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">${cat.name}</h3>
-          <table style="width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 15px;">
-            ${cat.items.map(item => `
-              <tr style="border-bottom: 1px solid #f5f5f5;">
-                <td style="padding: 8px; color: #666;">${item}</td>
-                <td style="padding: 8px; text-align: right; font-weight: bold;">${Math.floor(Math.random() * 3)}</td>
-              </tr>
-            `).join('')}
-          </table>
-        `).join('')}
-        <hr style="border: 1px solid #eee; margin: 30px 0 20px;">
-        <p style="text-align: center; color: #999; font-size: 11px;">Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
-      </div>
-    `;
-
-    if (typeof html2pdf !== 'undefined') {
-      const element = document.createElement('div');
-      element.innerHTML = html;
-      html2pdf().from(element).set({ filename: `protocolo-tea-${protocolo.paciente?.name || 'paciente'}-${protocolo.date}.pdf`, margin: 10 }).save();
-    } else {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.print();
+        if (typeof html2pdf !== 'undefined') {
+          const element = document.createElement('div');
+          element.innerHTML = html;
+          html2pdf().from(element).set({ filename: `protocolo-tea-${protocolo.paciente?.name || 'paciente'}-${protocolo.date}.pdf`, margin: 10 }).save();
+        } else {
+          const printWindow = window.open('', '_blank');
+          if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.print();
+          }
+        }
+        this.toastMessage.set('PDF exportado com sucesso!');
+        this.showToast.set(true);
+        setTimeout(() => this.showToast.set(false), 3000);
+      },
+      error: () => {
+        this.toastMessage.set('Erro ao buscar dados para PDF');
+        this.showToast.set(true);
+        setTimeout(() => this.showToast.set(false), 3000);
       }
-    }
-    this.toastMessage.set('Protocolo exportado com sucesso!');
-    this.showToast.set(true);
-    setTimeout(() => this.showToast.set(false), 3000);
+    });
   }
 }

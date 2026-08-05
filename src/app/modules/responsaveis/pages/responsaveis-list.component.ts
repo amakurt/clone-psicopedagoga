@@ -13,7 +13,7 @@ import { ResponsaveisService } from '../services/responsaveis.service';
       @if (loading()) { <p>Carregando...</p> }
       @else if (items().length === 0) { <div class="empty"><span class="material-icons" style="font-size:48px;color:var(--gray-400)">people</span><p>Nenhum responsável</p></div> }
       @else { <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Nome</th><th>Parentesco</th><th>Telefones</th><th>Email</th><th>Ações</th></tr></thead><tbody>
-        @for (r of items(); track r.id) { <tr><td><strong>{{ r.name }}</strong></td><td>{{ r.relationship }}</td><td>{{ r.phones }}</td><td>{{ r.email || '—' }}</td><td class="actions"><a [routerLink]="['/app/app/responsaveis', r.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/app/app/responsaveis', r.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
+        @for (r of items(); track r.id) { <tr><td><strong>{{ r.name }}</strong></td><td>{{ r.relationship }}</td><td>{{ r.phones }}</td><td>{{ r.email || '—' }}</td><td class="actions"><a [routerLink]="['/app/responsaveis', r.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/app/responsaveis', r.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
       </tbody></table></div></div> }
     </div>
   `,

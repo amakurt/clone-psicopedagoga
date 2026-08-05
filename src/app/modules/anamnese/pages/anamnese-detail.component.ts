@@ -10,7 +10,7 @@ import { AnamneseService } from '../services/anamnese.service';
   template: `
     <div class="page">
       <div class="header"><div><h1>Anamnese</h1><p class="subtitle">{{ item()?.paciente?.name }} — {{ item()?.createdAt | date:'dd/MM/yyyy' }}</p></div>
-        <div class="actions"><a routerLink="/app/anamnese" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/app/anamnese', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
+        <div class="actions"><a routerLink="/app/anamnese" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/anamnese', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
       @if (item()) { <div class="card"><div class="card-body">
         <div class="info-grid">
           <div class="info-section"><h3>Queixa Principal</h3><p>{{ item()?.queixaPrincipal || '—' }}</p></div>

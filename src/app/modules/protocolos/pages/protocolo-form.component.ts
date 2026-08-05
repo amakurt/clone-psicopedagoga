@@ -70,6 +70,50 @@ interface Category {
         </div>
       </div>
 
+      <!-- Global Summary Panel -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Overall Score -->
+          <div class="flex flex-col items-center justify-center">
+            <div class="relative w-28 h-28 mb-3">
+              <svg class="w-28 h-28 transform -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" stroke="#e5e7eb" stroke-width="10" fill="none" class="dark:stroke-slate-700" />
+                <circle cx="60" cy="60" r="50" stroke="#007F80" stroke-width="10" fill="none"
+                  stroke-linecap="round" [attr.stroke-dasharray]="getOverallDash()" />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-2xl font-black text-primary">{{ overallPercentage() }}%</span>
+                <span class="text-[9px] text-gray-400 uppercase tracking-wider">Geral</span>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-slate-400">{{ totalScore() }}/{{ totalMax() }} pontos</p>
+          </div>
+
+          <!-- Radar Chart Global -->
+          <div class="lg:col-span-1">
+            <canvas #globalRadarChart width="280" height="280"></canvas>
+          </div>
+
+          <!-- Category Indicators -->
+          <div class="space-y-2">
+            @for (cat of categories(); track cat.id) {
+              <div class="flex items-center gap-3">
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.background]="cat.color"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between mb-0.5">
+                    <span class="text-xs font-medium text-gray-700 dark:text-slate-300 truncate">{{ cat.name.replace('Habilidades ', '') }}</span>
+                    <span class="text-xs font-bold ml-2" [style.color]="cat.color">{{ getCategoryPercent(cat) }}%</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500" [style.width.%]="getCategoryPercent(cat)" [style.background]="cat.color"></div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Categories Sidebar -->
         <div class="lg:col-span-1">
@@ -165,6 +209,7 @@ interface Category {
 })
 export class ProtocoloFormComponent implements OnInit {
   @ViewChild('radarChart') radarChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('globalRadarChart') globalRadarChartRef!: ElementRef<HTMLCanvasElement>;
 
   private api = inject(ApiService);
   private auth = inject(AuthService);
@@ -231,7 +276,10 @@ export class ProtocoloFormComponent implements OnInit {
 
   selectCategory(cat: Category) {
     this.selectedCategory.set(cat);
-    setTimeout(() => this.updateChart(), 100);
+    setTimeout(() => {
+      this.updateChart();
+      this.updateGlobalChart();
+    }, 100);
   }
 
   getScore(catId: string, subId: string, itemIdx: number): number {
@@ -242,6 +290,7 @@ export class ProtocoloFormComponent implements OnInit {
     const key = `${catId}_${subId}_${itemIdx}`;
     this.evaluations.update(evals => ({ ...evals, [key]: score }));
     this.updateChart();
+    this.updateGlobalChart();
   }
 
   getScoreButtonClass(score: number): string {
@@ -297,8 +346,56 @@ export class ProtocoloFormComponent implements OnInit {
     return max > 0 ? Math.round((this.totalScore() / max) * 100) : 0;
   }
 
+  getOverallDash(): string {
+    const pct = this.overallPercentage();
+    const circumference = 2 * Math.PI * 50;
+    const filled = (pct / 100) * circumference;
+    return `${filled} ${circumference}`;
+  }
+
   filterItems() {
     // Reactive filtering happens via template
+  }
+
+  private globalChart: Chart | null = null;
+
+  updateGlobalChart() {
+    if (!this.globalRadarChartRef || this.categories().length === 0) return;
+    if (this.globalChart) this.globalChart.destroy();
+
+    const cats = this.categories();
+
+    this.globalChart = new Chart(this.globalRadarChartRef.nativeElement, {
+      type: 'radar',
+      data: {
+        labels: cats.map(c => c.name.replace('Habilidades ', '').replace('Habilidades Funcionais', 'Funcionais')),
+        datasets: [{
+          label: 'Geral',
+          data: cats.map(c => this.getCategoryPercent(c)),
+          backgroundColor: 'rgba(0, 127, 128, 0.15)',
+          borderColor: '#007F80',
+          borderWidth: 2,
+          pointBackgroundColor: cats.map(c => c.color),
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { stepSize: 25, display: false },
+            grid: { color: '#e5e7eb' },
+            pointLabels: { font: { size: 10, weight: 'bold' }, color: '#64748b' }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
   }
 
   updateChart() {
