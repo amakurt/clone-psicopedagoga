@@ -6,6 +6,7 @@ import { LaudoService } from '../services/laudo.service';
 import { ApiService } from '@core/services/api.service';
 import { AuthService } from '@core/services/auth.service';
 import { SignatureModalComponent } from '@shared/components/signature-modal.component';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-laudo-form',
@@ -117,6 +118,7 @@ export class LaudoFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
+  private toast = inject(ToastService);
 
   isEdit = false;
   id = '';
@@ -157,7 +159,7 @@ export class LaudoFormComponent implements OnInit {
 
   save() {
     if (!this.form.pacienteId || !this.form.titulo || !this.form.content) {
-      return alert('Preencha os campos obrigatórios');
+      return this.toast.warning('Preencha os campos obrigatórios');
     }
     this.saving.set(true);
     const payload = {
@@ -169,7 +171,7 @@ export class LaudoFormComponent implements OnInit {
       next: () => this.router.navigate(['/app/laudos']),
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar');
+        this.toast.error('Erro ao salvar');
       }
     });
   }

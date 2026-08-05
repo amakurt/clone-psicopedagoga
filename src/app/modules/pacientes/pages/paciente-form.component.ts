@@ -8,6 +8,7 @@ import { EscolasService } from '../../escolas/services/escolas.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-paciente-form',
@@ -292,6 +293,7 @@ export class PacienteFormComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   isEdit = false;
   id = '';
@@ -447,7 +449,7 @@ export class PacienteFormComponent implements OnInit {
       },
       error: () => {
         this.savingNewResponsavel.set(false);
-        alert('Erro ao criar responsável');
+        this.toast.error('Erro ao criar responsável');
       }
     });
   }
@@ -467,7 +469,7 @@ export class PacienteFormComponent implements OnInit {
   }
 
   save() {
-    if (!this.form.name) return alert('Nome é obrigatório');
+    if (!this.form.name) return this.toast.warning('Nome é obrigatório');
     this.saving.set(true);
 
     const formData = new FormData();
@@ -483,7 +485,7 @@ export class PacienteFormComponent implements OnInit {
     const obs = this.isEdit ? this.service.update(this.id, formData) : this.service.create(formData);
     obs.subscribe({
       next: () => this.router.navigate(['/app/pacientes']),
-      error: () => { this.saving.set(false); alert('Erro ao salvar'); }
+      error: () => { this.saving.set(false); this.toast.error('Erro ao salvar'); }
     });
   }
 }

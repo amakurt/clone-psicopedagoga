@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { DocumentosService } from '../services/documentos.service';
 import { UploadService, UploadResponse } from '@core/services/upload.service';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-documento-form',
@@ -169,6 +170,7 @@ export class DocumentoFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   uploadService = inject(UploadService);
+  private toast = inject(ToastService);
 
   isEdit = false;
   id = '';
@@ -232,7 +234,7 @@ export class DocumentoFormComponent implements OnInit {
       },
       error: () => {
         this.uploading.set(false);
-        alert('Erro ao enviar arquivo');
+        this.toast.error('Erro ao enviar arquivo');
       }
     });
   }
@@ -270,7 +272,7 @@ export class DocumentoFormComponent implements OnInit {
       next: () => this.router.navigate(['/app/documentos']),
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar documento');
+        this.toast.error('Erro ao salvar documento');
       }
     });
   }

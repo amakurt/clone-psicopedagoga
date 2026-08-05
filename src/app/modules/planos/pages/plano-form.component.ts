@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 declare var html2pdf: any;
 
@@ -266,6 +267,7 @@ export class PlanoFormComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   @ViewChild('pdfTemplate') pdfTemplate!: ElementRef;
 
@@ -362,7 +364,7 @@ export class PlanoFormComponent implements OnInit {
       },
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar plano');
+        this.toast.error('Erro ao salvar plano');
       }
     });
   }

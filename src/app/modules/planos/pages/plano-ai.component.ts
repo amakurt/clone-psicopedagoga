@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 declare var html2pdf: any;
 
@@ -213,6 +214,7 @@ declare var html2pdf: any;
 })
 export class PlanoAiComponent {
   private api = inject(ApiService);
+  private toast = inject(ToastService);
   loading = signal(false);
   plan = signal<any>(null);
 
@@ -223,7 +225,7 @@ export class PlanoAiComponent {
     this.loading.set(true);
     this.api.post('/ai/plan-suggestion', this.form).subscribe({
       next: (res: any) => { this.plan.set(res); this.loading.set(false); },
-      error: () => { this.loading.set(false); alert('Erro ao gerar plano'); }
+      error: () => { this.loading.set(false); this.toast.error('Erro ao gerar plano'); }
     });
   }
 
@@ -286,6 +288,6 @@ export class PlanoAiComponent {
   }
 
   applyPlan() {
-    alert('Plano de intervenção salvo! Acesse a seção de Planos para visualizar e editar.');
+    this.toast.success('Plano de intervenção salvo! Acesse a seção de Planos para visualizar e editar.');
   }
 }

@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
 import { AuthService } from '@core/services/auth.service';
 import { Chart, registerables } from 'chart.js';
+import { ToastService } from '@shared/components/toast.component';
 
 Chart.register(...registerables);
 
@@ -215,6 +216,7 @@ export class ProtocoloFormComponent implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   patients = signal<any[]>([]);
   categories = signal<Category[]>([]);
@@ -268,7 +270,7 @@ export class ProtocoloFormComponent implements OnInit {
         }
       },
       error: () => {
-        alert('Avaliação não encontrada');
+        this.toast.error('Avaliação não encontrada');
         this.router.navigate(['/app/protocolos']);
       }
     });
@@ -474,7 +476,7 @@ export class ProtocoloFormComponent implements OnInit {
       },
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar avaliação');
+        this.toast.error('Erro ao salvar avaliação');
       }
     });
   }

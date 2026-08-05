@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { EscolasService } from '../services/escolas.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-escola-form',
@@ -104,6 +105,7 @@ export class EscolaFormComponent implements OnInit {
   private service = inject(EscolasService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   isEdit = false;
   id = '';
@@ -187,25 +189,21 @@ export class EscolaFormComponent implements OnInit {
     if (!this.form.name) return;
     this.saving.set(true);
 
-    const data = {
-      ...this.form,
-      levels: JSON.stringify(this.form.levels),
-      cep: this.form.address.cep,
-      street: this.form.address.street,
-      neighborhood: this.form.address.neighborhood,
-      number: this.form.address.number,
-      complement: this.form.address.complement,
-      city: this.form.address.city,
-      state: this.form.address.state,
+    const data: any = {
+      name: this.form.name,
+      level: JSON.stringify(this.form.levels),
+      status: this.form.status,
+      contactEmail: this.form.contactEmail,
+      location: [this.form.address.street, this.form.address.number, this.form.address.neighborhood, this.form.address.city, this.form.address.state].filter(Boolean).join(', '),
     };
-    delete data.address;
+    if (this.isEdit) data.id = this.id;
 
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
       next: () => this.router.navigate(['/app/escolas']),
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar escola');
+        this.toast.error('Erro ao salvar escola');
       }
     });
   }

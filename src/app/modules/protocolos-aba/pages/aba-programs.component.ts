@@ -6,13 +6,14 @@ import { AbaService } from '../services/aba.service';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
 import { Chart, registerables } from 'chart.js';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
 Chart.register(...registerables);
 
 @Component({
   selector: 'app-aba-programs',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ConfirmModalComponent],
   template: `
     <div class="space-y-6 animate-in">
       <!-- Header -->
@@ -253,6 +254,15 @@ Chart.register(...registerables);
         <span class="text-sm font-medium">{{ toastMessage() }}</span>
       </div>
     }
+
+    <app-confirm-modal
+      [isOpen]="showDeleteModal()"
+      title="Excluir programa"
+      message="Tem certeza que deseja excluir este programa de ensino? Esta ação não pode ser desfeita."
+      confirmText="Excluir"
+      [dangerMode]="true"
+      (closed)="showDeleteModal.set(false)"
+      (confirmed)="confirmDeleteProgram()" />
   `,
   styles: [`:host { display: block; }`]
 })
@@ -274,6 +284,8 @@ export class AbaProgramsComponent implements OnInit {
   showToast = signal(false);
   toastMessage = signal('');
   toastType = signal<'success' | 'error'>('success');
+  showDeleteModal = signal(false);
+  programToDelete = signal<any>(null);
 
   filterPatientId = '';
   filterStatus = '';
@@ -418,7 +430,13 @@ export class AbaProgramsComponent implements OnInit {
   }
 
   deleteProgram(program: any) {
-    if (!confirm('Tem certeza que deseja excluir este programa?')) return;
+    this.programToDelete.set(program);
+    this.showDeleteModal.set(true);
+  }
+
+  confirmDeleteProgram() {
+    const program = this.programToDelete();
+    this.showDeleteModal.set(false);
     this.abaService.deleteProgram(program.id).subscribe({
       next: () => { this.loadPrograms(); this.toast('Programa excluído', 'success'); },
       error: () => this.toast('Erro ao excluir programa', 'error')

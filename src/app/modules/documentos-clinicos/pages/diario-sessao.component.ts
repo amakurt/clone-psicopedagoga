@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-diario-sessao',
@@ -156,6 +157,7 @@ import { ApiService } from '@core/services/api.service';
 export class DiarioSessaoComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   saving = signal(false);
   patients = signal<any[]>([]);
@@ -187,11 +189,11 @@ export class DiarioSessaoComponent implements OnInit {
     this.api.post('/session-diaries', this.form).subscribe({
       next: () => {
         this.saving.set(false);
-        alert('Diário salvo com sucesso!');
+        this.toast.success('Diário salvo com sucesso!');
       },
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar diário');
+        this.toast.error('Erro ao salvar diário');
       }
     });
   }

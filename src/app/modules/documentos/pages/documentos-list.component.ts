@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DocumentosService } from '../services/documentos.service';
 import { UploadService } from '@core/services/upload.service';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
 @Component({
   selector: 'app-documentos-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Header -->
@@ -113,10 +114,10 @@ import { UploadService } from '@core/services/upload.service';
                           <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Baixar" (click)="downloadDocument(d)">
                             <span class="material-icons text-lg">download</span>
                           </button>
-                          <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Assinar" (click)="signDocument(d)">
+                          <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Assinar" (click)="openSignModal(d)">
                             <span class="material-icons text-lg">draw</span>
                           </button>
-                          <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar com pais" (click)="shareWithGuardian(d)">
+                          <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar com pais" (click)="openShareModal(d)">
                             <span class="material-icons text-lg">share</span>
                           </button>
                           <a [routerLink]="['/app/documentos', d.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
@@ -133,6 +134,26 @@ import { UploadService } from '@core/services/upload.service';
         </div>
       </div>
     </div>
+
+    <app-confirm-modal
+      [isOpen]="showSignModal()"
+      title="Assinar Documento"
+      message="Tem certeza que deseja assinar este documento?"
+      confirmText="Assinar"
+      [dangerMode]="false"
+      (closed)="showSignModal.set(false)"
+      (confirmed)="executeSign()">
+    </app-confirm-modal>
+
+    <app-confirm-modal
+      [isOpen]="showShareModal()"
+      title="Compartilhar Documento"
+      message="Tem certeza que deseja compartilhar este documento com o responsável?"
+      confirmText="Compartilhar"
+      [dangerMode]="false"
+      (closed)="showShareModal.set(false)"
+      (confirmed)="executeShare()">
+    </app-confirm-modal>
 
     @if (showToast()) {
       <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg"
@@ -157,6 +178,10 @@ export class DocumentosListComponent implements OnInit {
   showToast = signal(false);
   toastMessage = signal('');
   toastType = signal('info');
+  showSignModal = signal(false);
+  docToSign = signal<any>(null);
+  showShareModal = signal(false);
+  docToShare = signal<any>(null);
   private timeout: any;
 
   categories = [
@@ -296,8 +321,15 @@ export class DocumentosListComponent implements OnInit {
     }
   }
 
-  signDocument(doc: any) {
-    if (confirm('Deseja assinar este documento?')) {
+  openSignModal(doc: any) {
+    this.docToSign.set(doc);
+    this.showSignModal.set(true);
+  }
+
+  executeSign() {
+    const doc = this.docToSign();
+    this.showSignModal.set(false);
+    if (doc) {
       this.service.update(doc.id, { status: 'PRONTO', signedAt: new Date().toISOString() }).subscribe({
         next: () => {
           this.showNotification('Documento assinado com sucesso!', 'success');
@@ -308,8 +340,15 @@ export class DocumentosListComponent implements OnInit {
     }
   }
 
-  shareWithGuardian(doc: any) {
-    if (confirm('Deseja compartilhar este documento com o responsável?')) {
+  openShareModal(doc: any) {
+    this.docToShare.set(doc);
+    this.showShareModal.set(true);
+  }
+
+  executeShare() {
+    const doc = this.docToShare();
+    this.showShareModal.set(false);
+    if (doc) {
       this.service.update(doc.id, { isShared: true }).subscribe({
         next: () => {
           this.showNotification('Documento compartilhado com sucesso!', 'success');

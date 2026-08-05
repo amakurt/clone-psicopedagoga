@@ -2,13 +2,14 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { EvolucoesService } from '../services/evolucoes.service';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
 declare var html2pdf: any;
 
 @Component({
   selector: 'app-evolucoes-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ConfirmModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Header -->
@@ -76,7 +77,7 @@ declare var html2pdf: any;
                           <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Exportar PDF" (click)="exportFrequencySheet(e)">
                             <span class="material-icons text-lg">picture_as_pdf</span>
                           </button>
-                          <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar" (click)="shareSession(e)">
+                          <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar" (click)="openShareModal(e)">
                             <span class="material-icons text-lg">share</span>
                           </button>
                           <a [routerLink]="['/app/evolucoes', e.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
@@ -97,6 +98,16 @@ declare var html2pdf: any;
       </div>
     </div>
 
+    <app-confirm-modal
+      [isOpen]="showShareModal()"
+      title="Compartilhar Evolução"
+      message="Tem certeza que deseja compartilhar esta evolução com o responsável?"
+      confirmText="Compartilhar"
+      [dangerMode]="false"
+      (closed)="showShareModal.set(false)"
+      (confirmed)="executeShare()">
+    </app-confirm-modal>
+
     @if (showToast()) {
       <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg"
         [class]="toastType() === 'success' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'">
@@ -116,6 +127,8 @@ export class EvolucoesListComponent implements OnInit {
   showToast = signal(false);
   toastMessage = signal('');
   toastType = signal('info');
+  showShareModal = signal(false);
+  evoToShare = signal<any>(null);
 
   ngOnInit() { this.load(); }
 
@@ -210,8 +223,15 @@ export class EvolucoesListComponent implements OnInit {
     this.showNotification('Ficha de frequência exportada!', 'success');
   }
 
-  shareSession(evo: any) {
-    if (confirm('Deseja compartilhar esta evolução com o responsável?')) {
+  openShareModal(evo: any) {
+    this.evoToShare.set(evo);
+    this.showShareModal.set(true);
+  }
+
+  executeShare() {
+    const evo = this.evoToShare();
+    this.showShareModal.set(false);
+    if (evo) {
       this.service.update(evo.id, { sharedWithGuardian: true }).subscribe({
         next: () => this.showNotification('Evolução compartilhada com sucesso!', 'success'),
         error: () => this.showNotification('Evolução compartilhada (modo local)', 'info')

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-plano-intervencao-doc',
@@ -219,6 +220,7 @@ import { ApiService } from '@core/services/api.service';
 export class PlanoIntervencaoDocComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   saving = signal(false);
   patients = signal<any[]>([]);
@@ -252,11 +254,11 @@ export class PlanoIntervencaoDocComponent implements OnInit {
     this.api.post('/intervention-documents', this.form).subscribe({
       next: () => {
         this.saving.set(false);
-        alert('Plano de intervenção salvo com sucesso!');
+        this.toast.success('Plano de intervenção salvo com sucesso!');
       },
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar plano de intervenção');
+        this.toast.error('Erro ao salvar plano de intervenção');
       }
     });
   }

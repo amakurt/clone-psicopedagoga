@@ -2,11 +2,12 @@ import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@core/services/api.service';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
 @Component({
   selector: 'app-sala-espera',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -112,7 +113,7 @@ import { ApiService } from '@core/services/api.service';
                     </button>
                   }
                   <button class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
-                    (click)="removeFromQueue(item.id)" title="Remover">
+                    (click)="openRemoveModal(item.id)" title="Remover">
                     <span class="material-icons text-lg">close</span>
                   </button>
                 </div>
@@ -122,6 +123,16 @@ import { ApiService } from '@core/services/api.service';
         }
       </div>
     </div>
+
+    <app-confirm-modal
+      [isOpen]="showRemoveModal()"
+      title="Remover da Fila"
+      message="Tem certeza que deseja remover este paciente da fila de espera?"
+      confirmText="Remover"
+      [dangerMode]="true"
+      (closed)="showRemoveModal.set(false)"
+      (confirmed)="executeRemove()">
+    </app-confirm-modal>
 
     <!-- Check-in Modal -->
     @if (showCheckinForm()) {
@@ -186,6 +197,8 @@ export class SalaEsperaComponent implements OnInit, OnDestroy {
   pacientes = signal<any[]>([]);
   showToast = signal(false);
   toastMessage = signal('');
+  showRemoveModal = signal(false);
+  idToRemove = signal<string | null>(null);
 
   checkinForm: any = { patientId: '', notes: '' };
 
@@ -269,8 +282,15 @@ export class SalaEsperaComponent implements OnInit, OnDestroy {
     });
   }
 
-  removeFromQueue(id: string) {
-    if (confirm('Remover paciente da fila?')) {
+  openRemoveModal(id: string) {
+    this.idToRemove.set(id);
+    this.showRemoveModal.set(true);
+  }
+
+  executeRemove() {
+    const id = this.idToRemove();
+    this.showRemoveModal.set(false);
+    if (id) {
       this.api.delete(`/waiting-room/${id}`).subscribe({ next: () => this.load() });
     }
   }

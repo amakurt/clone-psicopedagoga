@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { SessaoService } from '../services/sessao.service';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-sessao-form',
@@ -29,7 +30,7 @@ import { ApiService } from '@core/services/api.service';
   styles: [`.page { max-width: 900px; } .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; } .header h1 { margin: 0; font-size: 24px; } .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); } .card-body { padding: 24px; } .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; } .form-group { display: flex; flex-direction: column; gap: 4px; } .form-group label { font-size: 13px; font-weight: 500; color: var(--gray-700); } .full { grid-column: 1 / -1; } .form-control { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; width: 100%; box-sizing: border-box; } textarea.form-control { resize: vertical; } .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); } .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; } .btn-primary { background: var(--primary); color: white; } .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); } select.form-control { appearance: auto; }`]
 })
 export class SessaoFormComponent implements OnInit {
-  private service = inject(SessaoService); private api = inject(ApiService); private router = inject(Router); private route = inject(ActivatedRoute);
+  private service = inject(SessaoService); private api = inject(ApiService); private router = inject(Router); private route = inject(ActivatedRoute); private toast = inject(ToastService);
   isEdit = false; id = ''; saving = signal(false); pacientes = signal<any[]>([]);
   form: any = { pacienteId: '', date: '', tipo: '', duration: 60, valor: '', status: 'AGENDADA', observacoes: '' };
   ngOnInit() {
@@ -38,10 +39,10 @@ export class SessaoFormComponent implements OnInit {
     if (this.isEdit) this.service.get(this.id).subscribe({ next: (res: any) => { this.form = res; this.form.date = res.date ? new Date(res.date).toISOString().slice(0, 16) : ''; } });
   }
   save() {
-    if (!this.form.pacienteId || !this.form.date) return alert('Preencha paciente e data');
+    if (!this.form.pacienteId || !this.form.date) return this.toast.warning('Preencha paciente e data');
     this.saving.set(true);
     this.form.psicopedagogoId = 'system';
     const obs = this.isEdit ? this.service.update(this.id, this.form) : this.service.create(this.form);
-    obs.subscribe({ next: () => this.router.navigate(['/app/sessoes']), error: () => { this.saving.set(false); alert('Erro'); } });
+    obs.subscribe({ next: () => this.router.navigate(['/app/sessoes']), error: () => { this.saving.set(false); this.toast.error('Erro'); } });
   }
 }

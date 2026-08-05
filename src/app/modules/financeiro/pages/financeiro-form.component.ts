@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-financeiro-form',
@@ -95,6 +96,7 @@ export class FinanceiroFormComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   isEdit = false;
   id = '';
@@ -117,17 +119,17 @@ export class FinanceiroFormComponent implements OnInit {
   }
 
   save() {
-    if (!this.form.pacienteId) return alert('Selecione um paciente');
-    if (!this.form.date) return alert('Informe a data');
-    if (!this.form.value) return alert('Informe o valor');
-    if (!this.form.type) return alert('Selecione o tipo');
-    if (!this.form.status) return alert('Selecione o status');
+    if (!this.form.pacienteId) return this.toast.warning('Selecione um paciente');
+    if (!this.form.date) return this.toast.warning('Informe a data');
+    if (!this.form.value) return this.toast.warning('Informe o valor');
+    if (!this.form.type) return this.toast.warning('Selecione o tipo');
+    if (!this.form.status) return this.toast.warning('Selecione o status');
 
     this.saving.set(true);
     const obs = this.isEdit ? this.api.put(`/financeiro/${this.id}`, this.form) : this.api.post('/financeiro', this.form);
     obs.subscribe({
       next: () => this.router.navigate(['/app/financeiro']),
-      error: () => { this.saving.set(false); alert('Erro ao salvar'); }
+      error: () => { this.saving.set(false); this.toast.error('Erro ao salvar'); }
     });
   }
 }

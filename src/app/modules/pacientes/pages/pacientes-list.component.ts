@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PacientesService } from '../services/pacientes.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-pacientes-list',
@@ -159,6 +160,7 @@ import { PacientesService } from '../services/pacientes.service';
 })
 export class PacientesListComponent implements OnInit {
   private service = inject(PacientesService);
+  private toast = inject(ToastService);
   items = signal<any[]>([]);
   loading = signal(true);
   searchTerm = '';
@@ -256,7 +258,7 @@ export class PacientesListComponent implements OnInit {
     if (!p) return;
     this.service.delete(p.id).subscribe({
       next: () => { this.showDeleteModal.set(false); this.load(); },
-      error: () => alert('Erro ao excluir paciente')
+      error: () => this.toast.error('Erro ao excluir paciente')
     });
   }
 }

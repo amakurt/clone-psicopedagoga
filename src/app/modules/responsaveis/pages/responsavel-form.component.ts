@@ -6,6 +6,7 @@ import { ResponsaveisService } from '../services/responsaveis.service';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PacientesService } from '../../pacientes/services/pacientes.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-responsavel-form',
@@ -248,6 +249,7 @@ export class ResponsavelFormComponent implements OnInit {
   private pacientesService = inject(PacientesService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   isEdit = false;
   id = '';
@@ -341,7 +343,7 @@ export class ResponsavelFormComponent implements OnInit {
   linkPaciente(paciente: any) {
     // Check if already linked
     if (this.selectedPacientes().some(p => p.id === paciente.id)) {
-      alert('Este paciente já está vinculado');
+      this.toast.warning('Este paciente já está vinculado');
       return;
     }
     this.selectedPacientes.update(list => [...list, paciente]);
@@ -370,7 +372,7 @@ export class ResponsavelFormComponent implements OnInit {
       },
       error: () => {
         this.savingNewPaciente.set(false);
-        alert('Erro ao criar paciente');
+        this.toast.error('Erro ao criar paciente');
       }
     });
   }
@@ -406,7 +408,7 @@ export class ResponsavelFormComponent implements OnInit {
       next: () => this.router.navigate(['/app/responsaveis']),
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar responsável');
+        this.toast.error('Erro ao salvar responsável');
       }
     });
   }

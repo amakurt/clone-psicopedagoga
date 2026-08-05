@@ -6,6 +6,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-configuracoes',
@@ -239,6 +240,7 @@ import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.c
 export class ConfiguracoesComponent implements OnInit {
   auth = inject(AuthService);
   private api = inject(ApiService);
+  private toast = inject(ToastService);
 
   activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes'>('perfil');
   avatarPreview = signal<string | null>(null);
@@ -337,11 +339,11 @@ export class ConfiguracoesComponent implements OnInit {
 
   changePassword() {
     if (this.passwordForm.newPassword !== this.passwordForm.confirm) {
-      alert('As senhas não conferem');
+      this.toast.warning('As senhas não conferem');
       return;
     }
     if (!this.passwordForm.current || !this.passwordForm.newPassword) {
-      alert('Preencha todos os campos');
+      this.toast.warning('Preencha todos os campos');
       return;
     }
     this.api.put('/auth/password', { current: this.passwordForm.current, newPassword: this.passwordForm.newPassword }).subscribe({
@@ -349,7 +351,7 @@ export class ConfiguracoesComponent implements OnInit {
         this.showNotification('Senha alterada com sucesso!');
         this.passwordForm = { current: '', newPassword: '', confirm: '' };
       },
-      error: () => alert('Erro ao alterar senha')
+      error: () => this.toast.error('Erro ao alterar senha')
     });
   }
 

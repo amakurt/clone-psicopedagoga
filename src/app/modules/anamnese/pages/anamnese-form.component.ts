@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AnamneseService } from '../services/anamnese.service';
 import { ApiService } from '@core/services/api.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-anamnese-form',
@@ -328,6 +329,7 @@ export class AnamneseFormComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   isEdit = false;
   id = '';
@@ -399,8 +401,8 @@ export class AnamneseFormComponent implements OnInit {
   }
 
   save() {
-    if (!this.form.pacienteId) return alert('Selecione um paciente');
-    if (!this.form.queixaPrincipal) return alert('Preencha a queixa principal');
+    if (!this.form.pacienteId) return this.toast.warning('Selecione um paciente');
+    if (!this.form.queixaPrincipal) return this.toast.warning('Preencha a queixa principal');
     this.saving.set(true);
 
     const data = {
@@ -411,7 +413,7 @@ export class AnamneseFormComponent implements OnInit {
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
       next: () => this.router.navigate(['/app/anamnese']),
-      error: () => { this.saving.set(false); alert('Erro ao salvar'); }
+      error: () => { this.saving.set(false); this.toast.error('Erro ao salvar'); }
     });
   }
 }

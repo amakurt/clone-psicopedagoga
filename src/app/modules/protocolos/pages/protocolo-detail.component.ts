@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
 import { Chart, registerables } from 'chart.js';
+import { ToastService } from '@shared/components/toast.component';
 
 Chart.register(...registerables);
 
@@ -163,6 +164,7 @@ export class ProtocoloDetailComponent implements OnInit, AfterViewInit {
 
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   id = '';
   item = signal<any>(null);
@@ -204,7 +206,7 @@ export class ProtocoloDetailComponent implements OnInit, AfterViewInit {
         });
       },
       error: () => {
-        alert('Avaliação não encontrada');
+        this.toast.error('Avaliação não encontrada');
         this.loading.set(false);
       }
     });

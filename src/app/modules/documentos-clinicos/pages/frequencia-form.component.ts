@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-frequencia-form',
@@ -146,6 +147,7 @@ import { ApiService } from '@core/services/api.service';
 export class FrequenciaFormComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   saving = signal(false);
   patients = signal<any[]>([]);
@@ -176,11 +178,11 @@ export class FrequenciaFormComponent implements OnInit {
     this.api.post('/frequency-sheets', this.form).subscribe({
       next: () => {
         this.saving.set(false);
-        alert('Ficha de frequência salva com sucesso!');
+        this.toast.success('Ficha de frequência salva com sucesso!');
       },
       error: () => {
         this.saving.set(false);
-        alert('Erro ao salvar ficha de frequência');
+        this.toast.error('Erro ao salvar ficha de frequência');
       }
     });
   }

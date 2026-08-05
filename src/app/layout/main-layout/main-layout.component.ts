@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
+import { ToastComponent } from '../../shared/components/toast.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ToastComponent],
   template: `
     <div class="flex h-screen overflow-hidden" [class.dark]="isDarkMode()">
       <aside class="shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300 ease-in-out relative"
@@ -142,6 +143,7 @@ import { ApiService } from '../../core/services/api.service';
         </div>
       </main>
     </div>
+    <app-toast />
   `,
   styles: [`
     :host { display: block; }

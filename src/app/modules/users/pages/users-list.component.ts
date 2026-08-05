@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -8,11 +8,13 @@ import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { UsersService } from '../services/users.service';
 import { User } from '../../../core/models';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-users-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatTableModule, MatChipsModule],
+  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatTableModule, MatChipsModule, ConfirmModalComponent],
   template: `
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
@@ -58,7 +60,7 @@ import { User } from '../../../core/models';
                 <button mat-icon-button [routerLink]="[user.id, 'editar']">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" (click)="delete(user.id)">
+                <button mat-icon-button color="warn" (click)="confirmDelete(user.id)">
                   <mat-icon>delete</mat-icon>
                 </button>
               </td>
@@ -70,13 +72,25 @@ import { User } from '../../../core/models';
         </mat-card-content>
       </mat-card>
     </div>
+
+    <app-confirm-modal
+      [isOpen]="showDeleteModal()"
+      title="Excluir usuário"
+      message="Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita."
+      confirmText="Excluir"
+      [dangerMode]="true"
+      (closed)="showDeleteModal.set(false)"
+      (confirmed)="deleteUser()" />
   `
 })
 export class UsersListComponent implements OnInit {
+  private usersService = inject(UsersService);
+  private toast = inject(ToastService);
+
   users: User[] = [];
   displayedColumns = ['name', 'email', 'role', 'active', 'actions'];
-
-  constructor(private usersService: UsersService) {}
+  showDeleteModal = signal(false);
+  userIdToDelete = signal('');
 
   ngOnInit() {
     this.loadUsers();
@@ -94,9 +108,17 @@ export class UsersListComponent implements OnInit {
     }
   }
 
-  delete(id: string) {
-    if (confirm('Tem certeza que deseja excluir este usuário?')) {
-      this.usersService.delete(id).subscribe(() => this.loadUsers());
-    }
+  confirmDelete(id: string) {
+    this.userIdToDelete.set(id);
+    this.showDeleteModal.set(true);
+  }
+
+  deleteUser() {
+    const id = this.userIdToDelete();
+    this.showDeleteModal.set(false);
+    this.usersService.delete(id).subscribe({
+      next: () => { this.loadUsers(); this.toast.success('Usuário excluído com sucesso'); },
+      error: () => this.toast.error('Erro ao excluir usuário')
+    });
   }
 }

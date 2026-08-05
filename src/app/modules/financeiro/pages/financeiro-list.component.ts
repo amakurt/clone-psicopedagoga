@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
 declare var html2pdf: any;
 
 @Component({
   selector: 'app-financeiro-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Header -->
@@ -142,7 +144,7 @@ declare var html2pdf: any;
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-end gap-1">
                           @if (item.status === 'pendente') {
-                            <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Confirmar pagamento" (click)="confirmPayment(item)">
+                            <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Confirmar pagamento" (click)="openConfirmPaymentModal(item)">
                               <span class="material-icons text-lg">check_circle</span>
                             </button>
                           }
@@ -166,6 +168,16 @@ declare var html2pdf: any;
         </div>
       </div>
     </div>
+
+    <app-confirm-modal
+      [isOpen]="showConfirmPaymentModal()"
+      title="Confirmar Pagamento"
+      message="Tem certeza que deseja confirmar o recebimento deste pagamento?"
+      confirmText="Confirmar"
+      [dangerMode]="false"
+      (closed)="showConfirmPaymentModal.set(false)"
+      (confirmed)="executeConfirmPayment()">
+    </app-confirm-modal>
 
     @if (showDeleteModal()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" (click)="showDeleteModal.set(false)">
@@ -202,6 +214,7 @@ declare var html2pdf: any;
 })
 export class FinanceiroListComponent implements OnInit {
   private api = inject(ApiService);
+  private toast = inject(ToastService);
   items = signal<any[]>([]);
   loading = signal(true);
   searchTerm = '';
@@ -215,6 +228,8 @@ export class FinanceiroListComponent implements OnInit {
   showToast = signal(false);
   toastMessage = signal('');
   toastType = signal('info');
+  showConfirmPaymentModal = signal(false);
+  paymentToConfirm = signal<any>(null);
   private timeout: any;
 
   ngOnInit() { this.load(); }
@@ -269,8 +284,15 @@ export class FinanceiroListComponent implements OnInit {
     return colors[index];
   }
 
-  confirmPayment(item: any) {
-    if (confirm('Confirmar recebimento deste pagamento?')) {
+  openConfirmPaymentModal(item: any) {
+    this.paymentToConfirm.set(item);
+    this.showConfirmPaymentModal.set(true);
+  }
+
+  executeConfirmPayment() {
+    const item = this.paymentToConfirm();
+    this.showConfirmPaymentModal.set(false);
+    if (item) {
       this.api.put(`/financeiro/${item.id}`, { status: 'pago' }).subscribe({
         next: () => {
           this.showNotification('Pagamento confirmado com sucesso!', 'success');
@@ -392,7 +414,7 @@ export class FinanceiroListComponent implements OnInit {
     if (!item) return;
     this.api.delete(`/financeiro/${item.id}`).subscribe({
       next: () => { this.showDeleteModal.set(false); this.load(); },
-      error: () => alert('Erro ao excluir transação')
+      error: () => this.toast.error('Erro ao excluir transação')
     });
   }
 
