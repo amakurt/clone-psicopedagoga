@@ -1,6 +1,38 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 04 de Agosto de 2026
+## Última Atualização: 05 de Agosto de 2026
+
+---
+
+## Sessão 3 - 05/08/2026
+
+### O que foi feito
+
+#### 1. Sincronização com GitHub (novo PC)
+- `git pull` do commit `7595269` (111 arquivos, +8730 linhas)
+
+#### 2. Setup do ambiente do zero (Windows)
+- `npm install` no frontend e backend
+- Scripts de instalação bloqueados pelo npm (allowScripts) foram aprovados e salvos no `package.json` para futuras instalações
+- `npx prisma db push` - banco SQLite criado
+- `npx tsx src/seed.ts` - dados de teste carregados (5 usuários, 5 pacientes, 5 responsáveis, 4 sessões, 2 protocolos ABA, etc.)
+
+#### 3. Servidores iniciados
+- **Backend:** http://localhost:3000
+- **Frontend:** http://localhost:4200
+
+#### 4. Testes de endpoints (todos OK)
+- Login, dashboard (5 pacientes, 4 sessões, 2 protocolos TEA), pacientes, usuários, agenda, financeiro, waiting-room, consents, nfse, permissions, whatsapp, aba/assessments, aba/programs, evolution/compare, guardian/dashboard, ai-suggestions
+
+#### 5. Bug corrigido - Módulo WhatsApp quebrava o backend
+- **Problema:** `TypeError: Cannot read properties of undefined (reading 'findMany')` ao acessar rotas do WhatsApp
+- **Causa:** Código usava `prisma.whatsappLog` e `prisma.whatsappConfig`, mas o modelo Prisma é `WhatsAppLog`/`WhatsAppConfig` — o acesso correto no client é `prisma.whatsAppLog`/`prisma.whatsAppConfig` (com "A" maiúsculo)
+- **Correção:** 11 ocorrências corrigidas em `backend/src/routes/whatsapp.ts`
+- **Verificação:** `/api/whatsapp/history` e `/api/whatsapp/config` → HTTP 200
+
+#### 6. Ambiente: opencode.exe corrompido (fora do repo)
+- `opencode.exe` global tinha sido substituído por stub de 479 bytes (postinstall bloqueado pelo npm)
+- **Correção:** copiado binário real (174 MB, header MZ) de `opencode-windows-x64` para `opencode-ai/bin/opencode.exe`
 
 ---
 

@@ -24,7 +24,7 @@ const configSchema = z.object({
 });
 
 async function sendWhatsAppMessage(phone: string, message: string) {
-  const configRecord = await prisma.whatsappConfig.findFirst();
+  const configRecord = await prisma.whatsAppConfig.findFirst();
   if (!configRecord) {
     throw new Error('WhatsApp não configurado. Configure a API em Configurações > WhatsApp.');
   }
@@ -67,7 +67,7 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
   try {
     await sendWhatsAppMessage(phoneToUse, message);
 
-    const log = await prisma.whatsappLog.create({
+    const log = await prisma.whatsAppLog.create({
       data: {
         patientId,
         phone: phoneToUse,
@@ -79,7 +79,7 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
 
     res.json({ success: true, log });
   } catch (error: any) {
-    const log = await prisma.whatsappLog.create({
+    const log = await prisma.whatsAppLog.create({
       data: {
         patientId,
         phone: phoneToUse,
@@ -111,7 +111,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
     try {
       await sendWhatsAppMessage(patient.phone, message);
 
-      const log = await prisma.whatsappLog.create({
+      const log = await prisma.whatsAppLog.create({
         data: {
           patientId: patient.id,
           phone: patient.phone,
@@ -123,7 +123,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
 
       results.push({ patientId: patient.id, status: 'SENT', log });
     } catch (error: any) {
-      const log = await prisma.whatsappLog.create({
+      const log = await prisma.whatsAppLog.create({
         data: {
           patientId: patient.id,
           phone: patient.phone,
@@ -151,14 +151,14 @@ router.get('/history', async (req, res) => {
   const skip = (pageNum - 1) * limitNum;
 
   const [logs, total] = await Promise.all([
-    prisma.whatsappLog.findMany({
+    prisma.whatsAppLog.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       skip,
       take: limitNum,
       include: { paciente: { select: { id: true, name: true } } },
     }),
-    prisma.whatsappLog.count({ where }),
+    prisma.whatsAppLog.count({ where }),
   ]);
 
   res.json({ data: logs, total, page: pageNum, limit: limitNum });
@@ -167,15 +167,15 @@ router.get('/history', async (req, res) => {
 router.post('/config', validate(configSchema), async (req, res) => {
   const { apiUrl, token, phoneNumberId } = req.body;
 
-  const existing = await prisma.whatsappConfig.findFirst();
+  const existing = await prisma.whatsAppConfig.findFirst();
   let config;
   if (existing) {
-    config = await prisma.whatsappConfig.update({
+    config = await prisma.whatsAppConfig.update({
       where: { id: existing.id },
       data: { apiUrl, token, phoneNumberId },
     });
   } else {
-    config = await prisma.whatsappConfig.create({
+    config = await prisma.whatsAppConfig.create({
       data: { apiUrl, token, phoneNumberId },
     });
   }
@@ -184,7 +184,7 @@ router.post('/config', validate(configSchema), async (req, res) => {
 });
 
 router.get('/config', async (_req, res) => {
-  const config = await prisma.whatsappConfig.findFirst();
+  const config = await prisma.whatsAppConfig.findFirst();
   if (!config) {
     return res.json({ configured: false });
   }

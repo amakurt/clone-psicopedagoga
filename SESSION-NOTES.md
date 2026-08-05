@@ -1,8 +1,31 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 04/08/2026 (Atualizado)
+## Data: 05/08/2026 (Atualizado)
 
 ## Status: 100% Implementado + 10 Funcionalidades Competitivas + Painel TV + Correções de Rotas
+
+---
+
+## Sessão 05/08/2026
+
+### 1. Sincronização com GitHub (novo PC)
+- `git pull` do commit `7595269` (111 arquivos, +8730 linhas)
+
+### 2. Setup do ambiente (Windows)
+- `npm install` (frontend + backend) com allowScripts aprovados e salvos no package.json
+- `prisma db push` + `seed.ts` concluídos
+
+### 3. Bug corrigido - WhatsApp (quebra crítica)
+- **Problema:** `TypeError: Cannot read properties of undefined (reading 'findMany')` derrubava o backend
+- **Causa:** `prisma.whatsappLog`/`prisma.whatsappConfig` (errado) vs modelo `WhatsAppLog`/`WhatsAppConfig` → client gera `prisma.whatsAppLog`/`prisma.whatsAppConfig`
+- **Correção:** 11 ocorrências em `backend/src/routes/whatsapp.ts`
+- **Verificação:** rotas `/api/whatsapp/*` → HTTP 200
+
+### 4. Testes de endpoints
+- Todos os endpoints testados com sucesso (login, dashboard, pacientes, ABA, waiting-room, consents, nfse, permissions, evolution/compare, guardian, ai-suggestions)
+
+### 5. Ambiente (fora do repo)
+- `opencode.exe` global corrompido (stub de 479 bytes por postinstall bloqueado) → restaurado binário real de 174 MB
 
 ---
 
