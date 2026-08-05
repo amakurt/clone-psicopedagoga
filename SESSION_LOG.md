@@ -4,7 +4,44 @@
 
 ---
 
-## Sessão 4 - 05/08/2026 (Continuação)
+## Sessão 5 - 05/08/2026 (Tarde)
+
+### O que foi feito
+
+#### 1. Toast Notifications Animado
+- Barra de progresso no topo que encolhe conforme o tempo
+- Animação de entrada lenta (0.6s) com bounce
+- Animação de saída suave (0.5s) fade + slide
+- 4 estados de animação: hidden → entering → visible → leaving
+
+#### 2. Aba Aparência em Configurações
+- 3 temas: Claro, Escuro, Sistema
+- 6 cores de destaque选择aveis
+- Salva no localStorage e aplica automaticamente
+
+#### 3. Correção Salvar/Editar Escola
+- Schema Prisma do backend incompatível com frontend
+- Backend route: Zod schema atualizada + validação PUT
+- Frontend: campos individuais de endereço
+- schema.prisma raiz sincronizado
+
+#### 4. Diário de Sessões Redesignado
+- Cards arredondados com ícones coloridos
+- Labels com ícones por seção
+- Preview com cards coloridos
+
+#### 5. Página-lista Documentos Clínicos
+- 3 cards: Diário, Frequência, Plano de Intervenção
+- Rota agora mostra lista (não redireciona)
+
+#### 6. Sidebar Sempre Aberta
+- Estado forçado para aberto no ngOnInit
+
+#### 7. Ícone Docs Clínicos
+- Trocado de clinical_notes para note
+
+### Commits
+- `cd2e59e` - feat: melhorias UI + tema/apperência + toast animado + documentos clínicos
 
 ### O que foi feito
 

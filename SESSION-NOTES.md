@@ -6,7 +6,46 @@
 
 ---
 
-## Sessão 05/08/2026
+## Sessão 05/08/2026 (Continuação - Tarde)
+
+### 9. Toast Notifications Animado
+- Barra de progresso no topo que encolhe de 100% até 0%
+- Animação de entrada lenta (0.6s) com efeito bounce
+- Animação de saída suave (0.5s) fade + slide
+- 4 estados: hidden → entering → visible → leaving → hidden
+- Cores da barra diferenciadas por tipo (verde escuro, vermelho escuro, marrom, azul escuro)
+
+### 10. Aba Aparência em Configurações
+- 3 temas: Claro, Escuro, Sistema (segue preferência do SO)
+- 6 cores de destaque选择aveis (indigo, violeta, rosa, esmeralda, âmbar, vermelho)
+- Salva no localStorage e aplica automaticamente
+- Botão "Alternar Tema" removido da sidebar
+
+### 11. Correção Salvar/Editar Escola
+- **Problema:** Schema Prisma do backend (`levels`, `cep`, `street`...) incompatível com frontend (`level`, `location`)
+- **Correção:** 
+  - Backend route: Zod schema atualizada com campos corretos + validação no PUT
+  - Frontend: `save()` envia campos individuais de endereço
+  - `ngOnInit`: carrega endereço corretamente ao editar
+  - `schema.prisma` raiz sincronizado com backend
+
+### 12. Diário de Sessões Redesignado
+- Cards arredondados (3xl) com ícones coloridos por seção
+- Labels com ícones (flag, build, psychology, assignment, sticky_note_2)
+- Preview do documento com cards coloridos e ícones
+- Padronizado com o resto do sistema
+
+### 13. Página-lista Documentos Clínicos
+- 3 cards: Diário de Sessões, Frequência, Plano de Intervenção
+- Cada card com ícone, descrição, categoria e seta
+- Rota `/app/documentos-clinicos` agora mostra a lista (não redireciona)
+
+### 14. Sidebar Sempre Aberta
+- `sidebarOpen` forçado para `true` no ngOnInit
+- Limpa estado anterior do localStorage
+
+### 15. Ícone Docs Clínicos
+- Trocado de `clinical_notes` (parecia traços) para `note` (ícone de documento mais claro)
 
 ### 1. Sincronização com GitHub (novo PC)
 - `git pull` do commit `7595269` (111 arquivos, +8730 linhas)
