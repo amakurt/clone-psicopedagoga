@@ -8,13 +8,21 @@ router.use(authenticate);
 
 const schoolSchema = z.object({
   name: z.string().min(1),
-  location: z.string().optional(),
-  level: z.string().optional(),
+  levels: z.string().optional(),
+  cep: z.string().optional(),
+  street: z.string().optional(),
+  neighborhood: z.string().optional(),
+  number: z.string().optional(),
+  complement: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  phone: z.string().optional(),
   contactName: z.string().optional(),
   contactEmail: z.string().optional(),
   patientCount: z.number().optional(),
   status: z.string().optional(),
   imageUrl: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 router.get('/', async (req, res) => {
@@ -37,7 +45,7 @@ router.post('/', validate(schoolSchema), async (req, res) => {
   res.status(201).json(school);
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(schoolSchema), async (req, res) => {
   const school = await prisma.school.update({ where: { id: req.params.id }, data: req.body });
   res.json(school);
 });

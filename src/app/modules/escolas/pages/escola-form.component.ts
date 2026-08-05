@@ -157,7 +157,19 @@ export class EscolaFormComponent implements OnInit {
           ...this.form,
           ...res,
           levels,
-          address: res.address || this.form.address
+          phone: res.phone || '',
+          contactName: res.contactName || '',
+          contactEmail: res.contactEmail || '',
+          status: res.status || 'Ativa',
+          address: {
+            cep: res.cep || '',
+            street: res.street || '',
+            number: res.number || '',
+            complement: res.complement || '',
+            neighborhood: res.neighborhood || '',
+            city: res.city || '',
+            state: res.state || '',
+          }
         };
       });
     }
@@ -191,16 +203,27 @@ export class EscolaFormComponent implements OnInit {
 
     const data: any = {
       name: this.form.name,
-      level: JSON.stringify(this.form.levels),
+      levels: JSON.stringify(this.form.levels),
       status: this.form.status,
       contactEmail: this.form.contactEmail,
-      location: [this.form.address.street, this.form.address.number, this.form.address.neighborhood, this.form.address.city, this.form.address.state].filter(Boolean).join(', '),
+      contactName: this.form.contactName,
+      phone: this.form.phone,
+      cep: this.form.address?.cep || '',
+      street: this.form.address?.street || '',
+      number: this.form.address?.number || '',
+      complement: this.form.address?.complement || '',
+      neighborhood: this.form.address?.neighborhood || '',
+      city: this.form.address?.city || '',
+      state: this.form.address?.state || '',
     };
     if (this.isEdit) data.id = this.id;
 
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
-      next: () => this.router.navigate(['/app/escolas']),
+      next: () => {
+        this.toast.success(this.isEdit ? 'Escola atualizada com sucesso' : 'Escola criada com sucesso');
+        this.router.navigate(['/app/escolas']);
+      },
       error: () => {
         this.saving.set(false);
         this.toast.error('Erro ao salvar escola');

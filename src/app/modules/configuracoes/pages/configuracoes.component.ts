@@ -207,6 +207,82 @@ import { ToastService } from '@shared/components/toast.component';
         </div>
       }
 
+      <!-- Aparência Tab -->
+      @if (activeTab() === 'aparencia') {
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+          <div class="p-8">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Aparência</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              @for (theme of themes; track theme.id) {
+                <button class="relative flex flex-col items-center gap-3 p-6 rounded-2xl ring-2 transition-all hover:scale-[1.02]"
+                  [class]="currentTheme() === theme.id
+                    ? 'ring-primary bg-primary/5 shadow-lg shadow-primary/10'
+                    : 'ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600 bg-slate-50 dark:bg-slate-800'"
+                  (click)="setTheme(theme.id)">
+                  @if (currentTheme() === theme.id) {
+                    <div class="absolute top-3 right-3">
+                      <span class="material-icons text-primary text-lg">check_circle</span>
+                    </div>
+                  }
+                  <div class="size-16 rounded-2xl flex items-center justify-center"
+                    [class]="currentTheme() === theme.id ? 'bg-primary/10' : 'bg-slate-200 dark:bg-slate-700'">
+                    <span class="material-icons text-3xl"
+                      [class]="currentTheme() === theme.id ? 'text-primary' : 'text-slate-400 dark:text-slate-500'">
+                      {{ theme.icon }}
+                    </span>
+                  </div>
+                  <div class="text-center">
+                    <p class="font-bold text-sm"
+                      [class]="currentTheme() === theme.id ? 'text-primary' : 'text-slate-900 dark:text-white'">
+                      {{ theme.label }}
+                    </p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ theme.description }}</p>
+                  </div>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Simulação de cores -->
+          <div class="p-8 border-t border-slate-100 dark:border-slate-800">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Cores do Tema</h3>
+            <div class="flex flex-wrap gap-3">
+              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
+                style="background: #6366f1"
+                [class]="accentColor() === '#6366f1' ? 'ring-indigo-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#6366f1')"></button>
+              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
+                style="background: #8b5cf6"
+                [class]="accentColor() === '#8b5cf6' ? 'ring-violet-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#8b5cf6')"></button>
+              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
+                style="background: #ec4899"
+                [class]="accentColor() === '#ec4899' ? 'ring-pink-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#ec4899')"></button>
+              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
+                style="background: #10b981"
+                [class]="accentColor() === '#10b981' ? 'ring-emerald-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#10b981')"></button>
+              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
+                style="background: #f59e0b"
+                [class]="accentColor() === '#f59e0b' ? 'ring-amber-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#f59e0b')"></button>
+              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
+                style="background: #ef4444"
+                [class]="accentColor() === '#ef4444' ? 'ring-red-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#ef4444')"></button>
+            </div>
+          </div>
+
+          <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+              (click)="saveAppearance()">
+              Salvar Aparência
+            </button>
+          </div>
+        </div>
+      }
+
       <!-- Danger Zone -->
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-red-200 dark:ring-red-900/30 overflow-hidden">
         <div class="p-8">
@@ -242,17 +318,27 @@ export class ConfiguracoesComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
 
-  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes'>('perfil');
+  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'aparencia'>('perfil');
   avatarPreview = signal<string | null>(null);
   showToast = signal(false);
   toastMessage = signal('');
+  currentTheme = signal<string>(localStorage.getItem('theme') || 'light');
 
   tabs = [
     { id: 'perfil' as const, label: 'Perfil' },
     { id: 'seguranca' as const, label: 'Segurança' },
     { id: 'clinica' as const, label: 'Clínica' },
     { id: 'notificacoes' as const, label: 'Notificações' },
+    { id: 'aparencia' as const, label: 'Aparência' },
   ];
+
+  themes = [
+    { id: 'light', label: 'Claro', icon: 'light_mode', description: 'Tema claro para ambientes bem iluminados' },
+    { id: 'dark', label: 'Escuro', icon: 'dark_mode', description: 'Tema escuro para reduzir cansaço visual' },
+    { id: 'system', label: 'Sistema', icon: 'contrast', description: 'Segue a preferência do seu sistema operacional' },
+  ];
+
+  accentColor = signal(localStorage.getItem('accentColor') || '#6366f1');
 
   profileForm = { name: '', email: '', phone: '', phoneIsWhatsApp: false, registration: '', bio: '' };
   passwordForm = { current: '', newPassword: '', confirm: '' };
@@ -293,6 +379,13 @@ export class ConfiguracoesComponent implements OnInit {
         ...parsed,
         address: parsed.address || this.clinicForm.address
       };
+    }
+
+    this.applyTheme(this.currentTheme());
+    const savedColor = localStorage.getItem('accentColor');
+    if (savedColor) {
+      this.accentColor.set(savedColor);
+      document.documentElement.style.setProperty('--color-primary', savedColor);
     }
   }
 
@@ -363,6 +456,33 @@ export class ConfiguracoesComponent implements OnInit {
   saveNotifications() {
     localStorage.setItem('notification_prefs', JSON.stringify(this.notificationOptions));
     this.showNotification('Preferências salvas!');
+  }
+
+  setTheme(themeId: string) {
+    this.currentTheme.set(themeId);
+    this.applyTheme(themeId);
+  }
+
+  applyTheme(theme: string) {
+    const html = document.documentElement;
+    html.classList.remove('light', 'dark');
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      html.classList.add(prefersDark ? 'dark' : 'light');
+    } else {
+      html.classList.add(theme);
+    }
+  }
+
+  setAccentColor(color: string) {
+    this.accentColor.set(color);
+    document.documentElement.style.setProperty('--color-primary', color);
+  }
+
+  saveAppearance() {
+    localStorage.setItem('theme', this.currentTheme());
+    localStorage.setItem('accentColor', this.accentColor());
+    this.toast.success('Aparência salva com sucesso');
   }
 
   showNotification(message: string) {

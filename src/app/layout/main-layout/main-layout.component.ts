@@ -91,18 +91,6 @@ import { ToastComponent } from '../../shared/components/toast.component';
             </div>
           </div>
 
-          <button class="w-full mt-4 flex items-center gap-3 p-2 text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
-            [class.justify-center]="!sidebarOpen()"
-            (click)="toggleDarkMode()"
-            [title]="isDarkMode() ? 'Modo Claro' : 'Modo Escuro'">
-            <span class="material-icons text-[18px]">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</span>
-            <span class="text-xs font-semibold whitespace-nowrap overflow-hidden transition-all duration-300"
-              [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
-              [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
-              Alternar Tema
-            </span>
-          </button>
-
           <button class="w-full mt-2 flex items-center gap-3 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all"
             [class.justify-center]="!sidebarOpen()"
             (click)="auth.logout()"
@@ -174,7 +162,7 @@ export class MainLayoutComponent implements OnInit {
     { id: 'financeiro', label: 'Financeiro', icon: 'account_balance_wallet', route: '/app/financeiro', count: signal(0) },
     { id: 'nfse', label: 'NFS-e', icon: 'receipt_long', route: '/app/financeiro/nfse', count: signal(0) },
     { id: 'documentos', label: 'Documentos', icon: 'folder_open', route: '/app/documentos', count: signal(0) },
-    { id: 'documentos-clinicos', label: 'Docs Clínicos', icon: 'clinical_notes', route: '/app/documentos-clinicos', count: signal(0) },
+    { id: 'documentos-clinicos', label: 'Docs Clínicos', icon: 'note', route: '/app/documentos-clinicos', count: signal(0) },
     { id: 'biblioteca', label: 'Biblioteca', icon: 'menu_book', route: '/app/biblioteca', count: signal(0) },
     { id: 'protocolos', label: 'Protocolos', icon: 'fact_check', route: '/app/protocolos', count: signal(0) },
     { id: 'protocolos-aba', label: 'Protocolos ABA', icon: 'psychology', route: '/app/protocolos-aba', count: signal(0) },
@@ -193,10 +181,8 @@ export class MainLayoutComponent implements OnInit {
       document.documentElement.classList.add('dark');
     }
 
-    const savedSidebar = localStorage.getItem('sidebar_open');
-    if (savedSidebar !== null) {
-      this.sidebarOpen.set(savedSidebar === 'true');
-    }
+    localStorage.setItem('sidebar_open', 'true');
+    this.sidebarOpen.set(true);
 
     this.router.events.subscribe(() => {
       this.updatePageTitle();
