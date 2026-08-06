@@ -16,6 +16,7 @@ model User {
   active        Boolean  @default(true)
   avatarUrl     String?
   phone         String?
+  phoneIsWhatsApp Boolean @default(false)
   registration  String?
   bio           String?
   clinicName    String?

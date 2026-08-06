@@ -102,14 +102,26 @@ import { ToastService } from '@shared/components/toast.component';
       @if (activeTab() === 'seguranca') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
           <div class="p-8">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Alterar Senha</h3>
+            <div class="flex items-center gap-3 mb-6">
+              <span class="material-icons text-primary text-2xl">{{ hasPassword() ? 'lock' : 'lock_open' }}</span>
+              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                {{ hasPassword() ? 'Alterar Senha' : 'Definir Senha' }}
+              </h3>
+            </div>
+            @if (!hasPassword()) {
+              <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                Sua conta foi criada com o Google e não possui senha. Defina uma para poder entrar com email e senha.
+              </p>
+            }
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Senha Atual</label>
-                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                  type="password" [(ngModel)]="passwordForm.current" placeholder="Digite sua senha atual">
-              </div>
-              <div></div>
+              @if (hasPassword()) {
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Senha Atual</label>
+                  <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                    type="password" [(ngModel)]="passwordForm.current" placeholder="Digite sua senha atual">
+                </div>
+                <div></div>
+              }
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nova Senha</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
@@ -126,7 +138,7 @@ import { ToastService } from '@shared/components/toast.component';
           <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
             <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
               (click)="changePassword()">
-              Alterar Senha
+              {{ hasPassword() ? 'Alterar Senha' : 'Definir Senha' }}
             </button>
           </div>
         </div>
@@ -323,6 +335,7 @@ export class ConfiguracoesComponent implements OnInit {
   showToast = signal(false);
   toastMessage = signal('');
   currentTheme = signal<string>(localStorage.getItem('theme') || 'light');
+  hasPassword = signal(true);
 
   tabs = [
     { id: 'perfil' as const, label: 'Perfil' },
@@ -368,6 +381,7 @@ export class ConfiguracoesComponent implements OnInit {
         registration: user.registration || '',
         bio: user.bio || '',
       };
+      this.hasPassword.set(user.hasPassword !== false);
       if (user.avatarUrl) this.avatarPreview.set(user.avatarUrl);
     }
 
@@ -435,14 +449,21 @@ export class ConfiguracoesComponent implements OnInit {
       this.toast.warning('As senhas não conferem');
       return;
     }
-    if (!this.passwordForm.current || !this.passwordForm.newPassword) {
-      this.toast.warning('Preencha todos os campos');
+    if (this.hasPassword() && !this.passwordForm.current) {
+      this.toast.warning('Digite a senha atual');
       return;
     }
-    this.api.put('/auth/password', { current: this.passwordForm.current, newPassword: this.passwordForm.newPassword }).subscribe({
+    if (!this.passwordForm.newPassword) {
+      this.toast.warning('Digite a nova senha');
+      return;
+    }
+    const payload: any = { newPassword: this.passwordForm.newPassword };
+    if (this.hasPassword()) payload.current = this.passwordForm.current;
+    this.api.put('/auth/password', payload).subscribe({
       next: () => {
         this.showNotification('Senha alterada com sucesso!');
         this.passwordForm = { current: '', newPassword: '', confirm: '' };
+        this.hasPassword.set(true);
       },
       error: () => this.toast.error('Erro ao alterar senha')
     });

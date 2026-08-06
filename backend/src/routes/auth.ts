@@ -44,7 +44,12 @@ router.post('/login', async (req, res) => {
       name: user.name, 
       email: user.email, 
       role: user.role,
-      avatarUrl: user.avatarUrl
+      avatarUrl: user.avatarUrl,
+      phone: user.phone,
+      phoneIsWhatsApp: user.phoneIsWhatsApp,
+      registration: user.registration,
+      bio: user.bio,
+      hasPassword: !!user.password
     } 
   });
 });
@@ -89,7 +94,9 @@ router.post('/register', async (req, res) => {
       id: user.id, 
       name: user.name, 
       email: user.email, 
-      role: user.role 
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+      hasPassword: !!user.password
     } 
   });
 });
@@ -115,7 +122,9 @@ router.get('/google/callback',
       name: user.name,
       email: user.email,
       role: user.role,
-      avatarUrl: user.avatarUrl
+      avatarUrl: user.avatarUrl,
+      phone: user.phone,
+      hasPassword: !!user.password
     }))}`);
   }
 );
@@ -152,6 +161,75 @@ router.post('/change-password', authenticate, async (req: any, res) => {
     where: { id: userId },
     data: { password: hashedPassword }
   });
+
+  res.json({ message: 'Senha alterada com sucesso' });
+});
+
+// Update own profile
+router.put('/profile', authenticate, async (req: any, res) => {
+  const { name, email, phone, phoneIsWhatsApp, registration, bio, avatarUrl } = req.body;
+  const userId = req.user?.id;
+
+  const data: any = {};
+  if (name !== undefined) data.name = name;
+  if (phone !== undefined) data.phone = phone;
+  if (phoneIsWhatsApp !== undefined) data.phoneIsWhatsApp = phoneIsWhatsApp;
+  if (registration !== undefined) data.registration = registration;
+  if (bio !== undefined) data.bio = bio;
+  if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
+
+  if (email !== undefined && email !== req.user.email) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing && existing.id !== userId) {
+      return res.status(400).json({ error: 'Email já cadastrado' });
+    }
+    data.email = email;
+  }
+
+  const user = await prisma.user.update({ where: { id: userId }, data });
+  res.json({
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+      phone: user.phone,
+      phoneIsWhatsApp: user.phoneIsWhatsApp,
+      registration: user.registration,
+      bio: user.bio,
+      hasPassword: !!user.password
+    }
+  });
+});
+
+// Set/change own password (accounts without password can set one without 'current')
+router.put('/password', authenticate, async (req: any, res) => {
+  const { current, currentPassword, newPassword } = req.body;
+  const password = newPassword;
+
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.user?.id } });
+  if (!user) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+
+  if (user.password) {
+    const typed = current || currentPassword;
+    if (!typed) {
+      return res.status(400).json({ error: 'Senha atual é obrigatória' });
+    }
+    const validPassword = await bcrypt.compare(typed, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Senha atual incorreta' });
+    }
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await prisma.user.update({ where: { id: user.id }, data: { password: hashedPassword } });
 
   res.json({ message: 'Senha alterada com sucesso' });
 });

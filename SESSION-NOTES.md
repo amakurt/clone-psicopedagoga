@@ -6,6 +6,37 @@
 
 ---
 
+## Sessão 06/08/2026 (Tarde)
+
+### 23. Auditoria das 10 Funcionalidades Competitivas
+- **Backend:** 13 endpoints testados via API com payloads reais — WhatsApp, Signatures (GET/POST), ABA assessments/programs, evolution/compare, consents, permissions, nfse, waiting-room, ai/plan-suggestion, guardian/dashboard — todos OK
+- **Frontend:** rotas e componentes das 10 funcionalidades conferidas (12/12); endpoints frontend casam com o backend em 8/8 fluxos de API
+
+### 24. Correções da auditoria
+- **Painel TV:** status `CHAMANDO` não era aceito pela API → `CHAMADO` (envio e exibição); `EM_ATENDIMENTO` → `EM_SESSAO`
+- **Comparativa:** alias `comparar` em `evolucoes.routes.ts` + botão "Comparar" na lista
+- **Permissões:** botão `admin_panel_settings` em `users-list` navegando para `:id/permissoes`
+- **LGPD:** link "Ver Histórico" → `/app/lgpd` (era `/app/lgpd/log` inexistente)
+
+### 25. Google OAuth (credenciais reais)
+- `.env` com Client ID/Secret do Google Cloud Console
+- Fluxo testado no navegador: escolha de conta → callback → dashboard
+- Conta criada via Google: Iarlley Oliveira (PSICOPEDAGOGO, avatar do Google)
+- Origem JS e redirect URI configurados no console
+
+### 26. Senha para contas sem senha (Google)
+- **Bugs descobertos:** `PUT /auth/profile` e `PUT /auth/password` não existiam no backend (400/404) — perfil e senha nas Configurações nunca funcionaram
+- Rotas criadas: `PUT /auth/profile` (nome/email/telefone/registro/bio) e `PUT /auth/password` (define sem senha atual se a conta não tem; exige com validação se tem)
+- `phoneIsWhatsApp` adicionado no model `User`
+- `hasPassword` em login/registro/callback Google
+- Aba Segurança adaptativa: "Definir Senha" vs "Alterar Senha"
+- Testado: usuário Google definiu senha e logou com email+senha
+
+### 27. Observação de segurança
+- `backend/.env` **rastreado no GitHub** por decisão do usuário (repo privado, único dono) para continuar o trabalho em outro PC; `.env.example` criado como modelo
+
+---
+
 ## Sessão 06/08/2026 (Manhã)
 
 ### 16. Tooltips globais nos ícones

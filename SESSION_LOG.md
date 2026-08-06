@@ -4,6 +4,45 @@
 
 ---
 
+## Sessão 6 - 06/08/2026 (Tarde)
+
+### O que foi feito
+
+#### 1. Auditoria das 10 Funcionalidades Competitivas
+- **Backend:** todos os endpoints das 10 funcionalidades testados via API (WhatsApp, Assinatura, ABA, Evolução comparativa, Consents, Permissões, NFS-e, Sala de Espera, Guardian, IA) — todos OK (200/201 com payloads corretos)
+- **Frontend:** rotas e componentes verificados (12/12 rotas registradas, endpoints casam com o backend)
+
+#### 2. Bugs corrigidos na auditoria
+- **Painel TV** (`tv-sala-espera`): status `CHAMANDO`/`EM_ATENDIMENTO` que a API rejeita → `CHAMADO`/`EM_SESSAO` (envio e exibição)
+- **Evolução Comparativa:** rota `comparar` adicionada (além de `comparativa`) + botão "Comparar" na lista de evoluções (página era inacessível)
+- **Permissões:** botão `admin_panel_settings` por usuário em `users-list` (tela existia sem acesso)
+- **LGPD:** link "Ver Histórico" corrigido de `/app/lgpd/log` → `/app/lgpd`
+
+#### 3. Google OAuth configurado e testado
+- Credenciais reais (Client ID + Secret) adicionadas ao `backend/.env`
+- Fluxo completo validado: botão "Continuar com Google" → escolha de conta → callback → dashboard
+- Cria usuário com role `PSICOPEDAGOGO`, avatar do Google e `SocialAccount` (não cria duplicata)
+- Usuário criado: Iarlley Oliveira (iarlley.oliveira@gmail.com)
+- Google Console: origem JS `http://localhost:4200` e redirect `http://localhost:3000/api/auth/google/callback`
+
+#### 4. Senha para contas criadas via Google
+- **Bug novo também encontrado:** `PUT /auth/profile` e `PUT /auth/password` não existiam (404 no frontend) — "Salvar Perfil/Alterar Senha" nas Configurações nunca funcionaram
+- Criadas rotas `PUT /auth/profile` (perfil) e `PUT /auth/password` (define senha sem senha atual quando a conta não tem; exige senha atual quando tem)
+- Payloads de login/registro/Google incluem `hasPassword`
+- `phoneIsWhatsApp` adicionado ao model `User` + `db push`
+- Frontend: aba Segurança adaptativa — "Definir Senha" (contas Google) vs "Alterar Senha" (com senha atual)
+
+#### 5. Segurança e GitHub
+- `backend/.env` **mantido rastreado no GitHub** (repo privado, apenas o dono) para trabalhar em outro PC
+- `backend/.env.example` criado como referência
+
+### Commits
+- `081dc5a` - fix: auditoria das 10 funcionalidades
+- `6d35d0a` - feat: Google OAuth configurado + .env fora do versionamento (revertido parcialmente — .env voltou) 
+- Commit desta sessão: rotas de perfil/senha + definição de senha para contas Google
+
+---
+
 ## Sessão 6 - 06/08/2026 (Manhã)
 
 ### O que foi feito
