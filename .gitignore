@@ -10,3 +10,5 @@ backend/dist/
 .agent/
 
 *.log
+
+.env
