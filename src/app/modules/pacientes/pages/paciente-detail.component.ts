@@ -92,7 +92,7 @@ import { PacientesService } from '../services/pacientes.service';
               <div class="space-y-3">
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-500">Escola</span>
-                  <span class="text-sm font-medium text-gray-900">{{ paciente()?.school || '—' }}</span>
+                  <span class="text-sm font-medium text-gray-900">{{ paciente()?.school?.name || paciente()?.school || '—' }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-500">Série</span>
@@ -106,35 +106,51 @@ import { PacientesService } from '../services/pacientes.service';
               <div class="space-y-3">
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-500">Nome</span>
-                  <span class="text-sm font-medium text-gray-900">{{ paciente()?.responsavel?.name || paciente()?.guardianName || '—' }}</span>
+                  <span class="text-sm font-medium text-gray-900">{{ paciente()?.responsible?.name || paciente()?.guardianName || '—' }}</span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-sm text-gray-500">Telefone</span>
-                  <span class="text-sm font-medium text-gray-900">{{ paciente()?.responsavel?.phone || paciente()?.guardianPhone || '—' }}</span>
+                  <span class="text-sm font-medium text-gray-900">{{ paciente()?.responsible?.phones || paciente()?.responsible?.phone || paciente()?.guardianPhone || '—' }}</span>
                 </div>
+                @if (paciente()?.responsible?.relationship) {
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Parentesco</span>
+                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.responsible?.relationship }}</span>
+                  </div>
+                }
+                @if (paciente()?.responsible?.email) {
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Email</span>
+                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.responsible?.email }}</span>
+                  </div>
+                }
               </div>
             </div>
 
-            @if (paciente()?.address?.street) {
+            @if (paciente()?.street) {
               <div class="bg-white rounded-2xl shadow-sm p-6">
                 <h3 class="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-4">Endereço</h3>
                 <div class="space-y-3">
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-500">Rua</span>
-                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.address?.street }}, {{ paciente()?.address?.number }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.street }}, {{ paciente()?.number }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-500">Bairro</span>
-                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.address?.neighborhood }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.neighborhood }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-sm text-gray-500">Cidade</span>
+                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.city }}{{ paciente()?.state ? '/' + paciente()?.state : '' }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-sm text-gray-500">CEP</span>
-                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.address?.cep }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ paciente()?.cep }}</span>
                   </div>
-                  @if (paciente()?.address?.complement) {
+                  @if (paciente()?.complement) {
                     <div class="flex justify-between">
                       <span class="text-sm text-gray-500">Complemento</span>
-                      <span class="text-sm font-medium text-gray-900">{{ paciente()?.address?.complement }}</span>
+                      <span class="text-sm font-medium text-gray-900">{{ paciente()?.complement }}</span>
                     </div>
                   }
                 </div>

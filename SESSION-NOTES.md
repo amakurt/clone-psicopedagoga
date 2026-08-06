@@ -1,8 +1,43 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 05/08/2026 (Atualizado)
+## Data: 06/08/2026
 
 ## Status: 100% Implementado + 10 Funcionalidades Competitivas + Painel TV + Correções de Rotas
+
+---
+
+## Sessão 06/08/2026 (Manhã)
+
+### 16. Tooltips globais nos ícones
+- Sistema global em `app.component.ts` com evento delegado em `.material-icons`
+- Mapa `ICON_LABELS` (rótulos em português) + fallback que capitaliza o nome do ícone
+- CSS em `styles.scss` (posição, fundo escuro, fade)
+
+### 17. Cadastro de Responsável corrigido
+- **Prisma:** adicionados `city`, `state` e `phoneIsWhatsApp` nos models `Responsible` e `Paciente`
+- **Backend:** POST/PUT com `pacienteIds` para vincular pacientes existentes
+- **Frontend:** load do endereço na edição (campos planos do Prisma); toast de sucesso no save
+
+### 18. Cadastro de Paciente corrigido
+- **Backend:** POST/PUT mapeiam `responsavelId` → `responsibleId`; GET `/api/pacientes/:id` inclui `responsible` e `school`
+- **Frontend:** payload sem vetores de relações (`prontuarios`, `anamneses`, etc.); JSON quando não há avatar
+
+### 19. Páginas de Detalhe corrigidas
+- `responsavel-detail`: endereço em campos planos + badge WhatsApp
+- `paciente-detail`: `responsible.name` e `school.name` (antes usava `responsavel` inexistente)
+
+### 20. Métricas de estrelas no formulário de Evolução
+- Campos `focus`, `engagement`, `skillProgress`, `behavior` (1–5) com estrelas clicáveis
+- Backend zod: `clinicalEvolution`/`conduct` persistidos; `activities`/`observations` opcionais; PUT com `validate()`
+- Edição: load sanitizado + data em `YYYY-MM-DD`
+
+### 21. Contagem de pacientes nas Escolas
+- **Problema:** frontend lia `patientCount` (nulo no banco); API retorna array `patients`
+- **Correção:** `e.patients?.length || e.patientCount || 0` em `escolas-list` e `escola-detail`
+
+### 22. Correções diversas
+- Busca de CEP (ViaCEP): `authInterceptor` não envia mais `Authorization` para URLs fora de `/api/`
+- Evolução mock criada para Gabriel Carvalho Lima via `session-records`
 
 ---
 

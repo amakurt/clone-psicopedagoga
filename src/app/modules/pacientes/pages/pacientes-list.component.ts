@@ -94,7 +94,7 @@ import { ToastService } from '@shared/components/toast.component';
                       </div>
                     </td>
                     <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ p.birthDate ? calculateAge(p.birthDate) + ' anos' : '—' }}</td>
-                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ p.school || '—' }}</td>
+                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ p.school?.name || p.school || '—' }}</td>
                     <td class="px-6 py-4">
                       <div class="flex items-center gap-2">
                         <code class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-mono text-slate-700 dark:text-slate-300">{{ p.accessCode || '—' }}</code>

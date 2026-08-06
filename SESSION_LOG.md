@@ -1,6 +1,50 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 05 de Agosto de 2026
+## Última Atualização: 06 de Agosto de 2026
+
+---
+
+## Sessão 6 - 06/08/2026 (Manhã)
+
+### O que foi feito
+
+#### 1. Correção Busca de CEP (ViaCEP)
+- `authInterceptor` enviava header `Authorization` para chamadas externas
+- **Correção:** token só é adicionado quando a URL contém `/api/`
+
+#### 2. Cadastro de Responsável corrigido
+- Schema Prisma não tinha `city`, `state` e `phoneIsWhatsApp` → campos adicionados nos models `Responsible` e `Paciente`
+- Backend POST/PUT tratava `pacienteIds` mas não persistia os vínculos corretamente
+- Frontend: carregamento de endereço na edição (Prisma retorna campos planos, não objeto `address`)
+- Toast de sucesso no save
+
+#### 3. Páginas de Detalhe corrigidas
+- `responsavel-detail`: exibe endereço (campos planos) + WhatsApp
+- `paciente-detail`: usa `responsible.name` e `school.name` (GET `/api/pacientes/:id` agora inclui as relações `responsible` e `school`)
+
+#### 4. Cadastro de Paciente corrigido
+- Não envia mais vetores de relações (`prontuarios`, `anamneses`, etc.) no payload
+- Envia JSON quando não há avatar (evita erro de multipart no backend)
+- Mapeamento `responsavelId` (frontend) ↔ `responsibleId` (Prisma)
+
+#### 5. Evolução de exemplo
+- Criado registro mock de evolução para Gabriel Carvalho Lima via `session-records`
+
+#### 6. Tooltips globais nos ícones
+- Sistema em `app.component.ts` (evento delegado em `.material-icons`) com CSS em `styles.scss`
+- Mapa de rótulos em português (`ICON_LABELS`) com fallback de capitalização do nome
+
+#### 7. Métricas de estrelas no formulário de Evolução
+- Adicionadas 4 métricas (Foco, Engajamento, Progresso, Comportamento) com seleção por estrelas 1–5
+- Backend: `clinicalEvolution` e `conduct` agora persistidos no schema zod; `activities`/`observations` opcionais; PUT agora valida com `validate()`
+- Load na edição sanitizado (evita enviar objeto `paciente` ao Prisma); data convertida para `YYYY-MM-DD`
+
+#### 8. Contagem de pacientes nas Escolas
+- Frontend mostrava `patientCount` (campo do banco sempre nulo); a API retorna o array `patients`
+- **Correção:** `e.patients?.length || e.patientCount || 0` na lista (`escolas-list`) e no detail (`escola-detail`)
+
+### Commits
+- Commit desta sessão
 
 ---
 

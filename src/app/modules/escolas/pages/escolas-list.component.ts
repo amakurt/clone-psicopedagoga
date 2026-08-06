@@ -57,7 +57,7 @@ import { EscolasService } from '../services/escolas.service';
                   </div>
                   <div class="flex items-center gap-4">
                     <div class="text-right hidden sm:block">
-                      <p class="text-sm text-gray-500 dark:text-slate-400">{{ e.patientCount || 0 }} pacientes</p>
+                      <p class="text-sm text-gray-500 dark:text-slate-400">{{ e.patients?.length || e.patientCount || 0 }} pacientes</p>
                       <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold"
                         [class]="e.status === 'Ativa' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'">
                         {{ e.status }}

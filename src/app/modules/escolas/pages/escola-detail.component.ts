@@ -52,7 +52,7 @@ import { EscolasService } from '../services/escolas.service';
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-slate-400">Pacientes</p>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white">{{ item()?.patientCount || 0 }}</p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white">{{ item()?.patients?.length || item()?.patientCount || 0 }}</p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-slate-400">Telefone</p>

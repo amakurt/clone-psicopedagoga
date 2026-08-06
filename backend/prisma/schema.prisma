@@ -65,6 +65,9 @@ model Paciente {
   neighborhood  String?
   number        String?
   complement    String?
+  city          String?
+  state         String?
+  phoneIsWhatsApp Boolean @default(false)
   responsibleId String?
   schoolId      String?
   createdAt     DateTime @default(now())
@@ -135,6 +138,7 @@ model Responsible {
   cpf          String?
   rg           String?
   phones       String?
+  phoneIsWhatsApp Boolean @default(false)
   email        String?
   avatarUrl    String?
   cep          String?
@@ -142,6 +146,8 @@ model Responsible {
   neighborhood String?
   number       String?
   complement   String?
+  city         String?
+  state        String?
   userId       String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

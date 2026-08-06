@@ -13,6 +13,7 @@ const responsibleSchema = z.object({
   cpf: z.string().optional(),
   rg: z.string().optional(),
   phones: z.string().optional(),
+  phoneIsWhatsApp: z.boolean().optional(),
   email: z.string().optional(),
   avatarUrl: z.string().optional(),
   cep: z.string().optional(),
@@ -20,7 +21,10 @@ const responsibleSchema = z.object({
   neighborhood: z.string().optional(),
   number: z.string().optional(),
   complement: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
   userId: z.string().optional(),
+  pacienteIds: z.array(z.string()).optional(),
 });
 
 router.get('/', async (req, res) => {
@@ -38,12 +42,30 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', validate(responsibleSchema), async (req, res) => {
-  const responsible = await prisma.responsible.create({ data: req.body });
+  const { pacienteIds, patients, ...data } = req.body;
+  const responsible = await prisma.responsible.create({
+    data: {
+      ...data,
+      ...(pacienteIds?.length ? {
+        patients: { connect: pacienteIds.map((id: string) => ({ id })) }
+      } : {})
+    }
+  });
   res.status(201).json(responsible);
 });
 
 router.put('/:id', async (req, res) => {
-  const responsible = await prisma.responsible.update({ where: { id: req.params.id }, data: req.body });
+  const { pacienteIds, patients, ...data } = req.body;
+  const responsible = await prisma.responsible.update({
+    where: { id: req.params.id },
+    data: {
+      ...data,
+      ...(pacienteIds !== undefined ? {
+        patients: { set: pacienteIds.map((id: string) => ({ id })) }
+      } : {})
+    },
+    include: { patients: true }
+  });
   res.json(responsible);
 });
 

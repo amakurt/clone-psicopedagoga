@@ -267,3 +267,30 @@ select.form-control { appearance: auto; cursor: pointer; }
   .info-grid { grid-template-columns: 1fr; }
   .header { flex-direction: column; }
 }
+
+/* Icon Tooltip */
+.icon-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #19212E;
+  color: #FFFFFF;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.icon-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #19212E;
+}

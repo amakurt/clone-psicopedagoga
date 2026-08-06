@@ -341,12 +341,21 @@ export class PacienteFormComponent implements OnInit {
       this.service.get(this.id).subscribe((res: any) => {
         this.form = {
           ...res,
-          address: res.address || { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' }
+          responsavelId: res.responsibleId || '',
+          address: {
+            cep: res.cep || '',
+            street: res.street || '',
+            neighborhood: res.neighborhood || '',
+            number: res.number || '',
+            complement: res.complement || '',
+            city: res.city || '',
+            state: res.state || ''
+          }
         };
         if (res.avatar) this.avatarPreview.set(res.avatar);
-        if (res.responsavelId && res.responsavel) {
-          this.selectedResponsavel.set(res.responsavel);
-          this.responsavelSearch = res.responsavel.name;
+        if (res.responsibleId && res.responsible) {
+          this.selectedResponsavel.set(res.responsible);
+          this.responsavelSearch = res.responsible.name;
         }
       });
     } else {
@@ -472,19 +481,45 @@ export class PacienteFormComponent implements OnInit {
     if (!this.form.name) return this.toast.warning('Nome é obrigatório');
     this.saving.set(true);
 
-    const formData = new FormData();
-    Object.keys(this.form).forEach(key => {
-      if (key === 'address') {
-        formData.append('address', JSON.stringify(this.form.address));
-      } else {
-        formData.append(key, this.form[key]);
-      }
-    });
-    if (this.avatarFile) formData.append('avatar', this.avatarFile);
+    const data: any = {
+      name: this.form.name,
+      email: this.form.email || '',
+      phone: this.form.phone || '',
+      phoneIsWhatsApp: this.form.phoneIsWhatsApp || false,
+      cpf: this.form.cpf || '',
+      birthDate: this.form.birthDate || '',
+      grade: this.form.grade || '',
+      notes: this.form.notes || '',
+      accessCode: this.form.accessCode || '',
+      responsavelId: this.form.responsavelId || '',
+      cep: this.form.address?.cep || '',
+      street: this.form.address?.street || '',
+      neighborhood: this.form.address?.neighborhood || '',
+      number: this.form.address?.number || '',
+      complement: this.form.address?.complement || '',
+      city: this.form.address?.city || '',
+      state: this.form.address?.state || '',
+    };
 
-    const obs = this.isEdit ? this.service.update(this.id, formData) : this.service.create(formData);
+    let obs;
+    if (this.avatarFile) {
+      const formData = new FormData();
+      Object.keys(data).forEach(key => {
+        if (data[key] !== undefined && data[key] !== null) {
+          formData.append(key, String(data[key]));
+        }
+      });
+      formData.append('avatar', this.avatarFile);
+      obs = this.isEdit ? this.service.update(this.id, formData) : this.service.create(formData);
+    } else {
+      obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
+    }
+
     obs.subscribe({
-      next: () => this.router.navigate(['/app/pacientes']),
+      next: () => {
+        this.toast.success(this.isEdit ? 'Paciente atualizado com sucesso!' : 'Paciente criado com sucesso!');
+        this.router.navigate(['/app/pacientes']);
+      },
       error: () => { this.saving.set(false); this.toast.error('Erro ao salvar'); }
     });
   }

@@ -14,9 +14,11 @@ const sessionRecordSchema = z.object({
   date: z.string().min(1),
   objective: z.string().optional(),
   summary: z.string().min(1),
-  activities: z.string().min(1),
+  activities: z.string().optional(),
   instruments: z.string().optional(),
-  observations: z.string().min(1),
+  observations: z.string().optional(),
+  clinicalEvolution: z.string().optional(),
+  conduct: z.string().optional(),
   sharedWithGuardian: z.boolean().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
@@ -46,8 +48,9 @@ router.post('/', validate(sessionRecordSchema), async (req, res) => {
   res.status(201).json(record);
 });
 
-router.put('/:id', async (req, res) => {
-  const record = await prisma.sessionRecord.update({ where: { id: req.params.id }, data: req.body });
+router.put('/:id', validate(sessionRecordSchema), async (req, res) => {
+  const id = String(req.params.id);
+  const record = await prisma.sessionRecord.update({ where: { id }, data: req.body });
   res.json(record);
 });
 

@@ -304,7 +304,16 @@ export class ResponsavelFormComponent implements OnInit {
           ...this.form,
           ...res,
           phone: res.phones || res.phone || '',
-          address: res.address || this.form.address
+          phoneIsWhatsApp: res.phoneIsWhatsApp || false,
+          address: {
+            cep: res.cep || '',
+            street: res.street || '',
+            neighborhood: res.neighborhood || '',
+            number: res.number || '',
+            complement: res.complement || '',
+            city: res.city || '',
+            state: res.state || ''
+          }
         };
         if (res.patients) {
           this.selectedPacientes.set(res.patients);
@@ -390,6 +399,7 @@ export class ResponsavelFormComponent implements OnInit {
     const data = {
       ...this.form,
       phones: this.form.phone,
+      phoneIsWhatsApp: this.form.phoneIsWhatsApp,
       cep: this.form.address.cep,
       street: this.form.address.street,
       neighborhood: this.form.address.neighborhood,
@@ -401,11 +411,13 @@ export class ResponsavelFormComponent implements OnInit {
     };
     delete data.address;
     delete data.phone;
-    delete data.phoneIsWhatsApp;
 
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
-      next: () => this.router.navigate(['/app/responsaveis']),
+      next: () => {
+        this.toast.success(this.isEdit ? 'Responsável atualizado com sucesso!' : 'Responsável criado com sucesso!');
+        this.router.navigate(['/app/responsaveis']);
+      },
       error: () => {
         this.saving.set(false);
         this.toast.error('Erro ao salvar responsável');
