@@ -18,11 +18,18 @@ declare var html2pdf: any;
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">Evoluções</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Registros de sessões</p>
         </div>
-        <a routerLink="/app/evolucoes/novo"
-          class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
-          <span class="material-icons text-[18px]">add</span>
-          <span>Nova Evolução</span>
-        </a>
+        <div class="flex gap-3">
+          <a routerLink="/app/evolucoes/comparar"
+            class="flex items-center gap-2 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 hover:ring-primary/50 px-6 py-3 rounded-2xl font-bold text-sm transition-all active:scale-95">
+            <span class="material-icons text-[18px]">compare_arrows</span>
+            <span>Comparar</span>
+          </a>
+          <a routerLink="/app/evolucoes/novo"
+            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+            <span class="material-icons text-[18px]">add</span>
+            <span>Nova Evolução</span>
+          </a>
+        </div>
       </div>
 
       <!-- Table -->

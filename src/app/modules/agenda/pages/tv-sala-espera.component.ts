@@ -108,13 +108,13 @@ import { ApiService } from '@core/services/api.service';
                               AGUARDANDO
                             </span>
                             <p class="text-xs text-slate-500 mt-1">{{ item.waitTime }}</p>
-                          } @else if (item.status === 'CHAMANDO') {
+                          } @else if (item.status === 'CHAMADO') {
                             <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-xs font-bold animate-pulse">
-                              CHAMANDO
+                              CHAMADO
                             </span>
-                          } @else if (item.status === 'EM_ATENDIMENTO') {
+                          } @else if (item.status === 'EM_SESSAO') {
                             <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold">
-                              EM ATENDIMENTO
+                              EM SESSÃO
                             </span>
                           }
                         </div>
@@ -185,7 +185,7 @@ export class TvSalaEsperaComponent implements OnInit, OnDestroy {
         })));
         
         // Auto-call next patient
-        const nextPatient = data.find((item: any) => item.status === 'CHAMANDO');
+        const nextPatient = data.find((item: any) => item.status === 'CHAMADO');
         if (nextPatient) {
           this.calling.set(nextPatient);
         } else if (data.length > 0 && !this.calling()) {
@@ -209,7 +209,7 @@ export class TvSalaEsperaComponent implements OnInit, OnDestroy {
   }
 
   callNext(patient: any) {
-    this.api.put(`/waiting-room/${patient.id}/status`, { status: 'CHAMANDO' }).subscribe({
+    this.api.put(`/waiting-room/${patient.id}/status`, { status: 'CHAMADO' }).subscribe({
       next: () => {
         this.calling.set(patient);
         // Play notification sound

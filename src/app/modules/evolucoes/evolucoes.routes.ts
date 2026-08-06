@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 export default [
   { path: '', loadComponent: () => import('./pages/evolucoes-list.component').then(m => m.EvolucoesListComponent) },
+  { path: 'comparar', loadComponent: () => import('./pages/evolucao-comparativa.component').then(m => m.EvolucaoComparativaComponent) },
   { path: 'comparativa', loadComponent: () => import('./pages/evolucao-comparativa.component').then(m => m.EvolucaoComparativaComponent) },
   { path: 'novo', loadComponent: () => import('./pages/evolucao-form.component').then(m => m.EvolucaoFormComponent) },
   { path: ':id', loadComponent: () => import('./pages/evolucao-detail.component').then(m => m.EvolucaoDetailComponent) },

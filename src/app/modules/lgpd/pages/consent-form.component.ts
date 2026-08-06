@@ -145,7 +145,7 @@ declare var html2pdf: any;
             <span>Registrar Consentimento</span>
           </button>
 
-          <a routerLink="/app/lgpd/log" class="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all">
+          <a routerLink="/app/lgpd" class="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all">
             <span class="material-icons text-[18px]">history</span>
             <span>Ver Histórico</span>
           </a>

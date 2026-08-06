@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { UsersService } from '../services/users.service';
 import { User } from '../../../core/models';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
@@ -14,7 +15,7 @@ import { ToastService } from '@shared/components/toast.component';
 @Component({
   selector: 'app-users-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatTableModule, MatChipsModule, ConfirmModalComponent],
+  imports: [CommonModule, RouterModule, MatCardModule, MatButtonModule, MatIconModule, MatTableModule, MatChipsModule, MatTooltipModule, ConfirmModalComponent],
   template: `
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
@@ -59,6 +60,9 @@ import { ToastService } from '@shared/components/toast.component';
               <td mat-cell *matCellDef="let user">
                 <button mat-icon-button [routerLink]="[user.id, 'editar']">
                   <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button [routerLink]="[user.id, 'permissoes']" matTooltip="Permissões">
+                  <mat-icon>admin_panel_settings</mat-icon>
                 </button>
                 <button mat-icon-button color="warn" (click)="confirmDelete(user.id)">
                   <mat-icon>delete</mat-icon>
