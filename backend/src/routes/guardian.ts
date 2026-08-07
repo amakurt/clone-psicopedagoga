@@ -345,6 +345,32 @@ router.post('/chat', async (req, res) => {
   res.status(201).json(chatMessage);
 });
 
+// Notifica a equipe e tenta enviar WhatsApp (best-effort) sobre um novo pedido
+async function notifyStaffOnAppointmentRequest(responsibleName: string, patientName: string, appointment: any) {
+  const staff = await prisma.user.findMany({
+    where: { active: true, role: { in: ['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'] } }
+  });
+
+  const title = 'Nova solicitação de agendamento';
+  const message = `${responsibleName} solicitou agendamento para ${patientName} (${appointment.date} ${appointment.startTime})`;
+
+  await prisma.notification.createMany({
+    data: staff.map(u => ({ userId: u.id, title, message, type: 'appointment' }))
+  });
+
+  const { sendWhatsAppMessage } = await import('./whatsapp');
+
+  for (const u of staff) {
+    if (!u.phone || !u.phoneIsWhatsApp) continue;
+    try {
+      await sendWhatsAppMessage(u.phone, `🗓️ ${title}: ${message}`);
+      console.log(`[WHATSAPP] Notificação enviada para ${u.name} (${u.phone})`);
+    } catch (error: any) {
+      console.warn(`[WHATSAPP] Falha ao notificar ${u.name}: ${error.message}`);
+    }
+  }
+}
+
 // Request new appointment
 router.post('/appointments/request', async (req, res) => {
   const userId = req.user?.id;
@@ -370,6 +396,8 @@ router.post('/appointments/request', async (req, res) => {
       autorId: userId
     }
   });
+
+  await notifyStaffOnAppointmentRequest(responsible.name, patient.name, appointment);
 
   res.status(201).json(appointment);
 });

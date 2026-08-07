@@ -43,6 +43,7 @@ model User {
   abaPrograms        ABAProgram[]
   nfseIssued         Nfse[]
   verificationCodes  VerificationCode[]
+  documentRequests   DocumentRequest[]
 }
 
 model VerificationCode {
@@ -110,6 +111,7 @@ model Paciente {
   whatsappLogs         WhatsAppLog[]
   abaAssessments       ABAAssessment[]
   abaPrograms          ABAProgram[]
+  documentRequests     DocumentRequest[]
   nfse                 Nfse[]
   waitingRoom          WaitingRoom[]
   consentLogs          ConsentLog[]
@@ -169,7 +171,30 @@ model Responsible {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  patients Paciente[]
+  patients         Paciente[]
+  documentRequests DocumentRequest[]
+}
+
+model DocumentRequest {
+  id             String    @id @default(cuid())
+  professionalId String
+  patientId      String?
+  responsibleId  String?
+  title          String
+  description    String?
+  templateJson   String
+  token          String    @unique
+  status         String    @default("PENDENTE") // PENDENTE | RESPONDIDO | EXPIRADO | CANCELADO
+  dueDate        DateTime?
+  sentVia        String?   // EMAIL | WHATSAPP | LINK
+  submittedAt    DateTime?
+  answersJson    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  professional User         @relation(fields: [professionalId], references: [id])
+  paciente     Paciente?    @relation(fields: [patientId], references: [id])
+  responsible  Responsible? @relation(fields: [responsibleId], references: [id])
 }
 
 model School {

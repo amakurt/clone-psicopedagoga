@@ -139,6 +139,37 @@ async function invalidateVerificationCodes(userId: string, type: string) {
   });
 }
 
+// Vincula/cria o registro de Responsible para usuários com papel RESPONSAVEL
+async function ensureResponsibleForUser(user: any) {
+  if (user.role !== 'RESPONSAVEL') return;
+
+  const linked = await prisma.responsible.findFirst({ where: { userId: user.id } });
+  if (linked) return;
+
+  const byEmail = user.email
+    ? await prisma.responsible.findFirst({ where: { email: user.email } })
+    : null;
+
+  if (byEmail) {
+    await prisma.responsible.update({
+      where: { id: byEmail.id },
+      data: { userId: user.id },
+    });
+    return;
+  }
+
+  await prisma.responsible.create({
+    data: {
+      name: user.name,
+      relationship: 'Responsável',
+      email: user.email || null,
+      phones: user.phone || null,
+      phoneIsWhatsApp: !!user.phone,
+      userId: user.id,
+    },
+  });
+}
+
 // Local login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -202,6 +233,8 @@ router.post('/register', async (req, res) => {
       active: false,
     }
   });
+
+  await ensureResponsibleForUser(user);
 
   const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
   const channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');

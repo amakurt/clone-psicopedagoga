@@ -35,6 +35,7 @@ import permissionsRoutes from './permissions';
 import nfseRoutes from './nfse';
 import waitingRoomRoutes from './waiting-room';
 import aiSuggestionsRoutes from './ai-suggestions';
+import documentRequestsRoutes from './document-requests';
 
 const router = Router();
 
@@ -74,5 +75,6 @@ router.use('/permissions', permissionsRoutes);
 router.use('/nfse', nfseRoutes);
 router.use('/waiting-room', waitingRoomRoutes);
 router.use('/ai', aiSuggestionsRoutes);
+router.use('/document-requests', documentRequestsRoutes);
 
 export default router;

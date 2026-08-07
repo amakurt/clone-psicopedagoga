@@ -8,6 +8,7 @@ export const routes: Routes = [
   { path: 'auth/verify', loadComponent: () => import('./modules/auth/pages/verify/verify-account.component').then(m => m.VerifyAccountComponent) },
   { path: 'auth/recuperar-senha', loadComponent: () => import('./modules/auth/pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent) },
   { path: 'auth/callback', loadComponent: () => import('./modules/auth/pages/callback/auth-callback.component').then(m => m.AuthCallbackComponent) },
+  { path: 'formulario/:token', loadComponent: () => import('./modules/formulario/formulario.component').then(m => m.PublicFormComponent) },
   {
     path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),
@@ -55,6 +56,7 @@ export const routes: Routes = [
       { path: 'planos', loadChildren: () => import('./modules/planos/planos.routes').then(m => m.default) },
       { path: 'documentos-clinicos', loadChildren: () => import('./modules/documentos-clinicos/documentos-clinicos.routes').then(m => m.default) },
       { path: 'whatsapp', loadChildren: () => import('./modules/whatsapp/whatsapp.routes').then(m => m.default) },
+      { path: 'solicitacoes', loadChildren: () => import('./modules/solicitacoes/solicitacoes.routes').then(m => m.default) },
       { 
         path: 'users', 
         loadChildren: () => import('./modules/users/users.routes').then(m => m.default),

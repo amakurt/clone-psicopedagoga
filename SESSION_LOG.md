@@ -4,6 +4,39 @@
 
 ---
 
+## Sessão 8 - 07/08/2026 (Sexta, Tarde)
+
+### O que foi feito
+
+#### 1. Solicitações de Formulário para Responsáveis (links públicos)
+- Novo model `DocumentRequest` + `db push` + schema raiz sincronizado
+- Profissional monta formulário com campos dinâmicos (texto, texto longo, número, data, lista, escolha única, checkbox)
+- Sistema gera **link público único** enviado por email (SMTP Gmail) ou WhatsApp, ou copiado manualmente
+- Responsável preenche **sem login** em `/formulario/:token`
+- Profissional vê respostas e exporta PDF (html2pdf)
+
+#### 2. Rotas backend (`/api/document-requests`)
+- Públicas (sem auth): `GET /public/:token`, `POST /public/:token/submit`
+- Autenticadas: `GET/`, `GET/:id`, `POST/`, `POST/:id/resend`, `DELETE/:id`
+- Token de 20 bytes; 1 resposta por formulário (409 no duplo); expiração por dueDate
+
+#### 3. Frontend
+- Módulo `/app/solicitacoes`: lista (filtros por status), `novo` (construtor de campos), `:id` (respostas + link copiável + reenviar + PDF)
+- Página pública `/formulario/:token` (especialista, valida campos obrigatórios, tela de sucesso)
+- Menu lateral: novo item "Solicitações"
+
+#### 4. Bugs corrigidos no desenvolvimento
+- `sentVia` do Prisma x `sendVia` no código (envio por email retornava undefined)
+- Ajustes de template Angular (acesso por índice em Record para status colors)
+
+#### 5. Testes completos
+- Criar → GET público → submit → 409 no duplo → detalhe com respostas → resend por EMAIL (Gmail real OK)
+
+### Commits
+- (a commitar)
+
+---
+
 ## Sessão 7 - 07/08/2026 (Sexta)
 
 ### O que foi feito

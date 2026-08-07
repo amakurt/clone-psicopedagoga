@@ -2,11 +2,63 @@
 
 ## Data: 07/08/2026
 
-## Status: 100% Implementado + Verificação de Conta (email/WhatsApp) + Recuperação de Senha
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado
 
 ---
 
-## Sessão 07/08/2026 (Sexta)
+## Sessão 07/08/2026 (Sexta) — Parte 3
+
+### 30. Cadastro RESPONSAVEL gera registro de Responsável (vínculo)
+- **Problema:** usuário que se cadastra com papel `RESPONSAVEL` criava só o `User`; a lista de Responsáveis e o vínculo por código de acesso lêem a tabela `Responsible` → não aparecia no dashboard
+- **Correção:** helper `ensureResponsibleForUser()` em `auth.ts` — no registro com papel RESPONSAVEL vincula por email a um `Responsible` existente ou cria um novo (nome, email, telefone, userId)
+- **Backfill:** script pontual criou o registro para usuário já existente (Arley) — `GET /api/responsaveis` voltou a listá-lo com `userId` ligado
+
+### 31. Bloqueio de e-mails fictícios (evita bounce no SMTP real)
+- **Problema:** e-mails com dados fictícios (ex: `@email.com`) iam pro Gmail real → `Mail Delivery Subsystem` com bounce de volta ao remetente
+- **Correção:** `isFakeEmail()` em `lib/email.ts` detecta domínios fictícios (`email.com`, `example.com`, `test.com`) e local-parts com `test/fake/demo/exemplo` — nesses casos só loga no console, não envia
+- **Config:** `SMTP_FAKE_DOMAINS` no `.env` (documentado no `.env.example`) para adicionar domínios
+- **Validação:** `patricia.rocha@email.com` loga; `@gmail.com` envia normalmente
+
+### 32. Agenda — Solicitação de agendamento do RESPONSAVEL notifica equipe + WhatsApp
+- **Problema:** `POST /guardian/appointments/request` (usado pelo portal do responsável) não criava notificação — admin não ficava sabendo
+- **Correção:** `notifyStaffOnAppointmentRequest()` em `guardian.ts` — cria `Notification` (tipo appointment) para toda a equipe ativa (GESTOR, PROFISSIONAL, PSICOPEDAGOGO, SECRETARIA) + WhatsApp best-effort via `sendWhatsAppMessage` para quem tiver `phoneIsWhatsApp`
+- Agendamento continua PENDENTE → aparece em âmbar na Agenda (com contador no menu)
+- **Retroativo:** pedido já pendente do Arley ganhou notificações para a equipe
+
+### 33. WhatsApp — Evolution API real + Docker (Colima)
+- Instalado `colima`, `docker`, `docker-compose` via Homebrew (`~/.docker/config.json` com cliPluginsExtraDirs)
+- Stack `evolution-api/docker-compose.yml` (imagem oficial `evoapicloud/evolution-api:v2.3.7` + Postgres 16 + Redis 7) na porta 8080
+- Instância `edupsych` com `AUTHENTICATION_API_KEY=edupsych-localtest-apikey-2026`
+- **Pareamento:** WhatsApp bloqueou QR por limite de aparelhos → desvincular um "Aparelho conectado" no celular e escanear de novo resolveu
+- Config no app: URL `http://localhost:8080`, Token `edupsych-localtest-apikey-2026`, Phone ID `edupsych` (salva via `POST /whatsapp/config`)
+- Admin Teste: `+558584882254910` com `phoneIsWhatsApp: true`; Responsável Arley com número pessoal
+- **Teste completo:** solicitação do Arley → notificação da equipe (sino) + `[WHATSAPP] Notificação enviada para Admin Teste (+55...)` real
+- `notifyStaffOnAppointmentRequest` loga sucesso e falha; teste de envio via `POST /whatsapp/test`
+- **Aviso de segurança:** API não oficial — usar número dedicado; só recebem aviso usuários com `phoneIsWhatsApp: true` (apenas admin hoje)
+
+### 34. docker-compose + .env da Evolution API
+- `evolution-api/docker-compose.yml` (Postgres+Redis+API) e `evolution-api/.env` (`SERVER_URL`, `AUTHENTICATION_API_KEY`, `INSTANCE_NAME`)
+- Comandos: `cd evolution-api && docker compose up -d` | logs `docker logs evolution-api-evolution-api-1`
+- Instância conectada fica na porta 8080; para conectar de novo escanear QR (`/instance/connect/edupsych` → base64 do QR)
+
+---
+
+## Sessão 07/08/2026 (Sexta) — Parte 2
+
+### 29. Solicitações de Formulário para Responsáveis (link público)
+- **Model Prisma:** `DocumentRequest` (professionalId, responsibleId, patientId, title, templateJson, token único, status, dueDate, sentVia, answersJson, submittedAt)
+- **Fluxo:** profissional cria formulário com campos dinâmicos → sistema gera link público único → envia por email (SMTP Gmail) ou WhatsApp (Evolution API) ou só copia link → responsável preenche sem login → profissional vê respostas e exporta PDF
+- **Tipos de campo:** text, textarea, number, date, select, radio, checkbox (com obrigatoriedade e opções)
+- **Backend:** `document-requests.ts` — rotas públicas `GET/POST /public/:token` (sem auth) + CRUD autenticado + `POST /:id/resend`
+- **Segurança:** token aleatório de 20 bytes no link; formulário só aceita 1 resposta (409); expiração por dueDate
+- **Frontend:** módulo `/app/solicitacoes` (lista com filtros por status, formulário com construtor de campos, detalhe com respostas/PDF/link/copiar/reenviar) + página pública `/formulario/:token` (fora do guard de auth)
+- **Menu lateral:** item "Solicitações" (ícone assignment_turned_in)
+- **Bug corrigido:** `sentVia` vs `sendVia` (campo Prisma x leitura) — envio por email validado com Gmail real
+- **Testes:** criar → GET público → submit → 409 duplo → detalhe com respostas → resend EMAIL (log "[DOC REQUEST] Email enviado")
+
+---
+
+## Sessão 07/08/2026 (Sexta) — Parte 1
 
 ### 28. Ativação de Conta + Recuperação de Senha (código/link por email ou WhatsApp)
 - **Model Prisma:** `VerificationCode` (userId, type, channel, codeHash, tokenHash, expiresAt, attempts, usedAt)
