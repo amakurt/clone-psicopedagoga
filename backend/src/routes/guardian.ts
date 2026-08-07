@@ -297,6 +297,31 @@ router.put('/profile', async (req, res) => {
   res.json(updated);
 });
 
+// Chat: unread count for the guardian side (messages from staff not yet read)
+router.get('/chat/unread-count', async (req, res) => {
+  const userId = req.user?.id;
+
+  const responsible = await prisma.responsible.findFirst({ where: { userId } });
+  if (!responsible) {
+    return res.json({ count: 0 });
+  }
+
+  const patientIds = await prisma.paciente.findMany({
+    where: { responsibleId: responsible.id },
+    select: { id: true },
+  });
+
+  const count = await prisma.chatMessage.count({
+    where: {
+      pacienteId: { in: patientIds.map(p => p.id) },
+      senderRole: 'STAFF',
+      readByGuardian: false,
+    },
+  });
+
+  res.json({ count });
+});
+
 // Chat: get messages for patient
 router.get('/chat/:patientId', async (req, res) => {
   const { patientId } = req.params;
@@ -314,6 +339,12 @@ router.get('/chat/:patientId', async (req, res) => {
   if (!patient) {
     return res.status(403).json({ error: 'Acesso negado a este paciente' });
   }
+
+  // Marca como lidas pelo responsável as mensagens enviadas pela equipe
+  await prisma.chatMessage.updateMany({
+    where: { pacienteId: patientId, senderRole: 'STAFF', readByGuardian: false },
+    data: { readByGuardian: true },
+  });
 
   const messages = await prisma.chatMessage.findMany({
     where: { pacienteId: patientId },
@@ -337,13 +368,46 @@ router.post('/chat', async (req, res) => {
     data: {
       senderId: userId!,
       senderName: responsible.name,
+      senderRole: 'RESPONSAVEL',
       message,
-      pacienteId
+      pacienteId,
+      readByGuardian: true,
     }
   });
 
+  await notifyStaffOnGuardianMessage(responsible.name, pacienteId, message);
+
   res.status(201).json(chatMessage);
 });
+
+// Notifica a equipe e tenta enviar WhatsApp (best-effort) sobre uma nova mensagem do responsável
+async function notifyStaffOnGuardianMessage(responsibleName: string, pacienteId: string, message: string) {
+  const patient = await prisma.paciente.findUnique({ where: { id: pacienteId } });
+  const patientName = patient?.name || 'paciente';
+
+  const staff = await prisma.user.findMany({
+    where: { active: true, role: { in: ['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'] } }
+  });
+
+  const title = 'Nova mensagem do responsável';
+  const body = `${responsibleName} (${patientName}): ${message}`;
+
+  await prisma.notification.createMany({
+    data: staff.map(u => ({ userId: u.id, title, message: body, type: 'message' }))
+  });
+
+  const { sendWhatsAppMessage } = await import('./whatsapp');
+
+  for (const u of staff) {
+    if (!u.phone || !u.phoneIsWhatsApp) continue;
+    try {
+      await sendWhatsAppMessage(u.phone, `💬 ${title}: ${body}`);
+      console.log(`[WHATSAPP] Chat notificado para ${u.name} (${u.phone})`);
+    } catch (error: any) {
+      console.warn(`[WHATSAPP] Falha ao notificar chat para ${u.name}: ${error.message}`);
+    }
+  }
+}
 
 // Notifica a equipe e tenta enviar WhatsApp (best-effort) sobre um novo pedido
 async function notifyStaffOnAppointmentRequest(responsibleName: string, patientName: string, appointment: any) {

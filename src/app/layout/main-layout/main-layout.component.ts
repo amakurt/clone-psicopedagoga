@@ -4,11 +4,13 @@ import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/rou
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { ToastComponent } from '../../shared/components/toast.component';
+import { NotificationDropdownComponent } from '../../shared/components/notification-dropdown.component';
+import { ChatFloatingComponent } from '../../shared/components/chat-floating.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ToastComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ToastComponent, NotificationDropdownComponent, ChatFloatingComponent],
   template: `
     <div class="flex h-screen overflow-hidden" [class.dark]="isDarkMode()">
       <aside class="shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300 ease-in-out relative"
@@ -112,7 +114,8 @@ import { ToastComponent } from '../../shared/components/toast.component';
           </div>
           <div class="flex items-center gap-3">
             <div class="relative">
-              <button class="p-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-500 hover:text-primary transition-all relative">
+              <button class="p-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-500 hover:text-primary transition-all relative"
+                (click)="toggleNotifications()">
                 <span class="material-icons text-xl">notifications</span>
                 @if (notifCount() > 0) {
                   <span class="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
@@ -120,6 +123,10 @@ import { ToastComponent } from '../../shared/components/toast.component';
                   </span>
                 }
               </button>
+              @if (notifOpen()) {
+                <app-notification-dropdown [isOpen]="notifOpen()" (closed)="toggleNotifications()" (countChanged)="loadCounts()" />
+                <div class="fixed inset-0 z-40" (click)="notifOpen.set(false)"></div>
+              }
             </div>
           </div>
         </header>
@@ -132,6 +139,7 @@ import { ToastComponent } from '../../shared/components/toast.component';
       </main>
     </div>
     <app-toast />
+    <app-chat-floating />
   `,
   styles: [`
     :host { display: block; }
@@ -149,6 +157,7 @@ export class MainLayoutComponent implements OnInit {
   sidebarOpen = signal(true);
   isDarkMode = signal(false);
   notifCount = signal(0);
+  notifOpen = signal(false);
 
   navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', count: signal(0) },
@@ -228,6 +237,15 @@ export class MainLayoutComponent implements OnInit {
       next: (res: any) => this.notifCount.set(res.total || 0),
       error: () => {}
     });
+  }
+
+  toggleNotifications() {
+    if (this.notifOpen()) {
+      this.notifOpen.set(false);
+      this.loadCounts();
+    } else {
+      this.notifOpen.set(true);
+    }
   }
 
   toggleSidebar() {

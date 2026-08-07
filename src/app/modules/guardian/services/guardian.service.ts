@@ -66,4 +66,8 @@ export class GuardianService {
   sendChatMessage(pacienteId: string, message: string) {
     return this.api.post<ChatMessage>(`${this.base}/chat`, { pacienteId, message });
   }
+
+  getChatUnreadCount() {
+    return this.api.get<{ count: number }>(`${this.base}/chat/unread-count`);
+  }
 }

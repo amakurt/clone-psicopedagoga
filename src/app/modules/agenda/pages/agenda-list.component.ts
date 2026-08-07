@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { AgendaService } from '../services/agenda.service';
 
 @Component({
@@ -207,6 +207,7 @@ import { AgendaService } from '../services/agenda.service';
 })
 export class AgendaListComponent implements OnInit {
   private service = inject(AgendaService);
+  private router = inject(Router);
   items = signal<any[]>([]);
   loading = signal(true);
   currentView = signal<'day' | 'week' | 'month' | 'year'>('month');
@@ -382,6 +383,6 @@ export class AgendaListComponent implements OnInit {
   }
 
   viewAppointment(apt: any) {
-    window.location.href = `/agenda/${apt.id}`;
+    this.router.navigate(['/app/agenda', apt.id]);
   }
 }

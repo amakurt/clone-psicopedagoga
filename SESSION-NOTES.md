@@ -36,12 +36,30 @@
 - `notifyStaffOnAppointmentRequest` loga sucesso e falha; teste de envio via `POST /whatsapp/test`
 - **Aviso de segurança:** API não oficial — usar número dedicado; só recebem aviso usuários com `phoneIsWhatsApp: true` (apenas admin hoje)
 
-### 34. docker-compose + .env da Evolution API
-- `evolution-api/docker-compose.yml` (Postgres+Redis+API) e `evolution-api/.env` (`SERVER_URL`, `AUTHENTICATION_API_KEY`, `INSTANCE_NAME`)
-- Comandos: `cd evolution-api && docker compose up -d` | logs `docker logs evolution-api-evolution-api-1`
-- Instância conectada fica na porta 8080; para conectar de novo escanear QR (`/instance/connect/edupsych` → base64 do QR)
+### 35. Teste do acesso do responsável Arley + senha de teste
+- **Problema:** login do Arley (`arleyoliveiracastro@gmail.com`) retornava "Credenciais inválidas" — o hash não batia com `123456` (senha real definida por ele: `@Exodo22`)
+- **Correção:** senha restaurada para `@Exodo22` via SQL direto no `backend/prisma/dev.db` com bcrypt gerado pelo backend (login 200 confirmado)
+- **Validação:** `POST /auth/login` com `@Exodo22` → 200 + `GET /guardian/patients` e `GET /guardian/appointments` retornando os dados do Gabriel — fluxo completo do portal do responsável OK
+
+### 36. Refatoração da Feature de Mensagens entre Responsável e Profissional (Chat Flutuante + Notificações + APIs)
+- **Model Prisma:** `ChatMessage` atualizado com `senderRole` ('RESPONSAVEL' | 'STAFF'), `readByStaff` (Boolean) e `readByGuardian` (Boolean). DB SQLite atualizado via `prisma db push`.
+- **Backend Chat (`chat.ts` & `guardian.ts`):**
+  - `GET /api/chat/conversations`: Agrupa mensagens por paciente para a equipe com `unreadCount`, última mensagem e data.
+  - `POST /api/chat/conversations/:pacienteId/read`: Marca conversa como lida pela equipe (`readByStaff: true`).
+  - `POST /api/chat/send`: Envia mensagem como `STAFF` e notifica o usuário do responsável no app.
+  - `GET /api/guardian/chat/unread-count`: Retorna total de não lidas para o portal do responsável.
+  - `GET /api/guardian/chat/:patientId`: Marca mensagens como lidas pelo responsável (`readByGuardian: true`).
+  - `POST /api/guardian/chat`: Envia mensagem do responsável, notifica a equipe no app e dispara alerta por WhatsApp (Evolution API) para profissionais ativos com `phoneIsWhatsApp: true`.
+- **Frontend (`ChatFloatingComponent`):**
+  - Componente flutuante unificado (`<app-chat-floating>`) com botão no canto inferior direito, badge de não lidas, drawer interativo com lista de conversas e janela de chat.
+  - Suporte a Dual Mode (`guardian` true/false) para atuar no painel da clínica ou no portal do responsável.
+  - Polling a cada 8s e auto-scroll ao enviar/carregar mensagens.
+- **Layouts e Notificações:**
+  - `<app-chat-floating>` adicionado em `MainLayoutComponent` e `GuardianLayoutComponent`.
+  - Sino de notificações em `MainLayoutComponent` integrado com `NotificationDropdownComponent` e suporte visual para tipo `message`/`chat`.
 
 ---
+
 
 ## Sessão 07/08/2026 (Sexta) — Parte 2
 

@@ -355,8 +355,11 @@ export interface ChatMessage {
   id: string;
   senderId: string;
   senderName: string;
+  senderRole?: 'RESPONSAVEL' | 'STAFF';
   message: string;
   pacienteId: string;
+  readByStaff?: boolean;
+  readByGuardian?: boolean;
   paciente?: Paciente;
   createdAt?: Date;
 }

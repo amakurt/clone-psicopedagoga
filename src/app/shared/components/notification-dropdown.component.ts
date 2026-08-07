@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, Input } from '@angular/core';
+import { Component, inject, signal, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
 
@@ -8,7 +8,7 @@ import { ApiService } from '../../core/services/api.service';
   imports: [CommonModule],
   template: `
     @if (isOpen) {
-      <div class="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden z-50 animate-in">
+      <div class="absolute right-0 top-14 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden z-50 animate-in">
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h3 class="font-bold text-slate-900 dark:text-white text-sm">Notificações</h3>
@@ -69,6 +69,8 @@ import { ApiService } from '../../core/services/api.service';
 })
 export class NotificationDropdownComponent implements OnInit {
   @Input() isOpen = false;
+  @Output() closed = new EventEmitter<void>();
+  @Output() countChanged = new EventEmitter<void>();
   
   private api = inject(ApiService);
   notifications = signal<any[]>([]);
@@ -92,6 +94,7 @@ export class NotificationDropdownComponent implements OnInit {
     if (type?.includes('sessao') || type?.includes('Sessão') || type?.includes('evolucao')) return 'check_circle';
     if (type?.includes('pagamento') || type?.includes('Pagamento') || type?.includes('Financeiro')) return 'payments';
     if (type?.includes('agendamento') || type?.includes('Agendamento')) return 'calendar_month';
+    if (type?.includes('mensagem') || type?.includes('mensagem') || type?.toLowerCase().startsWith('message')) return 'chat';
     return 'notifications';
   }
 
@@ -101,6 +104,7 @@ export class NotificationDropdownComponent implements OnInit {
     if (type?.includes('sessao') || type?.includes('Sessão') || type?.includes('evolucao')) return 'bg-green-100 text-green-600';
     if (type?.includes('pagamento') || type?.includes('Pagamento') || type?.includes('Financeiro')) return 'bg-purple-100 text-purple-600';
     if (type?.includes('agendamento') || type?.includes('Agendamento')) return 'bg-cyan-100 text-cyan-600';
+    if (type?.includes('mensagem') || type?.toLowerCase().startsWith('message')) return 'bg-indigo-100 text-indigo-600';
     return 'bg-slate-100 text-slate-600';
   }
 
@@ -122,6 +126,7 @@ export class NotificationDropdownComponent implements OnInit {
       this.api.put(`/notifications/${notif.id}`, { read: true }).subscribe({
         next: () => {
           this.notifications.update(nots => nots.map(n => n.id === notif.id ? { ...n, read: true } : n));
+          this.countChanged.emit();
         },
         error: () => {}
       });
@@ -132,14 +137,17 @@ export class NotificationDropdownComponent implements OnInit {
     this.api.put('/notifications/mark-all-read', {}).subscribe({
       next: () => {
         this.notifications.update(nots => nots.map(n => ({ ...n, read: true })));
+        this.countChanged.emit();
       },
       error: () => {
         this.notifications.update(nots => nots.map(n => ({ ...n, read: true })));
+        this.countChanged.emit();
       }
     });
   }
 
   clearAll() {
     this.notifications.set([]);
+    this.closed.emit();
   }
 }

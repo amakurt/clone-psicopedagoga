@@ -15,9 +15,9 @@ const notificationSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
-  const { userId, read } = req.query;
+  const { read } = req.query;
   const where: any = {};
-  if (userId) where.userId = userId;
+  where.userId = (req.query.userId as string) || req.user?.id;
   if (read !== undefined) where.read = read === 'true';
   const notifications = await prisma.notification.findMany({ where, orderBy: { createdAt: 'desc' }, include: { user: true } });
   res.json({ data: notifications, total: notifications.length });
@@ -27,6 +27,11 @@ router.get('/:id', async (req, res) => {
   const notification = await prisma.notification.findUnique({ where: { id: req.params.id }, include: { user: true } });
   if (!notification) return res.status(404).json({ error: 'Notificação não encontrada' });
   res.json(notification);
+});
+
+router.put('/mark-all-read', async (req, res) => {
+  await prisma.notification.updateMany({ where: { userId: req.user!.id, read: false }, data: { read: true } });
+  res.json({ message: 'Todas as notificações marcadas como lidas' });
 });
 
 router.post('/', validate(notificationSchema), async (req, res) => {
@@ -47,12 +52,6 @@ router.delete('/:id', async (req, res) => {
 router.put('/:id/mark-as-read', async (req, res) => {
   const notification = await prisma.notification.update({ where: { id: req.params.id }, data: { read: true } });
   res.json(notification);
-});
-
-router.put('/mark-all-read', async (req, res) => {
-  const { userId } = req.body;
-  await prisma.notification.updateMany({ where: { userId, read: false }, data: { read: true } });
-  res.json({ message: 'Todas as notificações marcadas como lidas' });
 });
 
 export default router;

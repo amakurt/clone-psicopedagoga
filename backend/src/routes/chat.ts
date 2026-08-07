@@ -11,6 +11,106 @@ const chatMessageSchema = z.object({
   senderName: z.string().min(1),
   message: z.string().min(1),
   pacienteId: z.string().min(1),
+  senderRole: z.enum(['RESPONSAVEL', 'STAFF']).optional(),
+});
+
+// Conversation list for the staff side: one thread per patient, with unread badge
+router.get('/conversations', async (req, res) => {
+  const messages = await prisma.chatMessage.findMany({
+    orderBy: { createdAt: 'asc' },
+    include: { paciente: true },
+  });
+
+  const grouped = new Map<string, any>();
+  for (const m of messages) {
+    const p = m.paciente;
+    if (!p) continue;
+    const key = p.id;
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        pacienteId: p.id,
+        patientName: p.name,
+        patientInitials: p.initials || p.name.slice(0, 2).toUpperCase(),
+        patientColor: p.color || '#007F80',
+        unreadCount: 0,
+        lastMessage: m.message,
+        lastSenderName: m.senderName,
+        lastAt: m.createdAt,
+      });
+    }
+    const entry = grouped.get(key);
+    entry.lastMessage = m.message;
+    entry.lastSenderName = m.senderName;
+    entry.lastAt = m.createdAt;
+  }
+
+  // Unread = messages sent by the RESPONSAVEL that staff hasn't read yet
+  const unread = await prisma.chatMessage.findMany({
+    where: { senderRole: 'RESPONSAVEL', readByStaff: false },
+    select: { pacienteId: true },
+  });
+  for (const u of unread) {
+    const entry = grouped.get(u.pacienteId);
+    if (entry) entry.unreadCount += 1;
+  }
+
+  const conversations = Array.from(grouped.values()).sort(
+    (a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime()
+  );
+
+  res.json({ data: conversations, total: conversations.length });
+});
+
+// Mark a conversation as read by staff (called when the staff opens a thread)
+router.post('/conversations/:pacienteId/read', async (req, res) => {
+  await prisma.chatMessage.updateMany({
+    where: { pacienteId: req.params.pacienteId, senderRole: 'RESPONSAVEL', readByStaff: false },
+    data: { readByStaff: true },
+  });
+  res.json({ message: 'Conversa marcada como lida' });
+});
+
+// Send message as staff
+router.post('/send', async (req: any, res) => {
+  const { pacienteId, message } = req.body;
+  if (!pacienteId || !message || !message.trim()) {
+    return res.status(400).json({ error: 'Paciente e mensagem são obrigatórios' });
+  }
+
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: 'Não autenticado' });
+
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  const senderName = dbUser?.name || user.name || 'Equipe';
+
+  const chatMessage = await prisma.chatMessage.create({
+    data: {
+      senderId: user.id,
+      senderName,
+      senderRole: 'STAFF',
+      message,
+      pacienteId,
+      readByStaff: true,
+    },
+  });
+
+  // Notify the responsible (guardian) that there's a new message
+  const patient = await prisma.paciente.findUnique({
+    where: { id: pacienteId },
+    include: { responsible: true },
+  });
+  if (patient?.responsible?.userId) {
+    await prisma.notification.create({
+      data: {
+        userId: patient.responsible.userId,
+        title: 'Nova mensagem da equipe',
+        message: `${senderName} respondeu no chat de ${patient.name}`,
+        type: 'message',
+      },
+    });
+  }
+
+  res.status(201).json(chatMessage);
 });
 
 router.get('/', async (req, res) => {

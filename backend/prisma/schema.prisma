@@ -563,12 +563,15 @@ model InterventionPlan {
 }
 
 model ChatMessage {
-  id         String   @id @default(cuid())
-  senderId   String
-  senderName String
-  message    String
-  pacienteId String
-  createdAt  DateTime @default(now())
+  id             String   @id @default(cuid())
+  senderId       String
+  senderName     String
+  senderRole     String   @default("RESPONSAVEL")
+  message        String
+  pacienteId     String
+  readByStaff    Boolean  @default(false)
+  readByGuardian Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
   paciente Paciente @relation(fields: [pacienteId], references: [id])
 }

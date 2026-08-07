@@ -210,11 +210,11 @@ import { Paciente, Appointment, SessionRecord } from '@core/models';
                 </span>
               </div>
               <div class="mt-6 flex gap-3">
-                <a [routerLink]="['/app/guardian/evolutions']" [queryParams]="{ patientId: patient.id }"
+                <a [routerLink]="['/guardian/evolutions']" [queryParams]="{ patientId: patient.id }"
                   class="flex-1 py-2 px-4 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 text-center transition-all">
                   Evoluções
                 </a>
-                <a [routerLink]="['/app/guardian/documents']" [queryParams]="{ patientId: patient.id }"
+                <a [routerLink]="['/guardian/documents']" [queryParams]="{ patientId: patient.id }"
                   class="flex-1 py-2 px-4 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 text-center transition-all">
                   Documentos
                 </a>

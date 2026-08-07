@@ -48,6 +48,14 @@ app.use('/api', routes);
 // Error handler
 app.use(errorHandler);
 
+// Evitar derrubar o processo inteiro por erros em handlers async
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+});
+
 app.listen(PORT, () => {
   console.log(`Backend rodando na porta ${PORT}`);
 });

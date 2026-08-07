@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { GuardianService } from '@modules/guardian/services/guardian.service';
+import { ChatFloatingComponent } from '@shared/components/chat-floating.component';
 
 @Component({
   selector: 'app-guardian-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ChatFloatingComponent],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-slate-900">
       <!-- Header -->
@@ -71,6 +72,7 @@ import { GuardianService } from '@modules/guardian/services/guardian.service';
         <router-outlet></router-outlet>
       </main>
     </div>
+    <app-chat-floating [guardian]="true" />
   `
 })
 export class GuardianLayoutComponent implements OnInit {
