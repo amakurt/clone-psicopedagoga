@@ -24,6 +24,12 @@ import { environment } from '../../../../../environments/environment';
           <div class="mx-10 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
             <span class="material-icons text-lg">error</span> {{ error() }}
           </div>
+          @if (needsVerification()) {
+            <button class="mx-10 mb-4 w-[calc(100%-80px)] py-2 text-sm text-primary font-bold hover:underline"
+              (click)="resendVerification()" [disabled]="resending()">
+              {{ resending() ? 'Reenviando...' : 'Reenviar link de ativação' }}
+            </button>
+          }
         }
         @if (success()) {
           <div class="mx-10 mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 text-sm flex items-center gap-2">
@@ -90,6 +96,14 @@ import { environment } from '../../../../../environments/environment';
               type="submit" [disabled]="loading()">
               {{ loading() ? (isRegister() ? 'Criando conta...' : 'Entrando...') : (isRegister() ? 'Criar Conta' : 'Entrar') }}
             </button>
+
+            @if (!isRegister()) {
+              <div class="text-right mt-2">
+                <button type="button" class="text-xs text-slate-400 hover:text-primary font-semibold" (click)="forgotPassword()">
+                  Esqueceu sua senha?
+                </button>
+              </div>
+            }
           </form>
 
           <!-- Divider -->
@@ -140,6 +154,8 @@ export class LoginComponent {
   success = signal('');
   isRegister = signal(false);
   selectedRole = signal('PSICOPEDAGOGO');
+  needsVerification = signal(false);
+  resending = signal(false);
 
   emailError = signal('');
   passwordError = signal('');
@@ -149,7 +165,12 @@ export class LoginComponent {
     this.isRegister.set(!this.isRegister());
     this.error.set('');
     this.success.set('');
+    this.needsVerification.set(false);
     this.clearErrors();
+  }
+
+  forgotPassword() {
+    this.router.navigate(['/auth/recuperar-senha']);
   }
 
   clearErrors() {
@@ -217,11 +238,33 @@ export class LoginComponent {
     })
     .catch(err => {
       this.error.set(err.message || 'Erro ao conectar com o servidor');
+      this.needsVerification.set(err.message?.includes('não ativada') || false);
       this.loading.set(false);
     });
   }
 
-  register() {
+  resendVerification() {
+    this.resending.set(true);
+    fetch(`${environment.apiUrl}/auth/resend-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: this.email })
+    })
+    .then(res => res.json().then((data: any) => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+      if (!ok) throw new Error(data.error || 'Erro ao reenviar');
+      this.error.set('');
+      this.needsVerification.set(false);
+      this.success.set('Link de ativação reenviado! Verifique seu email.');
+      this.resending.set(false);
+    })
+    .catch(err => {
+      this.error.set(err.message || 'Erro ao reenviar');
+      this.resending.set(false);
+    });
+  }
+
+register() {
     fetch(`${environment.apiUrl}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -237,6 +280,10 @@ export class LoginComponent {
       return res.json();
     })
     .then(data => {
+      if (data.needsVerification) {
+        this.router.navigate(['/auth/verify'], { queryParams: { email: this.email } });
+        return;
+      }
       this.auth.login(data.token, data.user);
       const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
       this.router.navigate([redirectPath]);

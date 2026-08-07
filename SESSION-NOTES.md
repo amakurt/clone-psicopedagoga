@@ -1,8 +1,23 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 06/08/2026
+## Data: 07/08/2026
 
-## Status: 100% Implementado + 10 Funcionalidades Competitivas + Painel TV + Correções de Rotas
+## Status: 100% Implementado + Verificação de Conta (email/WhatsApp) + Recuperação de Senha
+
+---
+
+## Sessão 07/08/2026 (Sexta)
+
+### 28. Ativação de Conta + Recuperação de Senha (código/link por email ou WhatsApp)
+- **Model Prisma:** `VerificationCode` (userId, type, channel, codeHash, tokenHash, expiresAt, attempts, usedAt)
+- **Registro local:** cria usuário com `active: false` → envia link + código de 6 dígitos por email (ou WhatsApp) → login bloqueado com 403 "Conta não ativada" até ativar
+- **Rotas novas:** `POST /auth/verify-account` (por token do link OU código+email/phone), `POST /auth/resend-verification`, `POST /auth/forgot-password` (escolha EMAIL/WHATSAPP), `POST /auth/reset-password` (token do link OU código + nova senha)
+- **Email:** `lib/email.ts` com nodemailer (SMTP no .env); sem SMTP configurado → modo dev loga código/link no console do backend
+- **WhatsApp:** reutiliza `sendWhatsAppMessage` exportado de whatsapp.ts
+- **Segurança:** código com hash SHA-256, token de 32 bytes com hash, expiração (24h ativação / 10min reset), invalidação após uso (código não reusável)
+- **Frontend:** páginas `/auth/verify` (ativação por link ou código) e `/auth/recuperar-senha` (3 passos: identificar → código → nova senha); login com botão "Reenviar link de ativação" e link "Esqueceu sua senha?"
+- **Testes via curl:** registro → 403 no login → ativação por código OK → ativação por token OK → forgot → reset por código OK → reset por token OK → reuso de código bloqueado
+- **Google OAuth:** continua criando usuários `active: true` (email já comprovado pelo Google)
 
 ---
 

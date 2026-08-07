@@ -1,6 +1,41 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 06 de Agosto de 2026
+## Última Atualização: 07 de Agosto de 2026
+
+---
+
+## Sessão 7 - 07/08/2026 (Sexta)
+
+### O que foi feito
+
+#### 1. Verificação de conta no cadastro (email/WhatsApp)
+- Novo model Prisma `VerificationCode` (codeHash, tokenHash, type, channel, expiresAt) + `db push` + schema raiz sincronizado
+- Cadastro local agora cria conta `active: false` e envia link + código de 6 dígitos
+- Login bloqueia conta não ativada (403) com botão "Reenviar link de ativação" no frontend
+
+#### 2. Recuperação de senha
+- `POST /auth/forgot-password`: usuário escolhe canal (EMAIL ou WHATSAPP)
+- `POST /auth/reset-password`: valida token do link ou código + nova senha
+- Link no email: `/auth/recuperar-senha?token=...` ativa direto o passo de nova senha
+
+#### 3. Infraestrutura de email
+- `nodemailer` instalado + `backend/src/lib/email.ts` (SMTP via .env)
+- Sem SMTP configurado → modo dev loga código/link no console do backend (testável)
+- `.env` e `.env.example` com bloco SMTP
+
+#### 4. Frontend
+- `/auth/verify`: ativação automática ao clicar no link ou formulário de código
+- `/auth/recuperar-senha`: 3 passos (identificar conta + canal → código → nova senha)
+- Login: link "Esqueceu sua senha?" + reenvio de ativação
+- Register redireciona para `/auth/verify?email=...` (não loga mais automaticamente)
+
+#### 5. Testes completos (curl)
+- Registro → 403 no login → ativação por código ✓ → ativação por token ✓
+- Forgot → reset por código ✓ → reset por token ✓ → código reuso bloqueado ✓
+- Usuários de teste removidos do banco após os testes
+
+### Commits
+- (a commitar)
 
 ---
 
@@ -427,7 +462,7 @@ npm run start
 
 ## Pendências / Próximos Passos
 
-1. Testar todas as 10 funcionalidades competitivas
-2. Google OAuth - configurar credenciais reais
+1. Configurar SMTP real (Gmail app password ou Resend) para envio de emails em produção
+2. Testar as 10 funcionalidades competitivas no navegador
 3. Deploy em produção
 4. Testes E2E completos

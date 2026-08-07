@@ -1,13 +1,143 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { authenticate } from '../middleware';
+import { sendEmail, emailConfigured } from '../lib/email';
+import { sendWhatsAppMessage } from './whatsapp';
 
 const router = Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'psicopedagoga-secret-key-2026';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
+
+function generateCode(): string {
+  return crypto.randomInt(100000, 1000000).toString();
+}
+
+function hashValue(value: string): string {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function signToken(user: any) {
+  return jwt.sign(
+    { sub: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+function buildUserPayload(user: any) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    phone: user.phone,
+    phoneIsWhatsApp: user.phoneIsWhatsApp,
+    registration: user.registration,
+    bio: user.bio,
+    hasPassword: !!user.password
+  };
+}
+
+async function sendVerificationMessage(user: any, code: string, token: string, type: string) {
+  const isActivation = type === 'ACCOUNT_ACTIVATION';
+  const link = `${FRONTEND_URL}/auth/${isActivation ? 'verify' : 'recuperar-senha'}?token=${token}`;
+
+  if (user.email && emailConfigured()) {
+    await sendEmail(
+      user.email,
+      isActivation ? 'Confirme seu cadastro - EduPsych Pro' : 'Recuperação de senha - EduPsych Pro',
+      `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;border:1px solid #e2e8f0;border-radius:16px">
+        <h2 style="color:#1E1B4B;margin:0 0 8px">EduPsych Pro</h2>
+        <p style="color:#475569;font-size:14px">Olá, <strong>${user.name}</strong>!</p>
+        ${isActivation
+          ? '<p style="color:#475569;font-size:14px">Confirme seu cadastro clicando no botão abaixo:</p>'
+          : '<p style="color:#475569;font-size:14px">Recebemos um pedido de recuperação de senha. Use o botão abaixo:</p>'}
+        <div style="text-align:center;margin:24px 0">
+          <a href="${link}" style="background:#1E1B4B;color:#ffffff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:14px">
+            ${isActivation ? 'Confirmar Cadastro' : 'Redefinir Senha'}
+          </a>
+        </div>
+        <p style="color:#64748b;font-size:13px">Ou use o código de verificação: <strong style="font-size:18px;letter-spacing:3px">${code}</strong></p>
+        <p style="color:#94a3b8;font-size:12px">O link e o código expiram em ${isActivation ? '24 horas' : '10 minutos'}. Se não foi você, ignore este e-mail.</p>
+      </div>`
+    );
+    return 'EMAIL';
+  }
+
+  if (user.phone) {
+    try {
+      await sendWhatsAppMessage(
+        user.phone,
+        `EduPsych Pro: ${isActivation ? 'Confirme seu cadastro' : 'Seu código de recuperação'} ${code}. Link: ${link}`
+      );
+      return 'WHATSAPP';
+    } catch (e: any) {
+      console.warn('[AUTH] Falha ao enviar WhatsApp:', e.message);
+    }
+  }
+
+  console.log(`[DEV AUTH] ${isActivation ? 'Ativação' : 'Reset'} para ${user.email || user.phone}: código ${code} | link ${link}`);
+  return 'DEV';
+}
+
+async function createVerificationRecord(user: any, type: string, channel: string, minutesToExpire: number) {
+  const code = generateCode();
+  const token = crypto.randomBytes(32).toString('hex');
+
+  await prisma.verificationCode.create({
+    data: {
+      userId: user.id,
+      type,
+      channel,
+      codeHash: hashValue(code),
+      tokenHash: hashValue(token),
+      expiresAt: new Date(Date.now() + minutesToExpire * 60 * 1000),
+    },
+  });
+
+  return { code, token };
+}
+
+async function verifyCodeAndToken(userId: string, type: string, token?: string, code?: string) {
+  const records = await prisma.verificationCode.findMany({
+    where: { userId, type, usedAt: null },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  for (const record of records) {
+    if (record.expiresAt < new Date()) continue;
+    const tokenOk = token && record.tokenHash && record.tokenHash === hashValue(token);
+    const codeOk = code && record.codeHash === hashValue(code);
+
+    if (tokenOk || codeOk) {
+      return record;
+    }
+  }
+
+  return null;
+}
+
+async function findUserByVerificationToken(token: string, type: string) {
+  const record = await prisma.verificationCode.findFirst({
+    where: { tokenHash: hashValue(token), type, usedAt: null, expiresAt: { gt: new Date() } },
+    include: { user: true },
+  });
+  return record?.user || null;
+}
+
+async function invalidateVerificationCodes(userId: string, type: string) {
+  await prisma.verificationCode.updateMany({
+    where: { userId, type, usedAt: null },
+    data: { usedAt: new Date() },
+  });
+}
 
 // Local login
 router.post('/login', async (req, res) => {
@@ -22,6 +152,10 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Credenciais inválidas' });
   }
 
+  if (!user.active) {
+    return res.status(403).json({ error: 'Conta não ativada. Verifique seu email ou reenvie o link de ativação.' });
+  }
+
   if (!user.password) {
     return res.status(401).json({ error: 'Conta sem senha definida. Use login social.' });
   }
@@ -31,32 +165,17 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Credenciais inválidas' });
   }
 
-  const token = jwt.sign(
-    { sub: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+  const token = signToken(user);
 
   res.json({ 
     token, 
-    user: { 
-      id: user.id, 
-      name: user.name, 
-      email: user.email, 
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      phone: user.phone,
-      phoneIsWhatsApp: user.phoneIsWhatsApp,
-      registration: user.registration,
-      bio: user.bio,
-      hasPassword: !!user.password
-    } 
+    user: buildUserPayload(user)
   });
 });
 
 // Local register
 router.post('/register', async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, phone } = req.body;
   
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
@@ -78,27 +197,136 @@ router.post('/register', async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role: role || 'SECRETARIA'
+      role: role || 'SECRETARIA',
+      phone: phone || null,
+      active: false,
     }
   });
 
-  const token = jwt.sign(
-    { sub: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+  const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
+  const channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
 
-  res.status(201).json({ 
-    token, 
-    user: { 
-      id: user.id, 
-      name: user.name, 
-      email: user.email, 
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      hasPassword: !!user.password
-    } 
+  res.status(201).json({
+    message: 'Conta criada. Enviamos um link de ativação para o seu email.',
+    needsVerification: true,
+    channel,
+    user: { id: user.id, name: user.name, email: user.email, role: user.role }
   });
+});
+
+// Verify account (link click or code)
+router.post('/verify-account', async (req, res) => {
+  const { token, code, email } = req.body;
+
+  let user: any = null;
+  if (token) {
+    user = await findUserByVerificationToken(token, 'ACCOUNT_ACTIVATION');
+  } else if (email && code) {
+    user = await prisma.user.findUnique({ where: { email } });
+  }
+
+  if (!user) {
+    return res.status(400).json({ error: 'Link ou código inválido ou expirado' });
+  }
+
+  if (user.active) {
+    return res.json({ message: 'Conta já ativada', alreadyActive: true });
+  }
+
+  const record = await verifyCodeAndToken(user.id, 'ACCOUNT_ACTIVATION', token, code);
+  if (!record) {
+    return res.status(400).json({ error: 'Código inválido ou expirado' });
+  }
+
+  await invalidateVerificationCodes(user.id, 'ACCOUNT_ACTIVATION');
+  await prisma.user.update({ where: { id: user.id }, data: { active: true } });
+
+  const authToken = signToken(user);
+  res.json({ message: 'Conta ativada com sucesso', token: authToken, user: buildUserPayload(user) });
+});
+
+// Resend activation link/code
+router.post('/resend-verification', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email é obrigatório' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+
+  if (user.active) {
+    return res.status(400).json({ error: 'Conta já ativada' });
+  }
+
+  const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
+  const channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
+
+  res.json({ message: 'Link de ativação reenviado', channel });
+});
+
+// Forgot password - send code/link to email or WhatsApp
+router.post('/forgot-password', async (req, res) => {
+  const { email, phone, channel } = req.body;
+  const ch = channel === 'WHATSAPP' ? 'WHATSAPP' : 'EMAIL';
+
+  const user = email
+    ? await prisma.user.findUnique({ where: { email } })
+    : await prisma.user.findFirst({ where: { phone } });
+
+  if (!user) {
+    return res.json({ message: 'Se o endereço estiver cadastrado, enviaremos as instruções.' });
+  }
+
+  if (ch === 'WHATSAPP') {
+    if (!user.phone) {
+      return res.status(400).json({ error: 'Usuário não possui telefone cadastrado' });
+    }
+  } else if (!emailConfigured()) {
+    const { code, token } = await createVerificationRecord(user, 'PASSWORD_RESET', 'EMAIL', 10);
+    await sendVerificationMessage(user, code, token, 'PASSWORD_RESET');
+    return res.json({ message: 'Instruções enviadas (modo dev - consulte o console do backend)' });
+  }
+
+  const { code, token } = await createVerificationRecord(user, 'PASSWORD_RESET', ch, 10);
+  const sentChannel = await sendVerificationMessage(user, code, token, 'PASSWORD_RESET');
+
+  res.json({ message: 'Instruções de recuperação enviadas', channel: sentChannel });
+});
+
+// Reset password with token or code
+router.post('/reset-password', async (req, res) => {
+  const { token, code, email, phone, newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres' });
+  }
+
+  let user: any = null;
+  if (token) {
+    user = await findUserByVerificationToken(token, 'PASSWORD_RESET');
+  } else if (email && code) {
+    user = await prisma.user.findUnique({ where: { email } });
+  } else if (phone && code) {
+    user = await prisma.user.findFirst({ where: { phone } });
+  }
+
+  if (!user) {
+    return res.status(400).json({ error: 'Link ou código inválido ou expirado' });
+  }
+
+  const record = await verifyCodeAndToken(user.id, 'PASSWORD_RESET', token, code);
+  if (!record) {
+    return res.status(400).json({ error: 'Código ou link inválido ou expirado' });
+  }
+
+  await invalidateVerificationCodes(user.id, 'PASSWORD_RESET');
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: user.id }, data: { password: hashedPassword, active: true } });
+
+  res.json({ message: 'Senha redefinida com sucesso' });
 });
 
 // Google OAuth - Initiate

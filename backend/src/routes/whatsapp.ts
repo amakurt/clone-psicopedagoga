@@ -23,7 +23,7 @@ const configSchema = z.object({
   phoneNumberId: z.string().optional(),
 });
 
-async function sendWhatsAppMessage(phone: string, message: string) {
+export async function sendWhatsAppMessage(phone: string, message: string) {
   const configRecord = await prisma.whatsAppConfig.findFirst();
   if (!configRecord) {
     throw new Error('WhatsApp não configurado. Configure a API em Configurações > WhatsApp.');

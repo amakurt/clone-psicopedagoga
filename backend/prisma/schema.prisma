@@ -42,6 +42,22 @@ model User {
   abaAssessments     ABAAssessment[]
   abaPrograms        ABAProgram[]
   nfseIssued         Nfse[]
+  verificationCodes  VerificationCode[]
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // ACCOUNT_ACTIVATION | PASSWORD_RESET
+  channel   String   // EMAIL | WHATSAPP
+  codeHash  String
+  tokenHash String?
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Paciente {

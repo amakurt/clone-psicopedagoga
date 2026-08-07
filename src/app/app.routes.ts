@@ -5,6 +5,8 @@ import { roleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) },
   { path: 'login', loadComponent: () => import('./modules/auth/pages/login/login.component').then(m => m.LoginComponent) },
+  { path: 'auth/verify', loadComponent: () => import('./modules/auth/pages/verify/verify-account.component').then(m => m.VerifyAccountComponent) },
+  { path: 'auth/recuperar-senha', loadComponent: () => import('./modules/auth/pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent) },
   { path: 'auth/callback', loadComponent: () => import('./modules/auth/pages/callback/auth-callback.component').then(m => m.AuthCallbackComponent) },
   {
     path: 'app',
