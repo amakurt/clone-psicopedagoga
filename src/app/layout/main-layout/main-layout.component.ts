@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -149,7 +149,7 @@ import { ChatFloatingComponent } from '../../shared/components/chat-floating.com
     .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
   `]
 })
-export class MainLayoutComponent implements OnInit {
+export class MainLayoutComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   private api = inject(ApiService);
   private router = inject(Router);
@@ -158,6 +158,7 @@ export class MainLayoutComponent implements OnInit {
   isDarkMode = signal(false);
   notifCount = signal(0);
   notifOpen = signal(false);
+  private notifTimer: any;
 
   navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', count: signal(0) },
@@ -199,6 +200,11 @@ export class MainLayoutComponent implements OnInit {
     });
     this.updatePageTitle();
     this.loadCounts();
+    this.notifTimer = setInterval(() => this.loadCounts(), 10000);
+  }
+
+  ngOnDestroy() {
+    if (this.notifTimer) clearInterval(this.notifTimer);
   }
 
   updatePageTitle() {

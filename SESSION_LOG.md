@@ -40,6 +40,11 @@
 - Adicionado sino com badge de não lidas no header do `guardian-layout` (reuso do `NotificationDropdownComponent`) + polling de 15s em `GET /notifications?read=false`
 - Testado: status alterado pela equipe → notificação aparece no sino do responsável em até 15s
 
+#### 7. Bug: notificação da equipe só com refresh
+- `loadCounts()` no `main-layout` rodava só no ngOnInit → sino da equipe não atualizava
+- Adicionado polling de 10s (`setInterval` + `OnDestroy`): badge do sino e badge PENDENTE da Agenda atualizam sozinhos
+- Testado: solicitação do responsável → notificação não lida + contador PENDENTE atualizados
+
 ### Commits
 - (a commitar)
 

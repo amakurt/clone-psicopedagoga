@@ -37,6 +37,12 @@
 - **Validação:** login via `http://192.168.0.106:3000` com origin da LAN → 200; preflight CORS OK para ambas as origins
 - **Limitações:** IP pode mudar (DHCP); Google OAuth não funciona fora do Mac (redirect localhost registrado no Google Console)
 
+### 43. Bug corrigido — Notificação da equipe só chegava após refresh
+- **Problema:** solicitação de agendamento do responsável criava a notificação, mas o painel da equipe não atualizava o sino até recarregar a página
+- **Causa:** `loadCounts()` no `main-layout` rodava só no `ngOnInit` e ao fechar o dropdown — sem polling
+- **Correção:** `setInterval(() => this.loadCounts(), 10000)` no `MainLayoutComponent` (com `OnDestroy`/`clearInterval`) — atualiza badge do sino e badge PENDENTE da Agenda a cada 10s
+- **Testado:** solicitação → equipe com "Nova solicitação de agendamento" não lida + contador PENDENTE da agenda atualizado
+
 ### 42. Sino de notificações no Portal do Responsável
 - **Problema:** backend já criava notificação ao responsável quando a equipe mudava o status do agendamento, mas o Portal da Família **não tinha UI para exibi-las** (só o chat flutuante tinha badge)
 - **Correção** (`guardian-layout.component.ts`): sino de notificações no header com badge de não lidas, dropdown reutilizando `NotificationDropdownComponent` (já era genérico via token) e polling a cada 15s em `GET /notifications?read=false`
