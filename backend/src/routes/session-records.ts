@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -29,33 +30,38 @@ const sessionRecordSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteId, search } = req.query;
   const where: any = {};
   if (pacienteId) where.pacienteId = pacienteId;
   if (search) where.summary = { contains: search };
-  const records = await prisma.sessionRecord.findMany({ where, orderBy: { date: 'desc' }, include: { paciente: true } });
+  const records = await db.sessionRecord.findMany({ where, orderBy: { date: 'desc' }, include: { paciente: true } });
   res.json({ data: records, total: records.length });
 });
 
 router.get('/:id', async (req, res) => {
-  const record = await prisma.sessionRecord.findUnique({ where: { id: req.params.id }, include: { paciente: true } });
+  const db = scoped(prisma, req.user?.tenantId);
+  const record = await db.sessionRecord.findUnique({ where: { id: req.params.id }, include: { paciente: true } });
   if (!record) return res.status(404).json({ error: 'Registro de sessão não encontrado' });
   res.json(record);
 });
 
 router.post('/', validate(sessionRecordSchema), async (req, res) => {
-  const record = await prisma.sessionRecord.create({ data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const record = await db.sessionRecord.create({ data: req.body });
   res.status(201).json(record);
 });
 
 router.put('/:id', validate(sessionRecordSchema), async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const id = String(req.params.id);
-  const record = await prisma.sessionRecord.update({ where: { id }, data: req.body });
+  const record = await db.sessionRecord.update({ where: { id }, data: req.body });
   res.json(record);
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.sessionRecord.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.sessionRecord.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

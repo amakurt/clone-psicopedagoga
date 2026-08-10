@@ -232,7 +232,15 @@ export class LoginComponent {
       return res.json();
     })
     .then(data => {
-      this.auth.login(data.token, data.user);
+      this.auth.login(data.token, data.user, data.tenants, data.tenant);
+      const tenants = this.auth.tenants();
+      if (!tenants.length) {
+        throw new Error('Sua conta não está vinculada a nenhuma clínica');
+      }
+      if (tenants.length > 1) {
+        this.router.navigate(['/auth/select-clinic']);
+        return;
+      }
       const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
       this.router.navigate([redirectPath]);
     })

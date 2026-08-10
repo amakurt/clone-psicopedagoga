@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -20,10 +21,11 @@ const sessionDiarySchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteId } = req.query;
   const where: any = {};
   if (pacienteId) where.pacienteId = pacienteId as string;
-  const diaries = await prisma.sessionDiary.findMany({
+  const diaries = await db.sessionDiary.findMany({
     where,
     orderBy: { createdAt: 'desc' },
     include: { paciente: true },
@@ -32,7 +34,8 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  const diary = await prisma.sessionDiary.findUnique({
+  const db = scoped(prisma, req.user?.tenantId);
+  const diary = await db.sessionDiary.findUnique({
     where: { id: req.params.id },
     include: { paciente: true },
   });
@@ -41,7 +44,8 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', validate(sessionDiarySchema), async (req, res) => {
-  const diary = await prisma.sessionDiary.create({
+  const db = scoped(prisma, req.user?.tenantId);
+  const diary = await db.sessionDiary.create({
     data: req.body,
     include: { paciente: true },
   });
@@ -49,7 +53,8 @@ router.post('/', validate(sessionDiarySchema), async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const diary = await prisma.sessionDiary.update({
+  const db = scoped(prisma, req.user?.tenantId);
+  const diary = await db.sessionDiary.update({
     where: { id: req.params.id },
     data: req.body,
     include: { paciente: true },
@@ -58,7 +63,8 @@ router.put('/:id', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.sessionDiary.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.sessionDiary.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

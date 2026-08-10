@@ -7,6 +7,71 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  plan        String   @default("TRIAL") // TRIAL | BASICO | PRO
+  status      String   @default("ATIVO") // ATIVO | BLOQUEADO
+  trialEndsAt DateTime?
+  logoUrl     String?
+  colors      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships Membership[]
+
+  pacientes        Paciente[]
+  signatures       Signature[]
+  whatsappConfigs  WhatsAppConfig[]
+  whatsappLogs     WhatsAppLog[]
+  responsibles     Responsible[]
+  documentRequests DocumentRequest[]
+  schools          School[]
+  prontuarios      Prontuario[]
+  anamneses        Anamnese[]
+  sessoes          Sessao[]
+  laudos           Laudo[]
+  encaminhamentos  Encaminhamento[]
+  comunicacoes     Comunicacao[]
+  financeiro       FinanceiroSessao[]
+  notifications    Notification[]
+  documents        Document[]
+  appointments     Appointment[]
+  libraryResources LibraryResource[]
+  transactions     Transaction[]
+  sessionRecords   SessionRecord[]
+  abaAssessments   ABAAssessment[]
+  abaPrograms      ABAProgram[]
+  abaDataPoints    ABADataPoint[]
+  protocolEvaluations ProtocolEvaluation[]
+  interventionPlans   InterventionPlan[]
+  chatMessages        ChatMessage[]
+  sessionDiaries      SessionDiary[]
+  frequencySheets     FrequencySheet[]
+  interventionDocuments InterventionDocument[]
+  consentLogs          ConsentLog[]
+  nfse                 Nfse[]
+  waitingRoom          WaitingRoom[]
+  availabilities       Availability[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  tenantId String @default("")
+  userId    String
+  role      String   @default("SECRETARIA")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String
@@ -25,6 +90,7 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  memberships        Membership[]
   prontuarios        Prontuario[]
   anamneses          Anamnese[]
   laudos             Laudo[]
@@ -49,6 +115,7 @@ model User {
 
 model Availability {
   id        String   @id @default(cuid())
+  tenantId String @default("")
   userId    String
   dayOfWeek Int      // 0=domingo ... 6=sábado
   startTime String   // "09:00"
@@ -57,7 +124,10 @@ model Availability {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
 }
 
 model VerificationCode {
@@ -77,6 +147,7 @@ model VerificationCode {
 
 model Paciente {
   id            String   @id @default(cuid())
+  tenantId String @default("")
   name          String
   email         String?
   phone         String?
@@ -105,6 +176,7 @@ model Paciente {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  tenant         Tenant        @relation(fields: [tenantId], references: [id])
   responsible       Responsible?  @relation(fields: [responsibleId], references: [id])
   school            School?       @relation(fields: [schoolId], references: [id])
   prontuarios       Prontuario[]
@@ -129,30 +201,42 @@ model Paciente {
   nfse                 Nfse[]
   waitingRoom          WaitingRoom[]
   consentLogs          ConsentLog[]
+
+  @@index([tenantId])
 }
 
 model Signature {
   id           String   @id @default(cuid())
+  tenantId String @default("")
   userId       String
   imageBase64  String
   documentType String?
   createdAt    DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
 }
 
 model WhatsAppConfig {
   id              String   @id @default(cuid())
+  tenantId String @default("")
   apiUrl          String
   token           String
   phoneNumberId   String?
   autoSendReminders Boolean @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
 }
 
 model WhatsAppLog {
   id        String   @id @default(cuid())
+  tenantId String @default("")
   patientId String
   phone     String
   message   String
@@ -160,11 +244,15 @@ model WhatsAppLog {
   sentBy    String
   createdAt DateTime @default(now())
 
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
   paciente Paciente? @relation(fields: [patientId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Responsible {
   id           String   @id @default(cuid())
+  tenantId String @default("")
   name         String
   birthDate    String?
   relationship String
@@ -185,12 +273,16 @@ model Responsible {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  tenant           Tenant             @relation(fields: [tenantId], references: [id])
   patients         Paciente[]
   documentRequests DocumentRequest[]
+
+  @@index([tenantId])
 }
 
 model DocumentRequest {
   id             String    @id @default(cuid())
+  tenantId String @default("")
   professionalId String
   patientId      String?
   responsibleId  String?
@@ -206,13 +298,17 @@ model DocumentRequest {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
   professional User         @relation(fields: [professionalId], references: [id])
   paciente     Paciente?    @relation(fields: [patientId], references: [id])
   responsible  Responsible? @relation(fields: [responsibleId], references: [id])
+
+  @@index([tenantId])
 }
 
 model School {
   id           String   @id @default(cuid())
+  tenantId String @default("")
   name         String
   levels       String?
   cep          String?
@@ -232,11 +328,15 @@ model School {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  tenant   Tenant     @relation(fields: [tenantId], references: [id])
   patients Paciente[]
+
+  @@index([tenantId])
 }
 
 model Prontuario {
   id         String   @id @default(cuid())
+  tenantId String @default("")
   titulo     String
   conteudo   String
   pacienteId String
@@ -244,12 +344,16 @@ model Prontuario {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
   autor    User     @relation(fields: [autorId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Anamnese {
   id                     String @id @default(cuid())
+  tenantId String @default("")
   pacienteId             String
   autorId                String
   status                 String @default("PENDENTE")
@@ -296,12 +400,16 @@ model Anamnese {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
   autor    User     @relation(fields: [autorId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Sessao {
   id              String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId      String
   psicopedagogoId String
   date            DateTime
@@ -320,13 +428,17 @@ model Sessao {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
   paciente      Paciente @relation(fields: [pacienteId], references: [id])
   psicopedagogo User     @relation(fields: [psicopedagogoId], references: [id])
   financeiro    FinanceiroSessao[]
+
+  @@index([tenantId])
 }
 
 model Laudo {
   id         String   @id @default(cuid())
+  tenantId String @default("")
   titulo     String
   type       String   @default("LAUDO")
   content    String
@@ -336,12 +448,16 @@ model Laudo {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
   autor    User     @relation(fields: [autorId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Encaminhamento {
   id          String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId  String
   deUserId    String
   paraUserId  String?
@@ -351,24 +467,32 @@ model Encaminhamento {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
   deUser   User     @relation("EncaminhamentoDe", fields: [deUserId], references: [id])
   paraUser User?    @relation("EncaminhamentoPara", fields: [paraUserId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Comunicacao {
   id        String   @id @default(cuid())
+  tenantId String @default("")
   titulo    String
   mensagem  String
   tipo      String   @default("AVISO")
   autorId   String?
   createdAt DateTime @default(now())
 
-  autor User? @relation(fields: [autorId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  autor User?  @relation(fields: [autorId], references: [id])
+
+  @@index([tenantId])
 }
 
 model FinanceiroSessao {
   id            String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId    String
   sessaoId      String?
   valor         Float
@@ -380,12 +504,16 @@ model FinanceiroSessao {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
   sessao   Sessao?  @relation(fields: [sessaoId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Notification {
   id        String   @id @default(cuid())
+  tenantId String @default("")
   userId    String
   title     String
   message   String
@@ -393,11 +521,16 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId, read])
 }
 
 model Document {
   id               String   @id @default(cuid())
+  tenantId String @default("")
   name             String
   pacienteId       String?
   size             String?
@@ -412,12 +545,16 @@ model Document {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
   paciente Paciente? @relation(fields: [pacienteId], references: [id])
   autor    User?     @relation(fields: [autorId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Appointment {
   id          String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId  String
   patientName String
   date        String
@@ -431,12 +568,17 @@ model Appointment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
   paciente Paciente? @relation(fields: [pacienteId], references: [id])
   autor    User?     @relation(fields: [autorId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, date])
 }
 
 model LibraryResource {
   id          String   @id @default(cuid())
+  tenantId String @default("")
   name        String
   description String
   ageRange    String?
@@ -447,10 +589,15 @@ model LibraryResource {
   fileSize    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Transaction {
   id             String   @id @default(cuid())
+  tenantId String @default("")
   patientName    String
   patientId      String?
   date           String
@@ -465,10 +612,15 @@ model Transaction {
   professionalId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
 }
 
 model SessionRecord {
   id                 String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId         String
   professionalId     String?
   professionalName   String?
@@ -489,11 +641,15 @@ model SessionRecord {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
+
+  @@index([tenantId])
 }
 
 model ABAAssessment {
   id             String   @id @default(cuid())
+  tenantId String @default("")
   patientId      String
   professionalId String
   protocolType   String
@@ -505,12 +661,16 @@ model ABAAssessment {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
   paciente     Paciente @relation(fields: [patientId], references: [id])
   professional User     @relation(fields: [professionalId], references: [id])
+
+  @@index([tenantId])
 }
 
 model ABAProgram {
   id                     String   @id @default(cuid())
+  tenantId String @default("")
   patientId              String
   professionalId         String
   targetBehavior         String
@@ -523,24 +683,32 @@ model ABAProgram {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
   paciente     Paciente      @relation(fields: [patientId], references: [id])
   professional User          @relation(fields: [professionalId], references: [id])
   dataPoints   ABADataPoint[]
+
+  @@index([tenantId])
 }
 
 model ABADataPoint {
   id        String   @id @default(cuid())
+  tenantId String @default("")
   programId String
   date      DateTime @default(now())
   value     Float
   note      String?
   createdAt DateTime @default(now())
 
+  tenant  Tenant     @relation(fields: [tenantId], references: [id])
   program ABAProgram @relation(fields: [programId], references: [id])
+
+  @@index([tenantId])
 }
 
 model ProtocolEvaluation {
   id             String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId     String
   professionalId String
   date           String
@@ -551,12 +719,16 @@ model ProtocolEvaluation {
   minScore       Float  @default(0)
   createdAt      DateTime @default(now())
 
-  paciente Paciente @relation(fields: [pacienteId], references: [id])
-  profissional User @relation(fields: [professionalId], references: [id])
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  paciente     Paciente @relation(fields: [pacienteId], references: [id])
+  profissional User     @relation(fields: [professionalId], references: [id])
+
+  @@index([tenantId])
 }
 
 model InterventionPlan {
   id             String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId     String
   professionalId String
   date           String
@@ -572,12 +744,16 @@ model InterventionPlan {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  paciente Paciente @relation(fields: [pacienteId], references: [id])
-  profissional User @relation(fields: [professionalId], references: [id])
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  paciente     Paciente @relation(fields: [pacienteId], references: [id])
+  profissional User     @relation(fields: [professionalId], references: [id])
+
+  @@index([tenantId])
 }
 
 model ChatMessage {
   id             String   @id @default(cuid())
+  tenantId String @default("")
   senderId       String
   senderName     String
   senderRole     String   @default("RESPONSAVEL")
@@ -587,7 +763,10 @@ model ChatMessage {
   readByGuardian Boolean  @default(false)
   createdAt      DateTime @default(now())
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
+
+  @@index([tenantId])
 }
 
 model SocialAccount {
@@ -607,6 +786,7 @@ model SocialAccount {
 
 model SessionDiary {
   id              String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId      String
   sessionNumber   Int
   date            String
@@ -620,11 +800,15 @@ model SessionDiary {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
+
+  @@index([tenantId])
 }
 
 model FrequencySheet {
   id              String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId      String
   date            String
   entryTime       String?
@@ -636,11 +820,15 @@ model FrequencySheet {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
+
+  @@index([tenantId])
 }
 
 model InterventionDocument {
   id              String   @id @default(cuid())
+  tenantId String @default("")
   pacienteId      String
   professionalId  String?
   professionalName String?
@@ -656,11 +844,15 @@ model InterventionDocument {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
   paciente Paciente @relation(fields: [pacienteId], references: [id])
+
+  @@index([tenantId])
 }
 
 model ConsentLog {
   id           String   @id @default(cuid())
+  tenantId String @default("")
   patientId    String
   responsibleId String?
   consentType  String
@@ -669,11 +861,15 @@ model ConsentLog {
   ipAddress    String?
   recordedAt   DateTime @default(now())
 
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
   paciente Paciente? @relation(fields: [patientId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Nfse {
   id              String   @id @default(cuid())
+  tenantId String @default("")
   number          Int      @unique
   patientId       String
   professionalId  String
@@ -689,12 +885,16 @@ model Nfse {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
   paciente     Paciente @relation(fields: [patientId], references: [id])
   professional User     @relation(fields: [professionalId], references: [id])
+
+  @@index([tenantId])
 }
 
 model WaitingRoom {
   id            String    @id @default(cuid())
+  tenantId String @default("")
   patientId     String
   appointmentId String?
   status        String    @default("AGUARDANDO")
@@ -706,5 +906,8 @@ model WaitingRoom {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
   paciente Paciente? @relation(fields: [patientId], references: [id])
+
+  @@index([tenantId])
 }

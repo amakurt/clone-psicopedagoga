@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -16,7 +17,8 @@ const chatMessageSchema = z.object({
 
 // Conversation list for the staff side: one thread per patient, with unread badge
 router.get('/conversations', async (req, res) => {
-  const messages = await prisma.chatMessage.findMany({
+  const db = scoped(prisma, req.user?.tenantId);
+  const messages = await db.chatMessage.findMany({
     orderBy: { createdAt: 'asc' },
     include: { paciente: true },
   });
@@ -45,7 +47,7 @@ router.get('/conversations', async (req, res) => {
   }
 
   // Unread = messages sent by the RESPONSAVEL that staff hasn't read yet
-  const unread = await prisma.chatMessage.findMany({
+  const unread = await db.chatMessage.findMany({
     where: { senderRole: 'RESPONSAVEL', readByStaff: false },
     select: { pacienteId: true },
   });
@@ -63,7 +65,8 @@ router.get('/conversations', async (req, res) => {
 
 // Mark a conversation as read by staff (called when the staff opens a thread)
 router.post('/conversations/:pacienteId/read', async (req, res) => {
-  await prisma.chatMessage.updateMany({
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.chatMessage.updateMany({
     where: { pacienteId: req.params.pacienteId, senderRole: 'RESPONSAVEL', readByStaff: false },
     data: { readByStaff: true },
   });
@@ -72,6 +75,7 @@ router.post('/conversations/:pacienteId/read', async (req, res) => {
 
 // Send message as staff
 router.post('/send', async (req: any, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteId, message } = req.body;
   if (!pacienteId || !message || !message.trim()) {
     return res.status(400).json({ error: 'Paciente e mensagem são obrigatórios' });
@@ -83,7 +87,7 @@ router.post('/send', async (req: any, res) => {
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
   const senderName = dbUser?.name || user.name || 'Equipe';
 
-  const chatMessage = await prisma.chatMessage.create({
+  const chatMessage = await db.chatMessage.create({
     data: {
       senderId: user.id,
       senderName,
@@ -95,12 +99,12 @@ router.post('/send', async (req: any, res) => {
   });
 
   // Notify the responsible (guardian) that there's a new message
-  const patient = await prisma.paciente.findUnique({
+  const patient = await db.paciente.findUnique({
     where: { id: pacienteId },
     include: { responsible: true },
   });
   if (patient?.responsible?.userId) {
-    await prisma.notification.create({
+    await db.notification.create({
       data: {
         userId: patient.responsible.userId,
         title: 'Nova mensagem da equipe',
@@ -114,31 +118,36 @@ router.post('/send', async (req: any, res) => {
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteId } = req.query;
   const where: any = {};
   if (pacienteId) where.pacienteId = pacienteId;
-  const messages = await prisma.chatMessage.findMany({ where, orderBy: { createdAt: 'asc' }, include: { paciente: true } });
+  const messages = await db.chatMessage.findMany({ where, orderBy: { createdAt: 'asc' }, include: { paciente: true } });
   res.json({ data: messages, total: messages.length });
 });
 
 router.get('/:id', async (req, res) => {
-  const message = await prisma.chatMessage.findUnique({ where: { id: req.params.id }, include: { paciente: true } });
+  const db = scoped(prisma, req.user?.tenantId);
+  const message = await db.chatMessage.findUnique({ where: { id: req.params.id }, include: { paciente: true } });
   if (!message) return res.status(404).json({ error: 'Mensagem não encontrada' });
   res.json(message);
 });
 
 router.post('/', validate(chatMessageSchema), async (req, res) => {
-  const message = await prisma.chatMessage.create({ data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const message = await db.chatMessage.create({ data: req.body });
   res.status(201).json(message);
 });
 
 router.put('/:id', async (req, res) => {
-  const message = await prisma.chatMessage.update({ where: { id: req.params.id }, data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const message = await db.chatMessage.update({ where: { id: req.params.id }, data: req.body });
   res.json(message);
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.chatMessage.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.chatMessage.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

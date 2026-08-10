@@ -25,6 +25,36 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
               </div>
             </div>
             <div class="flex items-center gap-4">
+              @if (auth.tenants().length > 1) {
+                <div class="relative">
+                  <button class="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-gray-600 dark:text-slate-300 transition-all max-w-[200px]"
+                    (click)="tenantOpen.set(!tenantOpen())" title="Trocar de clínica">
+                    <span class="material-icons text-primary text-lg">domain</span>
+                    <span class="text-xs font-bold truncate">{{ auth.tenant()?.name || 'Clínica' }}</span>
+                  </button>
+                  @if (tenantOpen()) {
+                    <div class="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-2">
+                      @for (tenant of auth.tenants(); track tenant.id) {
+                        <button
+                          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left"
+                          [class]="tenant.id === auth.tenant()?.id
+                            ? 'bg-primary/10 text-primary'
+                            : (tenant.status === 'BLOQUEADO'
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700')"
+                          [disabled]="tenant.status === 'BLOQUEADO' || switching()"
+                          (click)="switchTenant(tenant)">
+                          <span class="material-icons text-[16px] text-primary">domain</span>
+                          <span class="text-xs font-bold truncate">{{ tenant.name }}</span>
+                          @if (tenant.id === auth.tenant()?.id) {
+                            <span class="material-icons text-[16px] ml-auto">check_circle</span>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
               <span class="text-sm text-gray-600 dark:text-slate-300">{{ userName() }}</span>
               <div class="relative">
                 <button class="p-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-gray-500 dark:text-slate-300 hover:text-primary transition-all relative"
@@ -93,7 +123,7 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
   `
 })
 export class GuardianLayoutComponent implements OnInit, OnDestroy {
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
   private router = inject(Router);
   private guardianService = inject(GuardianService);
   private api = inject(ApiService);
@@ -103,6 +133,8 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   userName = signal('');
   notifCount = signal(0);
   notifOpen = signal(false);
+  tenantOpen = signal(false);
+  switching = signal(false);
   private notifTimer: any;
 
   navItems = [
@@ -166,6 +198,21 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   selectPatient(patient: any) {
     this.selectedPatientId.set(patient.id);
     localStorage.setItem('guardian_patient_id', patient.id);
+  }
+
+  switchTenant(tenant: any) {
+    if (tenant.status === 'BLOQUEADO' || tenant.id === this.auth.tenant()?.id) {
+      this.tenantOpen.set(false);
+      return;
+    }
+    this.switching.set(true);
+    this.auth
+      .selectTenant(tenant.id)
+      .then(() => window.location.reload())
+      .catch(() => {
+        this.switching.set(false);
+        this.tenantOpen.set(false);
+      });
   }
 
   logout() {

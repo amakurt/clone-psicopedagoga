@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -16,13 +17,14 @@ const consentSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { patientId, consentType, status } = req.query;
   const where: any = {};
   if (patientId) where.patientId = patientId;
   if (consentType) where.consentType = consentType;
   if (status) where.status = status;
 
-  const consents = await prisma.consentLog.findMany({
+  const consents = await db.consentLog.findMany({
     where,
     orderBy: { recordedAt: 'desc' },
     include: { paciente: true }
@@ -31,7 +33,8 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:patientId', async (req, res) => {
-  const consents = await prisma.consentLog.findMany({
+  const db = scoped(prisma, req.user?.tenantId);
+  const consents = await db.consentLog.findMany({
     where: { patientId: req.params.patientId },
     orderBy: { recordedAt: 'desc' },
     include: { paciente: true }
@@ -40,7 +43,8 @@ router.get('/:patientId', async (req, res) => {
 });
 
 router.post('/', validate(consentSchema), async (req, res) => {
-  const consent = await prisma.consentLog.create({ data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const consent = await db.consentLog.create({ data: req.body });
   res.status(201).json(consent);
 });
 

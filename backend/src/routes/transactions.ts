@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -22,33 +23,38 @@ const transactionSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { search, status, type } = req.query;
   const where: any = {};
   if (search) where.patientName = { contains: search };
   if (status) where.status = status;
   if (type) where.type = type;
-  const transactions = await prisma.transaction.findMany({ where, orderBy: { createdAt: 'desc' } });
+  const transactions = await db.transaction.findMany({ where, orderBy: { createdAt: 'desc' } });
   res.json({ data: transactions, total: transactions.length });
 });
 
 router.get('/:id', async (req, res) => {
-  const transaction = await prisma.transaction.findUnique({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  const transaction = await db.transaction.findUnique({ where: { id: req.params.id } });
   if (!transaction) return res.status(404).json({ error: 'Transação não encontrada' });
   res.json(transaction);
 });
 
 router.post('/', validate(transactionSchema), async (req, res) => {
-  const transaction = await prisma.transaction.create({ data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const transaction = await db.transaction.create({ data: req.body });
   res.status(201).json(transaction);
 });
 
 router.put('/:id', async (req, res) => {
-  const transaction = await prisma.transaction.update({ where: { id: req.params.id }, data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const transaction = await db.transaction.update({ where: { id: req.params.id }, data: req.body });
   res.json(transaction);
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.transaction.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.transaction.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

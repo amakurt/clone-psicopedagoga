@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -28,22 +29,25 @@ const responsibleSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { search } = req.query;
   const where: any = {};
   if (search) where.name = { contains: search };
-  const responsaveis = await prisma.responsible.findMany({ where, orderBy: { name: 'asc' }, include: { patients: true } });
+  const responsaveis = await db.responsible.findMany({ where, orderBy: { name: 'asc' }, include: { patients: true } });
   res.json({ data: responsaveis, total: responsaveis.length });
 });
 
 router.get('/:id', async (req, res) => {
-  const responsible = await prisma.responsible.findUnique({ where: { id: req.params.id }, include: { patients: true } });
+  const db = scoped(prisma, req.user?.tenantId);
+  const responsible = await db.responsible.findUnique({ where: { id: req.params.id }, include: { patients: true } });
   if (!responsible) return res.status(404).json({ error: 'Responsável não encontrado' });
   res.json(responsible);
 });
 
 router.post('/', validate(responsibleSchema), async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteIds, patients, ...data } = req.body;
-  const responsible = await prisma.responsible.create({
+  const responsible = await db.responsible.create({
     data: {
       ...data,
       ...(pacienteIds?.length ? {
@@ -55,8 +59,9 @@ router.post('/', validate(responsibleSchema), async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteIds, patients, ...data } = req.body;
-  const responsible = await prisma.responsible.update({
+  const responsible = await db.responsible.update({
     where: { id: req.params.id },
     data: {
       ...data,
@@ -70,7 +75,8 @@ router.put('/:id', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.responsible.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.responsible.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

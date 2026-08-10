@@ -46,8 +46,21 @@ export class AuthCallbackComponent implements OnInit {
         try {
           const user = JSON.parse(decodeURIComponent(userStr));
           this.auth.login(token, user);
-          const redirectPath = user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
-          this.router.navigate([redirectPath]);
+          this.auth
+            .refreshTenants()
+            .then(() => {
+              const tenants = this.auth.tenants();
+              if (tenants.length > 1) {
+                this.router.navigate(['/auth/select-clinic']);
+              } else {
+                const redirectPath = user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
+                this.router.navigate([redirectPath]);
+              }
+            })
+            .catch(() => {
+              const redirectPath = user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
+              this.router.navigate([redirectPath]);
+            });
         } catch (e) {
           this.error.set('Erro ao processar dados de autenticação');
           this.loading.set(false);

@@ -113,6 +113,52 @@ import { ChatFloatingComponent } from '../../shared/components/chat-floating.com
             <h2 class="text-xl font-black text-slate-900 dark:text-white">{{ currentPageTitle() }}</h2>
           </div>
           <div class="flex items-center gap-3">
+            @if (auth.tenants().length > 1) {
+              <div class="relative">
+                <button class="flex items-center gap-2 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300 transition-all max-w-[220px]"
+                  (click)="tenantOpen.set(!tenantOpen())" title="Trocar de clínica">
+                  <div class="size-6 rounded-md bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                    @if (auth.tenant()?.logoUrl) {
+                      <img [src]="auth.tenant()?.logoUrl" class="size-full object-cover">
+                    } @else {
+                      <span class="material-icons text-[14px] text-primary">domain</span>
+                    }
+                  </div>
+                  <span class="text-xs font-bold truncate">{{ auth.tenant()?.name || 'Clínica' }}</span>
+                  <span class="material-icons text-[16px]">arrow_drop_down</span>
+                </button>
+                @if (tenantOpen()) {
+                  <div class="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-2">
+                    @for (tenant of auth.tenants(); track tenant.id) {
+                      <button
+                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left"
+                        [class]="tenant.id === auth.tenant()?.id
+                          ? 'bg-primary/10 text-primary'
+                          : (tenant.status === 'BLOQUEADO'
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700')"
+                        [disabled]="tenant.status === 'BLOQUEADO' || switching()"
+                        (click)="switchTenant(tenant)">
+                        <div class="size-8 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                          @if (tenant.logoUrl) {
+                            <img [src]="tenant.logoUrl" class="size-full object-cover">
+                          } @else {
+                            <span class="material-icons text-[16px] text-primary">domain</span>
+                          }
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-xs font-bold truncate">{{ tenant.name }}</p>
+                          <p class="text-[10px] opacity-70">{{ tenant.role }} · {{ tenant.status === 'BLOQUEADO' ? 'bloqueada' : tenant.plan }}</p>
+                        </div>
+                        @if (tenant.id === auth.tenant()?.id) {
+                          <span class="material-icons text-[16px]">check_circle</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
             <div class="relative">
               <button class="p-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-500 hover:text-primary transition-all relative"
                 (click)="toggleNotifications()">
@@ -158,6 +204,8 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   isDarkMode = signal(false);
   notifCount = signal(0);
   notifOpen = signal(false);
+  tenantOpen = signal(false);
+  switching = signal(false);
   private notifTimer: any;
 
   navItems = [
@@ -184,6 +232,21 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   ];
 
   currentPageTitle = signal('Dashboard');
+
+  switchTenant(tenant: any) {
+    if (tenant.status === 'BLOQUEADO' || tenant.id === this.auth.tenant()?.id) {
+      this.tenantOpen.set(false);
+      return;
+    }
+    this.switching.set(true);
+    this.auth
+      .selectTenant(tenant.id)
+      .then(() => window.location.reload())
+      .catch(() => {
+        this.switching.set(false);
+        this.tenantOpen.set(false);
+      });
+  }
 
   ngOnInit() {
     const savedTheme = localStorage.getItem('theme');

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -22,32 +23,37 @@ const interventionPlanSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteId, status } = req.query;
   const where: any = {};
   if (pacienteId) where.pacienteId = pacienteId;
   if (status) where.status = status;
-  const plans = await prisma.interventionPlan.findMany({ where, orderBy: { date: 'desc' }, include: { paciente: true, profissional: true } });
+  const plans = await db.interventionPlan.findMany({ where, orderBy: { date: 'desc' }, include: { paciente: true, profissional: true } });
   res.json({ data: plans, total: plans.length });
 });
 
 router.get('/:id', async (req, res) => {
-  const plan = await prisma.interventionPlan.findUnique({ where: { id: req.params.id }, include: { paciente: true, profissional: true } });
+  const db = scoped(prisma, req.user?.tenantId);
+  const plan = await db.interventionPlan.findUnique({ where: { id: req.params.id }, include: { paciente: true, profissional: true } });
   if (!plan) return res.status(404).json({ error: 'Plano de intervenção não encontrado' });
   res.json(plan);
 });
 
 router.post('/', validate(interventionPlanSchema), async (req, res) => {
-  const plan = await prisma.interventionPlan.create({ data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const plan = await db.interventionPlan.create({ data: req.body });
   res.status(201).json(plan);
 });
 
 router.put('/:id', async (req, res) => {
-  const plan = await prisma.interventionPlan.update({ where: { id: req.params.id }, data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const plan = await db.interventionPlan.update({ where: { id: req.params.id }, data: req.body });
   res.json(plan);
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.interventionPlan.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.interventionPlan.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

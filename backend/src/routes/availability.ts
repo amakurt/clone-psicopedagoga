@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -15,7 +16,8 @@ const availabilitySchema = z.object({
 
 // Lista os horários disponíveis do profissional logado
 router.get('/', async (req, res) => {
-  const availabilities = await prisma.availability.findMany({
+  const db = scoped(prisma, req.user?.tenantId);
+  const availabilities = await db.availability.findMany({
     where: { userId: req.user!.id },
     orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
   });
@@ -24,9 +26,10 @@ router.get('/', async (req, res) => {
 
 // Cria um horário disponível
 router.post('/', validate(availabilitySchema), async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { dayOfWeek, startTime, endTime, active } = req.body;
 
-  const existing = await prisma.availability.findFirst({
+  const existing = await db.availability.findFirst({
     where: {
       userId: req.user!.id,
       dayOfWeek,
@@ -38,7 +41,7 @@ router.post('/', validate(availabilitySchema), async (req, res) => {
     return res.status(400).json({ error: 'Este horário já está cadastrado para este dia' });
   }
 
-  const availability = await prisma.availability.create({
+  const availability = await db.availability.create({
     data: { userId: req.user!.id, dayOfWeek, startTime, endTime, active: active ?? true },
   });
   res.status(201).json(availability);
@@ -46,12 +49,13 @@ router.post('/', validate(availabilitySchema), async (req, res) => {
 
 // Atualiza um horário disponível
 router.put('/:id', validate(availabilitySchema), async (req, res) => {
-  const existing = await prisma.availability.findFirst({
+  const db = scoped(prisma, req.user?.tenantId);
+  const existing = await db.availability.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
   });
   if (!existing) return res.status(404).json({ error: 'Horário não encontrado' });
 
-  const availability = await prisma.availability.update({
+  const availability = await db.availability.update({
     where: { id: existing.id },
     data: req.body,
   });
@@ -60,12 +64,13 @@ router.put('/:id', validate(availabilitySchema), async (req, res) => {
 
 // Remove um horário disponível
 router.delete('/:id', async (req, res) => {
-  const existing = await prisma.availability.findFirst({
+  const db = scoped(prisma, req.user?.tenantId);
+  const existing = await db.availability.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
   });
   if (!existing) return res.status(404).json({ error: 'Horário não encontrado' });
 
-  await prisma.availability.delete({ where: { id: existing.id } });
+  await db.availability.delete({ where: { id: existing.id } });
   res.status(204).send();
 });
 

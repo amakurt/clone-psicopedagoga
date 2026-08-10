@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate } from '../middleware';
 
 const router = Router();
@@ -25,9 +26,10 @@ router.get('/compare', async (req, res) => {
       where2.pacienteId = patientId;
     }
 
+    const db = scoped(prisma, req.user?.tenantId);
     const [period1, period2] = await Promise.all([
-      prisma.sessionRecord.findMany({ where: where1, orderBy: { date: 'asc' } }),
-      prisma.sessionRecord.findMany({ where: where2, orderBy: { date: 'asc' } })
+      db.sessionRecord.findMany({ where: where1, orderBy: { date: 'asc' } }),
+      db.sessionRecord.findMany({ where: where2, orderBy: { date: 'asc' } })
     ]);
 
     res.json({ period1, period2 });

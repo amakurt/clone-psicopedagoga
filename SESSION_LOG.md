@@ -4,6 +4,52 @@
 
 ---
 
+## Sessão 12 - 10/08/2026 (Segunda) — SAAS Multi-tenant: Fase 2 (frontend multi-clínica)
+
+### O que foi feito
+
+#### 1. Backend — clínicas do usuário + troca por header
+- `POST /auth/login` retorna `tenants[]` + `tenant` (default = 1ª não bloqueada); `GET /auth/tenants`; `POST /auth/select-tenant` (valida membership, 403 sem vínculo)
+- Middleware `authenticate` aceita `X-Tenant-Id` (vínculo ativo obrigatório) e prefere clínica não bloqueada; `req.user.tenant` com {id, name, slug, plan, status, logoUrl, colors}
+
+#### 2. Frontend — seleção no login + switcher no header
+- `AuthService` com signals `tenants`/`tenant` (localStorage), `selectTenant()`, `refreshTenants()`; interceptor envia `X-Tenant-Id`
+- Página nova `/auth/select-clinic` quando login tem >1 clínica (bloqueadas desabilitadas); callback do Google usa mesma lógica via refreshTenants
+- Chip + dropdown de troca de clínica no header do `main-layout` e `guardian-layout` (troca → selectTenant + reload)
+
+#### 3. Validação
+- Login com 2 tenants ✓ · `GET /tenants` ✓ · select-tenant inválido 403 ✓ · **X-Tenant-Id: 5 pacientes (principal) → 0 (teste)** ✓ · `ng build` limpo · dados de teste removidos
+
+### Commits
+- (nenhum — pendente de commit junto com Fase 1)
+
+---
+
+## Sessão 11 - 10/08/2026 (Segunda) — SAAS Multi-tenant: Fase 1
+
+### O que foi feito
+
+#### 1. Scoping de todas as rotas de negócio (isolamento por tenantId)
+- Helper `backend/src/lib/tenant.ts` com `scoped(prisma, tenantId)` que injeta `tenantId` em `where` e `data` de ~33 modelos de negócio
+- Rotas convertidas (listadas na SESSION-NOTES, entrada 46); queries por id usam `where: { id, tenantId }` → 404 cruzado
+- Globais (`User`, `Tenant`, `Membership`) e rotas públicas (`document-requests` por token) permanecem sem scoping por design
+- `seed.ts` cria/resolve o Tenant "Clínica Principal" e planta dados escopados
+- Backfill `backfill-tenant.ts` re-executado: 33 tabelas vinculadas, 7 memberships, sem órfãos
+- Verificado: `tsc --noEmit` limpo + runtime (login/listagem/detalhe com tenantId correto)
+
+#### 2. Teste de isolamento entre tenants — 16/16 PASS
+- Script `backend/scripts/test-isolation.ts` (npm `test:isolation`, servidor próprio porta 3999): cria Tenant B + usuário B e valida POST injeta tenantId, listas não vazam, GET/PUT/DELETE cruzado → 404, cleanup automático
+- **Bug latente encontrado e corrigido:** `backend/src/lib/async-express.ts` — Express 4 não propaga rejeições async para o errorHandler (PUT/DELETE cruzado em rota sem try/catch deixava o cliente pendurado); patch no protótipo do Router, carregado via `lib/prisma.ts` — 404 do scoped agora vira resposta real
+- Dados de teste removidos (2 tenants/usuários órfãos da 1ª execução limpos; zero órfãos restantes)
+
+#### 3. Backup da conversa
+- `session-backup/2026-08-10-multitenant.json` (sessão atual) + `session-backup/2026-08-10-fase0-inicio.json` (sessão anterior/Fase 0), via `opencode export`
+
+### Commits
+- (nenhum — trabalho pendente de commit; `git status` mostra dezenas de arquivos modificados)
+
+---
+
 ## Sessão 10 - 10/08/2026 (Segunda)
 
 ### O que foi feito

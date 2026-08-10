@@ -1,10 +1,18 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { scoped } from './lib/tenant';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const hash = await bcrypt.hash('123456', 10);
+
+  const tenant = await prisma.tenant.upsert({
+    where: { slug: 'clinica-principal' },
+    update: {},
+    create: { name: 'Clínica Principal', slug: 'clinica-principal' },
+  });
+  const db = scoped(prisma, tenant.id);
 
   // Usuários
   const sarah = await prisma.user.upsert({
@@ -67,7 +75,7 @@ async function main() {
   });
 
   // 5 Responsáveis (nomes únicos)
-  const resp1 = await prisma.responsible.create({
+  const resp1 = await db.responsible.create({
     data: {
       name: 'Renata Carvalho Lima',
       relationship: 'Mãe',
@@ -82,7 +90,7 @@ async function main() {
     },
   });
 
-  const resp2 = await prisma.responsible.create({
+  const resp2 = await db.responsible.create({
     data: {
       name: 'Marcos Ribeiro Costa',
       relationship: 'Pai',
@@ -97,7 +105,7 @@ async function main() {
     },
   });
 
-  const resp3 = await prisma.responsible.create({
+  const resp3 = await db.responsible.create({
     data: {
       name: 'Patricia Mendes Rocha',
       relationship: 'Mãe',
@@ -112,7 +120,7 @@ async function main() {
     },
   });
 
-  const resp4 = await prisma.responsible.create({
+  const resp4 = await db.responsible.create({
     data: {
       name: 'Fernando Gomes Barros',
       relationship: 'Pai',
@@ -127,7 +135,7 @@ async function main() {
     },
   });
 
-  const resp5 = await prisma.responsible.create({
+  const resp5 = await db.responsible.create({
     data: {
       name: 'Adriana Nunes Pinto',
       relationship: 'Mãe',
@@ -143,7 +151,7 @@ async function main() {
   });
 
   // 5 Pacientes (nomes únicos)
-  const paciente1 = await prisma.paciente.create({
+  const paciente1 = await db.paciente.create({
     data: {
       name: 'Gabriel Carvalho Lima',
       cpf: '111.222.333-11',
@@ -161,7 +169,7 @@ async function main() {
     },
   });
 
-  const paciente2 = await prisma.paciente.create({
+  const paciente2 = await db.paciente.create({
     data: {
       name: 'Helena Ribeiro Costa',
       cpf: '222.333.444-22',
@@ -179,7 +187,7 @@ async function main() {
     },
   });
 
-  const paciente3 = await prisma.paciente.create({
+  const paciente3 = await db.paciente.create({
     data: {
       name: 'Theo Mendes Rocha',
       cpf: '333.444.555-33',
@@ -196,7 +204,7 @@ async function main() {
     },
   });
 
-  const paciente4 = await prisma.paciente.create({
+  const paciente4 = await db.paciente.create({
     data: {
       name: 'Manuela Gomes Barros',
       cpf: '444.555.666-44',
@@ -214,7 +222,7 @@ async function main() {
     },
   });
 
-  const paciente5 = await prisma.paciente.create({
+  const paciente5 = await db.paciente.create({
     data: {
       name: 'Davi Nunes Pinto',
       cpf: '555.666.777-55',
@@ -233,7 +241,7 @@ async function main() {
   });
 
   // Escolas
-  const escola1 = await prisma.school.create({
+  const escola1 = await db.school.create({
     data: {
       name: 'Escola Municipal Monteiro Lobato',
       levels: 'Anos Iniciais',
@@ -249,7 +257,7 @@ async function main() {
     },
   });
 
-  const escola2 = await prisma.school.create({
+  const escola2 = await db.school.create({
     data: {
       name: 'Colégio Estadual Machado de Assis',
       levels: 'Anos Finais',
@@ -266,11 +274,11 @@ async function main() {
   });
 
   // Vincular escolas
-  await prisma.paciente.update({ where: { id: paciente1.id }, data: { schoolId: escola1.id } });
-  await prisma.paciente.update({ where: { id: paciente2.id }, data: { schoolId: escola1.id } });
-  await prisma.paciente.update({ where: { id: paciente3.id }, data: { schoolId: escola2.id } });
-  await prisma.paciente.update({ where: { id: paciente4.id }, data: { schoolId: escola1.id } });
-  await prisma.paciente.update({ where: { id: paciente5.id }, data: { schoolId: escola2.id } });
+  await db.paciente.update({ where: { id: paciente1.id }, data: { schoolId: escola1.id } });
+  await db.paciente.update({ where: { id: paciente2.id }, data: { schoolId: escola1.id } });
+  await db.paciente.update({ where: { id: paciente3.id }, data: { schoolId: escola2.id } });
+  await db.paciente.update({ where: { id: paciente4.id }, data: { schoolId: escola1.id } });
+  await db.paciente.update({ where: { id: paciente5.id }, data: { schoolId: escola2.id } });
 
   // Protocolos TEA (avaliações)
   const evaluations = {
@@ -296,7 +304,7 @@ async function main() {
     'COGNICAO_resolucao': 3,
   };
 
-  await prisma.protocolEvaluation.create({
+  await db.protocolEvaluation.create({
     data: {
       pacienteId: paciente1.id,
       professionalId: sarah.id,
@@ -309,7 +317,7 @@ async function main() {
     },
   });
 
-  await prisma.protocolEvaluation.create({
+  await db.protocolEvaluation.create({
     data: {
       pacienteId: paciente2.id,
       professionalId: sarah.id,
@@ -328,7 +336,7 @@ async function main() {
   });
 
   // Planos de Intervenção
-  await prisma.interventionPlan.create({
+  await db.interventionPlan.create({
     data: {
       pacienteId: paciente1.id,
       professionalId: sarah.id,
@@ -355,7 +363,7 @@ async function main() {
     },
   });
 
-  await prisma.interventionPlan.create({
+  await db.interventionPlan.create({
     data: {
       pacienteId: paciente3.id,
       professionalId: profAna.id,
@@ -383,7 +391,7 @@ async function main() {
   });
 
   // Sessões
-  const sessao1 = await prisma.sessao.create({
+  const sessao1 = await db.sessao.create({
     data: {
       pacienteId: paciente1.id,
       psicopedagogoId: sarah.id,
@@ -399,7 +407,7 @@ async function main() {
     },
   });
 
-  await prisma.sessao.create({
+  await db.sessao.create({
     data: {
       pacienteId: paciente1.id,
       psicopedagogoId: sarah.id,
@@ -412,7 +420,7 @@ async function main() {
     },
   });
 
-  await prisma.sessao.create({
+  await db.sessao.create({
     data: {
       pacienteId: paciente2.id,
       psicopedagogoId: sarah.id,
@@ -426,7 +434,7 @@ async function main() {
     },
   });
 
-  await prisma.sessao.create({
+  await db.sessao.create({
     data: {
       pacienteId: paciente3.id,
       psicopedagogoId: profAna.id,
@@ -441,7 +449,7 @@ async function main() {
   });
 
   // Financeiro
-  await prisma.financeiroSessao.create({
+  await db.financeiroSessao.create({
     data: {
       pacienteId: paciente1.id,
       sessaoId: sessao1.id,
@@ -454,7 +462,7 @@ async function main() {
     },
   });
 
-  await prisma.financeiroSessao.create({
+  await db.financeiroSessao.create({
     data: {
       pacienteId: paciente2.id,
       valor: 200,
@@ -466,7 +474,7 @@ async function main() {
   });
 
   // Documentos Clínicos - Diário de Sessões
-  await prisma.sessionDiary.create({
+  await db.sessionDiary.create({
     data: {
       pacienteId: paciente1.id,
       sessionNumber: 15,
@@ -480,7 +488,7 @@ async function main() {
     },
   });
 
-  await prisma.sessionDiary.create({
+  await db.sessionDiary.create({
     data: {
       pacienteId: paciente3.id,
       sessionNumber: 22,
@@ -495,7 +503,7 @@ async function main() {
   });
 
   // Fichas de Frequência
-  await prisma.frequencySheet.create({
+  await db.frequencySheet.create({
     data: {
       pacienteId: paciente1.id,
       date: '2026-08-01',
@@ -509,7 +517,7 @@ async function main() {
   });
 
   // Protocolos ABA
-  await prisma.aBAAssessment.create({
+  await db.aBAAssessment.create({
     data: {
       patientId: paciente1.id,
       professionalId: sarah.id,
@@ -536,7 +544,7 @@ async function main() {
     },
   });
 
-  await prisma.aBAAssessment.create({
+  await db.aBAAssessment.create({
     data: {
       patientId: paciente3.id,
       professionalId: profAna.id,
@@ -560,7 +568,7 @@ async function main() {
   });
 
   // Programas ABA
-  const programa1 = await prisma.aBAProgram.create({
+  const programa1 = await db.aBAProgram.create({
     data: {
       patientId: paciente1.id,
       professionalId: sarah.id,
@@ -573,7 +581,7 @@ async function main() {
     },
   });
 
-  await prisma.aBAProgram.create({
+  await db.aBAProgram.create({
     data: {
       patientId: paciente3.id,
       professionalId: profAna.id,
@@ -587,7 +595,7 @@ async function main() {
   });
 
   // Pontos de dados ABA
-  await prisma.aBADataPoint.create({
+  await db.aBADataPoint.create({
     data: {
       programId: programa1.id,
       date: new Date('2026-08-01'),
@@ -596,7 +604,7 @@ async function main() {
     },
   });
 
-  await prisma.aBADataPoint.create({
+  await db.aBADataPoint.create({
     data: {
       programId: programa1.id,
       date: new Date('2026-08-03'),
@@ -606,7 +614,7 @@ async function main() {
   });
 
   // Convênios/Consentimentos (LGPD)
-  await prisma.consentLog.create({
+  await db.consentLog.create({
     data: {
       patientId: paciente1.id,
       responsibleId: resp1.id,
@@ -617,7 +625,7 @@ async function main() {
     },
   });
 
-  await prisma.consentLog.create({
+  await db.consentLog.create({
     data: {
       patientId: paciente2.id,
       responsibleId: resp2.id,
@@ -629,7 +637,7 @@ async function main() {
   });
 
   // NFS-e
-  await prisma.nfse.create({
+  await db.nfse.create({
     data: {
       number: 1001,
       patientId: paciente1.id,
@@ -645,7 +653,7 @@ async function main() {
     },
   });
 
-  await prisma.nfse.create({
+  await db.nfse.create({
     data: {
       number: 1002,
       patientId: paciente3.id,
@@ -661,7 +669,7 @@ async function main() {
   });
 
   // Documentos
-  await prisma.document.create({
+  await db.document.create({
     data: {
       name: 'Laudo Gabriel Lima - Julho 2026',
       pacienteId: paciente1.id,
@@ -673,7 +681,7 @@ async function main() {
     },
   });
 
-  await prisma.document.create({
+  await db.document.create({
     data: {
       name: 'Relatório ABA Theo - Agosto 2026',
       pacienteId: paciente3.id,

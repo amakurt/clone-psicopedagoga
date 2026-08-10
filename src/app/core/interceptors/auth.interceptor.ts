@@ -5,8 +5,14 @@ import { AuthService } from '../services/auth.service';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const token = auth.token;
-  if (token && req.url.includes('/api/')) {
-    req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+  const tenantId = auth.tenantId;
+  if (req.url.includes('/api/')) {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (tenantId) headers['X-Tenant-Id'] = tenantId;
+    if (headers['Authorization'] || headers['X-Tenant-Id']) {
+      req = req.clone({ setHeaders: headers });
+    }
   }
   return next(req);
 };

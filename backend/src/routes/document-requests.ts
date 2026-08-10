@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import crypto from 'crypto';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 import { sendEmail, emailConfigured } from '../lib/email';
 import { sendWhatsAppMessage } from './whatsapp';
@@ -32,8 +33,9 @@ const documentRequestSchema = z.object({
 const publicLink = (token: string) => `${FRONTEND_URL}/formulario/${token}`;
 
 async function sendRequestNotification(doc: any) {
+  const db = scoped(prisma, doc.tenantId);
   const responsible = doc.responsibleId
-    ? await prisma.responsible.findUnique({ where: { id: doc.responsibleId } })
+    ? await db.responsible.findUnique({ where: { id: doc.responsibleId } })
     : null;
 
   const link = publicLink(doc.token);
@@ -74,7 +76,8 @@ if (doc.sentVia === 'EMAIL' && responsible?.email) {
     try {
       await sendWhatsAppMessage(
         responsible.phones,
-        `Olá ${responsible.name}! Recebemos uma solicitação de formulário: ${doc.title}. Preencha neste link: ${link}`
+        `Olá ${responsible.name}! Recebemos uma solicitação de formulário: ${doc.title}. Preencha neste link: ${link}`,
+        doc.tenantId
       );
       return 'WHATSAPP';
     } catch (e: any) {
@@ -127,14 +130,16 @@ router.post('/public/:token/submit', async (req, res) => {
     return res.status(409).json({ error: 'Este formulário já foi respondido' });
   }
   if (doc.dueDate && doc.dueDate < new Date()) {
-    await prisma.documentRequest.update({
+    const db = scoped(prisma, doc.tenantId);
+    await db.documentRequest.update({
       where: { id: doc.id },
       data: { status: 'EXPIRADO' },
     });
     return res.status(410).json({ error: 'Este formulário expirou' });
   }
 
-  const updated = await prisma.documentRequest.update({
+  const db = scoped(prisma, doc.tenantId);
+  const updated = await db.documentRequest.update({
     where: { id: doc.id },
     data: {
       status: 'RESPONDIDO',
@@ -151,6 +156,7 @@ router.use(authenticate);
 
 // Create a document request
 router.post('/', validate(documentRequestSchema), async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const data = req.body;
   const token = crypto.randomBytes(20).toString('hex');
   const dueDate = data.dueDate ? new Date(data.dueDate) : undefined;
@@ -158,7 +164,7 @@ router.post('/', validate(documentRequestSchema), async (req, res) => {
     return res.status(400).json({ error: 'Data de validade inválida' });
   }
 
-  const doc = await prisma.documentRequest.create({
+  const doc = await db.documentRequest.create({
     data: {
       professionalId: req.user!.id,
       patientId: data.patientId || null,
@@ -190,6 +196,7 @@ router.post('/', validate(documentRequestSchema), async (req, res) => {
 
 // List document requests
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { status, patientId, professionalId, page = '1', limit = '50' } = req.query;
   const where: any = {};
   if (status) where.status = status;
@@ -202,7 +209,7 @@ router.get('/', async (req, res) => {
   const skip = (pageNum - 1) * limitNum;
 
   const [data, total] = await Promise.all([
-    prisma.documentRequest.findMany({
+    db.documentRequest.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       skip,
@@ -213,7 +220,7 @@ router.get('/', async (req, res) => {
         professional: { select: { id: true, name: true } },
       },
     }),
-    prisma.documentRequest.count({ where }),
+    db.documentRequest.count({ where }),
   ]);
 
   res.json({ data, total, page: pageNum, limit: limitNum });
@@ -221,7 +228,8 @@ router.get('/', async (req, res) => {
 
 // Get detail
 router.get('/:id', async (req, res) => {
-  const doc = await prisma.documentRequest.findUnique({
+  const db = scoped(prisma, req.user?.tenantId);
+  const doc = await db.documentRequest.findUnique({
     where: { id: req.params.id },
     include: {
       responsible: { select: { id: true, name: true, email: true, phones: true } },
@@ -253,7 +261,8 @@ router.get('/:id', async (req, res) => {
 
 // Resend notification
 router.post('/:id/resend', async (req, res) => {
-  const doc = await prisma.documentRequest.findUnique({
+  const db = scoped(prisma, req.user?.tenantId);
+  const doc = await db.documentRequest.findUnique({
     where: { id: req.params.id },
     include: { responsible: true },
   });
@@ -268,12 +277,13 @@ router.post('/:id/resend', async (req, res) => {
 
 // Delete
 router.delete('/:id', async (req, res) => {
-  const doc = await prisma.documentRequest.findUnique({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  const doc = await db.documentRequest.findUnique({ where: { id: req.params.id } });
   if (!doc) return res.status(404).json({ error: 'Solicitação não encontrada' });
   if (doc.professionalId !== req.user!.id && req.user!.role !== 'GESTOR') {
     return res.status(403).json({ error: 'Acesso negado' });
   }
-  await prisma.documentRequest.delete({ where: { id: req.params.id } });
+  await db.documentRequest.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

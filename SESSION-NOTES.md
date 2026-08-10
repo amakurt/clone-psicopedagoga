@@ -2,7 +2,50 @@
 
 ## Data: 10/08/2026
 
-## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fase 1 SAAS multi-tenant concluída (scoping das rotas + teste de isolamento)**
+
+---
+
+## Sessão 10/08/2026 (Segunda) — Parte 2: SAAS Multi-tenant
+
+### 46. Fase 1 — Scoping das 40+ rotas (isolamento por tenant)
+- **Helper `backend/src/lib/tenant.ts`:** `scoped(prisma, tenantId)` devolve um client com `where: { tenantId }` e `data: { tenantId }` injetados; getUserById usa `select`; `TENANT_MODELS` centraliza os ~33 modelos de negócio
+- **Todas as rotas de negócio convertidas a usar `scoped(prisma, req.user?.tenantId)`:** pacientes, responsaveis, escolas, dag, laudos, evolucoes, anamnese, sessoes, encaminhamentos, comunicacao, risco, financeiro, nfse, documentos, biblioteca, agenda, espera, aba-protocols, evolution-comparison, protocol-evaluations, planos, diario-sessoes, presencas, documentos-intervencao, lgpd, mensagens, whatsapp, disponibilidade, assinatura (+ helper task-create)
+- **Queries por id** usam `where: { id, tenantId }` — registro de outro tenant vira 404 (ou 400 no update via P2025)
+- **Globais (sem tenantId no schema):** User, Tenant, Membership, VerificationCode, SocialAccount → `users.ts`/`permissions.ts`/`auth.ts` intocados
+- **Intencionalmente não-escopadas:** `reset.ts` (drop) e `document-requests.ts` (rotas públicas por token único, sem auth)
+- **Seed atualizado:** resolve/cria o Tenant "Clínica Principal" (slug `clinica-principal`) e cria todos os dados com o client escopado
+- **Backfill re-executado** (`backend/src/backfill-tenant.ts`, idempotente): 33 tabelas → tenant principal, 7 memberships, sem órfãos
+- **Verificações:** `tsc --noEmit` limpo; runtime OK (login + GET pacientes + GET sessão por id retornam tenantId correto)
+- **Teste de isolamento:** `backend/scripts/test-isolation.ts` (ver entrada 47)
+
+### 47. Teste oficial de isolamento entre tenants — EXECUTADO: 16/16 PASS
+- Script `backend/scripts/test-isolation.ts` (npm script `test:isolation`; sobe servidor próprio na porta 3999 e limpa tudo ao final)
+- Validado via API: POST injeta `tenantId` do A e do B; listas não vazam entre tenants; GET/PUT/DELETE cruzados → 404; A continua vendo/apagando o próprio registro
+
+### 48. Bug latente corrigido — Express 4 não propaga rejeições async
+- **Problema descoberto pelo teste de isolamento:** `PUT/DELETE` cruzado em rotas sem try/catch (ex.: `pacientes.ts`) rejeitava o promise do `scoped` e o Express 4 NÃO encaminhava ao errorHandler → cliente ficava esperando resposta para sempre
+- **Correção:** `backend/src/lib/async-express.ts` — patch no protótipo do Router (get/post/put/delete/patch/all/use) que envolve cada handler com `Promise.resolve(fn).catch(next)`; carregado via import no topo de `lib/prisma.ts` (avaliado antes de qualquer rota ser definida)
+- **Resultado:** erro `{status:404}` do scoped agora chega ao errorHandler → resposta 404 real; cobre todas as rotas, com ou sem try/catch (sem dependência nova)
+
+### 49. Fase 2 — Frontend multi-clínica v1 (seleção + troca de clínica)
+- **Backend:**
+  - `POST /auth/login` agora retorna `tenants[]` (memberships ativas com tenant: plan/status/logo/role) + `tenant` (default = 1ª clínica não bloqueada)
+  - `GET /auth/tenants` (autenticado) — lista atual das clínicas do usuário
+  - `POST /auth/select-tenant` — valida membership ativa e retorna o tenant
+  - Middleware `authenticate`: aceita header **`X-Tenant-Id`** (se o usuário tem vínculo ativo lá); sem header → primeira membership **não bloqueada** (antes era a primeira, podendo cair em clínica bloqueada com 403 injusto); `req.user.tenant` agora inclui {id, name, slug, plan, status, logoUrl, colors}
+- **Frontend:**
+  - `AuthService`: signals `tenants`/`tenant` persistidos no localStorage (`auth_tenants`/`auth_tenant`); `selectTenant()` e `refreshTenants()`; login antigo sem tenants auto-recupera via refresh
+  - Interceptor envia `X-Tenant-Id` em todas as chamadas `/api/`
+  - Login: se o usuário tem **>1 clínica** → vai para nova página `/auth/select-clinic` (cards com logo/nome/plano/status, bloqueadas desabilitadas); senão redirect direto
+  - Google OAuth: callback agora busca os tenants via `refreshTenants()` e usa a mesma lógica
+  - Header (main-layout e guardian-layout): chip com o nome da clínica atual (logo quando houver) + dropdown para trocar — troca chama `selectTenant` + reload
+- **Validado:** login retorna 2 tenants; `GET /tenants` lista as duas; `select-tenant` inválido → 403; validado → tenant; **switch via X-Tenant-Id: clínica principal 5 pacientes → clínica de teste 0 pacientes** (isolamento por header OK); `ng build` limpo
+- **Limpeza:** tenant/membership de teste removidos (sarah voltou a ter 1 membership)
+
+### Backup da conversa
+- `session-backup/2026-08-10-multitenant.json` — export completo da sessão atual (`opencode export ses_01440a6a3ffeXFGyzCOLTTJ5UY`)
+- `session-backup/2026-08-10-fase0-inicio.json` — sessão anterior (início da Fase 0, models Tenant/Membership)
 
 ---
 

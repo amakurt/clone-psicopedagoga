@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -23,8 +24,9 @@ const configSchema = z.object({
   phoneNumberId: z.string().optional(),
 });
 
-export async function sendWhatsAppMessage(phone: string, message: string) {
-  const configRecord = await prisma.whatsAppConfig.findFirst();
+export async function sendWhatsAppMessage(phone: string, message: string, tenantId?: string) {
+  const db = scoped(prisma, tenantId);
+  const configRecord = await db.whatsAppConfig.findFirst();
   if (!configRecord) {
     throw new Error('WhatsApp não configurado. Configure a API em Configurações > WhatsApp.');
   }
@@ -52,9 +54,10 @@ export async function sendWhatsAppMessage(phone: string, message: string) {
 }
 
 router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { patientId, message, phone } = req.body;
 
-  const patient = await prisma.paciente.findUnique({ where: { id: patientId } });
+  const patient = await db.paciente.findUnique({ where: { id: patientId } });
   if (!patient) {
     return res.status(404).json({ error: 'Paciente não encontrado' });
   }
@@ -65,9 +68,9 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
   }
 
   try {
-    await sendWhatsAppMessage(phoneToUse, message);
+    await sendWhatsAppMessage(phoneToUse, message, req.user?.tenantId);
 
-    const log = await prisma.whatsAppLog.create({
+    const log = await db.whatsAppLog.create({
       data: {
         patientId,
         phone: phoneToUse,
@@ -79,7 +82,7 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
 
     res.json({ success: true, log });
   } catch (error: any) {
-    const log = await prisma.whatsAppLog.create({
+    const log = await db.whatsAppLog.create({
       data: {
         patientId,
         phone: phoneToUse,
@@ -94,9 +97,10 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
 });
 
 router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { patientIds, message } = req.body;
 
-  const patients = await prisma.paciente.findMany({
+  const patients = await db.paciente.findMany({
     where: { id: { in: patientIds } },
   });
 
@@ -109,9 +113,9 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
     }
 
     try {
-      await sendWhatsAppMessage(patient.phone, message);
+      await sendWhatsAppMessage(patient.phone, message, req.user?.tenantId);
 
-      const log = await prisma.whatsAppLog.create({
+      const log = await db.whatsAppLog.create({
         data: {
           patientId: patient.id,
           phone: patient.phone,
@@ -123,7 +127,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
 
       results.push({ patientId: patient.id, status: 'SENT', log });
     } catch (error: any) {
-      const log = await prisma.whatsAppLog.create({
+      const log = await db.whatsAppLog.create({
         data: {
           patientId: patient.id,
           phone: patient.phone,
@@ -141,6 +145,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
 });
 
 router.get('/history', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { patientId, status, page = '1', limit = '50' } = req.query;
   const where: any = {};
   if (patientId) where.patientId = patientId;
@@ -151,31 +156,32 @@ router.get('/history', async (req, res) => {
   const skip = (pageNum - 1) * limitNum;
 
   const [logs, total] = await Promise.all([
-    prisma.whatsAppLog.findMany({
+    db.whatsAppLog.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       skip,
       take: limitNum,
       include: { paciente: { select: { id: true, name: true } } },
     }),
-    prisma.whatsAppLog.count({ where }),
+    db.whatsAppLog.count({ where }),
   ]);
 
   res.json({ data: logs, total, page: pageNum, limit: limitNum });
 });
 
 router.post('/config', validate(configSchema), async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { apiUrl, token, phoneNumberId } = req.body;
 
-  const existing = await prisma.whatsAppConfig.findFirst();
+  const existing = await db.whatsAppConfig.findFirst();
   let config;
   if (existing) {
-    config = await prisma.whatsAppConfig.update({
+    config = await db.whatsAppConfig.update({
       where: { id: existing.id },
       data: { apiUrl, token, phoneNumberId },
     });
   } else {
-    config = await prisma.whatsAppConfig.create({
+    config = await db.whatsAppConfig.create({
       data: { apiUrl, token, phoneNumberId },
     });
   }
@@ -183,8 +189,9 @@ router.post('/config', validate(configSchema), async (req, res) => {
   res.json({ success: true, config });
 });
 
-router.get('/config', async (_req, res) => {
-  const config = await prisma.whatsAppConfig.findFirst();
+router.get('/config', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const config = await db.whatsAppConfig.findFirst();
   if (!config) {
     return res.json({ configured: false });
   }
@@ -201,7 +208,7 @@ router.post('/test', async (req, res) => {
   }
 
   try {
-    await sendWhatsAppMessage(phone, '✅ Mensagem de teste do EduPsych Pro - WhatsApp configurado com sucesso!');
+    await sendWhatsAppMessage(phone, '✅ Mensagem de teste do EduPsych Pro - WhatsApp configurado com sucesso!', req.user?.tenantId);
     res.json({ success: true, message: 'Mensagem de teste enviada com sucesso' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

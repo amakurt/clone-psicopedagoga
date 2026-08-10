@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -18,10 +19,11 @@ const frequencySheetSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { pacienteId } = req.query;
   const where: any = {};
   if (pacienteId) where.pacienteId = pacienteId as string;
-  const sheets = await prisma.frequencySheet.findMany({
+  const sheets = await db.frequencySheet.findMany({
     where,
     orderBy: { createdAt: 'desc' },
     include: { paciente: true },
@@ -30,7 +32,8 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  const sheet = await prisma.frequencySheet.findUnique({
+  const db = scoped(prisma, req.user?.tenantId);
+  const sheet = await db.frequencySheet.findUnique({
     where: { id: req.params.id },
     include: { paciente: true },
   });
@@ -39,7 +42,8 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', validate(frequencySheetSchema), async (req, res) => {
-  const sheet = await prisma.frequencySheet.create({
+  const db = scoped(prisma, req.user?.tenantId);
+  const sheet = await db.frequencySheet.create({
     data: req.body,
     include: { paciente: true },
   });
@@ -47,7 +51,8 @@ router.post('/', validate(frequencySheetSchema), async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const sheet = await prisma.frequencySheet.update({
+  const db = scoped(prisma, req.user?.tenantId);
+  const sheet = await db.frequencySheet.update({
     where: { id: req.params.id },
     data: req.body,
     include: { paciente: true },
@@ -56,7 +61,8 @@ router.put('/:id', async (req, res) => {
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.frequencySheet.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.frequencySheet.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

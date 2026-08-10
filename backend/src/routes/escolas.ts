@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -26,32 +27,37 @@ const schoolSchema = z.object({
 });
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { search, status } = req.query;
   const where: any = {};
   if (search) where.name = { contains: search };
   if (status) where.status = status;
-  const escolas = await prisma.school.findMany({ where, orderBy: { name: 'asc' }, include: { patients: true } });
+  const escolas = await db.school.findMany({ where, orderBy: { name: 'asc' }, include: { patients: true } });
   res.json({ data: escolas, total: escolas.length });
 });
 
 router.get('/:id', async (req, res) => {
-  const school = await prisma.school.findUnique({ where: { id: req.params.id }, include: { patients: true } });
+  const db = scoped(prisma, req.user?.tenantId);
+  const school = await db.school.findUnique({ where: { id: req.params.id }, include: { patients: true } });
   if (!school) return res.status(404).json({ error: 'Escola não encontrada' });
   res.json(school);
 });
 
 router.post('/', validate(schoolSchema), async (req, res) => {
-  const school = await prisma.school.create({ data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const school = await db.school.create({ data: req.body });
   res.status(201).json(school);
 });
 
 router.put('/:id', validate(schoolSchema), async (req, res) => {
-  const school = await prisma.school.update({ where: { id: req.params.id }, data: req.body });
+  const db = scoped(prisma, req.user?.tenantId);
+  const school = await db.school.update({ where: { id: req.params.id }, data: req.body });
   res.json(school);
 });
 
 router.delete('/:id', async (req, res) => {
-  await prisma.school.delete({ where: { id: req.params.id } });
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.school.delete({ where: { id: req.params.id } });
   res.status(204).send();
 });
 

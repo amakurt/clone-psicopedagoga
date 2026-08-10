@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
+import { scoped } from '../lib/tenant';
 import { authenticate } from '../middleware';
 
 const router = Router();
@@ -30,11 +31,12 @@ function generatePdfHtml(nfse: any) {
 }
 
 router.get('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { status, patientId } = req.query;
   const where: any = {};
   if (status) where.status = status;
   if (patientId) where.patientId = patientId;
-  const items = await prisma.nfse.findMany({
+  const items = await db.nfse.findMany({
     where,
     include: { paciente: true, professional: true },
     orderBy: { createdAt: 'desc' }
@@ -43,7 +45,8 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-  const item = await prisma.nfse.findUnique({
+  const db = scoped(prisma, req.user?.tenantId);
+  const item = await db.nfse.findUnique({
     where: { id: req.params.id },
     include: { paciente: true, professional: true }
   });
@@ -52,6 +55,7 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { patientId, professionalId, description, value, taxRate, notes } = req.body;
   if (!patientId || !professionalId || !description || !value) {
     return res.status(400).json({ error: 'Campos obrigatórios: patientId, professionalId, description, value' });
@@ -61,10 +65,10 @@ router.post('/', async (req, res) => {
   const taxValue = (value * rate) / 100;
   const totalValue = value + taxValue;
 
-  const lastNfse = await prisma.nfse.findFirst({ orderBy: { number: 'desc' } });
+  const lastNfse = await db.nfse.findFirst({ orderBy: { number: 'desc' } });
   const nextNumber = (lastNfse?.number || 0) + 1;
 
-  const nfse = await prisma.nfse.create({
+  const nfse = await db.nfse.create({
     data: {
       number: nextNumber,
       patientId,
@@ -84,6 +88,7 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id/status', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
   const { status } = req.body;
   const validStatuses = ['PENDENTE', 'EMITIDA', 'CANCELADA'];
   if (!validStatuses.includes(status)) {
@@ -94,7 +99,7 @@ router.put('/:id/status', async (req, res) => {
   if (status === 'EMITIDA') updateData.issuedAt = new Date();
   if (status === 'CANCELADA') updateData.cancelledAt = new Date();
 
-  const nfse = await prisma.nfse.update({
+  const nfse = await db.nfse.update({
     where: { id: req.params.id },
     data: updateData,
     include: { paciente: true, professional: true }
@@ -104,7 +109,8 @@ router.put('/:id/status', async (req, res) => {
 });
 
 router.get('/:id/pdf', async (req, res) => {
-  const nfse = await prisma.nfse.findUnique({
+  const db = scoped(prisma, req.user?.tenantId);
+  const nfse = await db.nfse.findUnique({
     where: { id: req.params.id },
     include: { paciente: true, professional: true }
   });

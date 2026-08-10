@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import { scoped, ensureMembership } from '../lib/tenant';
 import { authenticate } from '../middleware';
 import { sendEmail, emailConfigured } from '../lib/email';
 import { sendWhatsAppMessage } from './whatsapp';
@@ -42,6 +43,32 @@ function buildUserPayload(user: any) {
     bio: user.bio,
     hasPassword: !!user.password
   };
+}
+
+function buildTenantPayload(tenant: any, role: string) {
+  return {
+    id: tenant.id,
+    name: tenant.name,
+    slug: tenant.slug,
+    plan: tenant.plan,
+    status: tenant.status,
+    logoUrl: tenant.logoUrl,
+    colors: tenant.colors,
+    role,
+  };
+}
+
+async function getUserTenants(userId: string) {
+  const memberships = await prisma.membership.findMany({
+    where: { userId, active: true },
+    orderBy: { createdAt: 'asc' },
+    include: { tenant: true },
+  });
+  return memberships.map((m) => buildTenantPayload(m.tenant, m.role));
+}
+
+function pickDefaultTenant(tenants: any[]) {
+  return tenants.find((t) => t.status !== 'BLOQUEADO') || tenants[0];
 }
 
 async function sendVerificationMessage(user: any, code: string, token: string, type: string) {
@@ -143,22 +170,26 @@ async function invalidateVerificationCodes(userId: string, type: string) {
 async function ensureResponsibleForUser(user: any) {
   if (user.role !== 'RESPONSAVEL') return;
 
-  const linked = await prisma.responsible.findFirst({ where: { userId: user.id } });
+  const membership = await prisma.membership.findFirst({ where: { userId: user.id } });
+  const tenantId = membership?.tenantId || '';
+  const db = scoped(prisma, tenantId);
+
+  const linked = await db.responsible.findFirst({ where: { userId: user.id } });
   if (linked) return;
 
   const byEmail = user.email
-    ? await prisma.responsible.findFirst({ where: { email: user.email } })
+    ? await db.responsible.findFirst({ where: { email: user.email } })
     : null;
 
   if (byEmail) {
-    await prisma.responsible.update({
+    await db.responsible.update({
       where: { id: byEmail.id },
       data: { userId: user.id },
     });
     return;
   }
 
-  await prisma.responsible.create({
+  await db.responsible.create({
     data: {
       name: user.name,
       relationship: 'Responsável',
@@ -197,10 +228,14 @@ router.post('/login', async (req, res) => {
   }
 
   const token = signToken(user);
+  const tenants = await getUserTenants(user.id);
+  const tenant = pickDefaultTenant(tenants);
 
   res.json({ 
     token, 
-    user: buildUserPayload(user)
+    user: buildUserPayload(user),
+    tenants,
+    tenant,
   });
 });
 
@@ -234,6 +269,7 @@ router.post('/register', async (req, res) => {
     }
   });
 
+  await ensureMembership(user);
   await ensureResponsibleForUser(user);
 
   const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
@@ -362,14 +398,37 @@ router.post('/reset-password', async (req, res) => {
   res.json({ message: 'Senha redefinida com sucesso' });
 });
 
+// Minhas clínicas (memberships ativas)
+router.get('/tenants', authenticate, async (req: any, res) => {
+  const tenants = await getUserTenants(req.user.id);
+  res.json({ tenants, tenant: pickDefaultTenant(tenants) });
+});
+
+// Selecionar clínica ativa (a middleware usa X-Tenant-Id nas próximas requisições)
+router.post('/select-tenant', authenticate, async (req: any, res) => {
+  const { tenantId } = req.body;
+  if (!tenantId) {
+    return res.status(400).json({ error: 'tenantId é obrigatório' });
+  }
+  const membership = await prisma.membership.findFirst({
+    where: { userId: req.user.id, tenantId, active: true },
+    include: { tenant: true },
+  });
+  if (!membership) {
+    return res.status(403).json({ error: 'Você não tem vínculo ativo com esta clínica' });
+  }
+  res.json({ tenant: buildTenantPayload(membership.tenant, membership.role) });
+});
+
 // Google OAuth - Initiate
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // Google OAuth - Callback
 router.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
-  (req: any, res) => {
+  async (req: any, res) => {
     const user = req.user;
+    await ensureMembership(user);
     const token = jwt.sign(
       { sub: user.id, email: user.email, role: user.role },
       JWT_SECRET,
