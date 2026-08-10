@@ -253,6 +253,102 @@ router.get('/appointments', async (req, res) => {
   res.json({ data: appointments, total: appointments.length });
 });
 
+// Helper: busca um agendamento que pertence aos pacientes do responsável
+async function findGuardianAppointment(userId: string, appointmentId: string) {
+  const responsible = await prisma.responsible.findFirst({ where: { userId } });
+  if (!responsible) return null;
+
+  const patients = await prisma.paciente.findMany({
+    where: { responsibleId: responsible.id, active: true },
+    select: { id: true },
+  });
+
+  return prisma.appointment.findFirst({
+    where: { id: appointmentId, pacienteId: { in: patients.map(p => p.id) } },
+    include: { paciente: true },
+  });
+}
+
+// Notifica a equipe sobre cancelamento/reagendamento feito pelo responsável
+async function notifyStaffOnGuardianAction(title: string, message: string) {
+  const staff = await prisma.user.findMany({
+    where: { active: true, role: { in: ['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'] } }
+  });
+
+  await prisma.notification.createMany({
+    data: staff.map(u => ({ userId: u.id, title, message, type: 'appointment' }))
+  });
+
+  const { sendWhatsAppMessage } = await import('./whatsapp');
+  for (const u of staff) {
+    if (!u.phone || !u.phoneIsWhatsApp) continue;
+    try {
+      await sendWhatsAppMessage(u.phone, `🗓️ ${title}: ${message}`);
+      console.log(`[WHATSAPP] ${title} notificado para ${u.name}`);
+    } catch (error: any) {
+      console.warn(`[WHATSAPP] Falha ao notificar ${u.name}: ${error.message}`);
+    }
+  }
+}
+
+// Responsável cancela um agendamento (PENDENTE ou CONFIRMADO)
+router.put('/appointments/:id/cancel', async (req, res) => {
+  const userId = req.user?.id;
+  const appointment = await findGuardianAppointment(userId, req.params.id);
+  if (!appointment) return res.status(404).json({ error: 'Agendamento não encontrado' });
+
+  if (!['PENDENTE', 'CONFIRMADO'].includes(appointment.status)) {
+    return res.status(400).json({ error: `Não é possível cancelar um agendamento ${appointment.status}` });
+  }
+
+  const updated = await prisma.appointment.update({
+    where: { id: appointment.id },
+    data: { status: 'CANCELADO', notes: `${appointment.notes || ''} | Cancelado pelo responsável`.trim() },
+  });
+
+  await notifyStaffOnGuardianAction(
+    'Agendamento cancelado pelo responsável',
+    `${appointment.paciente?.name || appointment.patientName} (${appointment.date} ${appointment.startTime})`
+  );
+
+  res.json(updated);
+});
+
+// Responsável modifica (reagenda) um agendamento — volta para PENDENTE para a equipe re-confirmar
+router.put('/appointments/:id/reschedule', async (req, res) => {
+  const userId = req.user?.id;
+  const { date, startTime, notes } = req.body;
+  if (!date) return res.status(400).json({ error: 'Nova data é obrigatória' });
+
+  const appointment = await findGuardianAppointment(userId, req.params.id);
+  if (!appointment) return res.status(404).json({ error: 'Agendamento não encontrado' });
+
+  if (!['PENDENTE', 'CONFIRMADO'].includes(appointment.status)) {
+    return res.status(400).json({ error: `Não é possível modificar um agendamento ${appointment.status}` });
+  }
+
+  const start = startTime || appointment.startTime;
+  const endTime = String(parseInt(start.split(':')[0]) + 1).padStart(2, '0') + ':' + start.split(':')[1];
+
+  const updated = await prisma.appointment.update({
+    where: { id: appointment.id },
+    data: {
+      date,
+      startTime: start,
+      endTime,
+      status: 'PENDENTE',
+      notes: `${appointment.notes || ''} | Reagendado pelo responsável: ${date} ${start}${notes ? ` (${notes})` : ''}`.trim(),
+    },
+  });
+
+  await notifyStaffOnGuardianAction(
+    'Agendamento modificado pelo responsável',
+    `${appointment.paciente?.name || appointment.patientName} — nova data: ${date} ${start}`
+  );
+
+  res.json(updated);
+});
+
 // Get appointments for patient
 router.get('/appointments/:patientId', async (req, res) => {
   const { patientId } = req.params;

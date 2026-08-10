@@ -37,6 +37,18 @@
 - **Validação:** login via `http://192.168.0.106:3000` com origin da LAN → 200; preflight CORS OK para ambas as origins
 - **Limitações:** IP pode mudar (DHCP); Google OAuth não funciona fora do Mac (redirect localhost registrado no Google Console)
 
+### 44. Agendamentos — Responsável cancela/modifica + Disponibilidade da equipe
+- **Backend (`guardian.ts`):**
+  - `PUT /guardian/appointments/:id/cancel` — só PENDENTE/CONFIRMADO → CANCELADO; nota no histórico; bloqueado em CONCLUIDO
+  - `PUT /guardian/appointments/:id/reschedule` — nova data/horário; volta para **PENDENTE** (equipe re-confirma); nota "Reagendado pelo responsável"
+  - Ambas validam que o agendamento pertence aos pacientes do responsável e notificam a equipe (Notification + WhatsApp best-effort): "Agendamento cancelado/modificado pelo responsável"
+- **Frontend (`guardian-appointments`):** ícone `calendar_month` no cabeçalho da página; botões **Modificar** (modal com data/hora pré-preenchidos) e **Cancelar** (2 passos: "Confirmar cancelamento?" com timeout de 5s); visíveis apenas em PENDENTE/CONFIRMADO; toasts
+- **Disponibilidade da equipe:**
+  - Novo model Prisma `Availability` (userId, dayOfWeek 0-6, startTime, endTime, active) + `db push` + schema raiz sincronizado
+  - `backend/src/routes/availability.ts`: GET/POST/PUT/DELETE (por usuário logado, duplicata bloqueada com 400)
+  - Aba **Disponibilidade** nas Configurações: lista de horários por dia com toggle Ativo/Inativo e exclusão + formulário de novo horário (dia, início, fim)
+- **Testes via API:** solicitar → reagendar (volta PENDENTE) → cancelar → cancelar de novo bloqueado (400) → equipe recebeu 3 notificações ("Nova solicitação", "Modificado", "Cancelado"); CRUD de disponibilidade completo (criar/duplicar 400/update/delete); dados de teste removidos
+
 ### 43. Bug corrigido — Notificação da equipe só chegava após refresh
 - **Problema:** solicitação de agendamento do responsável criava a notificação, mas o painel da equipe não atualizava o sino até recarregar a página
 - **Causa:** `loadCounts()` no `main-layout` rodava só no `ngOnInit` e ao fechar o dropdown — sem polling

@@ -45,6 +45,13 @@
 - Adicionado polling de 10s (`setInterval` + `OnDestroy`): badge do sino e badge PENDENTE da Agenda atualizam sozinhos
 - Testado: solicitação do responsável → notificação não lida + contador PENDENTE atualizados
 
+#### 8. Responsável cancela/modifica agendamentos + Disponibilidade da equipe
+- Guardian: `PUT /appointments/:id/cancel` e `PUT /appointments/:id/reschedule` (volta para PENDENTE p/ re-confirmação) — notificam a equipe
+- Frontend do responsável: ícone de agenda no header, botões Modificar (modal) e Cancelar (2 passos) em PENDENTE/CONFIRMADO
+- Novo model `Availability` (dia da semana, início, fim, ativo) + rotas CRUD `/api/availability`
+- Aba "Disponibilidade" nas Configurações: lista com toggle ativo/inativo, excluir e adicionar horário
+- Testado via API: solicitar → reagendar → cancelar → bloqueio de re-cancelamento + CRUD de disponibilidade; dados de teste removidos
+
 ### Commits
 - (a commitar)
 

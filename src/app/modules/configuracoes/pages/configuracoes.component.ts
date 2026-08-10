@@ -295,6 +295,96 @@ import { ToastService } from '@shared/components/toast.component';
         </div>
       }
 
+      <!-- Disponibilidade Tab -->
+      @if (activeTab() === 'disponibilidade') {
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+          <div class="p-8">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Horários Disponíveis</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Configure os dias e horários em que você atende. Desative um horário sem precisar excluí-lo.</p>
+              </div>
+              <button class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95"
+                (click)="addAvailability()">
+                + Novo Horário
+              </button>
+            </div>
+
+            @if (availabilities().length === 0) {
+              <div class="p-10 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                <span class="material-icons text-5xl text-slate-300 dark:text-slate-600">schedule</span>
+                <p class="mt-3 text-sm font-bold text-slate-700 dark:text-slate-300">Nenhum horário configurado</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Clique em "+ Novo Horário" para começar</p>
+              </div>
+            } @else {
+              <div class="space-y-2">
+                @for (av of availabilities(); track av.id) {
+                  <div class="flex items-center gap-4 p-4 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 transition-all"
+                    [class]="av.active ? 'bg-slate-50 dark:bg-slate-800/50' : 'bg-slate-50/50 dark:bg-slate-800/20 opacity-60'">
+                    <div class="size-11 rounded-xl flex items-center justify-center shrink-0"
+                      [class]="av.active ? 'bg-primary/10 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'">
+                      <span class="material-icons text-xl">{{ av.active ? 'event_available' : 'event_busy' }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="font-bold text-sm text-slate-900 dark:text-white">{{ dayNames[av.dayOfWeek] }}</p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">{{ av.startTime }} — {{ av.endTime }}</p>
+                    </div>
+                    <label class="flex items-center cursor-pointer select-none" title="Ativo/Inativo">
+                      <span class="text-xs font-semibold mr-2 text-slate-500">{{ av.active ? 'Ativo' : 'Inativo' }}</span>
+                      <div class="relative">
+                        <input type="checkbox" class="peer sr-only" [checked]="av.active" (change)="toggleAvailability(av)">
+                        <div class="w-11 h-6 bg-slate-300 dark:bg-slate-600 rounded-full peer-checked:bg-primary transition-colors"></div>
+                        <div class="absolute top-0.5 left-0.5 size-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+                      </div>
+                    </label>
+                    <button class="size-9 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shrink-0" title="Excluir"
+                      (click)="deleteAvailability(av)">
+                      <span class="material-icons text-lg">delete</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Form de novo horário -->
+          @if (showAvailabilityForm()) {
+            <div class="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Novo Horário</h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dia da Semana *</label>
+                  <select class="w-full px-4 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                    [(ngModel)]="availabilityForm.dayOfWeek">
+                    @for (d of dayNames; track $index) {
+                      <option [value]="$index">{{ d }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Início *</label>
+                  <input type="time" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                    [(ngModel)]="availabilityForm.startTime">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fim *</label>
+                  <input type="time" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                    [(ngModel)]="availabilityForm.endTime">
+                </div>
+              </div>
+              <div class="flex justify-end gap-3 mt-6">
+                <button class="px-5 py-2.5 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all"
+                  (click)="showAvailabilityForm.set(false)">Cancelar</button>
+                <button class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm transition-all active:scale-95"
+                  (click)="saveAvailability()" [disabled]="savingAvailability()">
+                  {{ savingAvailability() ? 'Salvando...' : 'Salvar Horário' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Danger Zone -->
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-red-200 dark:ring-red-900/30 overflow-hidden">
         <div class="p-8">
@@ -330,18 +420,24 @@ export class ConfiguracoesComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
 
-  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'aparencia'>('perfil');
+  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'aparencia' | 'disponibilidade'>('perfil');
   avatarPreview = signal<string | null>(null);
   showToast = signal(false);
   toastMessage = signal('');
   currentTheme = signal<string>(localStorage.getItem('theme') || 'light');
   hasPassword = signal(true);
+  availabilities = signal<any[]>([]);
+  showAvailabilityForm = signal(false);
+  savingAvailability = signal(false);
+  availabilityForm: any = { dayOfWeek: 1, startTime: '09:00', endTime: '12:00' };
+  dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
   tabs = [
     { id: 'perfil' as const, label: 'Perfil' },
     { id: 'seguranca' as const, label: 'Segurança' },
     { id: 'clinica' as const, label: 'Clínica' },
     { id: 'notificacoes' as const, label: 'Notificações' },
+    { id: 'disponibilidade' as const, label: 'Disponibilidade' },
     { id: 'aparencia' as const, label: 'Aparência' },
   ];
 
@@ -384,6 +480,8 @@ export class ConfiguracoesComponent implements OnInit {
       this.hasPassword.set(user.hasPassword !== false);
       if (user.avatarUrl) this.avatarPreview.set(user.avatarUrl);
     }
+
+    this.loadAvailabilities();
 
     const savedClinic = localStorage.getItem('clinic_config');
     if (savedClinic) {
@@ -504,6 +602,60 @@ export class ConfiguracoesComponent implements OnInit {
     localStorage.setItem('theme', this.currentTheme());
     localStorage.setItem('accentColor', this.accentColor());
     this.toast.success('Aparência salva com sucesso');
+  }
+
+  loadAvailabilities() {
+    this.api.get('/availability').subscribe({
+      next: (res: any) => this.availabilities.set(res.data || []),
+      error: () => {}
+    });
+  }
+
+  addAvailability() {
+    this.availabilityForm = { dayOfWeek: 1, startTime: '09:00', endTime: '12:00' };
+    this.showAvailabilityForm.set(true);
+  }
+
+  saveAvailability() {
+    if (!this.availabilityForm.dayOfWeek || !this.availabilityForm.startTime || !this.availabilityForm.endTime) {
+      this.toast.warning('Preencha dia, início e fim');
+      return;
+    }
+    this.savingAvailability.set(true);
+    this.api.post('/availability', this.availabilityForm).subscribe({
+      next: () => {
+        this.savingAvailability.set(false);
+        this.showAvailabilityForm.set(false);
+        this.toast.success('Horário adicionado com sucesso');
+        this.loadAvailabilities();
+      },
+      error: (err: any) => {
+        this.savingAvailability.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao adicionar horário');
+      }
+    });
+  }
+
+  toggleAvailability(av: any) {
+    this.api.put(`/availability/${av.id}`, {
+      dayOfWeek: av.dayOfWeek,
+      startTime: av.startTime,
+      endTime: av.endTime,
+      active: !av.active,
+    }).subscribe({
+      next: () => this.loadAvailabilities(),
+      error: () => this.toast.error('Erro ao atualizar horário')
+    });
+  }
+
+  deleteAvailability(av: any) {
+    this.api.delete(`/availability/${av.id}`).subscribe({
+      next: () => {
+        this.toast.success('Horário excluído');
+        this.loadAvailabilities();
+      },
+      error: () => this.toast.error('Erro ao excluir horário')
+    });
   }
 
   showNotification(message: string) {

@@ -47,6 +47,14 @@ export class GuardianService {
     return this.api.post<Appointment>(`${this.base}/appointments/request`, data);
   }
 
+  cancelAppointment(id: string) {
+    return this.api.put<Appointment>(`${this.base}/appointments/${id}/cancel`, {});
+  }
+
+  rescheduleAppointment(id: string, data: { date: string; startTime?: string; notes?: string }) {
+    return this.api.put<Appointment>(`${this.base}/appointments/${id}/reschedule`, data);
+  }
+
   getPatientSessions(patientId: string) {
     return this.api.get<{ data: SessionRecord[]; total: number }>(`${this.base}/sessions/${patientId}`);
   }

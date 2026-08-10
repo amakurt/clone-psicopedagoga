@@ -21,6 +21,7 @@ import sessionRecordsRoutes from './session-records';
 import protocolEvaluationsRoutes from './protocol-evaluations';
 import interventionPlansRoutes from './intervention-plans';
 import chatRoutes from './chat';
+import availabilityRoutes from './availability';
 import guardianRoutes from './guardian';
 import uploadRoutes from './upload';
 import sessionDiariesRoutes from './session-diaries';
@@ -76,5 +77,6 @@ router.use('/nfse', nfseRoutes);
 router.use('/waiting-room', waitingRoomRoutes);
 router.use('/ai', aiSuggestionsRoutes);
 router.use('/document-requests', documentRequestsRoutes);
+router.use('/availability', availabilityRoutes);
 
 export default router;
