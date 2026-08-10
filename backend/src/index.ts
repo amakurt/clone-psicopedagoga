@@ -33,7 +33,7 @@ configurePassport();
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+  origin: (process.env.FRONTEND_URL || 'http://localhost:4200').split(',').map((u: string) => u.trim()),
   credentials: true
 }));
 

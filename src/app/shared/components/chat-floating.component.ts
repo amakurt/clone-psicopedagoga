@@ -268,6 +268,9 @@ export class ChatFloatingComponent implements OnInit, OnDestroy {
           lastAt: '',
         }));
         this.conversations.set(list);
+        if (this.selectedConversation() && this.isOpenSignal()) {
+          this.reloadThread();
+        }
       },
       error: () => {}
     });
@@ -295,6 +298,14 @@ export class ChatFloatingComponent implements OnInit, OnDestroy {
     if (!c) return;
     if (this.isGuardian()) {
       this.guardianService.getChatMessages(c.pacienteId).subscribe({
+        next: (res: any) => {
+          this.messages.set(res.data || []);
+          setTimeout(() => this.scrollToBottom(), 50);
+        }
+      });
+    } else {
+      this.api.post(`/chat/conversations/${c.pacienteId}/read`, {}).subscribe({});
+      this.api.get('/chat', { pacienteId: c.pacienteId }).subscribe({
         next: (res: any) => {
           this.messages.set(res.data || []);
           setTimeout(() => this.scrollToBottom(), 50);

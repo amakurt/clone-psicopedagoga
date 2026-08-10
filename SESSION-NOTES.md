@@ -1,8 +1,46 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 07/08/2026
+## Data: 09/08/2026
 
-## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local
+
+---
+
+## Sessão 09/08/2026 (Domingo)
+
+### 37. Teste completo do Chat Flutuante (Responsável ↔ Profissional)
+- **Fluxo validado de ponta a ponta via API (backend + WhatsApp real):**
+  - Responsável (Arley) envia mensagem → `senderRole: RESPONSAVEL`, `readByStaff: false`, `readByGuardian: true`
+  - Equipe vê `unreadCount=1` na lista de conversas + notificação "Nova mensagem do responsável"
+  - WhatsApp (Evolution API) envia alerta real para Admin Teste (+5585982254910)
+  - Equipe marca como lida (`POST /chat/conversations/:pacienteId/read`) → unread→0
+  - Equipe responde → `senderRole: STAFF`, `readByGuardian: false`
+  - Responsável vê `unread-count=1` + notificação "Nova mensagem da equipe"
+  - Responsável abre o chat (`GET /guardian/chat/:patientId`) → mensagens completas + unread→0
+- **Infra:** Colima/Docker estavam desligados → `colima start` + `docker compose up -d` (instância `edupsych` reconectada, `state: open`)
+
+### 38. Bug corrigido — Chat não recebia mensagens sem atualizar a página
+- **Problema:** com o chat aberto, mensagens novas só apareciam após refresh da página
+- **Causa:** o polling (8s) chamava `reloadThread()`, mas esse método **só tratava o lado do responsável** — a equipe não recarregava o thread; e no lado do responsável `loadGuardianConversations()` também não recarregava o thread aberto
+- **Correção** (`chat-floating.component.ts`):
+  - `reloadThread()` agora trata STAFF (recarrega via `GET /chat?pacienteId=` + marca como lida)
+  - `loadGuardianConversations()` agora chama `reloadThread()` quando há conversa aberta e janela visível
+- **Resultado:** mensagens chegam sozinhas em até ~8s nos dois lados
+
+### 39. Acesso pela rede local (outro PC na mesma rede)
+- **Problemas:** frontend preso em `localhost`; `apiUrl` hardcoded `http://localhost:3000/api` (outro PC chamaria o próprio localhost); CORS só aceitava `localhost:4200`
+- **Correções:**
+  - Frontend roda com `--host 0.0.0.0` (escuta em todas as interfaces)
+  - `src/environments/environment.ts`: `apiUrl` → `http://192.168.0.106:3000/api`
+  - `backend/src/index.ts`: CORS aceita lista separada por vírgula via `FRONTEND_URL`
+  - `backend/.env`: `FRONTEND_URL="http://localhost:4200,http://192.168.0.106:4200"`
+- **Validação:** login via `http://192.168.0.106:3000` com origin da LAN → 200; preflight CORS OK para ambas as origins
+- **Limitações:** IP pode mudar (DHCP); Google OAuth não funciona fora do Mac (redirect localhost registrado no Google Console)
+
+### 40. Scripts de inicialização
+- **`start-all.sh`**: sobe tudo (Colima/Docker/Evolution API + backend + frontend) com detecção de serviços já rodando, flag `--host-ip=IP` para expor na rede, verificação da instância `edupsych` e logs em `logs/`
+- **`stop-all.sh`**: derruba frontend, backend e `docker compose down`
+- `.gitignore` ganhou `logs/`
 
 ---
 

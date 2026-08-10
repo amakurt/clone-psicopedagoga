@@ -1,6 +1,36 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 07 de Agosto de 2026
+## Última Atualização: 09 de Agosto de 2026
+
+---
+
+## Sessão 9 - 09/08/2026 (Domingo)
+
+### O que foi feito
+
+#### 1. Teste completo do Chat Flutuante (responsável ↔ equipe)
+- Fluxo validado de ponta a ponta via API: envio do responsável → unread na equipe + notificação + WhatsApp real (Evolution API para Admin Teste) → marcação de leitura → resposta da equipe → unread no responsável + notificação → leitura pelo responsável
+- Colima/Docker reiniciados (`colima start` + `docker compose up -d`); instância `edupsych` reconectada (`state: open`)
+
+#### 2. Bug: chat não recebia mensagens sem refresh
+- `reloadThread()` no `chat-floating.component.ts` só tratava o lado do responsável (equipe não recarregava o thread no polling)
+- `loadGuardianConversations()` também não recarregava o thread aberto
+- **Correção:** `reloadThread()` agora suporta STAFF (GET /chat + marcar lida); lado do responsável recarrega thread no polling → mensagens chegam em até 8s
+
+#### 3. Acesso pela rede local (outro PC)
+- Frontend com `--host 0.0.0.0` (antes preso em localhost)
+- `environment.ts` com `apiUrl` apontando para `http://192.168.0.106:3000/api`
+- CORS no backend aceita lista (`FRONTEND_URL` com múltiplas origins separadas por vírgula)
+- Validado: login + preflight CORS por `http://192.168.0.106` (200/204)
+- Limitações: IP DHCP pode mudar; Google OAuth só funciona no Mac (redirect registrado no console)
+
+#### 4. Scripts start-all.sh / stop-all.sh
+- `./start-all.sh [--host-ip=IP]`: sobe Colima + Evolution API (com verificação da instância), backend e frontend; detecta serviços já rodando; logs em `logs/`
+- `./stop-all.sh`: derruba frontend, backend e Docker (compose down)
+- `.gitignore`: adicionado `logs/`
+
+### Commits
+- (a commitar)
 
 ---
 
