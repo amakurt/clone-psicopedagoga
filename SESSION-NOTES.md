@@ -37,6 +37,12 @@
 - **Validação:** login via `http://192.168.0.106:3000` com origin da LAN → 200; preflight CORS OK para ambas as origins
 - **Limitações:** IP pode mudar (DHCP); Google OAuth não funciona fora do Mac (redirect localhost registrado no Google Console)
 
+### 42. Sino de notificações no Portal do Responsável
+- **Problema:** backend já criava notificação ao responsável quando a equipe mudava o status do agendamento, mas o Portal da Família **não tinha UI para exibi-las** (só o chat flutuante tinha badge)
+- **Correção** (`guardian-layout.component.ts`): sino de notificações no header com badge de não lidas, dropdown reutilizando `NotificationDropdownComponent` (já era genérico via token) e polling a cada 15s em `GET /notifications?read=false`
+- **Testado:** equipe confirmou agendamento → `total: 12` não lidas no responsável, primeira sendo "Agendamento confirmado: Gabriel Carvalho Lima (2026-08-16 10:00)"
+- Fluxo completo: responsável solicita → equipe confirma/cancela/finaliza → responsável vê no sino em até 15s + WhatsApp best-effort
+
 ### 41. Agendamento — Equipe confirma/cancela/finaliza solicitações do responsável
 - **Problema:** solicitação do responsável criava agendamento PENDENTE, mas a equipe só podia editar — sem opção de Confirmar, Cancelar ou Finalizar
 - **Backend (`appointments.ts`):** `PUT /api/appointments/:id/status` com matriz de transições válidas:

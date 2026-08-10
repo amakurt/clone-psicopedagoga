@@ -1,14 +1,16 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { ApiService } from '@core/services/api.service';
 import { GuardianService } from '@modules/guardian/services/guardian.service';
 import { ChatFloatingComponent } from '@shared/components/chat-floating.component';
+import { NotificationDropdownComponent } from '@shared/components/notification-dropdown.component';
 
 @Component({
   selector: 'app-guardian-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ChatFloatingComponent],
+  imports: [CommonModule, RouterModule, ChatFloatingComponent, NotificationDropdownComponent],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-slate-900">
       <!-- Header -->
@@ -24,6 +26,21 @@ import { ChatFloatingComponent } from '@shared/components/chat-floating.componen
             </div>
             <div class="flex items-center gap-4">
               <span class="text-sm text-gray-600 dark:text-slate-300">{{ userName() }}</span>
+              <div class="relative">
+                <button class="p-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-gray-500 dark:text-slate-300 hover:text-primary transition-all relative"
+                  (click)="toggleNotifications()" title="Notificações">
+                  <span class="material-icons">notifications</span>
+                  @if (notifCount() > 0) {
+                    <span class="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
+                      {{ notifCount() > 99 ? '99+' : notifCount() }}
+                    </span>
+                  }
+                </button>
+                @if (notifOpen()) {
+                  <app-notification-dropdown [isOpen]="notifOpen()" (closed)="toggleNotifications()" (countChanged)="loadCounts()" />
+                  <div class="fixed inset-0 z-40" (click)="notifOpen.set(false)"></div>
+                }
+              </div>
               <button (click)="logout()" class="p-2 text-gray-500 hover:text-red-500 transition-colors" title="Sair">
                 <span class="material-icons">logout</span>
               </button>
@@ -75,14 +92,18 @@ import { ChatFloatingComponent } from '@shared/components/chat-floating.componen
     <app-chat-floating [guardian]="true" />
   `
 })
-export class GuardianLayoutComponent implements OnInit {
+export class GuardianLayoutComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
   private guardianService = inject(GuardianService);
+  private api = inject(ApiService);
 
   patients = signal<any[]>([]);
   selectedPatientId = signal<string>('');
   userName = signal('');
+  notifCount = signal(0);
+  notifOpen = signal(false);
+  private notifTimer: any;
 
   navItems = [
     { route: '/guardian', label: 'Início', icon: 'home' },
@@ -106,6 +127,28 @@ export class GuardianLayoutComponent implements OnInit {
     }
 
     this.loadPatients();
+    this.loadCounts();
+    this.notifTimer = setInterval(() => this.loadCounts(), 15000);
+  }
+
+  ngOnDestroy() {
+    if (this.notifTimer) clearInterval(this.notifTimer);
+  }
+
+  loadCounts() {
+    this.api.get('/notifications', { read: 'false' }).subscribe({
+      next: (res: any) => this.notifCount.set(res.total || 0),
+      error: () => {}
+    });
+  }
+
+  toggleNotifications() {
+    if (this.notifOpen()) {
+      this.notifOpen.set(false);
+      this.loadCounts();
+    } else {
+      this.notifOpen.set(true);
+    }
   }
 
   loadPatients() {

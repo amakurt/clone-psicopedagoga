@@ -35,6 +35,11 @@
 - `agenda-detail`: botões contextuais Confirmar (PENDENTE/CANCELADO), Finalizar (CONFIRMADO), Cancelar (PENDENTE/CONFIRMADO) com toast
 - Testado via API: solicitar → confirmar → finalizar → transição inválida → cancelar (tudo com notificações); dados de teste removidos
 
+#### 6. Sino de notificações no Portal do Responsável
+- Portal da Família não tinha UI de notificações (backend já criava para o responsável)
+- Adicionado sino com badge de não lidas no header do `guardian-layout` (reuso do `NotificationDropdownComponent`) + polling de 15s em `GET /notifications?read=false`
+- Testado: status alterado pela equipe → notificação aparece no sino do responsável em até 15s
+
 ### Commits
 - (a commitar)
 
