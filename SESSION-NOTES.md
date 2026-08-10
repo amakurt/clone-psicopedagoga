@@ -37,6 +37,19 @@
 - **Validação:** login via `http://192.168.0.106:3000` com origin da LAN → 200; preflight CORS OK para ambas as origins
 - **Limitações:** IP pode mudar (DHCP); Google OAuth não funciona fora do Mac (redirect localhost registrado no Google Console)
 
+### 41. Agendamento — Equipe confirma/cancela/finaliza solicitações do responsável
+- **Problema:** solicitação do responsável criava agendamento PENDENTE, mas a equipe só podia editar — sem opção de Confirmar, Cancelar ou Finalizar
+- **Backend (`appointments.ts`):** `PUT /api/appointments/:id/status` com matriz de transições válidas:
+  - `PENDENTE → CONFIRMADO | CANCELADO`
+  - `CONFIRMADO → CONCLUIDO | CANCELADO`
+  - `CANCELADO → CONFIRMADO` (reabrir)
+  - `CONCLUIDO → nenhuma` (terminal)
+  - Transição inválida → 400 com lista de permitidas
+- **Notificação ao responsável:** status alterado → `Notification` (app, tipo appointment) + WhatsApp best-effort via Evolution API
+- **Frontend (`agenda-detail`):** botões contextuais conforme status — Confirmar (verde, PENDENTE/CANCELADO), Finalizar (azul, CONFIRMADO), Cancelar (vermelho, PENDENTE/CONFIRMADO); estado CONCLUIDO mostra aviso "sem ações pendentes"; toast de sucesso/erro
+- **Testes via API:** solicitar → PENDENTE ✓ → confirmar ✓ (notificação) → finalizar ✓ (notificação) → transição inválida 400 ✓ → cancelar ✓ (notificação); agendamentos de teste removidos
+- **Observação:** WhatsApp do Arley falha (número não existe no WhatsApp real) — esperado, notificação no app sempre criada
+
 ### 40. Scripts de inicialização
 - **`start-all.sh`**: sobe tudo (Colima/Docker/Evolution API + backend + frontend) com detecção de serviços já rodando, flag `--host-ip=IP` para expor na rede, verificação da instância `edupsych` e logs em `logs/`
 - **`stop-all.sh`**: derruba frontend, backend e `docker compose down`

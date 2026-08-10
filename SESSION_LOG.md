@@ -29,6 +29,12 @@
 - `./stop-all.sh`: derruba frontend, backend e Docker (compose down)
 - `.gitignore`: adicionado `logs/`
 
+#### 5. Agendamento — equipe confirma/cancela/finaliza
+- Novo endpoint `PUT /api/appointments/:id/status` com matriz de transições (PENDENTE → CONFIRMADO/CANCELADO, CONFIRMADO → CONCLUIDO/CANCELADO, CANCELADO → CONFIRMADO, CONCLUIDO terminal) — transição inválida retorna 400
+- Mudança de status notifica o responsável (Notification no app + WhatsApp best-effort)
+- `agenda-detail`: botões contextuais Confirmar (PENDENTE/CANCELADO), Finalizar (CONFIRMADO), Cancelar (PENDENTE/CONFIRMADO) com toast
+- Testado via API: solicitar → confirmar → finalizar → transição inválida → cancelar (tudo com notificações); dados de teste removidos
+
 ### Commits
 - (a commitar)
 
