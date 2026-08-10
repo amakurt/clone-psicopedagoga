@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import { enforceTenantStatus } from '../lib/billing';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'psicopedagoga-secret-key-2026';
 
@@ -30,7 +31,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     const memberships = await prisma.membership.findMany({
       where: { userId: user.id, active: true },
       orderBy: { createdAt: 'asc' },
-      include: { tenant: true },
+      include: { tenant: { include: { subscription: true } } },
     });
 
     if (memberships.length === 0) {
@@ -45,6 +46,8 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     if (!membership) {
       return res.status(403).json({ error: 'Assinatura da clínica vencida ou bloqueada. Entre em contato com o suporte.' });
     }
+
+    await enforceTenantStatus(membership.tenant);
 
     if (membership.tenant.status === 'BLOQUEADO') {
       return res.status(403).json({ error: 'Assinatura da clínica vencida ou bloqueada. Entre em contato com o suporte.' });

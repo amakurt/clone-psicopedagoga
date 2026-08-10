@@ -57,6 +57,7 @@ export const routes: Routes = [
       { path: 'planos', loadChildren: () => import('./modules/planos/planos.routes').then(m => m.default) },
       { path: 'documentos-clinicos', loadChildren: () => import('./modules/documentos-clinicos/documentos-clinicos.routes').then(m => m.default) },
       { path: 'whatsapp', loadChildren: () => import('./modules/whatsapp/whatsapp.routes').then(m => m.default) },
+      { path: 'plano', loadChildren: () => import('./modules/billing/billing.routes').then(m => m.default) },
       { path: 'solicitacoes', loadChildren: () => import('./modules/solicitacoes/solicitacoes.routes').then(m => m.default) },
       { 
         path: 'users', 

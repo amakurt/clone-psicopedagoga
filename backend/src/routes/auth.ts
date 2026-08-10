@@ -5,6 +5,7 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { scoped, ensureMembership } from '../lib/tenant';
+import { enforceTenantStatus } from '../lib/billing';
 import { authenticate } from '../middleware';
 import { sendEmail, emailConfigured } from '../lib/email';
 import { sendWhatsAppMessage } from './whatsapp';
@@ -225,6 +226,18 @@ router.post('/login', async (req, res) => {
   const validPassword = await bcrypt.compare(password, user.password);
   if (!validPassword) {
     return res.status(401).json({ error: 'Credenciais inválidas' });
+  }
+
+  const membership = await prisma.membership.findFirst({
+    where: { userId: user.id, active: true },
+    orderBy: { createdAt: 'asc' },
+    include: { tenant: { include: { subscription: true } } },
+  });
+  if (membership) {
+    await enforceTenantStatus(membership.tenant);
+    if (membership.tenant.status === 'BLOQUEADO') {
+      return res.status(403).json({ error: 'Assinatura da clínica vencida ou bloqueada. Entre em contato com o suporte.' });
+    }
   }
 
   const token = signToken(user);

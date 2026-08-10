@@ -37,6 +37,7 @@ import nfseRoutes from './nfse';
 import waitingRoomRoutes from './waiting-room';
 import aiSuggestionsRoutes from './ai-suggestions';
 import documentRequestsRoutes from './document-requests';
+import billingRoutes from './billing';
 
 const router = Router();
 
@@ -78,5 +79,6 @@ router.use('/waiting-room', waitingRoomRoutes);
 router.use('/ai', aiSuggestionsRoutes);
 router.use('/document-requests', documentRequestsRoutes);
 router.use('/availability', availabilityRoutes);
+router.use('/billing', billingRoutes);
 
 export default router;

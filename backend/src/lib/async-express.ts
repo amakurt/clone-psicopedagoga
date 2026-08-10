@@ -5,6 +5,15 @@ import { Router } from 'express';
 // garantindo que erros (ex.: 404 de isolamento de tenant) gerem resposta HTTP.
 
 function wrap(fn: any): any {
+  if (fn.length >= 4) {
+    return function (err: any, req: any, res: any, next: any) {
+      try {
+        return Promise.resolve(fn(err, req, res, next)).catch(next);
+      } catch (e) {
+        next(e);
+      }
+    };
+  }
   return function (this: any, req: any, res: any, next: any) {
     try {
       return Promise.resolve(fn.call(this, req, res, next)).catch(next);

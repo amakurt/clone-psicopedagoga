@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { enforcePlanLimits } from '../lib/billing';
 import { authenticate, authorize, validate } from '../middleware';
 
 const router = Router();
@@ -29,6 +30,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 router.post('/', authorize('GESTOR'), validate(userSchema), async (req, res) => {
+  await enforcePlanLimits(req.user!.tenantId || '', 'profissional');
   const user = await prisma.user.create({ data: req.body });
   res.status(201).json(user);
 });

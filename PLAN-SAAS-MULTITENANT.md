@@ -101,8 +101,20 @@ Transformar o EduPsych Pro (atualmente single-tenant, uma clínica por instalaç
 - [x] Fase 1 — backend scoping (helper `scoped` em todas as rotas de negócio, queries por id com `{ id, tenantId }`, seed escopado, teste de isolamento `backend/scripts/test-isolation.ts`) | **concluída 10/08/2026**
 - [x] Fase 2 — frontend multi-clínica v1 (seleção de clínica no login, switcher no header, X-Tenant-Id) | **concluída 10/08/2026**
 - [ ] Fase 3 — billing
+- [ ] Fase 3a — gateway real (Asaas/Mercado Pago) + landing de venda
 - [ ] Fase 4 — deploy
 - [ ] Fase 5 — venda
+
+## Notas Fase 3 (billing)
+- **Models:** `Plan` (code, name, priceCents, maxPacientes, maxProfissionais, trialDays, features) + `Subscription` (tenantId, planId, status PENDENTE|ATIVA|CANCELADA, currentPeriodEnd, providerId)
+- **Seed:** 3 planos → `TRIAL` (R$0, 10 pacientes/2 profs, 14 dias), `BASICO` (R$149, 100/10), `PRO` (R$299, ilimitado) e `PRO` ativo na Clínica Principal
+- **Trial lazy:** `lib/billing.ts` cria a subscription da 1ª vez que um usuário da clínica faz login/requisição (vencimento = now + 14d)
+- **Enforcement:** middleware auth `enforceTenantStatus` (401 sem assinatura, 403 tenant BLOQUEADO/vencido) + `enforcePlanLimits` nos POSTs de pacientes/users (402 "Limite do plano atingido")
+- **Rotas** `routes/billing.ts`: `GET /plans`, `GET /billing` (status + uso), `POST /checkout` (PIX mock com `pixCopiaECola`), `POST /mock-pay` (ativa +30d; produção: Asaas/MercadoPago), `POST /webhook` (proteção por header `X-Billing-Webhook-Token`, default dev `BILLING_WEBHOOK_TOKEN`)
+- **Fix errorHandler:** o wrapper async-express tinha 3 parâmetros e quebrava o reconhecimento de error-middleware (4 params) do Express — respostas de erro viravam HTML default; agora o wrap emite variante de 4 params quando `fn.length >= 4` e toda resposta de erro é JSON
+- **Frontend:** rota `/app/plano` (`modules/billing`) — plano atual, barras de uso (pacientes/profissionais), cards dos 3 planos com preços, PIX copia-e-cola + botão "Simular pagamento" (mock), item "Plano e Assinatura" no sidebar
+- **Validado:** checkout TRIAL→BASICO (PENDENTE + 402 no limite de 10), mock-pay ATIVA +30d, webhook com/sem token (200/401), assinatura vencida → login 403 (renovação reativa), erros sempre JSON
+- **Pendência (fase 3a):** `checkoutPlan`/`createProviderCheckout` é stub mock — trocar por Pix recorrente real, `processWebhookEvent` por verificação de assinatura do payload no provider
 
 ## Notas Fase 2
 - Backend: `POST /auth/login` retorna `tenants[]` + `tenant` (default = 1ª clínica não bloqueada); `GET /auth/tenants` (autenticado) devolve as clínicas ativas; `POST /auth/select-tenant` valida membership e devolve o tenant

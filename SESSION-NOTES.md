@@ -2,7 +2,7 @@
 
 ## Data: 10/08/2026
 
-## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fase 1 SAAS multi-tenant concluída (scoping das rotas + teste de isolamento)**
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída**
 
 ---
 
@@ -42,6 +42,16 @@
   - Header (main-layout e guardian-layout): chip com o nome da clínica atual (logo quando houver) + dropdown para trocar — troca chama `selectTenant` + reload
 - **Validado:** login retorna 2 tenants; `GET /tenants` lista as duas; `select-tenant` inválido → 403; validado → tenant; **switch via X-Tenant-Id: clínica principal 5 pacientes → clínica de teste 0 pacientes** (isolamento por header OK); `ng build` limpo
 - **Limpeza:** tenant/membership de teste removidos (sarah voltou a ter 1 membership)
+
+### 50. Fase 3 — Billing: planos, trial, limite e assinatura (backend + frontend)
+- **Models** (`schema.prisma` + `prisma db push`): `Plan` (code, name, priceCents, maxPacientes, maxProfissionais, trialDays, features) e `Subscription` (tenantId, planId, status `PENDENTE|ATIVA|CANCELADA`, currentPeriodEnd, providerId)
+- **Seed:** `TRIAL` R$0 (10 pacientes / 2 profs / 14d), `BASICO` R$149 (100/10), `PRO` R$299 (ilimitado) — Clínica Principal com `PRO` ATIVA
+- **`lib/billing.ts`:** `getOrCreateSubscription` cria trial lazy (14d) no 1º login/request; `enforceTenantStatus` (401 assinatura ausente, 403 tenant vencido ⇒ `Tenant.status=BLOQUEADO`, renovação reativa); `getUsage`; `enforcePlanLimits` → 402 "Limite do plano atingido"; `checkoutPlan` (PIX mock com `pixCopiaECola`); `activateSubscription` (+30d via mock-pay)
+- **Rotas** `routes/billing.ts`: `GET /billing/plans`, `GET /billing` (status + uso), `POST /billing/checkout`, `POST /billing/mock-pay`, `POST /billing/webhook` (protegida por header `X-Billing-Webhook-Token`; default dev `BILLING_WEBHOOK_TOKEN`); enforcement plugado em `middleware/auth.ts`, `routes/auth.ts` (login), POST `pacientes` e POST `users`
+- **REGRESSÃO ENCONTRADA E CORRIGIDA — errorHandler não rodava:** respostas de erro voltavam como HTML default do Express (teste de isolamento só validava status; 404 JSON nunca tinha sido verificado de verdade; `X-Error-Handler` + log em `/tmp/errorhandler.log` provaram que o handler nunca era chamado). **Causa:** o patch `async-express` envolve todo handler com wrapper de 3 parâmetros → Express não reconhece error-middleware (exige `length >= 4`). **Correção:** wrapper agora emite variante de 4 params quando `fn.length >= 4`. **Validado:** `errTest` sync+async 418 JSON, 404 cruzado JSON, 402 limite JSON
+- **Frontend:** módulo `src/app/modules/billing/` — página `/app/plano` (plano atual + barras de uso pacientes/profissionais + cards dos 3 planos com preço + PIX copia-e-cola + botão "Simular pagamento" quando PENDENTE + feedback de erro/successo); rota em `app.routes.ts`; item "Plano e Assinatura" (credit_card) no sidebar e breadcrumb do main-layout; `ng build` limpo
+- **Validado via API:** checkout TRIAL→BASICO (PENDENTE + 402 no limite de 10/10), mock-pay ATIVA +30d, webhook com/sem token 200/401, login pós-vencimento 403, renovação reativa; teste de isolamento agora também exige corpo JSON nas respostas 404 — 19/19 PASS; tenants temporários `clinica-limite` removidos do banco
+- **Pendência (Fase 3a):** trocar `createProviderCheckout`/`processWebhookEvent` (stubs mock) por Pix recorrente real (Asaas/Mercado Pago)
 
 ### Backup da conversa
 - `session-backup/2026-08-10-multitenant.json` — export completo da sessão atual (`opencode export ses_01440a6a3ffeXFGyzCOLTTJ5UY`)

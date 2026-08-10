@@ -18,6 +18,10 @@ function expect(cond: boolean, label: string) {
   console.log(`PASS: ${label}`);
 }
 
+function expectJsonError(r: ApiResult, label: string) {
+  expect(r.body && typeof r.body.error === 'string' && r.body.error.length > 0, `${label} (body JSON com error)`);
+}
+
 async function api(method: string, urlPath: string, token?: string, body?: any): Promise<ApiResult> {
   const res = await fetch(`${BASE}${urlPath}`, {
     method,
@@ -99,12 +103,15 @@ async function main() {
 
     const r3 = await api('GET', `/pacientes/${patientA.id}`, tokenB);
     expect(r3.status === 404, `GET cruzado do paciente do A com token B -> 404 (status ${r3.status})`);
+    expectJsonError(r3, 'GET cruzado');
 
     const r4 = await api('PUT', `/pacientes/${patientA.id}`, tokenB, { name: 'Sobrescrita indevida' });
     expect(r4.status === 404, `PUT cruzado com token B -> 404 (status ${r4.status})`);
+    expectJsonError(r4, 'PUT cruzado');
 
     const r5 = await api('DELETE', `/pacientes/${patientA.id}`, tokenB);
     expect(r5.status === 404, `DELETE cruzado com token B -> 404 (status ${r5.status})`);
+    expectJsonError(r5, 'DELETE cruzado');
 
     const r6 = await api('GET', `/pacientes/${patientA.id}`, tokenA);
     expect(r6.status === 200, 'A ainda vê o próprio paciente (registro não foi alterado/apagado)');

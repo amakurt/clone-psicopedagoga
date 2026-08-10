@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
+import { enforcePlanLimits } from '../lib/billing';
 import { authenticate, validate } from '../middleware';
 
 const router = Router();
@@ -49,6 +50,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', validate(pacienteSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
+  await enforcePlanLimits(req.user!.tenantId || '', 'paciente');
   const { address, responsavelId, ...data } = req.body;
   if (address && typeof address === 'string') {
     try { Object.assign(data, JSON.parse(address)); } catch {}

@@ -228,6 +228,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { id: 'planos-ia', label: 'Plano IA', icon: 'auto_awesome', route: '/app/planos/ia', count: signal(0) },
     { id: 'whatsapp', label: 'WhatsApp', icon: 'chat', route: '/app/whatsapp', count: signal(0) },
     { id: 'solicitacoes', label: 'Solicitações', icon: 'assignment_turned_in', route: '/app/solicitacoes', count: signal(0) },
+    { id: 'plano', label: 'Plano e Assinatura', icon: 'credit_card', route: '/app/plano', count: signal(0) },
     { id: 'lgpd', label: 'LGPD', icon: 'gpp_good', route: '/app/lgpd', count: signal(0) },
   ];
 
@@ -292,6 +293,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       configuracoes: 'Configurações',
       whatsapp: 'WhatsApp',
       solicitacoes: 'Solicitações',
+      plano: 'Plano e Assinatura',
       lgpd: 'LGPD',
     };
     this.currentPageTitle.set(titles[path] || 'Dashboard');

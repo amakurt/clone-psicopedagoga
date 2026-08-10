@@ -14,6 +14,64 @@ async function main() {
   });
   const db = scoped(prisma, tenant.id);
 
+  await prisma.plan.upsert({
+    where: { code: 'TRIAL' },
+    update: {},
+    create: {
+      code: 'TRIAL',
+      name: 'Trial 14 dias',
+      priceCents: 0,
+      maxPacientes: 10,
+      maxProfissionais: 2,
+      features: JSON.stringify(['10 pacientes', '2 profissionais', 'Todos os módulos clínicos']),
+    },
+  });
+  await prisma.plan.upsert({
+    where: { code: 'BASICO' },
+    update: {},
+    create: {
+      code: 'BASICO',
+      name: 'Básico',
+      priceCents: 14900,
+      maxPacientes: 100,
+      maxProfissionais: 10,
+      features: JSON.stringify(['100 pacientes', '10 profissionais', 'Autorizações LGPD', 'WhatsApp']),
+    },
+  });
+  await prisma.plan.upsert({
+    where: { code: 'PRO' },
+    update: {},
+    create: {
+      code: 'PRO',
+      name: 'Profissional',
+      priceCents: 29900,
+      maxPacientes: 100000,
+      maxProfissionais: 1000,
+      features: JSON.stringify(['Pacientes ilimitados', 'Profissionais ilimitados', 'Todos os módulos', 'Suporte prioritário']),
+    },
+  });
+  const planTrials = await prisma.subscription.count({ where: { tenantId: tenant.id } });
+  if (planTrials === 0) {
+    await prisma.subscription.create({
+      data: {
+        tenantId: tenant.id,
+        planCode: 'PRO',
+        status: 'ATIVA',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      },
+    });
+    await prisma.tenant.update({ where: { id: tenant.id }, data: { plan: 'PRO' } });
+    console.log('Subscription PRO criada para a clínica principal');
+  } else {
+    await prisma.subscription.update({
+      where: { tenantId: tenant.id },
+      data: { planCode: 'PRO', status: 'ATIVA' },
+    });
+    await prisma.tenant.update({ where: { id: tenant.id }, data: { plan: 'PRO' } });
+    console.log('Clínica principal garantida como PRO');
+  }
+
   // Usuários
   const sarah = await prisma.user.upsert({
     where: { email: 'sarah@edupsych.com' },
@@ -637,7 +695,9 @@ async function main() {
   });
 
   // NFS-e
-  await db.nfse.create({
+  const existingNfse = await db.nfse.count({ where: { number: { in: [1001, 1002] } } });
+  if (existingNfse === 0) {
+    await db.nfse.create({
     data: {
       number: 1001,
       patientId: paciente1.id,
@@ -667,6 +727,7 @@ async function main() {
       notes: '16 sessões a R$ 150,00 cada',
     },
   });
+  }
 
   // Documentos
   await db.document.create({

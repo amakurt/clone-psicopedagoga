@@ -4,6 +4,34 @@
 
 ---
 
+## Sessão 13 - 10/08/2026 (Segunda) — SAAS Multi-tenant: Fase 3 (billing: planos, trial, limites, assinatura)
+
+### O que foi feito
+
+#### 1. Backend — Plan/Subscription + trial + enforcement
+- Models `Plan`/`Subscription` (+`Tenant.subscription`); seed dos 3 planos (TRIAL R$0 10/2 14d; BASICO R$149 100/10; PRO R$299 ilimitado) com Clínica Principal em PRO ativa
+- `lib/billing.ts`: trial lazy 14d no 1º acesso, `enforceTenantStatus` (401 sem assinatura / 403 vencido⇒BLOQUEADO / renovação reativa), `enforcePlanLimits` → 402, `checkoutPlan` (PIX mock), `activateSubscription` (+30d)
+- `routes/billing.ts`: `GET /plans`, `GET /billing`, `POST /checkout`, `POST /mock-pay`, `POST /webhook` (token por header `X-Billing-Webhook-Token`)
+- Enforcement plugado em: middleware auth (toda rota), login, POST pacientes, POST users
+
+#### 2. REGRESSÃO CORRIGIDA — errorHandler nunca rodava (respostas de erro viravam HTML)
+- Instrumentação (`X-Error-Handler` + log em `/tmp`) provou que o handler não era chamado; causa: wrapper do async-express tinha 3 params e o Express só trata error-middleware com `length >= 4`
+- Correção: wrapper emite variante de 4 params quando `fn.length >= 4`; removido o aparato de debug (`routes/errTest.ts`, log, header)
+- Teste de isolamento reforçado: agora exige corpo JSON nas respostas 404 — 19/19 PASS
+
+#### 3. Frontend — página /app/plano
+- Módulo `src/app/modules/billing/`: plano atual, barras de uso (pacientes/profissionais), cards dos 3 planos, PIX copia-e-cola + "Simular pagamento" (mock), rota em `app.routes.ts`, item "Plano e Assinatura" no sidebar
+- `ng build` limpo
+
+#### 4. Validações
+- Checkout TRIAL→BASICO (PENDENTE, PIX gerado, 402 no limite 10/10), mock-pay ATIVA +30d, webhook com/sem token (200/401), login pós-vencimento 403 + renovação reativa, erros sempre JSON
+- Tenants `clinica-limite` de teste removidos do banco
+
+### Commits
+- (na sessão 12 ficou pendente — commit desta fase inclui também as pendências da sessão 12)
+
+---
+
 ## Sessão 12 - 10/08/2026 (Segunda) — SAAS Multi-tenant: Fase 2 (frontend multi-clínica)
 
 ### O que foi feito
