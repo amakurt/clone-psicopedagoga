@@ -1,8 +1,20 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 09/08/2026
+## Data: 10/08/2026
 
-## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado
+
+---
+
+## Sessão 10/08/2026 (Segunda)
+
+### 45. Bug "Marcar todas como lidas" — causa raiz encontrada e validada
+- **Problema relatado:** no painel da equipe, "Marcar todas como lidas" nas notificações só funcionava clicando uma por uma
+- **Investigações descartadas:** backend via curl (200 OK), preflight CORS via origem LAN (204 OK), teste em Chrome headless do fluxo completo (funcionando) — nada indicava problema em runtime
+- **Causa raiz (análise do git):** no commit `6da73c2` a rota `PUT /mark-all-read` estava registrada **depois** de `PUT /:id` → Express casava `mark-all-read` como `:id` → erro do Prisma → **500**
+- **Correção:** já aplicada no commit `d344c8b` (rota movida para antes de `PUT /:id`)
+- **Validação no navegador (Playwright/Chrome headless):** 3 notificações não lidas criadas → badge `3` + 3 itens destacados → clique em "Marcar todas" → 0 destacados + badge some + zero erros de console; repetido pela origem LAN `192.168.0.106:4200` (a do outro PC)
+- **Observação:** notificações de teste removidas; usuário deve dar hard refresh (Ctrl/Cmd+Shift+R) se ainda vir o comportamento antigo (bundle cacheado)
 
 ---
 

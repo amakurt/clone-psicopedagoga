@@ -1,6 +1,23 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 09 de Agosto de 2026
+## Última Atualização: 10 de Agosto de 2026
+
+---
+
+## Sessão 10 - 10/08/2026 (Segunda)
+
+### O que foi feito
+
+#### 1. Bug: "Marcar todas como lidas" das notificações só funcionava uma a uma
+- **Investigação:** backend (`PUT /api/notifications/mark-all-read`) testado via curl → 200 OK; preflight CORS via origem LAN `http://192.168.0.106:4200` → 204 OK; teste em Chrome headless (Playwright) do fluxo completo no navegador → funcionando
+- **Causa raiz encontrada (análise do git):** no commit `6da73c2` a rota `PUT /mark-all-read` era definida na linha 52, **depois** de `PUT /:id` (linha 37) → o Express casava a string literal `mark-all-read` como parâmetro `:id` → `prisma.notification.update` lançava erro → **HTTP 500** → botão nunca funcionava (só o clique individual, por rota diferente, funcionava)
+- **Correção já aplicada:** no commit `d344c8b` a rota foi movida para a linha 32, **antes** de `PUT /:id` — ordem correta de registro no Express
+- **Validação final (navegador real, sem refresh):** criadas 3 notificações não lidas → badge `3` + 3 itens destacados → clique em "Marcar todas" → 0 destacados, badge some, zero erros de console — testado via `localhost:4200` e via `http://192.168.0.106:4200` (mesma origem que o outro PC)
+- **Limpeza:** notificações de teste removidas do banco
+- **Orientação ao usuário:** se o outro PC ainda mostrar o problema, é bundle/cache antigo — hard refresh (Ctrl/Cmd + Shift + R)
+
+### Commits
+- (nenhum código novo — investigação e validação; documentação nesta sessão)
 
 ---
 
@@ -53,7 +70,11 @@
 - Testado via API: solicitar → reagendar → cancelar → bloqueio de re-cancelamento + CRUD de disponibilidade; dados de teste removidos
 
 ### Commits
-- (a commitar)
+- `b955128` - feat: chat em tempo real via polling, acesso pela rede local, scripts start/stop-all + docs da sessão 09/08
+- `0b533fa` - feat: equipe confirma/cancela/finaliza agendamentos solicitados pelo responsavel + notificacao ao responsavel
+- `b2a45bb` - feat: sino de notificacoes no portal do responsavel (badge + dropdown + polling 15s)
+- `f617c54` - fix: notificacoes da equipe em tempo real - polling de 10s no main-layout (sino + badge agenda)
+- `21744f7` - feat: responsavel cancela/modifica agendamentos + disponibilidade da equipe (dias e horarios)
 
 ---
 
