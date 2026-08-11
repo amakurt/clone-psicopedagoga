@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    command: postgres -c max_connections=100
+    environment:
+      POSTGRES_USER: edupsych
+      POSTGRES_PASSWORD: EDUPSYCH_DB_PASSWORD
+      POSTGRES_DB: edupsych
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - edupsych_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edupsych -d edupsych"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  edupsych_pgdata:

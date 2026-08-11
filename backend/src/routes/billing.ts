@@ -3,12 +3,13 @@ import prisma from '../lib/prisma';
 import { authenticate } from '../middleware';
 import {
   getOrCreateSubscription,
-  enforceTenantStatus,
   getUsage,
   checkoutPlan,
   activateSubscription,
+  processWebhookEvent,
   BILLING_ENABLED,
 } from '../lib/billing';
+import { isWebhookAuthorized } from '../lib/asaas';
 import { z } from 'zod';
 import { validate } from '../middleware';
 
@@ -40,6 +41,7 @@ router.get('/', authenticate, async (req: any, res) => {
     plan,
     usage,
     tenant: tenants,
+    provider: subscription.provider || 'mock',
     maxPacientes: plan?.maxPacientes ?? 0,
     maxProfissionais: plan?.maxProfissionais ?? 0,
   });
@@ -53,7 +55,7 @@ router.post('/checkout', authenticate, validate(checkoutSchema), async (req: any
 
 router.post('/mock-pay', authenticate, async (req: any, res) => {
   const sub = await getOrCreateSubscription(req.user.tenantId);
-  if (sub.provider && sub.provider !== 'mock' && sub.status !== 'PENDENTE') {
+  if (sub.provider && sub.provider !== 'mock') {
     return res.status(400).json({ error: 'mock-pay só disponível no modo simulado' });
   }
   const { plan } = await activateSubscription(req.user.tenantId, sub.planCode);
@@ -61,36 +63,19 @@ router.post('/mock-pay', authenticate, async (req: any, res) => {
 });
 
 router.post('/webhook', async (req: any, res) => {
-  const expected = process.env.BILLING_WEBHOOK_TOKEN || 'dev-webhook-token';
-  const token = (req.headers['x-webhook-token'] || req.headers['x-billing-token']) as string;
-  if (token !== expected) {
+  const devToken = process.env.BILLING_WEBHOOK_TOKEN || 'dev-webhook-token';
+  const headerToken = (req.headers['x-billing-webhook-token'] || req.headers['x-webhook-token'] || req.headers['x-billing-token']) as string;
+
+  const tokenOk =
+    (process.env.ASAAS_API_KEY && isWebhookAuthorized(req)) ||
+    headerToken === devToken;
+
+  if (!tokenOk) {
     return res.status(401).json({ error: 'Assinatura de webhook inválida' });
   }
 
-  const { event, payment, subscription: subInfo } = req.body || {};
-  const eventName = String(event?.event || payment?.event || event || '').toUpperCase();
-
-  const tenantId = subInfo?.tenantId || payment?.customer || payment?.subscriptionId || req.body?.tenantId;
-
-  if (!tenantId) {
-    return res.status(400).json({ error: 'tenantId não informado no webhook' });
-  }
-
-  const isPaymentConfirmed =
-    eventName === 'PAYMENT_CONFIRMED' ||
-    eventName === 'PAYMENT_RECEIVED' ||
-    eventName.includes('PAYMENT_CONFIRMED') ||
-    eventName.includes('PAYMENT_RECEIVED');
-
-  if (isPaymentConfirmed) {
-    const sub = await prisma.subscription.findUnique({ where: { tenantId } });
-    if (!sub) return res.status(404).json({ error: 'Assinatura não encontrada' });
-    const { plan } = await activateSubscription(tenantId, sub.planCode);
-    console.log(`[BILLING] Pagamento confirmado (${sub.planCode}) para tenant ${tenantId}`);
-    return res.json({ ok: true, plan });
-  }
-
-  res.json({ ok: true, ignored: eventName || 'unknown' });
+  const result = await processWebhookEvent(req.body || {});
+  return res.json(result);
 });
 
 export default router;

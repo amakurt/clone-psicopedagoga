@@ -1,8 +1,39 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 10/08/2026
+## Data: 11/08/2026
 
-## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída**
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída + Fase 3a gateway real Asaas (Pix recorrente) concluída + Fase 4 adiada — deploy pausado (Oracle A1 sem capacidade; continuamos no ambiente local; pacote `deploy/` pronto + migração SQLite→Postgres validada: 321 linhas/40 tabelas)**
+
+---
+
+## Sessão 11/08/2026 (Terça) — Fase 3a: Gateway real Asaas (Pix recorrente)
+
+### 51. Asaas real — customer + subscription PIX mensal + QR Code + webhook assinado
+- **`backend/src/lib/asaas.ts` (novo):** client da API Asaas v3 — `getOrCreateCustomer` (dedup por `externalReference=tenantId`), `createSubscription` (`billingType: PIX`, `cycle: MONTHLY`, `nextDueDate` hoje), `getSubscriptionFirstPayment` (`GET /subscriptions/:id/payments`), `getPixQrCode` (`GET /payments/:id/pixQrCode` → `payload` copia-e-cola, `encodedImage` base64, `expirationDate`), `isWebhookAuthorized` (header **`asaas-access-token`** vs `ASAAS_WEBHOOK_TOKEN` — assinatura oficial do Asaas, docs confirmada)
+- **`lib/billing.ts`:** `checkoutPlan` modo asaas cria Customer → Subscription → 1ª cobrança → QR; grava `providerId` (id da assinatura), `providerCustomerId`, `providerPaymentId`, `pixCopiaECola`, `pixQrImage`, `pixExpiresAt`. `activateSubscription` estende a partir do `currentPeriodEnd` vigente (renovação não encurta) e limpa dados do PIX. `processWebhookEvent`: `PAYMENT_CONFIRMED/RECEIVED/ANTICIPATED` → ativa; **idempotência por `providerPaymentId`** (mesma cobrança reentregue = ignorar; cobrança nova = renovar +30d); `PAYMENT_OVERDUE` → PENDENTE; assinatura desconhecida não quebra
+- **Schema:** `Subscription` + `providerCustomerId`, `providerPaymentId`, `pixQrImage` (nullable); `prisma db push` + schema raiz sincronizado (40 models)
+- **Rotas billing:** webhook aceita `X-Billing-Webhook-Token` (dev) **ou** `asaas-access-token` (produção) — **bug corrigido:** `X-Billing-Webhook-Token` não era reconhecido (só `x-webhook-token`/`x-billing-token`); `GET /billing` retorna `provider`; `mock-pay` só com `provider === mock` (400 caso contrário — antes permitia em PENDENTE real)
+- **Frontend `/app/plano`:** imagem do QR Code (base64) quando houve, polling de 15s enquanto PENDENTE (ativa sozinha ao confirmar), "Simular pagamento" apenas no modo mock (`isMock` agora usa `provider`, antes usava status PENDENTE — mostrava o botão até para cobrança real)
+- **Validado:** modo mock intacto (checkout → mock-pay → webhook 401 sem token / 200 com token); scenario test com assinatura Asaas simulada — confirmação ativa (ATIVA + tenant ATIVO), duplicado ignorado, **renovação mensal estende período (+~30d)** — bug de renovação encontrado no teste (evento novo era tratado como duplicado) e corrigido, overdue → PENDENTE, dados de teste limpos; `tsc --noEmit` e `ng build` limpos
+- **Pendências para produção:** criar conta Asaas + chave de API (`ASAAS_API_KEY`), webhook com `authToken` (32-255 chars) apontando para `POST /api/billing/webhook` + `ASAAS_WEBHOOK_TOKEN`, `ASAAS_ENV=prod`; (Fase 3a nota original: "landing de venda" segue na Fase 5)
+
+---
+
+## Sessão 11/08/2026 (Terça) — Fase 4: Deploy na Oracle Free Tier (em preparação)
+
+### 52. Plano de deploy: Postgres de produção + pacote `deploy/` pronto
+- **Decisão:** produção com **Postgresql** (container postgres:16 em Docker interno, porta 127.0.0.1:5432, usuário `edupsych`, senha gerada por `openssl rand`); repositório mantém `provider = "sqlite"` no dev — o `setup.sh` troca via `sed` no servidor no primeiro deploy
+- **Pacote (`deploy/`):** `provision.sh` (nginx, git, unzip, ca-cert, curl, gnupg, cron, certbot, python3-certbot-nginx, **build-essential+python3** p/ compilar better-sqlite3; **pgloader removido**), `setup.sh` (Mac → servidor: build ng → rsync frontend/backend/migrate → .env → postgres up → swap provider → npm ci → generate → db push → **migração** → seed → build → pm2 → nginx → certbot → evolution → cron backup), `nginx-edupsych.conf`, `evolution-compose.yml`, `postgres-compose.yml`, `backend.env.example`, `backup.sh` (pg_dump + uploads, cron 3h, retém 14)
+- **OracLA Free Tier:** tenancy `sa-saopaulo-1`, limite A1 = **2 OCPU/12 GB** (não 4/24); **AD-1 sem capacidade** para `VM.Standard.A1.Flex` ("out of capacity" — mesmo com 1 OCPU/6 GB; só AD-1 disponível, não há seletor de AD) → plano B: retentar fora de pico; alternativa: Hetzner (CAX ARM). Instância AMD existente `instance-20260616-1438` @ `137.131.160.171` (1 GB RAM, gincana 24/7) **não pode ser apagada**; SSH nova instância = `~/.ssh/id_ed25519`
+- **Sem domínio ainda:** `DOMAIN=` vazio → nginx no IP (HTTP), certbot depois com domínio
+
+### 53. Migração SQLite→Postgres: pgloader descartado + `deploy/migrate/migrate.js` validado
+- **pgloader FALHOU:** datas do Prisma (epoch-ms `1785868323317`) viram `"1785868323317-01-01"` → COPY aborta → ~1 linha/tabela → descartado
+- **`deploy/migrate/migrate.js` (novo):** lê `schema.prisma` (parse de campos escalares: String/Int/Float/Boolean/DateTime/Json), converte por linha: DateTime (ms → `Date`), Boolean (0/1 → bool), Json (TEXT → JSON.parse); insere com `ON CONFLICT ("id") DO NOTHING` (idempotente), desabilita FK checks durante a carga + reativa, paddings: colegas com FKs órfãs ficam para último. Modo: `node migrate.js <dev.db> <pg-url> <schema.prisma>`
+- **Bug encontrado e corrigido:** regex do parser exigia espaço após o tipo (`(\?)?\s`) → campos sem default no fim da linha (`date DateTime`) não eram parseados → coluna ia cru (ms) → `date/time field value out of range` com valor 1785589200000; corrigido para `(?=\s|$)` (padrão lookahead)
+- **Teste real:** container local `edup-test-pg` (postgres:16, porta 5433) + cópia do backend com provider pg (`/tmp/backend-pg-test`) → `prisma db push` + `migrate.js` → **321 linhas em 40/40 tabelas, sem erros**; re-run idempotente (mesmo total, sem duplicar); **backend de teste rodou 100% contra o Postgres:** login OK (sarah@edupsych.com), 25 pacientes, billing PRO ativo com vencimento 10/10/2026, 17 notificações não lidas, waiting-room 200, conversa de chat presente
+- **`setup.sh` atualizado:** primeiro deploy = .env → postgres up → swap provider → npm ci → generate → **db push (cria tabelas) → migrate.js** → seed idempotente → build → pm2; `deploy/migrate/` entra no rsync (sem node_modules — `npm ci` no servidor) ; passo pgloader removido
+- **Ambiente de teste limpo** (container, `/tmp/backend-pg-test`, `/tmp/migration-test.db`, log)
 
 ---
 

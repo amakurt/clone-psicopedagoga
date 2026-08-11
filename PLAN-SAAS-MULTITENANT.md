@@ -68,10 +68,12 @@ Transformar o EduPsych Pro (atualmente single-tenant, uma clínica por instalaç
 ## Fase 4 — Deploy Oracle + domínio
 
 - Domínio `seuclinica.com` (registro.br ~R$40/ano): `app.seuclinica.com` (sistema) + raiz (landing)
-- Instância ARM Ubuntu: nginx (Angular estático + proxy `/api`) + PM2 (backend) + Docker (Evolution API)
+- Instância ARM Ubuntu: nginx (Angular estático + proxy `/api`) + PM2 (backend) + Docker (Evolution API) + container Postgres 16 interno
 - **Risco:** WhatsApp costuma bloquear IP de datacenter (Oracle) — testar com número descartável
 - Let's Encrypt + security list OCI (80/443) + `FRONTEND_URL` com domínio
-- Backups: cron `pg_dump` quando em Postgres
+- Backups: cron `deploy/backup.sh` (pg_dump + uploads, 3h, retém 14)
+- **Pré-requisito travado:** tenancy `sa-saopaulo-1` com limite **2 OCPU/12 GB** e **AD-1 sem capacidade** para A1 ("out of capacity" até com 1 OCPU/6 GB) — **decisão 11/08/2026: deploy adiado; continuamos no ambiente local (SQLite) para evoluir features e caçar bugs; quando retomarmos: instância A1 (retry fora de pico ou script OCI CLI) ou plano B Hetzner CAX11 (~R$25/mês)**, e não apagar a AMD `instance-20260616-1438`
+- **Migração de dados decidida:** Postgres em produção + `deploy/migrate/migrate.js` (SQLite→PG, idempotente; pgloader descartado por corromper datas do Prisma) — **validado localmente: 321 linhas/40 tabelas + backend rodando 100% no PG (11/08/2026)**
 
 ---
 
@@ -101,9 +103,17 @@ Transformar o EduPsych Pro (atualmente single-tenant, uma clínica por instalaç
 - [x] Fase 1 — backend scoping (helper `scoped` em todas as rotas de negócio, queries por id com `{ id, tenantId }`, seed escopado, teste de isolamento `backend/scripts/test-isolation.ts`) | **concluída 10/08/2026**
 - [x] Fase 2 — frontend multi-clínica v1 (seleção de clínica no login, switcher no header, X-Tenant-Id) | **concluída 10/08/2026**
 - [ ] Fase 3 — billing
-- [ ] Fase 3a — gateway real (Asaas/Mercado Pago) + landing de venda
-- [ ] Fase 4 — deploy
+- [x] Fase 3a — gateway real **Asaas (Pix recorrente)** — checkout com customer+subscription+QR Code, webhook validado por `asaas-access-token`, renovação mensal automática | **concluída 11/08/2026** (landing de venda segue na Fase 5)
+- [ ] Fase 4 — deploy **| pausada 11/08/2026 (A1 sem capacidade na Oracle; adiado p/ retomar local primeiro — pacote completo em `deploy/` e migração validada)**
 - [ ] Fase 5 — venda
+
+## Notas Fase 3a (gateway real)
+- **`lib/asaas.ts`**: client da API Asaas (v3, sandbox `sandbox.asaas.com/api/v3` quando `ASAAS_ENV=sandbox`) — `getOrCreateCustomer` (busca por `externalReference=tenantId`, evita customer duplicado), `createSubscription` (`billingType: PIX`, `cycle: MONTHLY`, `nextDueDate`=hoje), `getSubscriptionFirstPayment`, `getPixQrCode` (`GET /payments/{id}/pixQrCode` → `payload` copia-e-cola + `encodedImage` base64 + `expirationDate`), `isWebhookAuthorized` (compara header `asaas-access-token` com `ASAAS_WEBHOOK_TOKEN`)
+- **`lib/billing.ts`**: `checkoutPlan` no modo asaas cria Customer → Subscription → 1ª cobrança → QR Code; salva `providerId`=id da assinatura, `providerCustomerId`, `providerPaymentId`, `pixCopiaECola`, `pixQrImage`, `pixExpiresAt`. `activateSubscription` agora estende o período a partir do `currentPeriodEnd` atual (renovação não encurta) e limpa dados do PIX. `processWebhookEvent`: mapeia `PAYMENT_CONFIRMED/RECEIVED/ANTICIPATED` → ativa; idempotência por `providerPaymentId` (mesma cobrança reentregue = ignorar; cobrança nova = renovar +30d); `PAYMENT_OVERDUE` → status PENDENTE; webhook de assinatura desconhecida não quebra
+- **Schema**: `Subscription` ganhou `providerCustomerId`, `providerPaymentId`, `pixQrImage` (nullable, `db push` não-destrutivo; schema raiz sincronizado)
+- **Rotas**: webhook aceita header `X-Billing-Webhook-Token` (dev/mock) **ou** `asaas-access-token` (produção Asaas); `GET /billing` retorna `provider`; `mock-pay` bloqueado com 400 quando `provider !== mock`
+- **Frontend `/app/plano`**: mostra imagem do QR Code (base64) quando há, polling de 15s enquanto PENDENTE (ativa sozinha quando o webhook confirma), "Simular pagamento" só no modo mock
+- **Validado**: scenario test com subscription Asaas simulada — confirmação ativa (status ATIVA + tenant ATIVO), duplicado ignorado, renovação estende período (+~30d), overdue → PENDENTE, webhook desconhecido ignorado, limpeza OK; modo mock intacto (checkout → mock-pay → webhook dev token 401 sem token / 200 com token)
 
 ## Notas Fase 3 (billing)
 - **Models:** `Plan` (code, name, priceCents, maxPacientes, maxProfissionais, trialDays, features) + `Subscription` (tenantId, planId, status PENDENTE|ATIVA|CANCELADA, currentPeriodEnd, providerId)

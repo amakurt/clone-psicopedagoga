@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BillingService } from '../../services/billing.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -117,14 +117,27 @@ import { AuthService } from '../../../../core/services/auth.service';
               <p class="text-xs text-slate-500">Pagamento pendente. Ao confirmar, sua assinatura é ativada na hora.</p>
             </div>
           </div>
-          <div class="flex flex-col sm:flex-row gap-3">
-            <input [value]="pix()" readonly
-              class="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono" />
-            <button (click)="copyPix()" class="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold">Copiar</button>
-            @if (isMock()) {
-              <button (click)="mockPay()" class="px-5 py-3 bg-emerald-500 text-white rounded-xl text-sm font-bold">Simular pagamento</button>
-            }
-          </div>
+          @if (pixImage()) {
+            <div class="flex items-center gap-6 flex-wrap">
+              <img [src]="'data:image/png;base64,' + pixImage()" alt="QR Code Pix"
+                class="w-44 h-44 rounded-xl border border-slate-200 dark:border-slate-700" />
+              <div class="flex-1 min-w-[240px] flex flex-col gap-3">
+                <input [value]="pix()" readonly
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono" />
+                <button (click)="copyPix()" class="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold">Copiar código</button>
+              </div>
+            </div>
+          } @else {
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input [value]="pix()" readonly
+                class="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono" />
+              <button (click)="copyPix()" class="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold">Copiar</button>
+              @if (isMock()) {
+                <button (click)="mockPay()" class="px-5 py-3 bg-emerald-500 text-white rounded-xl text-sm font-bold">Simular pagamento</button>
+              }
+            </div>
+          }
+          <p class="text-xs text-slate-400 mt-3">Aguardando confirmação do pagamento<span class="animate-pulse">…</span></p>
         </div>
       }
     </div>
@@ -133,7 +146,7 @@ import { AuthService } from '../../../../core/services/auth.service';
     :host { display: block; }
   `]
 })
-export class PlanoComponent implements OnInit {
+export class PlanoComponent implements OnInit, OnDestroy {
   private billing = inject(BillingService);
   auth = inject(AuthService);
 
@@ -145,14 +158,21 @@ export class PlanoComponent implements OnInit {
   subStatus = signal('');
   periodEnd = signal('');
   status = signal('ATIVO');
+  provider = signal('');
   pix = signal('');
+  pixImage = signal('');
   selectedPlan = signal<any>(null);
   loading = signal(false);
   error = signal('');
   success = signal('');
+  private pollTimer: any = null;
 
   ngOnInit() {
     this.load();
+  }
+
+  ngOnDestroy() {
+    this.stopPolling();
   }
 
   load() {
@@ -164,7 +184,13 @@ export class PlanoComponent implements OnInit {
         this.maxProfissionais.set(res.maxProfissionais);
         this.subStatus.set(res.subscription.status);
         this.status.set(res.tenant?.status || 'ATIVO');
+        this.provider.set(res.provider || 'mock');
         this.periodEnd.set(new Date(res.subscription.currentPeriodEnd).toLocaleDateString('pt-BR'));
+        if (res.subscription.status === 'ATIVA') {
+          this.pix.set('');
+          this.pixImage.set('');
+          this.stopPolling();
+        }
       },
       error: () => this.error.set('Erro ao carregar informações do plano'),
     });
@@ -180,7 +206,9 @@ export class PlanoComponent implements OnInit {
       next: (res: any) => {
         this.selectedPlan.set(plan);
         this.pix.set(res.pixCopiaECola || '');
+        this.pixImage.set(res.pixQrImage || '');
         this.loading.set(false);
+        this.startPolling();
       },
       error: (err) => {
         this.error.set(err.error?.error || 'Erro ao gerar cobrança');
@@ -189,11 +217,24 @@ export class PlanoComponent implements OnInit {
     });
   }
 
+  startPolling() {
+    this.stopPolling();
+    this.pollTimer = setInterval(() => this.load(), 15000);
+  }
+
+  stopPolling() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
   mockPay() {
     this.loading.set(true);
     this.billing.mockPay().subscribe({
       next: () => {
         this.pix.set('');
+        this.pixImage.set('');
         this.selectedPlan.set(null);
         this.loading.set(false);
         this.success.set('Pagamento confirmado! Assinatura ativada.');
@@ -212,7 +253,7 @@ export class PlanoComponent implements OnInit {
   }
 
   isMock() {
-    return this.subStatus() === 'PENDENTE';
+    return this.provider() === 'mock' || this.provider() === '';
   }
 
   usagePercent(value: number, max: number) {

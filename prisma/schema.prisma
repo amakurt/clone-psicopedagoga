@@ -20,6 +20,7 @@ model Tenant {
   updatedAt   DateTime @updatedAt
 
   memberships Membership[]
+  subscription Subscription?
 
   pacientes        Paciente[]
   signatures       Signature[]
@@ -910,4 +911,35 @@ model WaitingRoom {
   paciente Paciente? @relation(fields: [patientId], references: [id])
 
   @@index([tenantId])
+}
+model Plan {
+  id              String   @id @default(cuid())
+  code            String   @unique // TRIAL | BASICO | PRO
+  name            String
+  priceCents      Int      @default(0)
+  maxPacientes    Int
+  maxProfissionais Int
+  features        String   @default("[]")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  tenantId          String   @unique
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planCode          String   @default("TRIAL")
+  status            String   @default("TRIAL") // TRIAL | ATIVA | PENDENTE | CANCELADA | BLOQUEADA
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd  DateTime
+  provider          String?  // asaas | mercadopago | mock
+  providerId        String?  // id da assinatura/cobrança no provedor
+  providerCustomerId String? // id do customer no provedor (asaas)
+  providerPaymentId String?  // id da cobrança atual no provedor
+  pixCopiaECola     String?
+  pixQrImage        String?  // QR code em base64 (imagem png)
+  pixExpiresAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
