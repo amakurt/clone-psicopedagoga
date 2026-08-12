@@ -17,6 +17,10 @@
 - **Checkout:** a cobrança em si já existe em `/app/plano` (Fase 3/3a — Pix mock / Asaas recorrente); a landing direciona o cliente recém-logado para lá
 - **Pendências pós-deploy:** domínio real + HTTPS; pricing com link recorrente Asaas direto na landing quando a conta Asaas de produção existir
 
+### 55. Remoção do Laboratório de Notificações (`DashboardComponent`)
+- **Remoção da feature de testes:** removido completamente o card `Laboratório de Notificações` da interface do Dashboard (`dashboard.component.ts`), limpando botões de teste, formulários locais, notificações temporárias e estado em memória (`labNotifications`, `createTestNotification`, `showToast`, `toastMessage`, `toastType`).
+- **Validação:** `ng build` limpo sem nenhum aviso/erro de compilação.
+
 ---
 
 ## Sessão 11/08/2026 (Terça) — Fase 3a: Gateway real Asaas (Pix recorrente)
