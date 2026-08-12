@@ -1,8 +1,21 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 11/08/2026
+## Data: 12/08/2026
 
-## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída + Fase 3a gateway real Asaas (Pix recorrente) concluída + Fase 4 adiada — deploy pausado (Oracle A1 sem capacidade; continuamos no ambiente local; pacote `deploy/` pronto + migração SQLite→Postgres validada: 321 linhas/40 tabelas)**
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída + Fase 3a gateway real Asaas (Pix recorrente) concluída + Fase 5 venda concluída (landing com planos e preços + registro de clínica self-service) — Fase 4 adiada — deploy pausado (Oracle A1 sem capacidade; continuamos no ambiente local; pacote `deploy/` pronto + migração SQLite→Postgres validada: 321 linhas/40 tabelas)**
+
+---
+
+## Sessão 12/08/2026 (Quarta) — Fase 5: Venda (landing com planos + registro de clínica self-service)
+
+### 54. Landing de venda + `POST /auth/register-clinic` (clínica própria com trial)
+- **Backend (`lib/tenant.ts`):** `slugifyClinic` (normaliza acentos, minúsculas, hífens) + `generateUniqueSlug` (sufixo numérico em colisão) + `createClinicWithAdmin` — cria Tenant (plan TRIAL, status ATIVO, `trialEndsAt` +14d) + User GESTOR (active false) + Membership + Subscription TRIAL com o mesmo período
+- **Backend (`routes/auth.ts`):** `POST /auth/register-clinic` — valida nome/email/senha/clinicName (senha ≥6, email único), reusa o fluxo de ativação por email/WhatsApp (VerificationCode + sendVerificationMessage), retorna `needsVerification` + `tenant` (payload com role GESTOR) — mesma experiência do `register`
+- **Frontend login (`login.component.ts`):** bug corrigido junto — a landing mandava `?mode=register` mas o componente **não lia** o queryParam (o form nunca abria em modo registro); agora lê `mode` (abre registro) e `plan` (guarda o plano escolhido). Novo campo **"Nome da Clínica"** obrigatório no registro para papéis profissionais (chama `register-clinic`); papel RESPONSAVEL continua com `register` normal. Pós-login com `plan` → redirect direto para `/app/plano` (antes sempre `/app/dashboard`)
+- **Landing (`landing-page.component.ts`):** nova seção **Planos e Preços** (`#planos`) — cards dos 3 planos carregados de `GET /billing/plans` (rota pública, sem auth), preço em BRL (`formatPrice`), features do `plan.features` (JSON), destaque "MAIS POPULAR" no BÁSICO, CTA "Assinar X"/"Começar Grátis" → `/login?mode=register&plan=CODE`; navbar ganhou link "Planos" (desktop + mobile); texto de trial grátis sem cartão
+- **Validado via API (backend real):** register-clinic → **403** no login antes de ativar → ativação por código (440791, email fake bloqueado → DEV log sem envio real) → login retorna o tenant novo (TRIAL/ATIVO) → `GET /billing` com subscription TRIAL e `trialEndsAt` +14d; **email duplicado → 400**, **sem clinicName → 400**, **slug colidido → `clinica-fase5-teste-2`**; `tsc --noEmit` e `ng build` limpos; dados de teste removidos (tenant + usuários, via deleção de verificationCode → membership → user → subscription → tenant)
+- **Checkout:** a cobrança em si já existe em `/app/plano` (Fase 3/3a — Pix mock / Asaas recorrente); a landing direciona o cliente recém-logado para lá
+- **Pendências pós-deploy:** domínio real + HTTPS; pricing com link recorrente Asaas direto na landing quando a conta Asaas de produção existir
 
 ---
 

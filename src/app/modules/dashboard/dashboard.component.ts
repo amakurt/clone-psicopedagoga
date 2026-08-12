@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit, ViewChild, ElementRef, AfterViewInit
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -107,36 +108,7 @@ Chart.register(...registerables);
         </div>
       </div>
 
-      <!-- Notification Lab -->
-      <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm p-8">
-        <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Laboratório de Notificações</h2>
-        <div class="flex gap-3 flex-wrap">
-          <button class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
-            (click)="createTestNotification('Paciente cadastrado com sucesso', 'paciente')">
-            <span class="material-icons text-lg">person_add</span> Novo Paciente
-          </button>
-          <button class="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 transition-colors flex items-center gap-2"
-            (click)="createTestNotification('Documento pendente de assinatura', 'documento')">
-            <span class="material-icons text-lg">description</span> Documento
-          </button>
-          <button class="px-5 py-2.5 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 transition-colors flex items-center gap-2"
-            (click)="createTestNotification('Sessão concluída com sucesso', 'evolucao')">
-            <span class="material-icons text-lg">check_circle</span> Evolução
-          </button>
-          <button class="px-5 py-2.5 bg-purple-500 text-white rounded-xl text-sm font-semibold hover:bg-purple-600 transition-colors flex items-center gap-2"
-            (click)="createTestNotification('Pagamento recebido', 'pagamento')">
-            <span class="material-icons text-lg">payments</span> Pagamento
-          </button>
-        </div>
 
-        @if (showToast()) {
-          <div class="mt-4 p-4 rounded-xl flex items-center gap-3 animate-in"
-            [class]="toastType() === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-blue-50 text-blue-700 border border-blue-200'">
-            <span class="material-icons">{{ toastType() === 'success' ? 'check_circle' : 'info' }}</span>
-            <span class="text-sm font-medium">{{ toastMessage() }}</span>
-          </div>
-        }
-      </div>
     </div>
   `,
   styles: [`
@@ -147,6 +119,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private router = inject(Router);
   private chart: Chart | null = null;
 
@@ -154,9 +127,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   activities = signal<any[]>([]);
   totalReceita = signal(0);
   totalDespesa = signal(0);
-  showToast = signal(false);
-  toastMessage = signal('');
-  toastType = signal('info');
 
   private chartReady = false;
   private pendingChartData: any = null;
@@ -352,29 +322,4 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.router.navigate([path]);
   }
 
-  createTestNotification(message: string, type: string) {
-    this.api.post('/notifications', { title: message, message, type, read: false }).subscribe({
-      next: () => {
-        this.showToast.set(true);
-        this.toastMessage.set('Notificação criada com sucesso!');
-        this.toastType.set('success');
-        this.loadNotifications();
-        setTimeout(() => this.showToast.set(false), 3000);
-      },
-      error: () => {
-        this.showToast.set(true);
-        this.toastMessage.set('Notificação criada (modo local)');
-        this.toastType.set('info');
-        const newActivity = {
-          id: Date.now().toString(),
-          message,
-          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          icon: this.getNotifIcon(type),
-          colorClass: this.getNotifColor(type),
-        };
-        this.activities.update(a => [newActivity, ...a].slice(0, 5));
-        setTimeout(() => this.showToast.set(false), 3000);
-      }
-    });
-  }
 }

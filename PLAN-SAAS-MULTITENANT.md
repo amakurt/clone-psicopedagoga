@@ -103,9 +103,17 @@ Transformar o EduPsych Pro (atualmente single-tenant, uma clínica por instalaç
 - [x] Fase 1 — backend scoping (helper `scoped` em todas as rotas de negócio, queries por id com `{ id, tenantId }`, seed escopado, teste de isolamento `backend/scripts/test-isolation.ts`) | **concluída 10/08/2026**
 - [x] Fase 2 — frontend multi-clínica v1 (seleção de clínica no login, switcher no header, X-Tenant-Id) | **concluída 10/08/2026**
 - [ ] Fase 3 — billing
-- [x] Fase 3a — gateway real **Asaas (Pix recorrente)** — checkout com customer+subscription+QR Code, webhook validado por `asaas-access-token`, renovação mensal automática | **concluída 11/08/2026** (landing de venda segue na Fase 5)
+- [x] Fase 3a — gateway real **Asaas (Pix recorrente)** — checkout com customer+subscription+QR Code, webhook validado por `asaas-access-token`, renovação mensal automática | **concluída 11/08/2026**
 - [ ] Fase 4 — deploy **| pausada 11/08/2026 (A1 sem capacidade na Oracle; adiado p/ retomar local primeiro — pacote completo em `deploy/` e migração validada)**
-- [ ] Fase 5 — venda
+- [x] Fase 5 — venda **| concluída 12/08/2026 (landing com seção Planos e Preços via `/billing/plans` + `POST /auth/register-clinic` self-service: nova clínica + admin GESTOR + trial 14d + ativação por email; checkout Pix recorrente acontece em `/app/plano` após login)**
+
+## Notas Fase 5 (venda)
+- **`POST /auth/register-clinic`** (backend): cria o Tenant da clínica (slug único via `slugifyClinic`/`generateUniqueSlug`, sufixo numérico em colisão) + usuário **GESTOR** + Membership + Subscription **TRIAL** (14 dias, `trialEndsAt` setado) e reusa o fluxo de ativação por email/WhatsApp (consistente com o `register`). Validações: email único, senha ≥ 6, `clinicName` obrigatório.
+- **Login/registro (frontend):** novo campo **"Nome da Clínica"** no modo registro para papéis profissionais (obrigatório → `register-clinic`); papel RESPONSAVEL continua com `register` normal (vínculo à clínica do responsável). Bug corrigido junto: a landing mandava `?mode=register` mas o login **não lia** o param — agora abre o form em modo registro e lê `?plan=CODE` (redirect pós-login vai direto para `/app/plano` quando um plano foi escolhido).
+- **Landing:** seção **Planos e Preços** (`#planos`) com cards dos 3 planos carregados de `GET /billing/plans` (rota pública, sem auth) — preço formatado em BRL, features do `plan.features`, destaque "MAIS POPULAR" no BÁSICO; CTAs → `/login?mode=register&plan=CODE`. Navbar ganhou link "Planos".
+- **Checkout:** a cobrança em si (Pix mock / Asaas recorrente) já está em `/app/plano` (Fase 3/3a) — a landing direciona o novo cliente para lá depois do login.
+- **Validado via API:** register-clinic → 403 no login antes de ativar → ativação por código → login retorna o tenant novo (TRIAL/ATIVO) → `GET /billing` com trial de 14 dias; email duplicado 400, sem clinicName 400, slug colidido → `-2`; dados de teste limpos; `tsc --noEmit` e `ng build` limpos.
+- **Pendências Fase 5 (pós-deploy):** domínio real + landing em HTTPS; pricing com link recorrente Asaas direto (sem passar pelo app) quando tiver conta Asaas em produção.
 
 ## Notas Fase 3a (gateway real)
 - **`lib/asaas.ts`**: client da API Asaas (v3, sandbox `sandbox.asaas.com/api/v3` quando `ASAAS_ENV=sandbox`) — `getOrCreateCustomer` (busca por `externalReference=tenantId`, evita customer duplicado), `createSubscription` (`billingType: PIX`, `cycle: MONTHLY`, `nextDueDate`=hoje), `getSubscriptionFirstPayment`, `getPixQrCode` (`GET /payments/{id}/pixQrCode` → `payload` copia-e-cola + `encodedImage` base64 + `expirationDate`), `isWebhookAuthorized` (compara header `asaas-access-token` com `ASAAS_WEBHOOK_TOKEN`)

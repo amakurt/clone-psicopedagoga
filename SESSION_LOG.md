@@ -1,6 +1,28 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 10 de Agosto de 2026
+## Última Atualização: 12 de Agosto de 2026
+
+---
+
+## Sessão 14 - 12/08/2026 (Quarta) — SAAS Multi-tenant: Fase 5 (venda — landing com planos + registro de clínica self-service)
+
+### O que foi feito
+
+#### 1. Backend — `POST /auth/register-clinic`
+- Helpers em `lib/tenant.ts`: `slugifyClinic` + `generateUniqueSlug` (sufixo numérico em colisão) + `createClinicWithAdmin` (Tenant TRIAL 14d + User GESTOR + Membership + Subscription TRIAL)
+- Rota em `routes/auth.ts`: valida nome/email/senha/clinicName (email único, senha ≥6), reusa fluxo de ativação por email/WhatsApp, retorna `needsVerification` + `tenant`
+
+#### 2. Frontend — login/registro + landing
+- **Bug corrigido:** `?mode=register` da landing não era lido (form nunca abria em modo registro) — agora lê `mode` e `plan`
+- Campo **"Nome da Clínica"** obrigatório para papéis profissionais no registro (→ `register-clinic`); RESPONSAVEL segue com `register`
+- Pós-login com `plan` escolhido → redirect direto para `/app/plano`
+- Landing: seção **Planos e Preços** (`#planos`) com cards dos 3 planos via `GET /billing/plans` (público), preço BRL, features, destaque BÁSICO, CTAs → `/login?mode=register&plan=CODE`; link "Planos" na navbar
+
+#### 4. Remoção do Laboratório de Notificações
+- Removida a seção de testes "Laboratório de Notificações" do `DashboardComponent` e seus métodos/sinais associados (`labNotifications`, `createTestNotification`, `showToast`).
+
+### Commits
+- `fix(dashboard): remover laboratorio de notificacoes`
 
 ---
 

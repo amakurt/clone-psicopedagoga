@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
 
@@ -39,6 +39,13 @@ import { environment } from '../../../../../environments/environment';
 
         <!-- Form -->
         <div class="px-10 pb-10">
+          @if (isRegister() && selectedPlan()) {
+            <div class="mb-5 p-3 bg-primary/5 border border-primary/20 rounded-xl text-sm text-slate-700 flex items-center gap-2">
+              <span class="material-icons text-primary text-lg">workspace_premium</span>
+              Você escolheu o plano <strong>{{ selectedPlan() }}</strong> — comece o trial e pague ao assinar.
+            </div>
+          }
+
           <form (ngSubmit)="onSubmit()">
             @if (isRegister()) {
               <div class="mb-5">
@@ -72,7 +79,7 @@ import { environment } from '../../../../../environments/environment';
               }
             </div>
 
-            @if (isRegister()) {
+            @if (isRegister() && !contracting()) {
               <div class="mb-6">
                 <label class="block text-sm font-semibold text-slate-600 mb-2">Tipo de Conta</label>
                 <div class="grid grid-cols-2 gap-3">
@@ -89,6 +96,19 @@ import { environment } from '../../../../../environments/environment';
                     <p class="text-xs font-bold">Responsável</p>
                   </button>
                 </div>
+              </div>
+            }
+
+            @if (isRegister() && selectedRole() !== 'RESPONSAVEL') {
+              <div class="mb-6">
+                <label class="block text-sm font-semibold text-slate-600 mb-2">Nome da Clínica</label>
+                <input class="w-full px-4 py-3 border rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all"
+                  [class.border-red-300]="clinicNameError()" [class.border-slate-200]="!clinicNameError()"
+                  type="text" [(ngModel)]="clinicName" name="clinicName" placeholder="Ex.: Clínica Florescer">
+                @if (clinicNameError()) {
+                  <p class="text-red-500 text-xs mt-1">{{ clinicNameError() }}</p>
+                }
+                <p class="text-xs text-slate-400 mt-1">Sua clínica terá 14 dias grátis, sem cartão.</p>
               </div>
             }
 
@@ -149,17 +169,33 @@ export class LoginComponent {
   email = '';
   password = '';
   name = '';
+  clinicName = '';
   loading = signal(false);
   error = signal('');
   success = signal('');
   isRegister = signal(false);
   selectedRole = signal('PSICOPEDAGOGO');
+  selectedPlan = signal('');
+  contracting = signal(false);
   needsVerification = signal(false);
   resending = signal(false);
 
   emailError = signal('');
   passwordError = signal('');
   nameError = signal('');
+  clinicNameError = signal('');
+
+  private route = inject(ActivatedRoute);
+
+  constructor() {
+    const mode = this.route.snapshot.queryParamMap.get('mode');
+    const plan = this.route.snapshot.queryParamMap.get('plan');
+    const type = this.route.snapshot.queryParamMap.get('type');
+    if (mode === 'register') this.isRegister.set(true);
+    if (plan) this.selectedPlan.set(plan);
+    this.contracting.set(!!plan || type === 'professional');
+    if (this.contracting()) this.selectedRole.set('PSICOPEDAGOGO');
+  }
 
   toggleMode() {
     this.isRegister.set(!this.isRegister());
@@ -177,6 +213,7 @@ export class LoginComponent {
     this.emailError.set('');
     this.passwordError.set('');
     this.nameError.set('');
+    this.clinicNameError.set('');
   }
 
   validate(): boolean {
@@ -201,6 +238,11 @@ export class LoginComponent {
 
     if (this.isRegister() && !this.name) {
       this.nameError.set('Nome é obrigatório');
+      valid = false;
+    }
+
+    if (this.isRegister() && this.selectedRole() !== 'RESPONSAVEL' && !this.clinicName) {
+      this.clinicNameError.set('Informe o nome da sua clínica');
       valid = false;
     }
 
@@ -241,7 +283,9 @@ export class LoginComponent {
         this.router.navigate(['/auth/select-clinic']);
         return;
       }
-      const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
+      const redirectPath = data.user?.role === 'RESPONSAVEL'
+        ? '/guardian'
+        : this.selectedPlan() ? '/app/plano' : '/app/dashboard';
       this.router.navigate([redirectPath]);
     })
     .catch(err => {
@@ -273,15 +317,26 @@ export class LoginComponent {
   }
 
 register() {
-    fetch(`${environment.apiUrl}/auth/register`, {
+    const isProfessional = this.selectedRole() !== 'RESPONSAVEL';
+    const endpoint = isProfessional ? '/auth/register-clinic' : '/auth/register';
+    const payload = isProfessional
+      ? {
+          name: this.name,
+          email: this.email,
+          password: this.password,
+          clinicName: this.clinicName,
+        }
+      : {
+          name: this.name,
+          email: this.email,
+          password: this.password,
+          role: this.selectedRole()
+        };
+
+    fetch(`${environment.apiUrl}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: this.name,
-        email: this.email,
-        password: this.password,
-        role: this.selectedRole()
-      })
+      body: JSON.stringify(payload)
     })
     .then(res => {
       if (!res.ok) return res.json().then(data => { throw new Error(data.error || 'Erro ao cadastrar'); });

@@ -113,3 +113,76 @@ export async function ensureMembership(user: any) {
     data: { tenantId, userId: user.id, role: user.role || 'SECRETARIA' },
   });
 }
+
+const TRIAL_DAYS = 14;
+
+export function slugifyClinic(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 60);
+}
+
+export async function generateUniqueSlug(name: string): Promise<string> {
+  const base = slugifyClinic(name) || 'clinica';
+  let slug = base;
+  let suffix = 2;
+  while (await prisma.tenant.findUnique({ where: { slug } })) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return slug;
+}
+
+// Cria uma clínica nova (tenant) com seu admin GESTOR e trial de 14 dias
+// (fluxo de venda: landing -> register-clinic -> ativação -> login)
+export async function createClinicWithAdmin(data: {
+  name: string;
+  email: string;
+  password: string;
+  clinicName: string;
+  phone?: string;
+}) {
+  const slug = await generateUniqueSlug(data.clinicName);
+  const trialEnd = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+
+  const tenant = await prisma.tenant.create({
+    data: {
+      name: data.clinicName,
+      slug,
+      plan: 'TRIAL',
+      status: 'ATIVO',
+      trialEndsAt: trialEnd,
+    },
+  });
+
+  const user = await prisma.user.create({
+    data: {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: 'GESTOR',
+      phone: data.phone || null,
+      active: false,
+    },
+  });
+
+  await prisma.membership.create({
+    data: { tenantId: tenant.id, userId: user.id, role: 'GESTOR' },
+  });
+
+  await prisma.subscription.create({
+    data: {
+      tenantId: tenant.id,
+      planCode: 'TRIAL',
+      status: 'TRIAL',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: trialEnd,
+    },
+  });
+
+  return { tenant, user };
+}

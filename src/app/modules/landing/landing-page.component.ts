@@ -1,6 +1,7 @@
-import { Component, signal, HostListener } from '@angular/core';
+import { Component, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-landing-page',
@@ -20,15 +21,16 @@ import { RouterModule } from '@angular/router';
           </a>
 
           <div class="hidden md:flex items-center gap-8">
-            <a href="#features" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Funcionalidades</a>
-            <a href="#testimonials" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Depoimentos</a>
-            <a href="#professionals" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Para Profissionais</a>
-            <a href="#parents" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Para Pais</a>
+            <a href="#features" (click)="scrollTo('features', $event)" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Funcionalidades</a>
+            <a href="#planos" (click)="scrollTo('planos', $event)" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Planos</a>
+            <a href="#testimonials" (click)="scrollTo('testimonials', $event)" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Depoimentos</a>
+            <a href="#features" (click)="scrollTo('features', $event)" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Para Profissionais</a>
+            <a href="#parents" (click)="scrollTo('parents', $event)" class="text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">Para Pais</a>
           </div>
 
           <div class="hidden md:flex items-center gap-3">
             <a routerLink="/login" class="px-5 py-2 text-sm font-semibold text-gray-700 dark:text-slate-300 hover:text-primary transition-colors">Entrar</a>
-            <a routerLink="/login" [queryParams]="{mode: 'register'}" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25">Começar Agora</a>
+            <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25">Começar Agora</a>
           </div>
 
           <button (click)="mobileMenu.set(!mobileMenu())" class="md:hidden p-2 text-gray-600 dark:text-slate-300">
@@ -39,13 +41,14 @@ import { RouterModule } from '@angular/router';
 
       @if (mobileMenu()) {
         <div class="md:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 px-4 py-4 space-y-3">
-          <a href="#features" (click)="mobileMenu.set(false)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Funcionalidades</a>
-          <a href="#testimonials" (click)="mobileMenu.set(false)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Depoimentos</a>
-          <a href="#professionals" (click)="mobileMenu.set(false)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Para Profissionais</a>
-          <a href="#parents" (click)="mobileMenu.set(false)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Para Pais</a>
+          <a href="#features" (click)="mobileMenu.set(false); scrollTo('features', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Funcionalidades</a>
+          <a href="#planos" (click)="mobileMenu.set(false); scrollTo('planos', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Planos</a>
+          <a href="#testimonials" (click)="mobileMenu.set(false); scrollTo('testimonials', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Depoimentos</a>
+          <a href="#features" (click)="mobileMenu.set(false); scrollTo('features', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Para Profissionais</a>
+          <a href="#parents" (click)="mobileMenu.set(false); scrollTo('parents', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Para Pais</a>
           <hr class="border-gray-200 dark:border-slate-700">
           <a routerLink="/login" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Entrar</a>
-          <a routerLink="/login" [queryParams]="{mode: 'register'}" class="block py-3 bg-primary text-white rounded-xl text-sm font-bold text-center">Começar Agora</a>
+          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="block py-3 bg-primary text-white rounded-xl text-sm font-bold text-center">Começar Agora</a>
         </div>
       }
     </nav>
@@ -80,11 +83,11 @@ import { RouterModule } from '@angular/router';
             </p>
 
             <div class="mt-8 flex flex-wrap gap-4">
-              <a routerLink="/login" [queryParams]="{mode: 'register'}" class="px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
+              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
                 Começar Agora Grátis
                 <span class="material-icons">arrow_forward</span>
               </a>
-              <a href="#features" class="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl font-bold text-base transition-all border border-gray-200 dark:border-slate-700">
+              <a href="#features" (click)="scrollTo('features', $event)" class="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl font-bold text-base transition-all border border-gray-200 dark:border-slate-700">
                 Ver Funcionalidades
               </a>
             </div>
@@ -109,7 +112,7 @@ import { RouterModule } from '@angular/router';
     </section>
 
     <!-- Features - Professionals -->
-    <section id="features" id="professionals" class="py-20 bg-white dark:bg-slate-900">
+    <section id="features" class="py-20 bg-white dark:bg-slate-900">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <span class="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
@@ -123,7 +126,7 @@ import { RouterModule } from '@angular/router';
         <div class="grid md:grid-cols-3 gap-8">
           @for (feature of professionalFeatures; track feature.title) {
             <div class="group p-8 bg-gray-50 dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" [class]="feature.bgClass">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 overflow-hidden" [class]="feature.bgClass">
                 <span class="material-icons text-2xl" [class]="feature.iconClass">{{ feature.icon }}</span>
               </div>
               <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">{{ feature.title }}</h3>
@@ -201,7 +204,7 @@ import { RouterModule } from '@angular/router';
         <div class="grid md:grid-cols-3 gap-8">
           @for (feature of parentFeatures; track feature.title) {
             <div class="group p-8 bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6" [class]="feature.bgClass">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 overflow-hidden" [class]="feature.bgClass">
                 <span class="material-icons text-2xl" [class]="feature.iconClass">{{ feature.icon }}</span>
               </div>
               <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">{{ feature.title }}</h3>
@@ -209,6 +212,66 @@ import { RouterModule } from '@angular/router';
             </div>
           }
         </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="planos" class="py-20 bg-white dark:bg-slate-900">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <span class="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-4">
+            <span class="material-icons text-primary text-sm">workspace_premium</span>
+            <span class="text-sm font-semibold text-primary">Planos e Preços</span>
+          </span>
+          <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">Comece grátis, cresça quando quiser</h2>
+          <p class="mt-4 text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">14 dias de teste gratuito, sem cartão de crédito. Pague via PIX quando decidir assinar.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          @for (plan of plans(); track plan.code) {
+            <div class="relative flex flex-col p-8 rounded-3xl border transition-all duration-300"
+              [class]="plan.code === 'BASICO'
+                ? 'bg-primary/5 dark:bg-primary/10 border-primary shadow-2xl shadow-primary/20 md:-mt-4 md:mb-4'
+                : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-xl'">
+              @if (plan.code === 'BASICO') {
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-xs font-bold rounded-full">
+                  MAIS POPULAR
+                </div>
+              }
+
+              <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ plan.name }}</h3>
+              <div class="mt-4 flex items-end gap-1">
+                <span class="text-4xl font-black text-gray-900 dark:text-white">{{ formatPrice(plan.priceCents) }}</span>
+                <span class="text-sm text-gray-500 dark:text-slate-400 mb-1">/mês</span>
+              </div>
+              <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
+                {{ plan.code === 'TRIAL' ? 'Teste grátis por 14 dias' : 'Cobrança mensal via PIX' }}
+              </p>
+
+              <ul class="mt-6 space-y-3 flex-1">
+                @for (feature of planFeatures(plan); track feature) {
+                  <li class="flex items-start gap-2 text-sm text-gray-600 dark:text-slate-300">
+                    <span class="material-icons text-primary text-base mt-0.5">check_circle</span>
+                    {{ feature }}
+                  </li>
+                }
+              </ul>
+
+              <a routerLink="/login" [queryParams]="{mode: 'register', plan: plan.code}"
+                class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm transition-all"
+                [class]="plan.code === 'BASICO'
+                  ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25'
+                  : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600'">
+                {{ plan.code === 'TRIAL' ? 'Começar Grátis' : 'Assinar ' + plan.name }}
+                <span class="material-icons text-base">arrow_forward</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <p class="mt-10 text-center text-sm text-gray-500 dark:text-slate-400">
+          Todos os planos incluem: prontuários, agenda, evoluções, laudos, portal do responsável, WhatsApp e suporte.
+        </p>
       </div>
     </section>
 
@@ -247,7 +310,7 @@ import { RouterModule } from '@angular/router';
         <div class="mt-16 bg-gradient-to-r from-primary to-teal-600 rounded-3xl p-8 md:p-12 text-center text-white">
           <h3 class="text-2xl md:text-3xl font-black mb-4">Pronto para transformar sua clínica?</h3>
           <p class="text-white/80 mb-8 max-w-xl mx-auto">Comece a usar o EduPsych Pro hoje mesmo e leve seu atendimento para o próximo nível.</p>
-          <a routerLink="/login" [queryParams]="{mode: 'register'}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary rounded-2xl font-bold hover:bg-gray-100 transition-all shadow-lg">
+          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary rounded-2xl font-bold hover:bg-gray-100 transition-all shadow-lg">
             Começar Agora
             <span class="material-icons">arrow_forward</span>
           </a>
@@ -283,9 +346,10 @@ import { RouterModule } from '@angular/router';
           <div>
             <h4 class="font-bold mb-4">Plataforma</h4>
             <ul class="space-y-3">
-              <li><a href="#features" class="text-gray-400 hover:text-white transition-colors text-sm">Funcionalidades</a></li>
-              <li><a href="#testimonials" class="text-gray-400 hover:text-white transition-colors text-sm">Depoimentos</a></li>
-              <li><a routerLink="/login" [queryParams]="{mode: 'register'}" class="text-gray-400 hover:text-white transition-colors text-sm">Criar Conta</a></li>
+              <li><a href="#features" (click)="scrollTo('features', $event)" class="text-gray-400 hover:text-white transition-colors text-sm">Funcionalidades</a></li>
+              <li><a href="#planos" (click)="scrollTo('planos', $event)" class="text-gray-400 hover:text-white transition-colors text-sm">Planos</a></li>
+              <li><a href="#testimonials" (click)="scrollTo('testimonials', $event)" class="text-gray-400 hover:text-white transition-colors text-sm">Depoimentos</a></li>
+              <li><a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="text-gray-400 hover:text-white transition-colors text-sm">Criar Conta</a></li>
             </ul>
           </div>
 
@@ -312,12 +376,38 @@ import { RouterModule } from '@angular/router';
   `,
   styles: [`
     :host { display: block; }
-    html { scroll-behavior: smooth; }
+    section[id] { scroll-margin-top: 84px; }
   `]
 })
-export class LandingPageComponent {
+export class LandingPageComponent implements OnInit {
   scrolled = signal(false);
   mobileMenu = signal(false);
+  plans = signal<any[]>([]);
+
+  ngOnInit() {
+    fetch(`${environment.apiUrl}/billing/plans`)
+      .then(res => res.ok ? res.json() : { data: [] })
+      .then((data: any) => this.plans.set(data?.data || []))
+      .catch(() => this.plans.set([]));
+  }
+
+  scrollTo(id: string, event?: Event) {
+    event?.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  formatPrice(cents: number) {
+    return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  }
+
+  planFeatures(plan: any): string[] {
+    try {
+      const parsed = JSON.parse(plan.features || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
 
   heroPills = ['Prontuários Online', 'Agenda Inteligente', 'Relatórios Automáticos'];
 
@@ -347,7 +437,7 @@ export class LandingPageComponent {
 
   parentFeatures = [
     {
-      icon: 'monitoring',
+      icon: 'show_chart',
       title: 'Acompanhamento Real',
       description: 'Veja a evolução do seu filho com gráficos claros e relatórios compartilhados pelo profissional.',
       bgClass: 'bg-orange-100 dark:bg-orange-900/30',

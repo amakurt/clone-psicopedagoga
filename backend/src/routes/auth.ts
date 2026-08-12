@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
-import { scoped, ensureMembership } from '../lib/tenant';
+import { scoped, ensureMembership, createClinicWithAdmin } from '../lib/tenant';
 import { enforceTenantStatus } from '../lib/billing';
 import { authenticate } from '../middleware';
 import { sendEmail, emailConfigured } from '../lib/email';
@@ -293,6 +293,47 @@ router.post('/register', async (req, res) => {
     needsVerification: true,
     channel,
     user: { id: user.id, name: user.name, email: user.email, role: user.role }
+  });
+});
+
+// Registro de nova clínica (self-service, fluxo de venda da landing)
+// Cria o Tenant da clínica + usuário GESTOR admin + subscription TRIAL 14d
+router.post('/register-clinic', async (req, res) => {
+  const { name, email, password, clinicName, phone } = req.body;
+
+  if (!name || !email || !password || !clinicName) {
+    return res.status(400).json({ error: 'Nome, email, senha e nome da clínica são obrigatórios' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return res.status(400).json({ error: 'Email já cadastrado' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const { tenant, user } = await createClinicWithAdmin({
+    name,
+    email,
+    password: hashedPassword,
+    clinicName,
+    phone,
+  });
+
+  const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
+  const channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
+
+  console.log(`[AUTH] Clínica criada: ${tenant.name} (${tenant.slug}) | admin ${user.email} | trial 14d`);
+
+  res.status(201).json({
+    message: 'Clínica criada. Enviamos um link de ativação para o seu email.',
+    needsVerification: true,
+    channel,
+    tenant: buildTenantPayload(tenant, 'GESTOR'),
+    user: { id: user.id, name: user.name, email: user.email, role: user.role },
   });
 });
 
