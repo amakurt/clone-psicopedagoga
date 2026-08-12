@@ -179,16 +179,16 @@ export class TvSalaEsperaComponent implements OnInit, OnDestroy {
     this.api.get<any>('/waiting-room').subscribe({
       next: (res) => {
         const data = res.data || res || [];
-        this.queue.set(data.map((item: any) => ({
+        const filtro = data.filter((item: any) => item.status !== "CONCLUIDO")
+        this.queue.set(filtro.map((item: any) => ({
           ...item,
           waitTime: this.getWaitTime(item.checkInAt)
         })));
         
         // Auto-call next patient
-        const nextPatient = data.find((item: any) => item.status === 'CHAMADO');
-        if (nextPatient) {
+const nextPatient = filtro.find((item: any) => item.status === 'CHAMADO');        if (nextPatient) {
           this.calling.set(nextPatient);
-        } else if (data.length > 0 && !this.calling()) {
+        } else if (filtro.length > 0 && !this.calling()) {
           this.callNext(data[0]);
         }
       },

@@ -8,6 +8,30 @@
 
 ## Sessão 12/08/2026 (Quarta) — Fase 5: Venda (landing com planos + registro de clínica self-service)
 
+### 58. Evoluções — modal de compartilhamento por redes + modo gráfico no quadro
+- **Antes:** botão de compartilhar abria só um modal de confirmação e marcava `sharedWithGuardian: true` no backend
+- **LGPD em primeiro lugar:** a pedido do usuário, o modal foi reestruturado — **"Compartilhar com o responsável" (portal do app, seguro) virou a opção principal** em destaque; redes sociais ficaram recolhidas em seção expansível "Redes sociais (desaconselhado)" que só libera os botões após **checkbox de reconhecimento LGPD obrigatório** (Lei 13.709/2018) — mensagem editável + aviso reconhecem exposição pública; estado de reconhecimento/expansão resetam a cada abertura do modal
+- **Modo gráfico:** toggle Lista/Gráfico no cabeçalho — Chart.js line chart das 4 métricas (Foco, Engajamento, Progresso, Comportamento) por data, eixo 0-5★, legenda de cores, filtro por paciente (select); "Todos os pacientes" agrega média por data; grid em `chartPoints()`, render via `setTimeout` pós-@if
+- **Validação:** `ng build` limpo; API `/session-records` única evolução (Gabriel, 4/4/3/4, shared ✓) — gráfico com 1 ponto inicial até novas evoluções
+
+### 57. Bug listas duplicadas — causa raiz no seed + deduplicação do banco
+- **Problema:** lista de pacientes mostrava 25 registros que eram 5 cópias idênticas (Gabriel, Helena, Theo, Manuela x5 + Davi x4 + Lucas) — gerado pela execução repetida do seed (08/04, 08/10 x4), que usava `create` para responsáveis/pacientes/escolas e filhos
+- **Causa raiz:** seed NÃO era idempotente para dados demo (só usuários via upsert); cada `npm run seed` recriava o bloco inteiro
+- **Correção (`seed.ts`):** guard `if (!demoSeeded)` no início do bloco demo (checa paciente "Gabriel Carvalho Lima" no tenant) — re-run pula criação; testado 2x seguidos (⏭️ pular)
+- **Deduplicação (`backend/scripts/dedupe-patients.js`, novo):** grupos por (nome, tenantId) → mantém o registro com mais dados relacionados (desempate: mais antigo) → deleta filhos em ordem segura (ABADataPoint antes de ABAProgram; ConsentLog/WhatsAppLog descobertos via PRAGMA foreign_key_list) → pacientes → responsáveis/escolas órfãs. Descobertos nomes Prisma `aBAAssessment`/`aBAProgram`/`aBADataPoint` (ABAAssessment → camelCase) e `whatsAppLog`/`consentLog`
+- **Resultado:** 19 pacientes duplicados + 67 filhos removidos, 20 responsáveis e 8 escolas órfãos limpos → restam **6 pacientes, 6 responsáveis, 3 escolas** (dados reais preservados: 2 agendamentos e waiting-room apontam para o paciente mantido cmsezw1e); API validada (lista 6 únicos com responsável/escola corretos, dashboard 6 pacientes/4 sessões)
+- Backup pré-limpeza: `/var/folders/.../opencode/dev-backup-pre-dedupe.db` (restaurar = copiar sobre `backend/prisma/dev.db`)
+
+### 56. Dashboard complementada (cards extras + agenda de hoje + sala de espera + uso do plano + skeletons)
+- **Análise:** backend de `/dashboard` já retornava `totalSessoes`/`totalEncaminhamentos` sem uso na UI; faltavam agenda, sala de espera, uso do plano, skeletons e havia fallback com `Math.random()` no gráfico (dados falsos apresentados como reais)
+- **Cards (4 → 6):** Pacientes Ativos, Sessões, Documentos Pendentes, Encaminhamentos, Casos Arquivados, Protocolos TEA — layout `xl:grid-cols-6`, todos clicáveis
+- **Agenda de hoje:** `GET /appointments?date=YYYY-MM-DD` (exclui CANCELADO, ordenado por horário, top 6 + link "Ver +N") — horário, dot de status, nome, tipo, chip de status; link para `/app/agenda/:id`
+- **Sala de espera:** `GET /waiting-room` (filtra CONCLUIDO) — nome, tempo de espera relativo ("há 12 min"), ícone/chip por status; link para a página
+- **Uso do plano:** `GET /billing` — nome do plano + vencimento + barras de uso pacientes/profissionais (PRO = "ilimitado" quando max ≥ 1000); botão "Gerenciar assinatura"
+- **Skeleton loading** (animate-pulse) em todos os 6 blocos; gráfico com estado de erro + "Tentar novamente" e estado vazio "Sem movimentações financeiras" (sem dados falsos)
+- **Header:** saudação com data em pt-BR + link "Ver agenda completa"
+- **Validação:** endpoints testados via API real (login sarah@edupsych.com: 25 pacientes, 20 sessões, waiting-room 1, billing PRO ilimitado); `ng build` limpo; ícones novos adicionados ao mapa global de tooltips
+
 ### 54. Landing de venda + `POST /auth/register-clinic` (clínica própria com trial)
 - **Backend (`lib/tenant.ts`):** `slugifyClinic` (normaliza acentos, minúsculas, hífens) + `generateUniqueSlug` (sufixo numérico em colisão) + `createClinicWithAdmin` — cria Tenant (plan TRIAL, status ATIVO, `trialEndsAt` +14d) + User GESTOR (active false) + Membership + Subscription TRIAL com o mesmo período
 - **Backend (`routes/auth.ts`):** `POST /auth/register-clinic` — valida nome/email/senha/clinicName (senha ≥6, email único), reusa o fluxo de ativação por email/WhatsApp (VerificationCode + sendVerificationMessage), retorna `needsVerification` + `tenant` (payload com role GESTOR) — mesma experiência do `register`

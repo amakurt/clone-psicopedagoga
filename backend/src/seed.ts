@@ -132,7 +132,10 @@ async function main() {
     },
   });
 
-  // 5 Responsáveis (nomes únicos)
+  // Dados demo — bloco idempotente: só cria se ainda não existir (evita duplicação em re-runs)
+  const demoSeeded = await db.paciente.findFirst({ where: { name: 'Gabriel Carvalho Lima' } });
+  if (!demoSeeded) {
+    // 5 Responsáveis (nomes únicos)
   const resp1 = await db.responsible.create({
     data: {
       name: 'Renata Carvalho Lima',
@@ -755,23 +758,26 @@ async function main() {
   });
 
   console.log('✅ Seed concluído!');
-  console.log('📋 Dados criados:');
-  console.log('   - 5 usuários (2 gestores + 3 profissionais)');
-  console.log('   - 5 responsáveis');
-  console.log('   - 5 pacientes');
-  console.log('   - 2 escolas');
-  console.log('   - 2 protocolos TEA');
-  console.log('   - 2 planos de intervenção');
-  console.log('   - 4 sessões');
-  console.log('   - 2 financeiros');
-  console.log('   - 2 diários de sessão');
-  console.log('   - 1 ficha de frequência');
-  console.log('   - 2 protocolos ABA');
-  console.log('   - 2 programas ABA');
-  console.log('   - 2 pontos de dados ABA');
-  console.log('   - 2 consentimentos LGPD');
-  console.log('   - 2 NFS-e');
-  console.log('   - 2 documentos');
+    console.log('📋 Dados criados:');
+    console.log('   - 5 usuários (2 gestores + 3 profissionais)');
+    console.log('   - 5 responsáveis');
+    console.log('   - 5 pacientes');
+    console.log('   - 2 escolas');
+    console.log('   - 2 protocolos TEA');
+    console.log('   - 2 planos de intervenção');
+    console.log('   - 4 sessões');
+    console.log('   - 2 financeiros');
+    console.log('   - 2 diários de sessão');
+    console.log('   - 1 ficha de frequência');
+    console.log('   - 2 protocolos ABA');
+    console.log('   - 2 programas ABA');
+    console.log('   - 2 pontos de dados ABA');
+    console.log('   - 2 consentimentos LGPD');
+    console.log('   - 2 NFS-e');
+    console.log('   - 2 documentos');
+  } else {
+    console.log('⏭️ Dados demo já existem — pulando criação (idempotente)');
+  }
 }
 
 main()
