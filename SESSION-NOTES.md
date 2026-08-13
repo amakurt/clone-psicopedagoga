@@ -1,8 +1,26 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 12/08/2026
+## Data: 13/08/2026
 
-## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída + Fase 3a gateway real Asaas (Pix recorrente) concluída + Fase 5 venda concluída (landing com planos e preços + registro de clínica self-service) — Fase 4 adiada — deploy pausado (Oracle A1 sem capacidade; continuamos no ambiente local; pacote `deploy/` pronto + migração SQLite→Postgres validada: 321 linhas/40 tabelas)**
+## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída + Fase 3a gateway real Asaas (Pix recorrente) concluída + Fase 5 venda concluída (landing com planos e preços + registro de clínica self-service) + Navegação reorganizada (menu Documentos e Protocolos expansíveis com submenus; /app/plano sem cards de planos para assinantes ativos) — Fase 4 adiada — deploy pausado (Oracle A1 sem capacidade; continuamos no ambiente local; pacote `deploy/` pronto + migração SQLite→Postgres validada: 321 linhas/40 tabelas)**
+
+---
+
+## Sessão 13/08/2026 (Quinta) — Reorganização da navegação (menus expansíveis)
+
+### 59. Sistema no ar localmente + menu Documentos expansível com submenus
+- **Sistema no ar:** `start-all.sh` subiu Evolution API/backend/frontend, mas os processos morriam quando o shell encerrava (o tool do agente mata o process group ao terminar o comando) → subidos desanexados com `start_new_session=True` via Python (`logs/backend.log`/`logs/frontend.log`); validado login real (sarah@edupsych.com → JWT)
+- **Sidebar (`main-layout.component.ts`):** `navItems` era um array 100% plano (sem suporte a submenu) → criado tipo `NavItem` com `children?` (fora da classe — `type` dentro de classe não compila no Angular) + `menuOpen` signal (Set de ids expandidos) + `toggleMenu`/`isExpanded`/`isGroupActive` + `syncExpandedMenus()` (auto-expande o grupo quando a rota atual está dentro dele)
+- **Template:** grupos renderizam `<button>` com chevron `expand_more` (rotate-180) e sub-itens em coluna com borda esquerda (`border-l-2` + `pl-3`); `routerLinkActiveOptions="{ exact: true }"` no item "Arquivos" (`/app/documentos` não pode casar com `/app/documentos-clinicos`); sidebar recolhida (`w-20`) esconde submenu; badge de count preservado (`item.count && item.count() > 0`)
+- **Grupo Documentos:** Arquivos, Diário de Sessões, Frequência, Plano de Intervenção (sub-itens diretos — o hub de cards deixou de ser necessário no menu), Biblioteca, **Laudos (novo item de menu — a rota `/app/laudos` existia mas não aparecia)**, Solicitações, LGPD — itens removidos do nível raiz: documentos-clinicos, biblioteca, solicitacoes, lgpd
+- **Grupo Protocolos:** Protocolo TEA, Avaliação ABA (`/app/protocolos-aba/assessment`), Programas ABA (`/app/protocolos-aba/programs`)
+- **Títulos do header:** mapa `titles` ganhou `laudos` + títulos por subrota (`documentos-clinicos` → Diário de Sessões/Frequência/Plano de Intervenção; `protocolos-aba` → Avaliação ABA/Programas ABA)
+- **Validação:** 2 erros de build corrigidos — `type` alias dentro da classe ("Unexpected token") movido para escopo do módulo; `count` opcional no tipo exigiu `?.count?.set()` no `loadCounts`; `ng build` limpo
+
+### 60. /app/plano — planos disponíveis ocultos para assinantes ativos
+- **Problema:** página mostrava os 3 cards de planos sempre, inclusive para quem já assinou (ex.: trial) — poluição visual
+- **Correção (`plano.component.ts`):** novo signal `showPlans` + `hasActiveSubscription()` (`subStatus === 'ATIVA'`); com assinatura ativa, os cards somem e aparece um link sutil "Trocar de plano" (swap_horiz + chevron, `hover:text-primary`) que expande o grid ao clicar (vira "Ocultar planos" para recolher); sem assinatura ativa (PENDENTE/CANCELADA) os cards continuam visíveis direto, como antes
+- **Validação:** `ng build` limpo
 
 ---
 

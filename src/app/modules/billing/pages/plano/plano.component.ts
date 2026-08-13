@@ -73,38 +73,52 @@ import { AuthService } from '../../../../core/services/auth.service';
 
       <!-- Planos disponíveis -->
       <div>
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3">Planos disponíveis</h3>
-        <div class="grid md:grid-cols-3 gap-4">
-          @for (plan of plans(); track plan.code) {
-            <div class="rounded-2xl border p-5 flex flex-col"
-              [class]="plan.code === currentPlan()?.code
-                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm'">
-              <p class="font-bold text-slate-900 dark:text-white">{{ plan.name }}</p>
-              <p class="text-2xl font-black mt-2 text-slate-900 dark:text-white">
-                {{ plan.priceCents ? 'R$ ' + (plan.priceCents / 100).toFixed(2) : 'Grátis' }}
-                <span class="text-sm font-semibold text-slate-400">/mês</span>
-              </p>
-              <p class="text-xs text-slate-500 mt-1">{{ plan.maxPacientes >= 100000 ? 'Pacientes ilimitados' : plan.maxPacientes + ' pacientes' }} · {{ plan.maxProfissionais >= 1000 ? 'Profissionais ilimitados' : plan.maxProfissionais + ' profissionais' }}</p>
-              <div class="mt-4 text-sm text-slate-600 dark:text-slate-300 space-y-1 flex-1">
-                @for (feature of planFeatures(plan); track feature) {
-                  <p class="flex items-center gap-2">
-                    <span class="material-icons text-primary text-[16px]">check_circle</span> {{ feature }}
+        @if (hasActiveSubscription()) {
+          <button (click)="showPlans.set(!showPlans())"
+            class="mt-2 inline-flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-slate-500 hover:text-primary transition-colors"
+            title="Ver outros planos">
+            <span class="material-icons text-[18px]">swap_horiz</span>
+            {{ showPlans() ? 'Ocultar planos' : 'Trocar de plano' }}
+            <span class="material-icons text-[18px] transition-transform duration-300"
+              [class.rotate-180]="showPlans()">expand_more</span>
+          </button>
+        }
+        @if (!hasActiveSubscription() || showPlans()) {
+          <div class="mt-3">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3">Planos disponíveis</h3>
+            <div class="grid md:grid-cols-3 gap-4">
+              @for (plan of plans(); track plan.code) {
+                <div class="rounded-2xl border p-5 flex flex-col"
+                  [class]="plan.code === currentPlan()?.code
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm'">
+                  <p class="font-bold text-slate-900 dark:text-white">{{ plan.name }}</p>
+                  <p class="text-2xl font-black mt-2 text-slate-900 dark:text-white">
+                    {{ plan.priceCents ? 'R$ ' + (plan.priceCents / 100).toFixed(2) : 'Grátis' }}
+                    <span class="text-sm font-semibold text-slate-400">/mês</span>
                   </p>
-                }
-              </div>
-              <button
-                class="mt-4 w-full py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
-                [class]="plan.code === currentPlan()?.code
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-primary hover:bg-primary-dark text-white'"
-                [disabled]="plan.code === currentPlan()?.code || loading()"
-                (click)="subscribe(plan)">
-                {{ plan.code === currentPlan()?.code ? 'Plano atual' : (plan.priceCents ? 'Assinar' : 'Iniciar trial') }}
-              </button>
+                  <p class="text-xs text-slate-500 mt-1">{{ plan.maxPacientes >= 100000 ? 'Pacientes ilimitados' : plan.maxPacientes + ' pacientes' }} · {{ plan.maxProfissionais >= 1000 ? 'Profissionais ilimitados' : plan.maxProfissionais + ' profissionais' }}</p>
+                  <div class="mt-4 text-sm text-slate-600 dark:text-slate-300 space-y-1 flex-1">
+                    @for (feature of planFeatures(plan); track feature) {
+                      <p class="flex items-center gap-2">
+                        <span class="material-icons text-primary text-[16px]">check_circle</span> {{ feature }}
+                      </p>
+                    }
+                  </div>
+                  <button
+                    class="mt-4 w-full py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                    [class]="plan.code === currentPlan()?.code
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-primary hover:bg-primary-dark text-white'"
+                    [disabled]="plan.code === currentPlan()?.code || loading()"
+                    (click)="subscribe(plan)">
+                    {{ plan.code === currentPlan()?.code ? 'Plano atual' : (plan.priceCents ? 'Assinar' : 'Iniciar trial') }}
+                  </button>
+                </div>
+              }
             </div>
-          }
-        </div>
+          </div>
+        }
       </div>
 
       <!-- PIX gerado -->
@@ -165,6 +179,7 @@ export class PlanoComponent implements OnInit, OnDestroy {
   loading = signal(false);
   error = signal('');
   success = signal('');
+  showPlans = signal(false);
   private pollTimer: any = null;
 
   ngOnInit() {
@@ -254,6 +269,10 @@ export class PlanoComponent implements OnInit, OnDestroy {
 
   isMock() {
     return this.provider() === 'mock' || this.provider() === '';
+  }
+
+  hasActiveSubscription() {
+    return this.subStatus() === 'ATIVA';
   }
 
   usagePercent(value: number, max: number) {

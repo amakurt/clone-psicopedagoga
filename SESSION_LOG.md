@@ -1,6 +1,39 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 12 de Agosto de 2026
+## Última Atualização: 13 de Agosto de 2026
+
+---
+
+## Sessão 15 - 13/08/2026 (Quinta) — Reorganização da navegação (menus expansíveis)
+
+### O que foi feito
+
+#### 1. Sistema no ar localmente (processos desanexados)
+- `start-all.sh` subia os serviços, mas os processos morriam quando o shell encerrava (process group morto pelo tool do agente) → backend e frontend subidos com `start_new_session=True` (Python `subprocess.Popen`), logs em `logs/backend.log` e `logs/frontend.log`
+- Login real validado (sarah@edupsych.com → JWT)
+
+#### 2. Menu "Documentos" expansível com submenus (`main-layout.component.ts`)
+- `navItems` plano → tipo `NavItem` com `children?` (movido para escopo do módulo — `type` dentro da classe quebra o compile do Angular); `menuOpen` signal + `toggleMenu`/`isExpanded`/`isGroupActive` + `syncExpandedMenus()` (auto-expande na rota ativa)
+- Grupos renderizam button com chevron `expand_more` (rotate-180); sub-itens com `border-l-2`; `routerLinkActiveOptions="{ exact: true }"` no item Arquivos (evita conflito `/app/documentos` × `/app/documentos-clinicos`); submenu oculto com sidebar recolhida
+- Grupo Documentos: Arquivos, Diário de Sessões, Frequência, Plano de Intervenção, Biblioteca, Laudos (novo item — rota existia sem menu), Solicitações, LGPD
+
+#### 3. Menu "Protocolos" expansível
+- Protocolo TEA, Avaliação ABA, Programas ABA
+
+#### 4. Títulos do header por subrota
+- `laudos` adicionado ao mapa; `documentos-clinicos/{diario,frequencia,plano}` e `protocolos-aba/{assessment,programs}` com títulos próprios
+
+#### 5. `/app/plano` — planos ocultos para assinantes ativos
+- Assinatura ATIVA → cards de planos somem; link sutil "Trocar de plano" expande/colapsa o grid (signal `showPlans` + `hasActiveSubscription()`); sem assinatura ativa os cards aparecem direto
+
+#### 6. Validação
+- `ng build` limpo; dev server no ar (http://localhost:4200)
+
+### Backup da conversa
+- `session-backup/2026-08-13-menu-documentos-protocolos.json` — export da sessão `ses_004e69997ffeg9vrVrfphdG0Ur`
+
+### Commits
+- (nenhum — pendente, inclui também `backend/prisma/dev.db` modificado)
 
 ---
 

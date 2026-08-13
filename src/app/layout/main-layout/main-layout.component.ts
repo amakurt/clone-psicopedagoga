@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -6,6 +6,15 @@ import { ApiService } from '../../core/services/api.service';
 import { ToastComponent } from '../../shared/components/toast.component';
 import { NotificationDropdownComponent } from '../../shared/components/notification-dropdown.component';
 import { ChatFloatingComponent } from '../../shared/components/chat-floating.component';
+
+type NavItem = {
+  id: string;
+  label: string;
+  icon: string;
+  route?: string;
+  count?: WritableSignal<number>;
+  children?: NavItem[];
+};
 
 @Component({
   selector: 'app-main-layout',
@@ -34,27 +43,67 @@ import { ChatFloatingComponent } from '../../shared/components/chat-floating.com
 
         <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
           @for (item of navItems; track item.id) {
-            <a [routerLink]="item.route"
-               routerLinkActive="bg-primary/10 text-primary"
-               class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative"
-               [class.justify-center]="!sidebarOpen()"
-               [class.text-slate-600]="true"
-               [class.dark:text-slate-400]="true"
-               [title]="item.label">
-              <span class="material-icons text-[20px] shrink-0">{{ item.icon }}</span>
-              <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold"
-                [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
-                [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
-                {{ item.label }}
-              </span>
-              @if (item.count() > 0) {
-                <span class="absolute flex items-center justify-center bg-red-500 text-white text-[8px] font-black rounded-full transition-all"
-                  [class.right-3]="sidebarOpen()" [class.min-w-[14px]]="sidebarOpen()" [class.h-[14px]]="sidebarOpen()" [class.px-1]="sidebarOpen()"
-                  [class.top-1.5]="!sidebarOpen()" [class.right-1.5]="!sidebarOpen()" [class.size-2]="!sidebarOpen()">
-                  {{ sidebarOpen() ? item.count() : '' }}
+            @if (item.children?.length) {
+              <div>
+                <button (click)="toggleMenu(item.id)"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative"
+                  [class.justify-center]="!sidebarOpen()"
+                  [class.text-primary]="isGroupActive(item.id)"
+                  [class.text-slate-600]="!isGroupActive(item.id)"
+                  [class.dark:text-slate-400]="!isGroupActive(item.id)"
+                  [title]="item.label">
+                  <span class="material-icons text-[20px] shrink-0">{{ item.icon }}</span>
+                  <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold text-left"
+                    [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
+                    [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()"
+                    [class.flex-1]="sidebarOpen()">
+                    {{ item.label }}
+                  </span>
+                  @if (sidebarOpen()) {
+                    <span class="material-icons text-[18px] transition-transform duration-300 shrink-0"
+                      [class.rotate-180]="isExpanded(item.id)">expand_more</span>
+                  }
+                </button>
+                @if (sidebarOpen() && isExpanded(item.id)) {
+                  <div class="ml-3 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-3">
+                    @for (child of item.children; track child.id) {
+                      <a [routerLink]="child.route"
+                         routerLinkActive="bg-primary/10 text-primary"
+                         [routerLinkActiveOptions]="{ exact: true }"
+                         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group"
+                         [class.text-slate-500]="true"
+                         [class.dark:text-slate-400]="true"
+                         [title]="child.label">
+                        <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
+                        <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <a [routerLink]="item.route"
+                 routerLinkActive="bg-primary/10 text-primary"
+                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative"
+                 [class.justify-center]="!sidebarOpen()"
+                 [class.text-slate-600]="true"
+                 [class.dark:text-slate-400]="true"
+                 [title]="item.label">
+                <span class="material-icons text-[20px] shrink-0">{{ item.icon }}</span>
+                <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold"
+                  [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
+                  [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
+                  {{ item.label }}
                 </span>
-              }
-            </a>
+                @if (item.count && item.count() > 0) {
+                  <span class="absolute flex items-center justify-center bg-red-500 text-white text-[8px] font-black rounded-full transition-all"
+                    [class.right-3]="sidebarOpen()" [class.min-w-[14px]]="sidebarOpen()" [class.h-[14px]]="sidebarOpen()" [class.px-1]="sidebarOpen()"
+                    [class.top-1.5]="!sidebarOpen()" [class.right-1.5]="!sidebarOpen()" [class.size-2]="!sidebarOpen()">
+                    {{ sidebarOpen() ? item.count() : '' }}
+                  </span>
+                }
+              </a>
+            }
           }
 
           <div class="pt-4 pb-2 px-3" [class.opacity-0]="!sidebarOpen()">
@@ -207,8 +256,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   tenantOpen = signal(false);
   switching = signal(false);
   private notifTimer: any;
+  private menuOpen = signal(new Set<string>());
 
-  navItems = [
+  navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', count: signal(0) },
     { id: 'pacientes', label: 'Pacientes', icon: 'people', route: '/app/pacientes', count: signal(0) },
     { id: 'evolucoes', label: 'Evoluções', icon: 'show_chart', route: '/app/evolucoes', count: signal(0) },
@@ -219,17 +269,31 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { id: 'tv-sala', label: 'Painel TV', icon: 'tv', route: '/app/agenda/tv', count: signal(0) },
     { id: 'financeiro', label: 'Financeiro', icon: 'account_balance_wallet', route: '/app/financeiro', count: signal(0) },
     { id: 'nfse', label: 'NFS-e', icon: 'receipt_long', route: '/app/financeiro/nfse', count: signal(0) },
-    { id: 'documentos', label: 'Documentos', icon: 'folder_open', route: '/app/documentos', count: signal(0) },
-    { id: 'documentos-clinicos', label: 'Docs Clínicos', icon: 'note', route: '/app/documentos-clinicos', count: signal(0) },
-    { id: 'biblioteca', label: 'Biblioteca', icon: 'menu_book', route: '/app/biblioteca', count: signal(0) },
-    { id: 'protocolos', label: 'Protocolos', icon: 'fact_check', route: '/app/protocolos', count: signal(0) },
-    { id: 'protocolos-aba', label: 'Protocolos ABA', icon: 'psychology', route: '/app/protocolos-aba', count: signal(0) },
+    {
+      id: 'documentos', label: 'Documentos', icon: 'folder_open',
+      children: [
+        { id: 'doc-arquivos', label: 'Arquivos', icon: 'folder', route: '/app/documentos' },
+        { id: 'doc-diario', label: 'Diário de Sessões', icon: 'edit_note', route: '/app/documentos-clinicos/diario' },
+        { id: 'doc-frequencia', label: 'Frequência', icon: 'checklist', route: '/app/documentos-clinicos/frequencia' },
+        { id: 'doc-plano', label: 'Plano de Intervenção', icon: 'assignment', route: '/app/documentos-clinicos/plano' },
+        { id: 'doc-biblioteca', label: 'Biblioteca', icon: 'menu_book', route: '/app/biblioteca' },
+        { id: 'doc-laudos', label: 'Laudos', icon: 'description', route: '/app/laudos' },
+        { id: 'doc-solicitacoes', label: 'Solicitações', icon: 'assignment_turned_in', route: '/app/solicitacoes' },
+        { id: 'doc-lgpd', label: 'LGPD', icon: 'gpp_good', route: '/app/lgpd' },
+      ],
+    },
+    {
+      id: 'protocolos', label: 'Protocolos', icon: 'fact_check',
+      children: [
+        { id: 'proto-tea', label: 'Protocolo TEA', icon: 'fact_check', route: '/app/protocolos' },
+        { id: 'proto-aba-assessment', label: 'Avaliação ABA', icon: 'psychology', route: '/app/protocolos-aba/assessment' },
+        { id: 'proto-aba-programs', label: 'Programas ABA', icon: 'list_alt', route: '/app/protocolos-aba/programs' },
+      ],
+    },
     { id: 'planos', label: 'Planos', icon: 'description', route: '/app/planos', count: signal(0) },
     { id: 'planos-ia', label: 'Plano IA', icon: 'auto_awesome', route: '/app/planos/ia', count: signal(0) },
     { id: 'whatsapp', label: 'WhatsApp', icon: 'chat', route: '/app/whatsapp', count: signal(0) },
-    { id: 'solicitacoes', label: 'Solicitações', icon: 'assignment_turned_in', route: '/app/solicitacoes', count: signal(0) },
     { id: 'plano', label: 'Plano e Assinatura', icon: 'credit_card', route: '/app/plano', count: signal(0) },
-    { id: 'lgpd', label: 'LGPD', icon: 'gpp_good', route: '/app/lgpd', count: signal(0) },
   ];
 
   currentPageTitle = signal('Dashboard');
@@ -272,7 +336,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   updatePageTitle() {
-    const path = this.router.url.split('?')[0].split('/')[1] || 'dashboard';
+    const segs = this.router.url.split('?')[0].split('/').filter(Boolean);
+    const path = segs[1] || 'dashboard';
+    const sub = segs[2];
     const titles: Record<string, string> = {
       dashboard: 'Dashboard',
       pacientes: 'Pacientes',
@@ -286,6 +352,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       documentos: 'Documentos',
       'documentos-clinicos': 'Documentos Clínicos',
       biblioteca: 'Biblioteca',
+      laudos: 'Laudos',
       protocolos: 'Protocolos',
       'protocolos-aba': 'Protocolos ABA',
       planos: 'Planos',
@@ -296,12 +363,20 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       plano: 'Plano e Assinatura',
       lgpd: 'LGPD',
     };
-    this.currentPageTitle.set(titles[path] || 'Dashboard');
+    let title = titles[path] || 'Dashboard';
+    if (path === 'documentos-clinicos' && sub) {
+      title = ({ diario: 'Diário de Sessões', frequencia: 'Frequência', plano: 'Plano de Intervenção' } as Record<string, string>)[sub] || title;
+    }
+    if (path === 'protocolos-aba' && sub) {
+      title = ({ assessment: 'Avaliação ABA', programs: 'Programas ABA' } as Record<string, string>)[sub] || title;
+    }
+    this.currentPageTitle.set(title);
+    this.syncExpandedMenus();
   }
 
   loadCounts() {
     this.api.get('/appointments', { status: 'PENDENTE' }).subscribe({
-      next: (res: any) => this.navItems.find(i => i.id === 'agenda')?.count.set(res.total || 0),
+      next: (res: any) => this.navItems.find(i => i.id === 'agenda')?.count?.set(res.total || 0),
       error: () => {}
     });
     this.api.get('/notifications', { read: 'false' }).subscribe({
@@ -322,6 +397,36 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   toggleSidebar() {
     this.sidebarOpen.update(v => !v);
     localStorage.setItem('sidebar_open', String(this.sidebarOpen()));
+  }
+
+  isExpanded(id: string): boolean {
+    return this.menuOpen().has(id);
+  }
+
+  toggleMenu(id: string) {
+    this.menuOpen.update(s => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  isGroupActive(id: string): boolean {
+    const item = this.navItems.find(i => i.id === id);
+    if (!item?.children) return false;
+    return item.children.some(c => this.router.url.split('?')[0].startsWith(c.route || '/__none__'));
+  }
+
+  private syncExpandedMenus() {
+    const url = this.router.url.split('?')[0];
+    this.menuOpen.update(s => {
+      const next = new Set(s);
+      this.navItems.forEach(item => {
+        const inside = item.children?.some(c => url.startsWith(c.route || '/__none__'));
+        if (inside) next.add(item.id);
+      });
+      return next;
+    });
   }
 
   toggleDarkMode() {
