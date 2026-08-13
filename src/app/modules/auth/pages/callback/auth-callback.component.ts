@@ -9,7 +9,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   imports: [CommonModule],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1E1B4B] to-[#007F80]">
-      <div class="bg-white rounded-[20px] shadow-2xl p-10 text-center">
+      <div class="bg-white rounded-[20px] shadow-2xl p-10 text-center legacy-card">
         @if (loading()) {
           <div class="flex flex-col items-center gap-4">
             <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>

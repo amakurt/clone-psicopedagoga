@@ -541,7 +541,7 @@ router.post('/change-password', authenticate, async (req: any, res) => {
 
 // Update own profile
 router.put('/profile', authenticate, async (req: any, res) => {
-  const { name, email, phone, phoneIsWhatsApp, registration, bio, avatarUrl } = req.body;
+  const { name, email, phone, phoneIsWhatsApp, registration, bio, avatarUrl, pixKey, pixKeyType } = req.body;
   const userId = req.user?.id;
 
   const data: any = {};
@@ -551,6 +551,29 @@ router.put('/profile', authenticate, async (req: any, res) => {
   if (registration !== undefined) data.registration = registration;
   if (bio !== undefined) data.bio = bio;
   if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
+  if (pixKey !== undefined) data.pixKey = pixKey;
+  if (pixKeyType !== undefined) data.pixKeyType = pixKeyType;
+
+  if (data.pixKey && !data.pixKeyType) {
+    return res.status(400).json({ error: 'Informe o tipo da chave PIX (CPF, CNPJ, e-mail, telefone ou aleatória)' });
+  }
+  if (data.pixKeyType && !data.pixKey) {
+    return res.status(400).json({ error: 'Informe a chave PIX' });
+  }
+  if (data.pixKey && data.pixKeyType) {
+    const type = String(data.pixKeyType).toUpperCase();
+    const digits = String(data.pixKey).replace(/\D/g, '');
+    const valid =
+      (type === 'CPF' && /^\d{11}$/.test(digits)) ||
+      (type === 'CNPJ' && /^\d{14}$/.test(digits)) ||
+      (type === 'EMAIL' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(data.pixKey))) ||
+      (type === 'PHONE' && /^\d{10,13}$/.test(digits)) ||
+      (type === 'RANDOM' && /^[a-zA-Z0-9-]{10,32}$/.test(String(data.pixKey).trim()));
+    if (!valid) {
+      return res.status(400).json({ error: 'Chave PIX inválida para o tipo selecionado' });
+    }
+    data.pixKeyType = type;
+  }
 
   if (email !== undefined && email !== req.user.email) {
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -572,6 +595,8 @@ router.put('/profile', authenticate, async (req: any, res) => {
       phoneIsWhatsApp: user.phoneIsWhatsApp,
       registration: user.registration,
       bio: user.bio,
+      pixKey: user.pixKey,
+      pixKeyType: user.pixKeyType,
       hasPassword: !!user.password
     }
   });

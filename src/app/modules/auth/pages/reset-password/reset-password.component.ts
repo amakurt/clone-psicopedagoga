@@ -10,7 +10,7 @@ import { environment } from '../../../../../environments/environment';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1E1B4B] to-[#007F80] p-5">
-      <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-[420px] overflow-hidden">
+      <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-[420px] overflow-hidden legacy-card">
         <div class="p-10 pb-8 text-center">
           <span class="material-icons text-[56px] text-primary">lock_reset</span>
           <h1 class="mt-3 text-[24px] font-black text-slate-900">Recuperar Senha</h1>

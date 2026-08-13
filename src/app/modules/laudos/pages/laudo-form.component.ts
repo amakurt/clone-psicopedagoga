@@ -13,7 +13,7 @@ import { ToastService } from '@shared/components/toast.component';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, SignatureModalComponent],
   template: `
-    <div class="max-w-[900px]">
+    <div class="max-w-[900px] legacy-page">
       <div class="flex justify-between items-start mb-5">
         <div>
           <h1 class="text-2xl font-bold m-0">{{ isEdit ? 'Editar' : 'Novo' }} Laudo</h1>
@@ -24,7 +24,7 @@ import { ToastService } from '@shared/components/toast.component';
         </a>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 legacy-card">
         <div class="p-6">
           <div class="grid grid-cols-2 gap-4">
             <div class="col-span-2 flex flex-col gap-1">

@@ -8,7 +8,7 @@ import { LaudoService } from '../services/laudo.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="max-w-[900px]">
+    <div class="max-w-[900px] legacy-page">
       <div class="flex justify-between items-start mb-5">
         <div>
           <h1 class="text-2xl font-bold m-0">{{ item()?.titulo }}</h1>
@@ -25,7 +25,7 @@ import { LaudoService } from '../services/laudo.service';
       </div>
 
       @if (item()) {
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 legacy-card">
           <div class="p-6">
             <div class="flex gap-4 items-center mb-5 pb-4 border-b border-slate-200 text-sm text-slate-600">
               @if (item()?.status === 'ASSINADO') {

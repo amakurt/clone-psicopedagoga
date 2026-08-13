@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import QRCode from 'qrcode';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
@@ -143,6 +144,11 @@ declare var html2pdf: any;
                       </td>
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-end gap-1">
+                          @if (item.status === 'pendente' && item.type === 'receita') {
+                            <button class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Cobrar via PIX" (click)="openPixModal(item)">
+                              <span class="material-icons text-lg">qr_code</span>
+                            </button>
+                          }
                           @if (item.status === 'pendente') {
                             <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Confirmar pagamento" (click)="openConfirmPaymentModal(item)">
                               <span class="material-icons text-lg">check_circle</span>
@@ -200,6 +206,60 @@ declare var html2pdf: any;
       </div>
     }
 
+    @if (showPixModal()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" (click)="closePixModal()">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md mx-4 p-8 ring-1 ring-slate-200 dark:ring-slate-800 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="size-11 bg-primary/10 rounded-2xl flex items-center justify-center">
+                <span class="material-icons text-primary text-2xl">qr_code_2</span>
+              </div>
+              <div>
+                <h3 class="text-lg font-black text-slate-900 dark:text-white">Cobrança via PIX</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ pixTarget()?.paciente?.name || '' }} · R$ {{ pixValue() }}</p>
+              </div>
+            </div>
+            <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" (click)="closePixModal()">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+
+          @if (pixError()) {
+            <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl text-amber-700 dark:text-amber-300 text-sm flex items-start gap-2 mb-4">
+              <span class="material-icons text-[18px] shrink-0">warning</span>
+              <span>{{ pixError() }}</span>
+            </div>
+            <div class="flex justify-end">
+              <button class="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all" (click)="closePixModal()">Fechar</button>
+            </div>
+          } @else if (pixCode()) {
+            @if (pixQrImage()) {
+              <div class="flex justify-center mb-5">
+                <img [src]="pixQrImage()" alt="QR Code PIX" class="w-52 h-52 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 bg-white p-3">
+              </div>
+            }
+            <div class="flex items-center gap-2 mb-4">
+              <input [value]="pixCode()" readonly
+                class="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono">
+              <button class="px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold shrink-0" (click)="copyPixCode()">Copiar</button>
+            </div>
+            <div class="flex flex-col gap-2">
+              <a [href]="whatsAppUrl()" target="_blank"
+                class="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold transition-all">
+                <span class="material-icons text-[18px]">chat</span> Compartilhar no WhatsApp
+              </a>
+              <p class="text-[11px] text-slate-400 text-center">O responsável também vê esta cobrança no Portal da Família</p>
+            </div>
+          } @else {
+            <div class="flex flex-col items-center justify-center py-10">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+              <p class="text-sm text-slate-500 mt-4">Gerando QR Code…</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
     @if (showToast()) {
       <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg"
         [class]="toastType() === 'success' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'">
@@ -230,6 +290,11 @@ export class FinanceiroListComponent implements OnInit {
   toastType = signal('info');
   showConfirmPaymentModal = signal(false);
   paymentToConfirm = signal<any>(null);
+  showPixModal = signal(false);
+  pixTarget = signal<any>(null);
+  pixCode = signal('');
+  pixQrImage = signal('');
+  pixError = signal('');
   private timeout: any;
 
   ngOnInit() { this.load(); }
@@ -423,5 +488,49 @@ export class FinanceiroListComponent implements OnInit {
     this.toastType.set(type);
     this.showToast.set(true);
     setTimeout(() => this.showToast.set(false), 3000);
+  }
+
+  openPixModal(item: any) {
+    this.pixTarget.set(item);
+    this.pixCode.set('');
+    this.pixQrImage.set('');
+    this.pixError.set('');
+    this.showPixModal.set(true);
+    this.api.post(`/financeiro/${item.id}/generate-pix`, { force: true }).subscribe({
+      next: (res: any) => {
+        this.pixCode.set(res.pixCopiaECola || '');
+        this.renderPixQr(res.pixCopiaECola || '');
+      },
+      error: (err) => this.pixError.set(err.error?.error || 'Erro ao gerar cobrança PIX'),
+    });
+  }
+
+  closePixModal() {
+    this.showPixModal.set(false);
+    this.load();
+  }
+
+  renderPixQr(code: string) {
+    QRCode.toDataURL(code, { width: 260, margin: 2 }).then((url: string) => this.pixQrImage.set(url));
+  }
+
+  copyPixCode() {
+    navigator.clipboard?.writeText(this.pixCode());
+    this.showNotification('Código PIX copiado!', 'success');
+  }
+
+  pixValue() {
+    const v = parseFloat(this.pixTarget()?.value) || 0;
+    return v.toFixed(2);
+  }
+
+  whatsAppUrl() {
+    const item = this.pixTarget();
+    const phone = item?.paciente?.responsible?.phone || '';
+    const digits = phone.replace(/\D/g, '');
+    const text = encodeURIComponent(
+      `Olá! Segue a cobrança de R$ ${this.pixValue()} (${item?.paciente?.name || ''}).\n\nPague com o PIX abaixo:\n${this.pixCode()}`
+    );
+    return `https://wa.me/${digits}?text=${text}`;
   }
 }

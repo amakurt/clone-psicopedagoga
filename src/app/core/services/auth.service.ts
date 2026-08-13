@@ -97,4 +97,11 @@ export class AuthService {
     const u = this.user();
     return u && roles.includes(u.role);
   }
+
+  updateUser(patch: any) {
+    const current = this.user() || {};
+    const next = { ...current, ...patch };
+    this.user.set(next);
+    localStorage.setItem(this.userKey, JSON.stringify(next));
+  }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
+import { applyAccentColor } from '../../core/utils/theme';
 import { ToastComponent } from '../../shared/components/toast.component';
 import { NotificationDropdownComponent } from '../../shared/components/notification-dropdown.component';
 import { ChatFloatingComponent } from '../../shared/components/chat-floating.component';
@@ -14,6 +15,8 @@ type NavItem = {
   route?: string;
   count?: WritableSignal<number>;
   children?: NavItem[];
+  profile?: boolean;
+  action?: string;
 };
 
 @Component({
@@ -67,16 +70,39 @@ type NavItem = {
                 @if (sidebarOpen() && isExpanded(item.id)) {
                   <div class="ml-3 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-3">
                     @for (child of item.children; track child.id) {
-                      <a [routerLink]="child.route"
-                         routerLinkActive="bg-primary/10 text-primary"
-                         [routerLinkActiveOptions]="{ exact: true }"
-                         class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group"
-                         [class.text-slate-500]="true"
-                         [class.dark:text-slate-400]="true"
-                         [title]="child.label">
-                        <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
-                        <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
-                      </a>
+                      @if (child.profile) {
+                        <div class="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                          <div class="size-9 rounded-full bg-cover bg-center border-2 border-white dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                            @if (auth.user()?.avatarUrl) {
+                              <img [src]="auth.user()?.avatarUrl" class="size-full object-cover">
+                            } @else {
+                              <span class="material-icons text-slate-300 text-xl">person</span>
+                            }
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ auth.user()?.name || 'Usuário' }}</p>
+                            <p class="text-[10px] text-slate-500 truncate">{{ auth.user()?.role || 'Profissional' }}</p>
+                          </div>
+                        </div>
+                      } @else if (child.action) {
+                        <button (click)="handleChildAction(child)"
+                          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
+                          [title]="child.label">
+                          <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
+                          <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
+                        </button>
+                      } @else {
+                        <a [routerLink]="child.route"
+                           routerLinkActive="bg-primary/10 text-primary"
+                           [routerLinkActiveOptions]="{ exact: true }"
+                           class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group"
+                           [class.text-slate-500]="true"
+                           [class.dark:text-slate-400]="true"
+                           [title]="child.label">
+                          <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
+                          <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
+                        </a>
+                      }
                     }
                   </div>
                 }
@@ -105,55 +131,7 @@ type NavItem = {
               </a>
             }
           }
-
-          <div class="pt-4 pb-2 px-3" [class.opacity-0]="!sidebarOpen()">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Administrativo</p>
-          </div>
-
-          <a routerLink="/app/configuracoes"
-             routerLinkActive="bg-primary/10 text-primary"
-             class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group"
-             [class.justify-center]="!sidebarOpen()"
-             [class.text-slate-600]="true"
-             [class.dark:text-slate-400]="true"
-             title="Configurações">
-            <span class="material-icons text-[20px] shrink-0">settings</span>
-            <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold"
-              [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
-              [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
-              Configurações
-            </span>
-          </a>
         </nav>
-
-        <div class="p-4 border-t border-slate-200 dark:border-slate-800 overflow-hidden">
-          <div class="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl"
-            [class.justify-center]="!sidebarOpen()">
-            <div class="size-9 rounded-full bg-cover bg-center border-2 border-white dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-              @if (auth.user()?.avatarUrl) {
-                <img [src]="auth.user()?.avatarUrl" class="size-full object-cover">
-              } @else {
-                <span class="material-icons text-slate-300 text-xl">person</span>
-              }
-            </div>
-            <div class="flex-1 min-w-0 transition-all duration-300" [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()" [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
-              <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ auth.user()?.name || 'Usuário' }}</p>
-              <p class="text-[10px] text-slate-500 truncate">{{ auth.user()?.role || 'Profissional' }}</p>
-            </div>
-          </div>
-
-          <button class="w-full mt-2 flex items-center gap-3 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-all"
-            [class.justify-center]="!sidebarOpen()"
-            (click)="auth.logout()"
-            title="Sair">
-            <span class="material-icons text-[18px]">logout</span>
-            <span class="text-xs font-bold whitespace-nowrap overflow-hidden transition-all duration-300"
-              [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
-              [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
-              Sair do Sistema
-            </span>
-          </button>
-        </div>
       </aside>
 
       <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#eff2f6] dark:bg-[#19212e] transition-colors duration-200">
@@ -294,6 +272,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { id: 'planos-ia', label: 'Plano IA', icon: 'auto_awesome', route: '/app/planos/ia', count: signal(0) },
     { id: 'whatsapp', label: 'WhatsApp', icon: 'chat', route: '/app/whatsapp', count: signal(0) },
     { id: 'plano', label: 'Plano e Assinatura', icon: 'credit_card', route: '/app/plano', count: signal(0) },
+    {
+      id: 'configuracoes', label: 'Configurações', icon: 'settings',
+      children: [
+        { id: 'cfg-user', label: '', icon: '', profile: true },
+        { id: 'cfg-perfil', label: 'Meu Perfil', icon: 'person', route: '/app/configuracoes' },
+        { id: 'cfg-sair', label: 'Sair do Sistema', icon: 'logout', action: 'logout' },
+      ],
+    },
   ];
 
   currentPageTitle = signal('Dashboard');
@@ -319,6 +305,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     if (this.isDarkMode()) {
       document.documentElement.classList.add('dark');
     }
+
+    const savedColor = localStorage.getItem('accentColor');
+    if (savedColor) applyAccentColor(savedColor);
 
     localStorage.setItem('sidebar_open', 'true');
     this.sidebarOpen.set(true);
@@ -422,11 +411,15 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     this.menuOpen.update(s => {
       const next = new Set(s);
       this.navItems.forEach(item => {
-        const inside = item.children?.some(c => url.startsWith(c.route || '/__none__'));
+        const inside = item.children?.some(c => c.route && url.startsWith(c.route));
         if (inside) next.add(item.id);
       });
       return next;
     });
+  }
+
+  handleChildAction(child: NavItem) {
+    if (child.action === 'logout') this.auth.logout();
   }
 
   toggleDarkMode() {

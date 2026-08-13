@@ -8,7 +8,7 @@ import { LaudoService } from '../services/laudo.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="max-w-[1200px]">
+    <div class="max-w-[1200px] legacy-page">
       <div class="flex justify-between items-start mb-5">
         <div>
           <h1 class="text-2xl font-bold m-0">Laudos</h1>
@@ -28,7 +28,7 @@ import { LaudoService } from '../services/laudo.service';
           <p class="text-slate-500 mt-2">Nenhum laudo encontrado</p>
         </div>
       } @else {
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 legacy-card">
           <div class="p-4">
             <table class="w-full border-collapse">
               <thead>

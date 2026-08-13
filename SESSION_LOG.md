@@ -4,6 +4,29 @@
 
 ---
 
+## Sessão 16 - 13/08/2026 (Quinta) — Cobrança PIX própria + tema escuro completo + cor de destaque
+
+### O que foi feito
+
+#### 1. Cobrança via PIX própria do profissional (sem gateway)
+- Cada profissional cadastra sua própria chave PIX (Configurações → Recebimento); o sistema monta o QR Code/copia-e-cola (EMV/BR Code estático, CRC-16 validado contra exemplo oficial do BCB `1D3D`); o profissional exibe/compartilha (WhatsApp); o portal do responsável (menu renomeado para "Cobranças") lista as cobranças e paga com "Já paguei" → notifica a equipe
+- Schema: `User.pixKey/pixKeyType` + `FinanceiroSessao.paymentMethod/pixCopiaECola/pixKey/pixKeyType/chargeShared/payConfirmedByGuardian` (backend + raiz, `db push`)
+- `backend/src/lib/pix.ts` (novo): gerador EMV estático + `normalizePixKey` por tipo; **PHONE → E.164 com +55** (o app do banco recusava "código inválido" porque o DICT armazena telefone com DDI)
+- `financeiro.ts` reescrito: normaliza form↔schema, `GET /:id`, `DELETE /:id`, `POST /:id/generate-pix` (regenera se chave mudou ou código obsoleto); `auth.ts` valida formato da chave no PUT /profile; `guardian.ts` com `GET /charges` (isolamento validado) e `POST /charges/:id/pay`
+- Frontend: `qrcode` instalado, `AuthService.updateUser()`, aba Recebimento com dicas por tipo, modal QR com copiar/compartilhar WhatsApp no financeiro-list, `guardian-financial` reescrito
+- E2E via API validado (perfil → cobrança → PIX com `+5585988014049` → charges isoladas → pay com notificação) e dados de teste limpos
+
+#### 2. Tema escuro completo
+- Bug: texto de inputs ilegível (branco em branco) em páginas legadas → 13 telas com paleta `gray` fixa adaptadas via CSS scoped `.dark` + marcadoras `legacy-page`/`legacy-card` em `styles.scss` (cards, textos, bordas, inputs, placeholders, hovers, rings)
+- Cabeçalhos de laudos (fora do card) corrigidos movendo a marcadora para a raiz; hover states remapeados
+- Cor de destaque (Aparência) consertada: 3 bugs — variável morta `--color-primary`, Tailwind com hex fixo, cor não persistida no load → `tailwind.config.js` agora usa `rgb(var(--primary-rgb) / <alpha-value>)` + novo `src/app/core/utils/theme.ts` (`applyAccentColor` com triplets RGB e derivações) + aplicação no main-layout ngOnInit
+- Botão "Salvar Alterações" invisível = estado HMR corrompido após troca do tailwind.config.js → reinício do dev server (pid 18354) + hard reload
+
+#### 3. Validação
+- `tsc --noEmit` (backend) e `ng build` limpos; CSS de produção e dev conferidos (regras `rgb(var(--primary-rgb)...)`, `:root` com triplets, remaps legacy)
+
+---
+
 ## Sessão 15 - 13/08/2026 (Quinta) — Reorganização da navegação (menus expansíveis)
 
 ### O que foi feito

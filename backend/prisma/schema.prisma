@@ -88,6 +88,8 @@ model User {
   clinicName    String?
   clinicAddress String?
   permissions   String?
+  pixKey        String?
+  pixKeyType    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -502,6 +504,12 @@ model FinanceiroSessao {
   description   String?
   category      String?
   dataPagamento DateTime?
+  paymentMethod String?
+  pixCopiaECola String?
+  pixKey        String?
+  pixKeyType    String?
+  chargeShared  Boolean  @default(false)
+  payConfirmedByGuardian Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

@@ -112,6 +112,97 @@ router.get('/evolutions/:patientId', async (req, res) => {
   res.json({ data: records, total: records.length });
 });
 
+// Cobranças (FinanceiroSessao com PIX) dos pacientes vinculados ao responsável
+router.get('/charges', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const userId = req.user?.id;
+
+  const responsible = await db.responsible.findFirst({ where: { userId } });
+  if (!responsible) {
+    return res.json({ data: [], total: 0 });
+  }
+
+  const patients = await db.paciente.findMany({
+    where: { responsibleId: responsible.id, active: true },
+    select: { id: true },
+  });
+  const patientIds = patients.map((p: any) => p.id);
+  if (patientIds.length === 0) {
+    return res.json({ data: [], total: 0 });
+  }
+
+  const charges = await db.financeiroSessao.findMany({
+    where: { pacienteId: { in: patientIds }, paymentMethod: 'PIX' },
+    include: { paciente: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  res.json({
+    data: charges.map((c: any) => ({
+      id: c.id,
+      pacienteId: c.pacienteId,
+      paciente: c.paciente?.name || '',
+      description: c.description,
+      value: c.valor,
+      status: c.status,
+      pixCopiaECola: c.pixCopiaECola,
+      payConfirmedByGuardian: c.payConfirmedByGuardian,
+      date: c.dataPagamento || c.createdAt,
+    })),
+    total: charges.length,
+  });
+});
+
+// Responsável avisa que pagou → notifica a equipe
+router.post('/charges/:id/pay', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const userId = req.user?.id;
+  const { id } = req.params;
+
+  const responsible = await db.responsible.findFirst({ where: { userId } });
+  if (!responsible) {
+    return res.status(403).json({ error: 'Acesso negado' });
+  }
+
+  const charge = await db.financeiroSessao.findFirst({
+    where: { id, paymentMethod: 'PIX' },
+    include: { paciente: true },
+  });
+  if (!charge) {
+    return res.status(404).json({ error: 'Cobrança não encontrada' });
+  }
+
+  const patient = await db.paciente.findFirst({
+    where: { id: charge.pacienteId, responsibleId: responsible.id },
+  });
+  if (!patient) {
+    return res.status(403).json({ error: 'Acesso negado a esta cobrança' });
+  }
+
+  await db.financeiroSessao.update({
+    where: { id: charge.id },
+    data: { payConfirmedByGuardian: true },
+  });
+
+  const staff = await getTenantStaff(req.user?.tenantId as string);
+  await Promise.all(
+    staff.map((u: any) =>
+      db.notification.create({
+        data: {
+          tenantId: req.user?.tenantId,
+          userId: u.id,
+          title: 'Pagamento informado',
+          type: 'payment',
+          message: `Pagamento confirmado pelo responsável: ${patient.name} (R$ ${charge.valor.toFixed(2)})`,
+          read: false,
+        },
+      })
+    )
+  );
+
+  res.json({ ok: true, message: 'Pagamento comunicado à clínica' });
+});
+
 // Get financial info for a patient (only RECEITA/shared)
 router.get('/financial/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);

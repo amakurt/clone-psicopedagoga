@@ -141,7 +141,7 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
     { route: '/guardian', label: 'Início', icon: 'home' },
     { route: '/guardian/evolutions', label: 'Evoluções', icon: 'trending_up' },
     { route: '/guardian/appointments', label: 'Agendamentos', icon: 'event' },
-    { route: '/guardian/financial', label: 'Financeiro', icon: 'payments' },
+    { route: '/guardian/financial', label: 'Cobranças', icon: 'payments' },
     { route: '/guardian/documents', label: 'Documentos', icon: 'description' },
     { route: '/guardian/chat', label: 'Mensagens', icon: 'chat' },
     { route: '/guardian/settings', label: 'Configurações', icon: 'settings' },

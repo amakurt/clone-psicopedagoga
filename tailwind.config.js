@@ -8,9 +8,9 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#007F80',
-          dark: '#006666',
-          light: '#E0F5F5',
+          DEFAULT: 'rgb(var(--primary-rgb) / <alpha-value>)',
+          dark: 'rgb(var(--primary-dark-rgb) / <alpha-value>)',
+          light: 'rgb(var(--primary-light-rgb) / <alpha-value>)',
         }
       },
       borderRadius: {

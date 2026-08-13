@@ -8,7 +8,7 @@ import { PacientesService } from '../services/pacientes.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="min-h-screen bg-gray-50 p-6">
+    <div class="min-h-screen bg-gray-50 p-6 legacy-page">
       <div class="max-w-5xl mx-auto">
         <div class="flex justify-between items-start mb-6">
           <a routerLink="/app/pacientes" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">

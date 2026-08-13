@@ -27,6 +27,14 @@ export class GuardianService {
     return this.api.get<{ data: Transaction[]; total: number }>(`${this.base}/financial/${patientId}`);
   }
 
+  getCharges() {
+    return this.api.get<{ data: any[]; total: number }>(`${this.base}/charges`);
+  }
+
+  confirmChargePayment(id: string) {
+    return this.api.post<{ ok: boolean }>(`${this.base}/charges/${id}/pay`, {});
+  }
+
   getDocuments(patientId: string) {
     return this.api.get<{ data: Document[]; total: number }>(`${this.base}/documents/${patientId}`);
   }

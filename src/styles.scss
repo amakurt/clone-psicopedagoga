@@ -9,6 +9,8 @@
 :root {
   --primary: #007F80;
   --primary-rgb: 0, 127, 128;
+  --primary-dark-rgb: 0, 102, 102;
+  --primary-light-rgb: 224, 245, 245;
   --primary-light: #E0F5F5;
   --primary-dark: #006666;
   --danger: #EF4444;
@@ -55,6 +57,89 @@
   --gray-800: #1E293B;
   --gray-900: #F1F5F9;
 }
+
+/* Páginas/superfícies legadas com paleta clara fixa (bg-white/text-gray) —
+   adapta ao tema escuro sem depender de variantes dark: por utilitário */
+.dark .legacy-page.bg-gray-50 { background-color: var(--bg); }
+.dark .legacy-card { background-color: var(--card-bg); }
+
+.dark .legacy-page .bg-white,
+.dark .legacy-card .bg-white { background-color: var(--card-bg); }
+.dark .legacy-page .bg-gray-50,
+.dark .legacy-card .bg-gray-50,
+.dark .legacy-page .bg-slate-50,
+.dark .legacy-card .bg-slate-50 { background-color: var(--gray-800); }
+.dark .legacy-page .bg-gray-100,
+.dark .legacy-card .bg-gray-100,
+.dark .legacy-page .bg-slate-100,
+.dark .legacy-card .bg-slate-100,
+.dark .legacy-page .bg-gray-200,
+.dark .legacy-card .bg-gray-200 { background-color: var(--gray-800); }
+.dark .legacy-page .hover\:bg-slate-50:hover,
+.dark .legacy-card .hover\:bg-slate-50:hover,
+.dark .legacy-page .hover\:bg-gray-50:hover,
+.dark .legacy-card .hover\:bg-gray-50:hover,
+.dark .legacy-page .hover\:bg-slate-100:hover,
+.dark .legacy-card .hover\:bg-slate-100:hover,
+.dark .legacy-page .hover\:bg-gray-100:hover,
+.dark .legacy-card .hover\:bg-gray-100:hover,
+.dark .legacy-page .hover\:bg-slate-200:hover,
+.dark .legacy-card .hover\:bg-slate-200:hover { background-color: var(--gray-800); }
+
+.dark .legacy-page .text-gray-900,
+.dark .legacy-card .text-gray-900,
+.dark .legacy-page .text-gray-800,
+.dark .legacy-card .text-gray-800,
+.dark .legacy-page .text-gray-700,
+.dark .legacy-card .text-gray-700,
+.dark .legacy-page .text-slate-900,
+.dark .legacy-card .text-slate-900,
+.dark .legacy-page .text-slate-700,
+.dark .legacy-card .text-slate-700 { color: var(--text); }
+.dark .legacy-page .text-gray-600,
+.dark .legacy-card .text-gray-600,
+.dark .legacy-page .text-gray-500,
+.dark .legacy-card .text-gray-500,
+.dark .legacy-page .text-slate-600,
+.dark .legacy-card .text-slate-600,
+.dark .legacy-page .text-slate-500,
+.dark .legacy-card .text-slate-500,
+.dark .legacy-page .text-gray-400,
+.dark .legacy-card .text-gray-400,
+.dark .legacy-page .text-slate-400,
+.dark .legacy-card .text-slate-400 { color: var(--text-secondary); }
+.dark .legacy-page .text-gray-300,
+.dark .legacy-card .text-gray-300,
+.dark .legacy-page .text-slate-300,
+.dark .legacy-card .text-slate-300 { color: var(--text-secondary); }
+
+.dark .legacy-page .border-gray-200,
+.dark .legacy-card .border-gray-200,
+.dark .legacy-page .border-gray-100,
+.dark .legacy-card .border-gray-100,
+.dark .legacy-page .border-slate-200,
+.dark .legacy-card .border-slate-200,
+.dark .legacy-page .border-slate-300,
+.dark .legacy-card .border-slate-300 { border-color: var(--gray-700); }
+
+.dark .legacy-page input,
+.dark .legacy-card input,
+.dark .legacy-page select,
+.dark .legacy-card select,
+.dark .legacy-page textarea {
+  background-color: var(--gray-800);
+  color: var(--text);
+  border-color: var(--gray-700);
+}
+.dark .legacy-page input::placeholder,
+.dark .legacy-card input::placeholder,
+.dark .legacy-page textarea::placeholder,
+.dark .legacy-card textarea::placeholder { color: var(--text-secondary); opacity: 0.8; }
+.dark .legacy-page option,
+.dark .legacy-card option { background-color: var(--gray-800); color: var(--text); }
+
+.dark .legacy-page .ring-slate-200,
+.dark .legacy-card .ring-slate-200 { --tw-ring-color: var(--gray-700); }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

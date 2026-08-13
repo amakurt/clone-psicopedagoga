@@ -10,7 +10,7 @@ import { DigitalSignatureComponent } from './digital-signature.component';
     @if (isOpen) {
       <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in"
         (click)="onBackdropClick($event)">
-        <div class="bg-white rounded-3xl shadow-2xl w-full mx-4 overflow-hidden ring-1 ring-slate-200 max-w-lg"
+        <div class="bg-white rounded-3xl shadow-2xl w-full mx-4 overflow-hidden ring-1 ring-slate-200 max-w-lg legacy-card"
           (click)="$event.stopPropagation()">
 
           <div class="p-6 border-b border-slate-100 flex items-center justify-between">

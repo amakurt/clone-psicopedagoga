@@ -10,7 +10,7 @@ import { environment } from '@env/environment';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-[#1E1B4B] to-[#007F80] p-6 flex items-center justify-center">
-      <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-xl overflow-hidden my-8">
+      <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-xl overflow-hidden my-8 legacy-card">
         @if (loading()) {
           <div class="p-12 text-center">
             <p class="text-slate-400 text-sm">Carregando formulário...</p>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
+import { applyAccentColor } from '@core/utils/theme';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { ToastService } from '@shared/components/toast.component';
@@ -99,6 +100,65 @@ import { ToastService } from '@shared/components/toast.component';
       }
 
       <!-- Security Tab -->
+      <!-- Recebimento Tab -->
+      @if (activeTab() === 'recebimento') {
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+          <div class="p-8">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="material-icons text-primary text-2xl">qr_code_2</span>
+              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Recebimento via PIX</h3>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Configure sua chave PIX para gerar cobranças para os responsáveis. O sistema monta o QR Code e o código
+              "copia e cola" automaticamente a partir desta chave — sem custo de gateway.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tipo de Chave</label>
+                <select class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                  [(ngModel)]="pixForm.pixKeyType">
+                  <option value="CPF">CPF</option>
+                  <option value="CNPJ">CNPJ</option>
+                  <option value="EMAIL">E-mail</option>
+                  <option value="PHONE">Telefone</option>
+                  <option value="RANDOM">Chave aleatória</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Chave PIX</label>
+                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                  [(ngModel)]="pixForm.pixKey" [placeholder]="pixForm.pixKeyType === 'PHONE' ? 'Ex.: 85988014049 (com DDD)' : pixForm.pixKeyType === 'RANDOM' ? 'Ex.: a1b2c3d4-e5f6-...' : 'Ex.: seuemail@email.com ou 12345678901'" [attr.maxlength]="pixForm.pixKeyType === 'RANDOM' ? 36 : undefined">
+              </div>
+            </div>
+
+            <div class="p-4 mb-6 bg-slate-50 dark:bg-slate-800/60 rounded-2xl text-xs text-slate-500 dark:text-slate-400">
+              @if (pixForm.pixKeyType === 'PHONE') {
+                <p><span class="material-icons text-[16px] align-text-bottom text-primary">smartphone</span> Informe o número com DDD, sem espaços ou traços (ex.: 85988014049). O sistema adiciona o +55 automaticamente, conforme o padrão do Banco Central.</p>
+              } @else if (pixForm.pixKeyType === 'EMAIL') {
+                <p><span class="material-icons text-[16px] align-text-bottom text-primary">alternate_email</span> Use o e-mail exatamente como cadastrado no seu banco (tudo em minúsculas).</p>
+              } @else if (pixForm.pixKeyType === 'RANDOM') {
+                <p><span class="material-icons text-[16px] align-text-bottom text-primary">key</span> Copie a chave aleatória (EVP) exatamente como aparece no app do seu banco.</p>
+              } @else {
+                <p><span class="material-icons text-[16px] align-text-bottom text-primary">badge</span> Apenas os números, sem pontos ou traços (ex.: 12345678901).</p>
+              }
+            </div>
+
+            <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-start gap-3 text-xs text-amber-700 dark:text-amber-300">
+              <span class="material-icons text-[18px] shrink-0">info</span>
+              <p>A chave deve estar <b>cadastrada no seu banco</b> — o app do banco do pagador consulta o DICT do Banco Central e recusa o QR Code se a chave não existir. Cada profissional da clínica tem a sua própria chave — as cobranças que você gerar apontam para ela.</p>
+            </div>
+          </div>
+
+          <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+              (click)="savePix()">
+              Salvar Chave PIX
+            </button>
+          </div>
+        </div>
+      }
+
       @if (activeTab() === 'seguranca') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
           <div class="p-8">
@@ -420,7 +480,7 @@ export class ConfiguracoesComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
 
-  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'aparencia' | 'disponibilidade'>('perfil');
+  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'aparencia' | 'disponibilidade' | 'recebimento'>('perfil');
   avatarPreview = signal<string | null>(null);
   showToast = signal(false);
   toastMessage = signal('');
@@ -438,6 +498,7 @@ export class ConfiguracoesComponent implements OnInit {
     { id: 'clinica' as const, label: 'Clínica' },
     { id: 'notificacoes' as const, label: 'Notificações' },
     { id: 'disponibilidade' as const, label: 'Disponibilidade' },
+    { id: 'recebimento' as const, label: 'Recebimento' },
     { id: 'aparencia' as const, label: 'Aparência' },
   ];
 
@@ -450,6 +511,7 @@ export class ConfiguracoesComponent implements OnInit {
   accentColor = signal(localStorage.getItem('accentColor') || '#6366f1');
 
   profileForm = { name: '', email: '', phone: '', phoneIsWhatsApp: false, registration: '', bio: '' };
+  pixForm = { pixKey: '', pixKeyType: 'EMAIL' };
   passwordForm = { current: '', newPassword: '', confirm: '' };
   clinicForm: any = { 
     name: '', 
@@ -479,6 +541,8 @@ export class ConfiguracoesComponent implements OnInit {
       };
       this.hasPassword.set(user.hasPassword !== false);
       if (user.avatarUrl) this.avatarPreview.set(user.avatarUrl);
+      if (user.pixKey) this.pixForm.pixKey = user.pixKey;
+      if (user.pixKeyType) this.pixForm.pixKeyType = user.pixKeyType;
     }
 
     this.loadAvailabilities();
@@ -497,7 +561,7 @@ export class ConfiguracoesComponent implements OnInit {
     const savedColor = localStorage.getItem('accentColor');
     if (savedColor) {
       this.accentColor.set(savedColor);
-      document.documentElement.style.setProperty('--color-primary', savedColor);
+      applyAccentColor(savedColor);
     }
   }
 
@@ -537,8 +601,25 @@ export class ConfiguracoesComponent implements OnInit {
 
   saveProfile() {
     this.api.put('/auth/profile', this.profileForm).subscribe({
-      next: () => this.showNotification('Perfil atualizado com sucesso!'),
+      next: (res: any) => {
+        this.showNotification('Perfil atualizado com sucesso!');
+        if (res?.user) this.auth.updateUser(res.user);
+      },
       error: () => this.showNotification('Perfil atualizado (modo local)')
+    });
+  }
+
+  savePix() {
+    if (!this.pixForm.pixKey.trim()) {
+      this.toast.warning('Digite sua chave PIX');
+      return;
+    }
+    this.api.put('/auth/profile', this.pixForm).subscribe({
+      next: (res: any) => {
+        if (res?.user) this.auth.updateUser(res.user);
+        this.showNotification('Chave PIX salva com sucesso!');
+      },
+      error: () => this.toast.error('Erro ao salvar chave PIX')
     });
   }
 
@@ -595,7 +676,7 @@ export class ConfiguracoesComponent implements OnInit {
 
   setAccentColor(color: string) {
     this.accentColor.set(color);
-    document.documentElement.style.setProperty('--color-primary', color);
+    applyAccentColor(color);
   }
 
   saveAppearance() {
