@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { escapeHtml } from '../../../core/utils/escape';
 
 declare var html2pdf: any;
 
@@ -277,7 +278,7 @@ export class ConsentFormComponent {
           ${this.consent.research ? '<li>Pesquisa Científica</li>' : ''}
           ${this.consent.shareWithSchool ? '<li>Compartilhamento com Escola</li>' : ''}
         </ul>
-        ${this.consent.details ? `<h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px;">Observações</h3><p style="font-size: 13px; color: #333;">${this.consent.details}</p>` : ''}
+        ${this.consent.details ? `<h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px;">Observações</h3><p style="font-size: 13px; color: #333;">${escapeHtml(this.consent.details)}</p>` : ''}
         <hr style="border: 1px solid #eee; margin: 30px 0 20px;">
         <p style="text-align: center; color: #999; font-size: 11px;">Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
       </div>

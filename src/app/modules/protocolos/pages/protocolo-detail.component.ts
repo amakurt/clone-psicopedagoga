@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit, ViewChild, ElementRef, AfterViewInit
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { escapeHtml } from '@core/utils/escape';
 import { Chart, registerables } from 'chart.js';
 import { ToastService } from '@shared/components/toast.component';
 
@@ -346,7 +347,7 @@ export class ProtocoloDetailComponent implements OnInit, AfterViewInit {
         <hr style="border: 1px solid #eee; margin: 20px 0;">
 
         <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #666; width: 140px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${info.paciente?.name || '—'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666; width: 140px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(info.paciente?.name) || '—'}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(info.date).toLocaleDateString('pt-BR')}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Pontuação Geral:</td><td style="padding: 8px 0; font-weight: bold; font-size: 18px; color: #007F80;">${data.totalScore}/${data.totalMax} (${data.overallPercentage}%)</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Classificação:</td><td style="padding: 8px 0; font-weight: bold; color: ${this.getClassificationColor()};">${this.getClassification(data.overallPercentage)}</td></tr>
@@ -367,14 +368,14 @@ export class ProtocoloDetailComponent implements OnInit, AfterViewInit {
               <tr style="border-bottom: 1px solid #eee;">
                 <td style="padding: 10px;">
                   <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 12px; height: 12px; border-radius: 50%; background: ${cat.color};"></div>
-                    <span style="font-weight: 500;">${cat.name}</span>
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: ${escapeHtml(cat.color)};"></div>
+                    <span style="font-weight: 500;">${escapeHtml(cat.name)}</span>
                   </div>
                 </td>
                 <td style="padding: 10px; text-align: center; font-weight: bold;">${cat.score}/${cat.maxScore}</td>
-                <td style="padding: 10px; text-align: center; font-weight: bold; color: ${cat.color};">${cat.percentage}%</td>
+                <td style="padding: 10px; text-align: center; font-weight: bold; color: ${escapeHtml(cat.color)};">${cat.percentage}%</td>
                 <td style="padding: 10px; text-align: center;">
-                  <span style="background: ${cat.color}20; color: ${cat.color}; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                  <span style="background: ${escapeHtml(cat.color)}20; color: ${escapeHtml(cat.color)}; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">
                     ${cat.percentage >= 67 ? 'Bom' : cat.percentage >= 34 ? 'Regular' : 'Baixo'}
                   </span>
                 </td>
@@ -385,7 +386,7 @@ export class ProtocoloDetailComponent implements OnInit, AfterViewInit {
 
         <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin: 20px 0;">
           <h4 style="color: #333; margin: 0 0 8px; font-size: 14px;">Observações Clínicas</h4>
-          <p style="color: #666; font-size: 13px; margin: 0; white-space: pre-wrap;">${info.notes || 'Nenhuma observação registrada.'}</p>
+          <p style="color: #666; font-size: 13px; margin: 0; white-space: pre-wrap;">${escapeHtml(info.notes) || 'Nenhuma observação registrada.'}</p>
         </div>
 
         <hr style="border: 1px solid #eee; margin: 30px 0 20px;">

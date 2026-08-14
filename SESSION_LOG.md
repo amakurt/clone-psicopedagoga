@@ -4,6 +4,26 @@
 
 ---
 
+## Sessão 17b - 14/08/2026 (Sexta) — Auditoria de segurança (OWASP + testes dinâmicos)
+
+### O que foi feito
+
+#### 1. Auditoria (security-scan + subagente frontend + testes dinâmicos)
+- Pontos fortes: tenant isolation via `scoped()` sólida, guardian valida vínculo, bcrypt, JWT verify + membership, CORS restrito
+- CRÍTICO confirmado: `GET /users`/`/users/:id` sem authorize — PROFISSIONAL via hashes bcrypt + chaves PIX de todas as clínicas → `authorize('GESTOR')` + select seguro + `GET /users/members` p/ NFS-e
+- CRÍTICO: `.env`/`backend/.env`/`evolution-api/.env` rastreados no git → removidos do tracking + .gitignore (rotacionar segredos!)
+- ALTO: sem rate limiting → global 300/min + strictLimiter (20/15min) em 8 rotas sensíveis + linkLimiter (30/15min) no guardian/link
+- ALTO: stored XSS em exports (12 arquivos) → `escapeHtml` helper aplicado em 10 arquivos
+- ALTO: JWT no query param do OAuth callback → code curto (5min) + `POST /auth/google/exchange`
+- ALTO: fallbacks hardcoded JWT/SESSION_SECRET → fail-fast
+- MÉDIO: path traversal uploads (path.basename) + helmet headers
+- Pendências: token de reset na URL, JWT em localStorage, environment.ts com IP LAN
+
+#### 2. Validação
+- tsc + ng build limpos; reteste dinâmico (403/select seguro/429/404/headers); regressão UI Playwright OK (dashboard, NFS-e, configurações)
+
+---
+
 ## Sessão 17 - 14/08/2026 (Sexta) — Correções de visibilidade no tema claro (fontes/ícones "invisíveis")
 
 ### O que foi feito

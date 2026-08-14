@@ -13,18 +13,34 @@ const userSchema = z.object({
   role: z.enum(['GESTOR', 'PSICOPEDAGOGO', 'SECRETARIA']).optional(),
 });
 
-router.get('/', async (req, res) => {
+const USER_SAFE_SELECT = {
+  id: true, name: true, email: true, role: true, active: true,
+  phone: true, registration: true, avatarUrl: true, bio: true, createdAt: true,
+} as const;
+
+// Membros da própria clínica (qualquer role autenticado) — usado p/ selects (ex: NFS-e)
+router.get('/members', async (req, res) => {
+  const memberships = await prisma.membership.findMany({
+    where: { tenantId: req.user!.tenantId, active: true },
+    select: { user: { select: USER_SAFE_SELECT } },
+    orderBy: { createdAt: 'asc' },
+  });
+  const users = memberships.map((m: any) => m.user).filter((u: any) => u.active);
+  res.json({ data: users, total: users.length });
+});
+
+router.get('/', authorize('GESTOR'), async (req, res) => {
   const { role, search } = req.query;
   const where: any = {};
   if (role) where.role = role;
   if (search) where.name = { contains: search };
-  const users = await prisma.user.findMany({ where, orderBy: { name: 'asc' } });
+  const users = await prisma.user.findMany({ where, orderBy: { name: 'asc' }, select: USER_SAFE_SELECT });
   res.json({ data: users, total: users.length });
 });
 
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', authorize('GESTOR'), async (req: Request, res: Response) => {
   const id = req.params.id as string;
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await prisma.user.findUnique({ where: { id }, select: USER_SAFE_SELECT });
   if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
   res.json(user);
 });

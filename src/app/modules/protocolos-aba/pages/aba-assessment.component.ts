@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
+import { escapeHtml } from '@core/utils/escape';
 import { AbaService } from '../services/aba.service';
 import { ABLLS_R_DOMAINS, ABLLS_TOTAL_SKILLS, ABLLS_SCORE_LABELS } from '../data/ablls-r';
 import { VB_MAPP_DOMAINS, VB_MAPP_TOTAL_MILESTONES, VB_MAPP_SCORE_LABELS } from '../data/vb-mapp';
@@ -511,23 +512,23 @@ export class AbaAssessmentComponent implements OnInit {
         </div>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #666; width: 120px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${this.patients().find(p => p.id === this.selectedPatientId())?.name || '—'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666; width: 120px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(this.patients().find(p => p.id === this.selectedPatientId())?.name) || '—'}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Protocolo:</td><td style="padding: 8px 0; font-weight: bold;">${protocol}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(this.assessmentDate).toLocaleDateString('pt-BR')}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Pontuação:</td><td style="padding: 8px 0; font-weight: bold; font-size: 18px; color: #007F80;">${this.totalScore()}/${this.totalMax()} (${this.overallPercentage()}%)</td></tr>
         </table>
         ${domains.map(domain => `
-          <h3 style="color: ${domain.color}; font-size: 14px; margin: 20px 0 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">${domain.name} — ${this.getDomainScore(domain)}/${this.getDomainMax(domain)}</h3>
+          <h3 style="color: ${escapeHtml(domain.color)}; font-size: 14px; margin: 20px 0 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">${escapeHtml(domain.name)} — ${this.getDomainScore(domain)}/${this.getDomainMax(domain)}</h3>
           <table style="width: 100%; font-size: 12px; border-collapse: collapse; margin-bottom: 15px;">
             ${(domain.items || []).map((item: any) => `
               <tr style="border-bottom: 1px solid #f5f5f5;">
-                <td style="padding: 8px; color: #666; width: 70%;">${item.name}</td>
+                <td style="padding: 8px; color: #666; width: 70%;">${escapeHtml(item.name)}</td>
                 <td style="padding: 8px; text-align: right; font-weight: bold;">${labels[this.evaluations()[item.id] || 0] || '—'}</td>
               </tr>
             `).join('')}
           </table>
         `).join('')}
-        ${this.notes ? `<h3 style="color: #333; font-size: 14px; margin: 20px 0 10px;">Observações</h3><p style="font-size: 12px; color: #666;">${this.notes}</p>` : ''}
+        ${this.notes ? `<h3 style="color: #333; font-size: 14px; margin: 20px 0 10px;">Observações</h3><p style="font-size: 12px; color: #666;">${escapeHtml(this.notes)}</p>` : ''}
         <hr style="border: 1px solid #eee; margin: 30px 0 20px;">
         <p style="text-align: center; color: #999; font-size: 11px;">Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
       </div>

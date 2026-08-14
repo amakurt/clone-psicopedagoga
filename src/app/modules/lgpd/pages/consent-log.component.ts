@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { escapeHtml } from '../../../core/utils/escape';
 
 declare var html2pdf: any;
 
@@ -205,7 +206,7 @@ export class ConsentLogComponent implements OnInit {
     const rows = this.consents().map(c => `
       <tr style="border-bottom: 1px solid #eee;">
         <td style="padding: 10px;">${new Date(c.recordedAt).toLocaleDateString('pt-BR')}</td>
-        <td style="padding: 10px;">${c.paciente?.name || '—'}</td>
+        <td style="padding: 10px;">${escapeHtml(c.paciente?.name) || '—'}</td>
         <td style="padding: 10px;">${this.getTypeLabel(c.consentType)}</td>
         <td style="padding: 10px;">${this.getStatusLabel(c.status)}</td>
       </tr>

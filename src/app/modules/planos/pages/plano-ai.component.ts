@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@core/services/api.service';
+import { escapeHtml } from '@core/utils/escape';
 import { ToastService } from '@shared/components/toast.component';
 
 declare var html2pdf: any;
@@ -248,23 +249,23 @@ export class PlanoAiComponent {
       <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #007F80; padding-bottom: 15px;">
         <h1 style="color: #007F80; margin: 0;">EduPsych Pro</h1>
         <h2 style="color: #333; margin: 5px 0 0;">Plano de Intervenção IA</h2>
-        <p style="color: #666; margin: 5px 0 0;">Diagnóstico: ${p.diagnosis} | Idade: ${p.age} anos | Nível: ${p.level}</p>
+        <p style="color: #666; margin: 5px 0 0;">Diagnóstico: ${escapeHtml(p.diagnosis)} | Idade: ${p.age} anos | Nível: ${escapeHtml(p.level)}</p>
       </div>`;
 
     html += `<div style="background: #f0fdfa; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
       <h3 style="color: #007F80; margin: 0 0 10px;">Plano Geral</h3>
-      <p><strong>Duração:</strong> ${p.overallPlan.totalEstimatedWeeks} semanas | <strong>Frequência:</strong> ${p.overallPlan.sessionFrequency} | <strong>Reavaliação:</strong> ${p.overallPlan.reassessmentPeriod}</p>
+      <p><strong>Duração:</strong> ${p.overallPlan.totalEstimatedWeeks} semanas | <strong>Frequência:</strong> ${escapeHtml(p.overallPlan.sessionFrequency)} | <strong>Reavaliação:</strong> ${escapeHtml(p.overallPlan.reassessmentPeriod)}</p>
     </div>`;
 
     for (const s of p.suggestions) {
       html += `<div style="margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px;">
-        <h3 style="color: #1e293b; margin: 0 0 10px;">${s.category} - ${s.goal}</h3>`;
+        <h3 style="color: #1e293b; margin: 0 0 10px;">${escapeHtml(s.category)} - ${escapeHtml(s.goal)}</h3>`;
       for (const strat of s.strategies) {
         html += `<div style="margin: 10px 0; padding: 10px; background: #f8fafc; border-radius: 8px;">
-          <p style="font-weight: bold; margin: 0 0 5px;">${strat.title} <span style="color: #666; font-size: 12px;">[${strat.difficulty}]</span></p>
-          <p style="margin: 0 0 8px; color: #555; font-size: 13px;">${strat.description}</p>
-          <ol style="margin: 0; padding-left: 20px; font-size: 13px;">${strat.steps.map((st: string) => `<li style="margin: 3px 0;">${st}</li>`).join('')}</ol>
-          <p style="margin: 8px 0 0; font-size: 12px; color: #888;">${strat.estimatedSessions} sessões | ${strat.frequency} | ${strat.evidence}</p>
+          <p style="font-weight: bold; margin: 0 0 5px;">${escapeHtml(strat.title)} <span style="color: #666; font-size: 12px;">[${escapeHtml(strat.difficulty)}]</span></p>
+          <p style="margin: 0 0 8px; color: #555; font-size: 13px;">${escapeHtml(strat.description)}</p>
+          <ol style="margin: 0; padding-left: 20px; font-size: 13px;">${strat.steps.map((st: string) => `<li style="margin: 3px 0;">${escapeHtml(st)}</li>`).join('')}</ol>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #888;">${strat.estimatedSessions} sessões | ${escapeHtml(strat.frequency)} | ${escapeHtml(strat.evidence)}</p>
         </div>`;
       }
       html += `</div>`;
@@ -272,7 +273,7 @@ export class PlanoAiComponent {
 
     html += `<div style="margin-top: 20px; padding: 15px; background: #fffbeb; border-radius: 12px;">
       <h3 style="color: #92400e; margin: 0 0 10px;">Recomendações Gerais</h3>
-      <ul style="margin: 0; padding-left: 20px; font-size: 13px;">${p.generalRecommendations.map((r: string) => `<li style="margin: 3px 0;">${r}</li>`).join('')}</ul>
+      <ul style="margin: 0; padding-left: 20px; font-size: 13px;">${p.generalRecommendations.map((r: string) => `<li style="margin: 3px 0;">${escapeHtml(r)}</li>`).join('')}</ul>
     </div>`;
 
     html += `<p style="text-align: center; color: #999; font-size: 11px; margin-top: 20px;">Gerado em ${new Date().toLocaleString('pt-BR')}</p></div>`;

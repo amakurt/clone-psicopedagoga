@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EvolucoesService } from '../services/evolucoes.service';
 import { ModalComponent } from '@shared/components/modal.component';
+import { escapeHtml } from '@core/utils/escape';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -566,7 +567,7 @@ export class EvolucoesListComponent implements OnInit {
         </div>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #666; width: 120px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${evo.paciente?.name || '—'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666; width: 120px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(evo.paciente?.name) || '—'}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(evo.date).toLocaleDateString('pt-BR')}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Profissional:</td><td style="padding: 8px 0;">Dra. Sarah Miller</td></tr>
         </table>
@@ -590,10 +591,10 @@ export class EvolucoesListComponent implements OnInit {
           </tr>
         </table>
         <h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px;">Resumo da Sessão</h3>
-        <p style="font-size: 13px; color: #333; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: 8px;">${evo.summary || 'Sem resumo registrado.'}</p>
+        <p style="font-size: 13px; color: #333; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: 8px;">${escapeHtml(evo.summary) || 'Sem resumo registrado.'}</p>
         ${evo.activities ? `
           <h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px;">Atividades Realizadas</h3>
-          <p style="font-size: 13px; color: #333; line-height: 1.6;">${evo.activities}</p>
+          <p style="font-size: 13px; color: #333; line-height: 1.6;">${escapeHtml(evo.activities)}</p>
         ` : ''}
         <hr style="border: 1px solid #eee; margin: 30px 0 20px;">
         <p style="text-align: center; color: #999; font-size: 11px;">Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>

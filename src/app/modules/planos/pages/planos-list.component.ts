@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PlanosService } from '../services/planos.service';
+import { escapeHtml } from '@core/utils/escape';
 
 declare var html2pdf: any;
 
@@ -159,22 +160,22 @@ export class PlanosListComponent implements OnInit {
         </div>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #666; width: 140px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${plano.paciente?.name || '—'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666; width: 140px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(plano.paciente?.name) || '—'}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(plano.createdAt).toLocaleDateString('pt-BR')}</td></tr>
-          <tr><td style="padding: 8px 0; color: #666;">Frequência:</td><td style="padding: 8px 0;">${plano.frequency || '—'}</td></tr>
-          <tr><td style="padding: 8px 0; color: #666;">Duração:</td><td style="padding: 8px 0;">${plano.duration || '—'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666;">Frequência:</td><td style="padding: 8px 0;">${escapeHtml(plano.frequency) || '—'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666;">Duração:</td><td style="padding: 8px 0;">${escapeHtml(plano.duration) || '—'}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Nº Sessões:</td><td style="padding: 8px 0; font-weight: bold;">${plano.sessionCount || 0}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Valor/Sessão:</td><td style="padding: 8px 0;">R$ ${(plano.valuePerSession || 0).toFixed(2)}</td></tr>
           <tr><td style="padding: 8px 0; color: #666; font-size: 16px;">Valor Total:</td><td style="padding: 8px 0; font-size: 16px; font-weight: bold; color: #007F80;">R$ ${this.calculateTotal(plano).toFixed(2)}</td></tr>
         </table>
         ${plano.description ? `
           <h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px;">Descrição do Plano</h3>
-          <p style="font-size: 13px; color: #333; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: 8px;">${plano.description}</p>
+          <p style="font-size: 13px; color: #333; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: 8px;">${escapeHtml(plano.description)}</p>
         ` : ''}
         ${plano.steps ? `
           <h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px;">Etapas</h3>
           <div style="font-size: 13px; color: #333; line-height: 1.6;">
-            ${plano.steps.split('\n').map((step: string, i: number) => `<p style="margin: 8px 0;"><strong>Etapa ${i + 1}:</strong> ${step}</p>`).join('')}
+            ${plano.steps.split('\n').map((step: string, i: number) => `<p style="margin: 8px 0;"><strong>Etapa ${i + 1}:</strong> ${escapeHtml(step)}</p>`).join('')}
           </div>
         ` : ''}
         <hr style="border: 1px solid #eee; margin: 30px 0 20px;">

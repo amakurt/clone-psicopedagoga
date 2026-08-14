@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProtocolosService } from '../services/protocolos.service';
 import { ApiService } from '@core/services/api.service';
+import { escapeHtml } from '@core/utils/escape';
 
 declare var html2pdf: any;
 
@@ -170,7 +171,7 @@ export class ProtocolosListComponent implements OnInit {
             </div>
             <hr style="border: 1px solid #eee; margin: 20px 0;">
             <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
-              <tr><td style="padding: 8px 0; color: #666; width: 140px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${protocolo.paciente?.name || '—'}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666; width: 140px;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(protocolo.paciente?.name) || '—'}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(protocolo.date).toLocaleDateString('pt-BR')}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Pontuação Geral:</td><td style="padding: 8px 0; font-weight: bold; font-size: 18px; color: #007F80;">${data.totalScore}/${data.totalMax} (${data.overallPercentage}%)</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Classificação:</td><td style="padding: 8px 0; font-weight: bold;">${this.getClassification(protocolo.averageScore)}</td></tr>
@@ -190,14 +191,14 @@ export class ProtocolosListComponent implements OnInit {
                   <tr style="border-bottom: 1px solid #eee;">
                     <td style="padding: 10px;">
                       <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${cat.color};"></div>
-                        <span style="font-weight: 500;">${cat.name}</span>
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${escapeHtml(cat.color)};"></div>
+                        <span style="font-weight: 500;">${escapeHtml(cat.name)}</span>
                       </div>
                     </td>
                     <td style="padding: 10px; text-align: center; font-weight: bold;">${cat.score}/${cat.maxScore}</td>
-                    <td style="padding: 10px; text-align: center; font-weight: bold; color: ${cat.color};">${cat.percentage}%</td>
+                    <td style="padding: 10px; text-align: center; font-weight: bold; color: ${escapeHtml(cat.color)};">${cat.percentage}%</td>
                     <td style="padding: 10px; text-align: center;">
-                      <span style="background: ${cat.color}20; color: ${cat.color}; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                      <span style="background: ${escapeHtml(cat.color)}20; color: ${escapeHtml(cat.color)}; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold;">
                         ${cat.percentage >= 67 ? 'Bom' : cat.percentage >= 34 ? 'Regular' : 'Baixo'}
                       </span>
                     </td>

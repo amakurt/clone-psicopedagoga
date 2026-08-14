@@ -12,3 +12,9 @@ backend/dist/
 *.log
 logs/
 *.db.bak-*
+
+# Secrets
+.env
+backend/.env
+evolution-api/.env
+*.env.local

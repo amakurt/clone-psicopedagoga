@@ -84,14 +84,16 @@ router.post('/multiple', upload.array('files', 10), (req, res) => {
 
 // Serve uploaded files
 router.get('/:filename', (req, res) => {
-  const filePath = path.join(__dirname, '../../uploads', req.params.filename);
+  const filename = path.basename(req.params.filename);
+  const filePath = path.join(__dirname, '../../uploads', filename);
   res.sendFile(filePath);
 });
 
 // Delete uploaded file
 router.delete('/:filename', (req, res) => {
   const fs = require('fs');
-  const filePath = path.join(__dirname, '../../uploads', req.params.filename);
+  const filename = path.basename(req.params.filename);
+  const filePath = path.join(__dirname, '../../uploads', filename);
   
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);

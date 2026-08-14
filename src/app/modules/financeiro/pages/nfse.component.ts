@@ -241,7 +241,7 @@ export class NfseComponent implements OnInit {
   ngOnInit() {
     this.load();
     this.api.get('/pacientes').subscribe((res: any) => this.pacientes.set(res.data || []));
-    this.api.get('/users').subscribe((res: any) => this.users.set(res.data || []));
+    this.api.get('/users/members').subscribe((res: any) => this.users.set(res.data || []));
   }
 
   load() {

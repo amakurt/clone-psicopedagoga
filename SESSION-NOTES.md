@@ -6,7 +6,29 @@
 
 ---
 
-## Sessão 14/08/2026 (Sexta) — Correções de visibilidade no tema claro (fontes/ícones "invisíveis")
+## Sessão 14/08/2026 (Sexta) — Auditoria de segurança completa (OWASP + testes dinâmicos)
+
+### 67. Auditoria: escopo e metodologia
+- Skills usadas: `security-scan` (OWASP Top 10/secrets/misconfig) + subagente de análise frontend; testes dinâmicos na API real (`:3000`) com token real
+- **Pontos fortes verificados:** tenant isolation via `scoped()` sólida (findUnique→findFirst com tenantId, update/delete checam existência); guardian valida vínculo responsável-paciente em todas as rotas; bcrypt com salt; JWT verify + user ativo + membership; CORS restrito a origens configuradas; uploads exigem auth
+
+### 68. CRÍTICOS encontrados e corrigidos
+- **Broken Access Control (A01) — confirmado dinamicamente:** `GET /users` e `GET /users/:id` sem `authorize('GESTOR')` — qualquer role (PROFISSIONAL) listava TODOS os usuários de todas as clínicas com **hash bcrypt de senha + chave PIX** no response → adicionado `authorize('GESTOR')` + `select` com campos seguros (sem password/pixKey/permissions); criado `GET /users/members` (scoped ao tenant, campos seguros) para o select da NFS-e (frontend ajustado)
+- **Segredos no git:** `.env`, `backend/.env` e `evolution-api/.env` rastreados no repositório (com valores reais no histórico desde 03/08) → `git rm --cached` + `.gitignore` atualizado; **ALERTA: rotacionar JWT_SECRET/SESSION_SECRET/SMTP/Google OAuth/Evolution API** (histórico não reescrito)
+
+### 69. ALTOS encontrados e corrigidos
+- **Sem rate limiting em nenhuma rota** → `express-rate-limit`: global 300 req/min na API + `strictLimiter` (20 req/15min) em login/register/register-clinic/verify-account/resend-verification/forgot-password/reset-password/google-exchange + `linkLimiter` (30 req/15min) no `POST /guardian/link` (anti brute-force do accessCode de 6 dígitos) — validado: 429 após estouro
+- **Stored XSS nos exports HTML (12 arquivos):** dados de API/usuário interpolados sem escape em `innerHTML`/`document.write` (pior: guardian-evolutions — cross-user) → novo `src/app/core/utils/escape.ts` (`escapeHtml`) aplicado em 10 arquivos (protocolo-detail, evolucoes-list, plano-ai, planos-list, aba-assessment, evolucao-comparativa, financeiro-list, consent-form, consent-log, protocolos-list); nfse.component deixa `res.html` cru de propósito (quebraria layout)
+- **JWT + dados do usuário no query param do callback Google OAuth** (vazava via Referer/histórico) → fluxo trocado por `code` de curta duração (`purpose: 'oauth-exchange'`, 5 min) + `POST /auth/google/exchange` (com strictLimiter); frontend atualizado
+- **Fallbacks hardcoded** `JWT_SECRET`/`SESSION_SECRET` (`'psicopedagoga-secret-key-2026'`) → fail-fast com erro claro se env ausente
+
+### 70. MÉDIOS corrigidos + pendências
+- **Path traversal teórico** em `GET/DELETE /uploads/:filename` → `path.basename()` (validado: `..%2f` → 404)
+- **Security headers ausentes** → `helmet()` (X-Content-Type-Options: nosniff, X-Frame-Options: SAMEORIGIN, CSP, Referrer-Policy: no-referrer)
+- **Pendências documentadas (não corrigidas nesta sessão):** token de reset de senha na URL (migrar p/ código curto); JWT em localStorage (mitigado pelos fixes de XSS; cookie HttpOnly é migração maior); `environments/environment.ts` com IP da LAN em HTTP; self-XSS em consent-form (baixo)
+- **Validação:** `tsc --noEmit` + `ng build` limpos; reteste dinâmico (403 no /users p/ PROFISSIONAL, sem password/pixKey no response, 429 no login/link, 404 no traversal, headers presentes); regressão UI Playwright (login → dashboard → NFS-e → configurações OK)
+
+---
 
 ### 63. Causa raiz: `bg-primary` transparente no runtime (bug herdado da sessão 13)
 - **Sintoma:** no tema claro, textos e ícones teal sumiam em botões/badges da landing e páginas internas — o usuário relatou "fontes e ícones não visíveis"

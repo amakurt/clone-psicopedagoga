@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import QRCode from 'qrcode';
 import { ApiService } from '@core/services/api.service';
+import { escapeHtml } from '@core/utils/escape';
 import { ToastService } from '@shared/components/toast.component';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
@@ -377,7 +378,7 @@ export class FinanceiroListComponent implements OnInit {
         </div>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px;">
-          <tr><td style="padding: 8px 0; color: #666;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${item.paciente?.name || '—'}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666;">Paciente:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(item.paciente?.name) || '—'}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Data:</td><td style="padding: 8px 0;">${new Date(item.date).toLocaleDateString('pt-BR')}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Tipo:</td><td style="padding: 8px 0;">${item.type === 'receita' ? 'Receita' : 'Despesa'}</td></tr>
           <tr><td style="padding: 8px 0; color: #666;">Status:</td><td style="padding: 8px 0;">${item.status === 'pago' ? 'Pago' : 'Pendente'}</td></tr>
@@ -442,7 +443,7 @@ export class FinanceiroListComponent implements OnInit {
             ${data.map(item => `
               <tr style="border-bottom: 1px solid #f1f5f9;">
                 <td style="padding: 10px;">${new Date(item.date).toLocaleDateString('pt-BR')}</td>
-                <td style="padding: 10px;">${item.paciente?.name || '—'}</td>
+                <td style="padding: 10px;">${escapeHtml(item.paciente?.name) || '—'}</td>
                 <td style="padding: 10px;">${item.type === 'receita' ? 'Receita' : 'Despesa'}</td>
                 <td style="padding: 10px;">${item.status === 'pago' ? 'Pago' : item.status === 'pendente' ? 'Pendente' : 'Atrasado'}</td>
                 <td style="padding: 10px; text-align: right; font-weight: bold; color: ${item.type === 'receita' ? '#10B981' : '#EF4444'};">R$ ${(parseFloat(item.value) || 0).toFixed(2)}</td>

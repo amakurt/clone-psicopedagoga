@@ -3,7 +3,9 @@ import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { enforceTenantStatus } from '../lib/billing';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'psicopedagoga-secret-key-2026';
+const JWT_SECRET: string = process.env.JWT_SECRET || (() => {
+  throw new Error('JWT_SECRET não definido. Configure o backend/.env antes de subir o servidor.');
+})();
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;

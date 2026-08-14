@@ -1,10 +1,20 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate } from '../middleware';
 
 const router = Router();
 router.use(authenticate);
+
+// Anti brute-force do código de acesso (6 dígitos) do portal do responsável
+const linkLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas de código de acesso. Aguarde alguns minutos.' },
+});
 
 // Staff (equipe) da clínica, via membership
 async function getTenantStaff(tenantId: string) {
@@ -18,7 +28,7 @@ async function getTenantStaff(tenantId: string) {
 }
 
 // Link responsible to patient by access code
-router.post('/link', async (req, res) => {
+router.post('/link', linkLimiter, async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { accessCode } = req.body;
   const userId = req.user?.id;

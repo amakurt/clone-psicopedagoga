@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { GuardianService } from '../services/guardian.service';
 import { SessionRecord } from '@core/models';
+import { escapeHtml } from '@core/utils/escape';
 
 declare var html2pdf: any;
 
@@ -234,10 +235,10 @@ export class GuardianEvolutionsComponent implements OnInit {
           <span style="color: #007F80; font-weight: bold;">Sessão ${r.sessionNumber || '—'}</span>
           <span style="color: #666; font-size: 13px;">${r.date}</span>
         </div>
-        <h3 style="margin: 0 0 8px; color: #1e293b;">${r.summary}</h3>
-        ${r.objective ? `<p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Objetivo:</strong> ${r.objective}</p>` : ''}
-        ${r.activities ? `<p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Atividades:</strong> ${r.activities}</p>` : ''}
-        ${r.observations ? `<p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Obs:</strong> ${r.observations}</p>` : ''}
+        <h3 style="margin: 0 0 8px; color: #1e293b;">${escapeHtml(r.summary)}</h3>
+        ${r.objective ? `<p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Objetivo:</strong> ${escapeHtml(r.objective)}</p>` : ''}
+        ${r.activities ? `<p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Atividades:</strong> ${escapeHtml(r.activities)}</p>` : ''}
+        ${r.observations ? `<p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Obs:</strong> ${escapeHtml(r.observations)}</p>` : ''}
         ${(r.focus || r.engagement || r.skillProgress || r.behavior) ? `<div style="display: flex; gap: 15px; margin-top: 8px;">
           ${r.focus ? `<span style="font-size: 12px; color: #666;">Foco: ${r.focus}%</span>` : ''}
           ${r.engagement ? `<span style="font-size: 12px; color: #666;">Engajamento: ${r.engagement}%</span>` : ''}

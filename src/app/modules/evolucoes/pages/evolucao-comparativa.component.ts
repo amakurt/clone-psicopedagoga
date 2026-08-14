@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { escapeHtml } from '../../../core/utils/escape';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -311,8 +312,8 @@ export class EvolucaoComparativaComponent implements OnInit, AfterViewInit {
         </div>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
-          <tr><td style="padding: 8px 0; color: #666; width: 120px;">Período 1:</td><td style="padding: 8px 0; font-weight: bold;">${this.period1Start} a ${this.period1End}</td></tr>
-          <tr><td style="padding: 8px 0; color: #666;">Período 2:</td><td style="padding: 8px 0; font-weight: bold;">${this.period2Start} a ${this.period2End}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666; width: 120px;">Período 1:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(this.period1Start)} a ${escapeHtml(this.period1End)}</td></tr>
+          <tr><td style="padding: 8px 0; color: #666;">Período 2:</td><td style="padding: 8px 0; font-weight: bold;">${escapeHtml(this.period2Start)} a ${escapeHtml(this.period2End)}</td></tr>
         </table>
         <h3 style="color: #007F80; font-size: 14px; margin: 20px 0 10px;">Médias por Domínio</h3>
         <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
@@ -324,26 +325,26 @@ export class EvolucaoComparativaComponent implements OnInit, AfterViewInit {
           </tr>
           <tr style="border-bottom: 1px solid #eee;">
             <td style="padding: 10px;">Foco</td>
-            <td style="padding: 10px;">${p1Avg.focus}</td>
-            <td style="padding: 10px;">${p2Avg.focus}</td>
+            <td style="padding: 10px;">${escapeHtml(p1Avg.focus)}</td>
+            <td style="padding: 10px;">${escapeHtml(p2Avg.focus)}</td>
             <td style="padding: 10px;">${(p2Avg.focus - p1Avg.focus).toFixed(1)}</td>
           </tr>
           <tr style="border-bottom: 1px solid #eee;">
             <td style="padding: 10px;">Engajamento</td>
-            <td style="padding: 10px;">${p1Avg.engagement}</td>
-            <td style="padding: 10px;">${p2Avg.engagement}</td>
+            <td style="padding: 10px;">${escapeHtml(p1Avg.engagement)}</td>
+            <td style="padding: 10px;">${escapeHtml(p2Avg.engagement)}</td>
             <td style="padding: 10px;">${(p2Avg.engagement - p1Avg.engagement).toFixed(1)}</td>
           </tr>
           <tr style="border-bottom: 1px solid #eee;">
             <td style="padding: 10px;">Progresso</td>
-            <td style="padding: 10px;">${p1Avg.skillProgress}</td>
-            <td style="padding: 10px;">${p2Avg.skillProgress}</td>
+            <td style="padding: 10px;">${escapeHtml(p1Avg.skillProgress)}</td>
+            <td style="padding: 10px;">${escapeHtml(p2Avg.skillProgress)}</td>
             <td style="padding: 10px;">${(p2Avg.skillProgress - p1Avg.skillProgress).toFixed(1)}</td>
           </tr>
           <tr>
             <td style="padding: 10px;">Comportamento</td>
-            <td style="padding: 10px;">${p1Avg.behavior}</td>
-            <td style="padding: 10px;">${p2Avg.behavior}</td>
+            <td style="padding: 10px;">${escapeHtml(p1Avg.behavior)}</td>
+            <td style="padding: 10px;">${escapeHtml(p2Avg.behavior)}</td>
             <td style="padding: 10px;">${(p2Avg.behavior - p1Avg.behavior).toFixed(1)}</td>
           </tr>
         </table>

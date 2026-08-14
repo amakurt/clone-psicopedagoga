@@ -1,8 +1,9 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { scoped, ensureMembership, createClinicWithAdmin } from '../lib/tenant';
 import { enforceTenantStatus } from '../lib/billing';
@@ -12,8 +13,19 @@ import { sendWhatsAppMessage } from './whatsapp';
 
 const router = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'psicopedagoga-secret-key-2026';
+const JWT_SECRET: string = process.env.JWT_SECRET || (() => {
+  throw new Error('JWT_SECRET não definido. Configure o backend/.env antes de subir o servidor.');
+})();
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
+
+// Rate limit estrito para rotas sensíveis (brute force / enumeration)
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' },
+});
 
 function generateCode(): string {
   return crypto.randomInt(100000, 1000000).toString();
@@ -203,7 +215,7 @@ async function ensureResponsibleForUser(user: any) {
 }
 
 // Local login
-router.post('/login', async (req, res) => {
+router.post('/login', strictLimiter, async (req, res) => {
   const { email, password } = req.body;
   
   if (!email || !password) {
@@ -253,7 +265,8 @@ router.post('/login', async (req, res) => {
 });
 
 // Local register
-router.post('/register', async (req, res) => {
+// register usa strictLimiter
+router.post('/register', strictLimiter, async (req, res) => {
   const { name, email, password, role, phone } = req.body;
   
   if (!name || !email || !password) {
@@ -298,7 +311,7 @@ router.post('/register', async (req, res) => {
 
 // Registro de nova clínica (self-service, fluxo de venda da landing)
 // Cria o Tenant da clínica + usuário GESTOR admin + subscription TRIAL 14d
-router.post('/register-clinic', async (req, res) => {
+router.post('/register-clinic', strictLimiter, async (req, res) => {
   const { name, email, password, clinicName, phone } = req.body;
 
   if (!name || !email || !password || !clinicName) {
@@ -338,7 +351,7 @@ router.post('/register-clinic', async (req, res) => {
 });
 
 // Verify account (link click or code)
-router.post('/verify-account', async (req, res) => {
+router.post('/verify-account', strictLimiter, async (req, res) => {
   const { token, code, email } = req.body;
 
   let user: any = null;
@@ -369,7 +382,8 @@ router.post('/verify-account', async (req, res) => {
 });
 
 // Resend activation link/code
-router.post('/resend-verification', async (req, res) => {
+// resend usa strictLimiter
+router.post('/resend-verification', strictLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ error: 'Email é obrigatório' });
@@ -391,7 +405,7 @@ router.post('/resend-verification', async (req, res) => {
 });
 
 // Forgot password - send code/link to email or WhatsApp
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', strictLimiter, async (req, res) => {
   const { email, phone, channel } = req.body;
   const ch = channel === 'WHATSAPP' ? 'WHATSAPP' : 'EMAIL';
 
@@ -420,7 +434,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // Reset password with token or code
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', strictLimiter, async (req, res) => {
   const { token, code, email, phone, newPassword } = req.body;
 
   if (!newPassword || newPassword.length < 6) {
@@ -483,25 +497,54 @@ router.get('/google/callback',
   async (req: any, res) => {
     const user = req.user;
     await ensureMembership(user);
-    const token = jwt.sign(
-      { sub: user.id, email: user.email, role: user.role },
+    // Code de curta duração (5 min) — o JWT nunca passa pela URL
+    const exchangeCode = jwt.sign(
+      { purpose: 'oauth-exchange', sub: user.id },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '5m' }
     );
-    
-    // Redirect to frontend with token
+
+    // Redirect to frontend with code (sem token na URL)
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
-    res.redirect(`${frontendUrl}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      avatarUrl: user.avatarUrl,
-      phone: user.phone,
-      hasPassword: !!user.password
-    }))}`);
+    res.redirect(`${frontendUrl}/auth/callback?code=${exchangeCode}`);
   }
 );
+
+// Troca o code do OAuth por um token de sessão (o code nunca toca a URL do usuário final)
+router.post('/google/exchange', strictLimiter, async (req: Request, res: Response) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: 'Código ausente' });
+
+  let payload: any;
+  try {
+    payload = jwt.verify(code, JWT_SECRET);
+  } catch {
+    return res.status(400).json({ error: 'Código inválido ou expirado' });
+  }
+
+  if (payload.purpose !== 'oauth-exchange') {
+    return res.status(400).json({ error: 'Código inválido' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+  if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
+
+  const token = jwt.sign(
+    { sub: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  res.json({ token, user: {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    phone: user.phone,
+    hasPassword: !!user.password,
+  } });
+});
 
 // Change password
 router.post('/change-password', authenticate, async (req: any, res) => {
