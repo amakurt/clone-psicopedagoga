@@ -29,7 +29,7 @@ import { ToastService } from '@shared/components/toast.component';
             Exportar PDF
           </button>
           <button (click)="save()" [disabled]="saving() || !form.pacienteId"
-            class="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
+            class="px-6 py-2 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
             <span class="material-icons">save</span>
             {{ saving() ? 'Salvando...' : 'Salvar' }}
           </button>
@@ -40,19 +40,19 @@ import { ToastService } from '@shared/components/toast.component';
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-200 dark:border-slate-700">
         <div class="flex items-center justify-center gap-4">
           <button (click)="currentStep.set(1)" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
-            [class]="currentStep() === 1 ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'">
+            [class]="currentStep() === 1 ? 'bg-primary text-on-primary' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'">
             <span class="material-icons">1</span>
             <span class="text-sm font-medium">Avaliação</span>
           </button>
           <span class="material-icons text-gray-300">chevron_right</span>
           <button (click)="currentStep.set(2)" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
-            [class]="currentStep() === 2 ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'">
+            [class]="currentStep() === 2 ? 'bg-primary text-on-primary' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'">
             <span class="material-icons">2</span>
             <span class="text-sm font-medium">Habilidades</span>
           </button>
           <span class="material-icons text-gray-300">chevron_right</span>
           <button (click)="currentStep.set(3)" class="flex items-center gap-2 px-4 py-2 rounded-xl transition-all"
-            [class]="currentStep() === 3 ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'">
+            [class]="currentStep() === 3 ? 'bg-primary text-on-primary' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'">
             <span class="material-icons">3</span>
             <span class="text-sm font-medium">Roteiro</span>
           </button>
@@ -168,7 +168,7 @@ import { ToastService } from '@shared/components/toast.component';
             </button>
             @if (currentStep() < 3) {
               <button (click)="currentStep.set(currentStep() + 1)"
-                class="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold transition-all">
+                class="px-6 py-2 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold transition-all">
                 Próximo
               </button>
             }

@@ -27,7 +27,7 @@ interface ChatConversation {
       <!-- Floating button -->
       @if (!isOpen()) {
         <button (click)="toggleOpen()"
-          class="relative size-14 rounded-full bg-primary hover:bg-primary-dark text-white shadow-xl shadow-primary/30 flex items-center justify-center transition-all hover:scale-105">
+          class="relative size-14 rounded-full bg-primary hover:bg-primary-dark text-on-primary shadow-xl shadow-primary/30 flex items-center justify-center transition-all hover:scale-105">
           <span class="material-icons text-2xl">chat</span>
           @if (totalUnread() > 0) {
             <span class="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
@@ -41,7 +41,7 @@ interface ChatConversation {
       @if (isOpen()) {
         <div class="absolute bottom-0 right-0 w-[380px] h-[520px] max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden flex flex-col chat-rise">
           <!-- Header -->
-          <div class="p-4 bg-primary text-white flex items-center justify-between shrink-0">
+          <div class="p-4 bg-primary text-on-primary flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
               <span class="material-icons">chat</span>
               <div>
@@ -66,11 +66,11 @@ interface ChatConversation {
           @if (selectedConversation() === null) {
             <div class="flex-1 overflow-y-auto custom-scrollbar">
               @if (loading()) {
-                <div class="h-full flex items-center justify-center text-slate-400">
+                <div class="h-full flex items-center justify-center text-slate-500">
                   <span class="material-icons animate-spin">autorenew</span>
                 </div>
               } @else if (conversations().length === 0) {
-                <div class="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2">
+                <div class="h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 gap-2">
                   <span class="material-icons text-5xl">forum</span>
                   <p class="text-sm">Nenhuma conversa ainda</p>
                   @if (!isGuardian()) {
@@ -89,7 +89,7 @@ interface ChatConversation {
                     <div class="flex items-center justify-between">
                       <p class="font-bold text-sm text-slate-900 dark:text-white truncate">{{ conversation.patientName }}</p>
                       @if (conversation.lastAt) {
-                        <span class="text-[10px] text-slate-400 ml-2 shrink-0">{{ formatTime(conversation.lastAt) }}</span>
+                        <span class="text-[10px] text-slate-500 ml-2 shrink-0">{{ formatTime(conversation.lastAt) }}</span>
                       }
                     </div>
                     <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -99,7 +99,7 @@ interface ChatConversation {
                     </p>
                   </div>
                   @if (conversation.unreadCount > 0) {
-                    <span class="size-5 bg-primary text-white text-[10px] font-black rounded-full flex items-center justify-center shrink-0">
+                    <span class="size-5 bg-primary text-on-primary text-[10px] font-black rounded-full flex items-center justify-center shrink-0">
                       {{ conversation.unreadCount }}
                     </span>
                   }
@@ -126,7 +126,7 @@ interface ChatConversation {
               <!-- Messages -->
               <div #scrollContainer class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 @if (messages().length === 0) {
-                  <div class="h-full flex items-center justify-center text-slate-400 text-sm">
+                  <div class="h-full flex items-center justify-center text-slate-500 text-sm">
                     <p>Sem mensagens ainda — digite abaixo para começar.</p>
                   </div>
                 }
@@ -134,7 +134,7 @@ interface ChatConversation {
                   <div class="flex" [class.justify-end]="isMine(msg)">
                     <div class="max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-snug"
                       [class]="isMine(msg)
-                        ? 'bg-primary text-white rounded-br-md'
+                        ? 'bg-primary text-on-primary rounded-br-md'
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md'">
                       <p class="text-xs font-semibold mb-1" *ngIf="!isMine(msg)">{{ msg.senderName }}</p>
                       <p class="whitespace-pre-wrap break-words">{{ msg.message }}</p>
@@ -153,7 +153,7 @@ interface ChatConversation {
                     class="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
                     placeholder="Digite sua mensagem...">
                   <button (click)="send()" [disabled]="!newMessage.trim()"
-                    class="size-11 bg-primary hover:bg-primary-dark text-white rounded-xl flex items-center justify-center disabled:opacity-40 transition-all shrink-0">
+                    class="size-11 bg-primary hover:bg-primary-dark text-on-primary rounded-xl flex items-center justify-center disabled:opacity-40 transition-all shrink-0">
                     <span class="material-icons text-lg">send</span>
                   </button>
                 </div>

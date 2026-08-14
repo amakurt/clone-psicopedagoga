@@ -27,7 +27,7 @@ import { AgendaService } from '../services/agenda.service';
             }
           </div>
           <a routerLink="/app/agenda/novo"
-            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
             <span>Novo</span>
           </a>
@@ -48,7 +48,7 @@ import { AgendaService } from '../services/agenda.service';
       </div>
 
       @if (loading()) {
-        <div class="flex items-center justify-center p-12 text-slate-400">
+        <div class="flex items-center justify-center p-12 text-slate-500">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       } @else {
@@ -57,7 +57,7 @@ import { AgendaService } from '../services/agenda.service';
           <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
             <div class="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800">
               @for (day of weekDays; track day) {
-                <div class="p-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ day }}</div>
+                <div class="p-3 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ day }}</div>
               }
             </div>
             <div class="grid grid-cols-7">
@@ -67,7 +67,7 @@ import { AgendaService } from '../services/agenda.service';
                   [class.ring-2]="day.isToday"
                   [class.ring-primary]="day.isToday">
                   <p class="text-xs font-bold mb-1"
-                    [class]="day.isCurrentMonth ? 'text-slate-900 dark:text-white' : 'text-slate-400'"
+                    [class]="day.isCurrentMonth ? 'text-slate-900 dark:text-white' : 'text-slate-500'"
                     [class.text-primary]="day.isToday"
                     [class.font-black]="day.isToday">
                     {{ day.date }}
@@ -81,7 +81,7 @@ import { AgendaService } from '../services/agenda.service';
                       </div>
                     }
                     @if (day.appointments.length > 3) {
-                      <p class="text-[10px] text-slate-400 font-bold">+{{ day.appointments.length - 3 }} mais</p>
+                      <p class="text-[10px] text-slate-500 font-bold">+{{ day.appointments.length - 3 }} mais</p>
                     }
                   </div>
                 </div>
@@ -98,7 +98,7 @@ import { AgendaService } from '../services/agenda.service';
               @for (day of weekDaysFull(); track day.date) {
                 <div class="p-3 text-center"
                   [class]="day.isToday ? 'bg-primary/5' : ''">
-                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ day.dayName }}</p>
+                  <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ day.dayName }}</p>
                   <p class="text-lg font-black mt-1"
                     [class]="day.isToday ? 'text-primary' : 'text-slate-900 dark:text-white'">
                     {{ day.date }}
@@ -109,7 +109,7 @@ import { AgendaService } from '../services/agenda.service';
             <div class="grid grid-cols-8">
               <div class="border-r border-slate-200 dark:border-slate-800">
                 @for (hour of hours; track hour) {
-                  <div class="h-16 p-2 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-400">
+                  <div class="h-16 p-2 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-500">
                     {{ hour }}
                   </div>
                 }
@@ -143,7 +143,7 @@ import { AgendaService } from '../services/agenda.service';
               <div class="p-6">
                 @for (hour of hours; track hour) {
                   <div class="flex gap-4 mb-4">
-                    <div class="w-16 text-xs font-bold text-slate-400 pt-2">{{ hour }}</div>
+                    <div class="w-16 text-xs font-bold text-slate-500 pt-2">{{ hour }}</div>
                     <div class="flex-1 min-h-[60px] border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative">
                       @for (apt of getAppointmentsForHour(hour); track apt.id) {
                         <div class="absolute inset-x-0 -top-1 rounded-xl px-4 py-3 cursor-pointer transition-all hover:shadow-md"
@@ -164,7 +164,7 @@ import { AgendaService } from '../services/agenda.service';
               <h3 class="font-bold text-slate-900 dark:text-white mb-4">Resumo do Dia</h3>
               <div class="space-y-4">
                 <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total</p>
+                  <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total</p>
                   <p class="text-2xl font-black text-slate-900 dark:text-white">{{ dayAppointments().length }}</p>
                 </div>
                 <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl">
@@ -189,7 +189,7 @@ import { AgendaService } from '../services/agenda.service';
                 <p class="text-sm font-bold text-slate-900 dark:text-white mb-2">{{ month.name }}</p>
                 <div class="flex items-end justify-between">
                   <p class="text-3xl font-black text-primary">{{ month.count }}</p>
-                  <p class="text-[10px] font-bold text-slate-400">consultas</p>
+                  <p class="text-[10px] font-bold text-slate-500">consultas</p>
                 </div>
                 <div class="mt-3 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div class="h-full bg-primary rounded-full transition-all" [style.width.%]="month.percentage"></div>

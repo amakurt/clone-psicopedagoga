@@ -24,7 +24,7 @@ import { ApiService } from '../../core/services/api.service';
           @if (notifications().length === 0) {
             <div class="p-8 text-center">
               <span class="material-icons text-4xl text-slate-300">notifications_none</span>
-              <p class="text-sm text-slate-400 mt-2">Nenhuma notificação</p>
+              <p class="text-sm text-slate-500 mt-2">Nenhuma notificação</p>
             </div>
           } @else {
             @for (notif of notifications(); track notif.id) {
@@ -39,7 +39,7 @@ import { ApiService } from '../../core/services/api.service';
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ notif.title }}</p>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ notif.message }}</p>
-                    <p class="text-[10px] text-slate-400 mt-1">{{ formatTime(notif.createdAt) }}</p>
+                    <p class="text-[10px] text-slate-500 mt-1">{{ formatTime(notif.createdAt) }}</p>
                   </div>
                   @if (!notif.read) {
                     <div class="size-2 bg-primary rounded-full shrink-0 mt-2"></div>

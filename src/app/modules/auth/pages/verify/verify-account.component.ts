@@ -53,7 +53,7 @@ import { environment } from '../../../../../environments/environment';
                 }
               </div>
 
-              <button class="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-[15px] font-bold transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
+              <button class="w-full py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-[15px] font-bold transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
                 type="submit" [disabled]="loading()">
                 {{ loading() ? 'Ativando...' : 'Ativar Conta' }}
               </button>
@@ -61,7 +61,7 @@ import { environment } from '../../../../../environments/environment';
           }
 
           @if (success()) {
-            <button class="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-[15px] font-bold transition-all shadow-lg shadow-primary/25"
+            <button class="w-full py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-[15px] font-bold transition-all shadow-lg shadow-primary/25"
               (click)="goApp()">
               Ir para o Dashboard
             </button>

@@ -65,7 +65,7 @@ import { ToastService } from '@shared/components/toast.component';
                   </td>
                   <td class="px-6 py-4 text-right">
                     @if (c.status !== 'PAGO') {
-                      <button class="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
+                      <button class="px-4 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
                         (click)="openPayModal(c)">
                         Pagar
                       </button>

@@ -15,12 +15,12 @@ import { ApiService } from '@core/services/api.service';
             <span class="material-icons text-primary text-4xl">monitoring</span>
             <div>
               <h1 class="text-2xl font-black">Sala de Espera</h1>
-              <p class="text-sm text-slate-400">EduPsych Pro - Painel de Chamada</p>
+              <p class="text-sm text-slate-500">EduPsych Pro - Painel de Chamada</p>
             </div>
           </div>
           <div class="text-right">
             <p class="text-3xl font-black text-primary">{{ currentTime() }}</p>
-            <p class="text-sm text-slate-400">{{ currentDate() }}</p>
+            <p class="text-sm text-slate-500">{{ currentDate() }}</p>
           </div>
         </div>
       </div>
@@ -46,18 +46,18 @@ import { ApiService } from '@core/services/api.service';
                   <p class="text-xl text-slate-300 mb-2">Chamando</p>
                   <h2 class="text-5xl font-black text-primary mb-4 animate-pulse">{{ calling()?.patientName }}</h2>
                   <div class="flex items-center justify-center gap-3 mb-6">
-                    <span class="material-icons text-slate-400">science</span>
+                    <span class="material-icons text-slate-500">science</span>
                     <span class="text-xl text-slate-300">{{ calling()?.professionalName }}</span>
                   </div>
                   <div class="flex items-center justify-center gap-3">
-                    <span class="material-icons text-slate-400">door_front</span>
+                    <span class="material-icons text-slate-500">door_front</span>
                     <span class="text-xl text-primary font-bold">Sala {{ calling()?.room || '1' }}</span>
                   </div>
                 </div>
               } @else {
                 <div class="relative z-10 text-center">
                   <span class="material-icons text-slate-600 text-8xl mb-4">hourglass_empty</span>
-                  <p class="text-2xl text-slate-400">Aguardando próximo paciente...</p>
+                  <p class="text-2xl text-slate-500">Aguardando próximo paciente...</p>
                 </div>
               }
             </div>
@@ -89,7 +89,7 @@ import { ApiService } from '@core/services/api.service';
                         
                         <!-- Position -->
                         <div class="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg"
-                          [class]="i === 0 ? 'bg-primary text-white' : 'bg-slate-600 text-slate-300'">
+                          [class]="i === 0 ? 'bg-primary text-on-primary' : 'bg-slate-600 text-slate-300'">
                           {{ i + 1 }}
                         </div>
                         
@@ -98,13 +98,13 @@ import { ApiService } from '@core/services/api.service';
                           <p class="font-bold text-lg" [class]="i === 0 ? 'text-primary' : 'text-white'">
                             {{ item.patientName }}
                           </p>
-                          <p class="text-sm text-slate-400">{{ item.professionalName }}</p>
+                          <p class="text-sm text-slate-500">{{ item.professionalName }}</p>
                         </div>
                         
                         <!-- Status -->
                         <div class="text-right">
                           @if (item.status === 'AGUARDANDO') {
-                            <span class="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-bold">
+                            <span class="px-3 py-1 bg-amber-500/20 text-amber-600 rounded-full text-xs font-bold">
                               AGUARDANDO
                             </span>
                             <p class="text-xs text-slate-500 mt-1">{{ item.waitTime }}</p>

@@ -51,25 +51,25 @@ import { ToastService } from '@shared/components/toast.component';
 
         <div class="p-8">
           <!-- Dados Pessoais -->
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Dados Pessoais</h3>
+          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Dados Pessoais</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome Completo *</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome Completo *</label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.name" placeholder="Nome completo">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Data de Nascimento</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Data de Nascimento</label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 type="date" [(ngModel)]="form.birthDate">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Série/Ano</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Série/Ano</label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.grade" placeholder="Ex: 3º ano">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Status</label>
               <select class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.active">
                 <option [value]="true">Ativo</option>
@@ -77,7 +77,7 @@ import { ToastService } from '@shared/components/toast.component';
               </select>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Escola</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Escola</label>
               <select class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.schoolId">
                 <option value="">Selecione a escola</option>
@@ -87,10 +87,10 @@ import { ToastService } from '@shared/components/toast.component';
               </select>
             </div>
             <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Responsável</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Responsável</label>
               <div class="flex gap-2">
                 <div class="relative flex-1">
-                  <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                  <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
                   <input class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                     [(ngModel)]="responsavelSearch" (input)="filterResponsaveis()" placeholder="Buscar responsável..."
                     (focus)="showResponsavelDropdown.set(true)" (blur)="hideResponsavelDropdown()">
@@ -111,7 +111,7 @@ import { ToastService } from '@shared/components/toast.component';
                     </div>
                   }
                   @if (form.responsavelId) {
-                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-red-500"
                       (click)="clearResponsavel()">
                       <span class="material-icons text-[18px]">close</span>
                     </button>
@@ -138,25 +138,25 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <!-- Documentos -->
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Documentos</h3>
+          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Documentos</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">CPF</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">CPF</label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [value]="form.cpf" (input)="formatCPF($event)" placeholder="000.000.000-00" maxlength="14">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">RG</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">RG</label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.rg" placeholder="00.000.000-0">
             </div>
           </div>
 
           <!-- Código de Acesso -->
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Código de Acesso</h3>
+          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Código de Acesso</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div>
-              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Código</label>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Código</label>
               <div class="flex gap-2">
                 <input class="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl text-sm font-mono font-bold text-slate-700 dark:text-slate-300"
                   [value]="form.accessCode || 'Será gerado automaticamente'" readonly>
@@ -173,7 +173,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <!-- Contato -->
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Contato</h3>
+          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Contato</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div>
               <app-phone-input 
@@ -194,7 +194,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <!-- Endereço -->
-          <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Endereço</h3>
+          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Endereço</h3>
           <div class="mb-8">
             <app-address-form 
               [address]="form.address" 
@@ -207,7 +207,7 @@ import { ToastService } from '@shared/components/toast.component';
         <!-- Actions -->
         <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
           <a routerLink="/app/pacientes" class="px-6 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancelar</a>
-          <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
+          <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
             (click)="save()" [disabled]="saving()">
             {{ saving() ? 'Salvando...' : 'Salvar' }}
           </button>
@@ -271,7 +271,7 @@ import { ToastService } from '@shared/components/toast.component';
               Cancelar
             </button>
             <button (click)="createResponsavel()" [disabled]="!newResponsavel.name || savingNewResponsavel()"
-              class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-all flex items-center gap-2">
+              class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-medium text-sm disabled:opacity-50 transition-all flex items-center gap-2">
               @if (savingNewResponsavel()) {
                 <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               }
@@ -369,7 +369,7 @@ export class PacienteFormComponent implements OnInit {
   }
 
   getAvatarColor(name: string): string {
-    const colors = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#EF4444', '#06B6D4', '#84CC16'];
+    const colors = ['#2563EB', '#6D28D9', '#BE185D', '#B45309', '#047857', '#B91C1C', '#0E7490', '#4D7C0F'];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
   }

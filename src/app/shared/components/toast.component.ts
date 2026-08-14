@@ -81,11 +81,11 @@ export class ToastComponent {
 
   getClasses(): string {
     switch (this.toast.type()) {
-      case 'success': return 'bg-emerald-500';
+      case 'success': return 'bg-emerald-600';
       case 'error': return 'bg-red-500';
       case 'warning': return 'bg-amber-500';
       case 'info': return 'bg-blue-500';
-      default: return 'bg-emerald-500';
+      default: return 'bg-emerald-600';
     }
   }
 

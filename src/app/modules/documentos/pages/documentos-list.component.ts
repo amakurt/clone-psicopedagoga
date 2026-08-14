@@ -24,7 +24,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
             <input type="file" class="hidden" (change)="onFileUpload($event)" accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.csv">
           </label>
           <a routerLink="/app/documentos/novo"
-            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
             <span>Novo Documento</span>
           </a>
@@ -35,7 +35,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
       <div class="flex flex-wrap gap-3">
         @for (cat of categories; track cat.value) {
           <button class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
-            [class]="filterCategory() === cat.value ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-slate-900 text-slate-500 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50'"
+            [class]="filterCategory() === cat.value ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-white dark:bg-slate-900 text-slate-500 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50'"
             (click)="filterCategory.set(cat.value); load()">
             {{ cat.label }}
           </button>
@@ -54,7 +54,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
         <div class="p-6 border-b border-slate-100 dark:border-slate-800">
           <div class="relative max-w-md">
-            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
             <input class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
               placeholder="Buscar documento..." [(ngModel)]="searchTerm" (input)="onSearch()">
           </div>
@@ -75,12 +75,12 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Documento</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Paciente</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Categoria</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Data</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Documento</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Categoria</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Data</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -94,7 +94,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                           </div>
                           <div>
                             <p class="text-sm font-bold text-slate-900 dark:text-white">{{ d.name }}</p>
-                            <p class="text-xs text-slate-400">{{ getFileType(d) }}</p>
+                            <p class="text-xs text-slate-500">{{ getFileType(d) }}</p>
                           </div>
                         </div>
                       </td>
@@ -111,16 +111,16 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                       <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ d.createdAt | date:'dd/MM/yyyy' }}</td>
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-end gap-1">
-                          <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Baixar" (click)="downloadDocument(d)">
+                          <button class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Baixar" (click)="downloadDocument(d)">
                             <span class="material-icons text-lg">download</span>
                           </button>
-                          <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Assinar" (click)="openSignModal(d)">
+                          <button class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Assinar" (click)="openSignModal(d)">
                             <span class="material-icons text-lg">draw</span>
                           </button>
-                          <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar com pais" (click)="openShareModal(d)">
+                          <button class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar com pais" (click)="openShareModal(d)">
                             <span class="material-icons text-lg">share</span>
                           </button>
-                          <a [routerLink]="['/app/documentos', d.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                          <a [routerLink]="['/app/documentos', d.id, 'editar']" class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
                         </div>

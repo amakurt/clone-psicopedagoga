@@ -23,7 +23,7 @@ Chart.register(...registerables);
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Gerencie programas de intervenção e coleta de dados</p>
         </div>
         <button (click)="showForm.set(true)"
-          class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+          class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
           <span class="material-icons text-[18px]">add</span>
           Novo Programa
         </button>
@@ -51,12 +51,12 @@ Chart.register(...registerables);
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ editingProgram() ? 'Editar Programa' : 'Novo Programa' }}</h3>
             <button (click)="closeForm()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
-              <span class="material-icons text-slate-400">close</span>
+              <span class="material-icons text-slate-500">close</span>
             </button>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Paciente *</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Paciente *</label>
               <select [(ngModel)]="form.patientId" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
                 <option value="">Selecione</option>
                 @for (p of patients(); track p.id) {
@@ -65,7 +65,7 @@ Chart.register(...registerables);
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Status</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Status</label>
               <select [(ngModel)]="form.status" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
                 <option value="ATIVO">Ativo</option>
                 <option value="PAUSADO">Pausado</option>
@@ -73,17 +73,17 @@ Chart.register(...registerables);
               </select>
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Comportamento-Alvo *</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Comportamento-Alvo *</label>
               <input type="text" [(ngModel)]="form.targetBehavior" placeholder="Ex: Aumentar vocabulário expressivo..."
                 class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Estratégia de Intervenção *</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Estratégia de Intervenção *</label>
               <textarea [(ngModel)]="form.interventionStrategy" rows="2" placeholder="Descreva a estratégia de intervenção..."
                 class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium resize-none"></textarea>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Método de Coleta</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Método de Coleta</label>
               <select [(ngModel)]="form.dataCollectionMethod" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
                 <option value="">Selecione</option>
                 <option value="ABC">ABC (Antecedente-Behavior-Consequence)</option>
@@ -95,11 +95,11 @@ Chart.register(...registerables);
               </select>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Data de Início</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Data de Início</label>
               <input type="date" [(ngModel)]="form.startDate" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observações</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Observações</label>
               <textarea [(ngModel)]="form.notes" rows="2" placeholder="Observações adicionais..."
                 class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium resize-none"></textarea>
             </div>
@@ -109,7 +109,7 @@ Chart.register(...registerables);
               Cancelar
             </button>
             <button (click)="saveProgram()" [disabled]="savingForm() || !form.patientId || !form.targetBehavior"
-              class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50">
+              class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-bold text-sm transition-all disabled:opacity-50">
               {{ savingForm() ? 'Salvando...' : 'Salvar Programa' }}
             </button>
           </div>
@@ -140,17 +140,17 @@ Chart.register(...registerables);
                     </div>
                     <div>
                       <h4 class="text-sm font-black text-slate-900 dark:text-white">{{ program.targetBehavior }}</h4>
-                      <p class="text-xs text-slate-400">{{ getPatientName(program.patientId) }} — {{ program.interventionStrategy | slice:0:80 }}{{ program.interventionStrategy.length > 80 ? '...' : '' }}</p>
+                      <p class="text-xs text-slate-500">{{ getPatientName(program.patientId) }} — {{ program.interventionStrategy | slice:0:80 }}{{ program.interventionStrategy.length > 80 ? '...' : '' }}</p>
                     </div>
                   </div>
                   <div class="flex items-center gap-1">
-                    <button (click)="openDataForm(program)" class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Adicionar dado">
+                    <button (click)="openDataForm(program)" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Adicionar dado">
                       <span class="material-icons text-lg">add_chart</span>
                     </button>
-                    <button (click)="editProgram(program)" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                    <button (click)="editProgram(program)" class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                       <span class="material-icons text-lg">edit</span>
                     </button>
-                    <button (click)="deleteProgram(program)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir">
+                    <button (click)="deleteProgram(program)" class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir">
                       <span class="material-icons text-lg">delete</span>
                     </button>
                   </div>
@@ -158,22 +158,22 @@ Chart.register(...registerables);
 
                 <div class="grid grid-cols-3 gap-3 mb-4">
                   <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">Status</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Status</p>
                     <p class="text-sm font-black mt-1" [class]="getStatusTextClass(program.status)">{{ program.status }}</p>
                   </div>
                   <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">Coleta</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Coleta</p>
                     <p class="text-sm font-black text-slate-900 dark:text-white mt-1">{{ program.dataCollectionMethod || '—' }}</p>
                   </div>
                   <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">Dados</p>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase">Dados</p>
                     <p class="text-sm font-black text-slate-900 dark:text-white mt-1">{{ program.dataPoints?.length || 0 }}</p>
                   </div>
                 </div>
 
                 @if (program.dataPoints && program.dataPoints.length > 0) {
                   <div class="mt-4">
-                    <p class="text-xs font-bold text-slate-400 mb-2">Progresso</p>
+                    <p class="text-xs font-bold text-slate-500 mb-2">Progresso</p>
                     <canvas #programChart [attr.data-program-id]="program.id" height="80"></canvas>
                   </div>
                 }
@@ -181,17 +181,17 @@ Chart.register(...registerables);
                 <!-- Data Points Table -->
                 @if (expandedProgramId() === program.id && program.dataPoints && program.dataPoints.length > 0) {
                   <div class="mt-4 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <p class="text-xs font-bold text-slate-400 mb-2">Histórico de Dados</p>
+                    <p class="text-xs font-bold text-slate-500 mb-2">Histórico de Dados</p>
                     <div class="space-y-2 max-h-48 overflow-y-auto">
                       @for (dp of program.dataPoints; track dp.id) {
                         <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
                           <div>
                             <p class="text-xs font-bold text-slate-900 dark:text-white">{{ dp.date | date:'dd/MM/yyyy HH:mm' }}</p>
-                            @if (dp.note) { <p class="text-[10px] text-slate-400">{{ dp.note }}</p> }
+                            @if (dp.note) { <p class="text-[10px] text-slate-500">{{ dp.note }}</p> }
                           </div>
                           <div class="flex items-center gap-2">
                             <span class="text-sm font-black text-primary">{{ dp.value }}</span>
-                            <button (click)="deleteDataPoint(dp, program)" class="p-1 text-slate-400 hover:text-red-500 rounded">
+                            <button (click)="deleteDataPoint(dp, program)" class="p-1 text-slate-500 hover:text-red-500 rounded">
                               <span class="material-icons text-sm">close</span>
                             </button>
                           </div>
@@ -201,7 +201,7 @@ Chart.register(...registerables);
                   </div>
                 }
 
-                <button (click)="toggleExpand(program.id)" class="mt-3 text-xs font-bold text-slate-400 hover:text-primary transition-colors">
+                <button (click)="toggleExpand(program.id)" class="mt-3 text-xs font-bold text-slate-500 hover:text-primary transition-colors">
                   {{ expandedProgramId() === program.id ? 'Recolher' : 'Ver detalhes' }}
                 </button>
               </div>
@@ -217,21 +217,21 @@ Chart.register(...registerables);
             <div class="flex items-center justify-between mb-6">
               <h3 class="text-lg font-black text-slate-900 dark:text-white">Adicionar Dado</h3>
               <button (click)="showDataForm.set(false)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
-                <span class="material-icons text-slate-400">close</span>
+                <span class="material-icons text-slate-500">close</span>
               </button>
             </div>
             <div class="space-y-4">
               <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Data e Hora</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Data e Hora</label>
                 <input type="datetime-local" [(ngModel)]="dataForm.date" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Valor *</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Valor *</label>
                 <input type="number" step="0.1" [(ngModel)]="dataForm.value" placeholder="0"
                   class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observação</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Observação</label>
                 <textarea [(ngModel)]="dataForm.note" rows="2" placeholder="Observação opcional..."
                   class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium resize-none"></textarea>
               </div>
@@ -239,7 +239,7 @@ Chart.register(...registerables);
             <div class="flex justify-end gap-3 mt-6">
               <button (click)="showDataForm.set(false)" class="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-semibold text-sm">Cancelar</button>
               <button (click)="saveDataPoint()" [disabled]="!dataForm.value && dataForm.value !== 0"
-                class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50">
+                class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-bold text-sm transition-all disabled:opacity-50">
                 Salvar Dado
               </button>
             </div>

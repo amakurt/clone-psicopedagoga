@@ -10,7 +10,7 @@ import { environment } from '../../../../../environments/environment';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1E1B4B] to-[#007F80] p-5">
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1E1B4B] to-primary p-5">
       <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-[420px] overflow-hidden legacy-card">
         <!-- Header -->
         <div class="p-10 pb-8 text-center">
@@ -21,7 +21,7 @@ import { environment } from '../../../../../environments/environment';
 
         <!-- Error/Success -->
         @if (error()) {
-          <div class="mx-10 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
+          <div class="mx-10 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
             <span class="material-icons text-lg">error</span> {{ error() }}
           </div>
           @if (needsVerification()) {
@@ -32,7 +32,7 @@ import { environment } from '../../../../../environments/environment';
           }
         }
         @if (success()) {
-          <div class="mx-10 mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-600 text-sm flex items-center gap-2">
+          <div class="mx-10 mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm flex items-center gap-2">
             <span class="material-icons text-lg">check_circle</span> {{ success() }}
           </div>
         }
@@ -108,18 +108,18 @@ import { environment } from '../../../../../environments/environment';
                 @if (clinicNameError()) {
                   <p class="text-red-500 text-xs mt-1">{{ clinicNameError() }}</p>
                 }
-                <p class="text-xs text-slate-400 mt-1">Sua clínica terá 14 dias grátis, sem cartão.</p>
+                <p class="text-xs text-slate-500 mt-1">Sua clínica terá 14 dias grátis, sem cartão.</p>
               </div>
             }
 
-            <button class="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-xl text-[15px] font-bold transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
+            <button class="w-full py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-[15px] font-bold transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
               type="submit" [disabled]="loading()">
               {{ loading() ? (isRegister() ? 'Criando conta...' : 'Entrando...') : (isRegister() ? 'Criar Conta' : 'Entrar') }}
             </button>
 
             @if (!isRegister()) {
               <div class="text-right mt-2">
-                <button type="button" class="text-xs text-slate-400 hover:text-primary font-semibold" (click)="forgotPassword()">
+                <button type="button" class="text-xs text-slate-500 hover:text-primary font-semibold" (click)="forgotPassword()">
                   Esqueceu sua senha?
                 </button>
               </div>
@@ -129,7 +129,7 @@ import { environment } from '../../../../../environments/environment';
           <!-- Divider -->
           <div class="flex items-center my-6">
             <div class="flex-1 border-b border-slate-200"></div>
-            <span class="px-3 text-xs font-semibold text-slate-400 uppercase">ou</span>
+            <span class="px-3 text-xs font-semibold text-slate-500 uppercase">ou</span>
             <div class="flex-1 border-b border-slate-200"></div>
           </div>
 

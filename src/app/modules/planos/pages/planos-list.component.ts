@@ -18,7 +18,7 @@ declare var html2pdf: any;
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Planos terapêuticos estruturados</p>
         </div>
         <a routerLink="/app/planos/novo"
-          class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+          class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
           <span class="material-icons text-[18px]">add</span>
           <span>Novo Plano</span>
         </a>
@@ -41,13 +41,13 @@ declare var html2pdf: any;
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Paciente</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Data</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Frequência</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Sessões</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Valor Total</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Data</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Frequência</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Sessões</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Valor Total</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -74,13 +74,13 @@ declare var html2pdf: any;
                       </td>
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-end gap-1">
-                          <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Exportar PDF" (click)="exportPDF(p)">
+                          <button class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Exportar PDF" (click)="exportPDF(p)">
                             <span class="material-icons text-lg">picture_as_pdf</span>
                           </button>
-                          <a [routerLink]="['/app/planos', p.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
+                          <a [routerLink]="['/app/planos', p.id]" class="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
                             <span class="material-icons text-lg">visibility</span>
                           </a>
-                          <a [routerLink]="['/app/planos', p.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                          <a [routerLink]="['/app/planos', p.id, 'editar']" class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
                         </div>
@@ -129,7 +129,7 @@ export class PlanosListComponent implements OnInit {
   }
 
   getAvatarColor(name: string): string {
-    const colors = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#EF4444', '#06B6D4', '#84CC16'];
+    const colors = ['#2563EB', '#6D28D9', '#BE185D', '#B45309', '#047857', '#B91C1C', '#0E7490', '#4D7C0F'];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
   }

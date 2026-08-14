@@ -31,7 +31,7 @@ declare var html2pdf: any;
             Exportar PDF
           </button>
           <button (click)="save()" [disabled]="saving() || !selectedPatientId"
-            class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
+            class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
             <span class="material-icons">save</span>
             {{ saving() ? 'Salvando...' : 'Salvar' }}
           </button>
@@ -75,7 +75,7 @@ declare var html2pdf: any;
                 : 'text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700'">
               <span class="flex items-center justify-center gap-2">
                 <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs"
-                  [class]="currentStep() === step.num ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-400'">
+                  [class]="currentStep() === step.num ? 'bg-primary text-on-primary' : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-400'">
                   {{ step.num }}
                 </span>
                 {{ step.label }}

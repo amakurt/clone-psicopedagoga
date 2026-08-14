@@ -18,7 +18,7 @@ import { LaudoService } from '../services/laudo.service';
           <a routerLink="/app/laudos" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50 no-underline">
             <span class="material-icons text-[18px]">arrow_back</span>
           </a>
-          <a [routerLink]="['/app/laudos', id, 'editar']" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark no-underline">
+          <a [routerLink]="['/app/laudos', id, 'editar']" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:bg-primary-dark no-underline">
             <span class="material-icons text-[18px]">edit</span>
           </a>
         </div>
@@ -50,7 +50,7 @@ import { LaudoService } from '../services/laudo.service';
                   <img [src]="item()?.signatureImage" alt="Assinatura" class="max-h-20">
                 </div>
                 @if (item()?.signedAt) {
-                  <p class="text-xs text-slate-400 mt-2">
+                  <p class="text-xs text-slate-500 mt-2">
                     Assinado em {{ item()?.signedAt | date:'dd/MM/yyyy HH:mm' }}
                   </p>
                 }

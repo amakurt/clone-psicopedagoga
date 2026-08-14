@@ -26,12 +26,12 @@ declare var html2pdf: any;
           <!-- Toggle Lista / Gráfico -->
           <div class="flex bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-800 rounded-2xl p-1">
             <button class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all"
-              [class]="viewMode() === 'list' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+              [class]="viewMode() === 'list' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
               (click)="setView('list')">
               <span class="material-icons text-[18px]">view_list</span> Lista
             </button>
             <button class="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all"
-              [class]="viewMode() === 'graph' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+              [class]="viewMode() === 'graph' ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
               (click)="setView('graph')">
               <span class="material-icons text-[18px]">insights</span> Gráfico
             </button>
@@ -43,7 +43,7 @@ declare var html2pdf: any;
               <span>Comparar</span>
             </a>
             <a routerLink="/app/evolucoes/novo"
-              class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+              class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
               <span class="material-icons text-[18px]">add</span>
               <span>Nova Evolução</span>
             </a>
@@ -78,11 +78,11 @@ declare var html2pdf: any;
                 <table class="w-full text-left border-collapse">
                   <thead>
                     <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                      <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Data</th>
-                      <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Paciente</th>
-                      <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Métricas</th>
-                      <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Resumo</th>
-                      <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                      <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Data</th>
+                      <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                      <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Métricas</th>
+                      <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Resumo</th>
+                      <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -101,7 +101,7 @@ declare var html2pdf: any;
                         <td class="px-6 py-4">
                           <div class="flex gap-1">
                             @for (star of getStars(ratingOf(e, 'focus')); track $index) {
-                              <span class="material-icons text-sm" [class]="star ? 'text-amber-400' : 'text-slate-200'">
+                              <span class="material-icons text-sm" [class]="star ? 'text-amber-600' : 'text-slate-400'">
                                 {{ star ? 'star' : 'star_border' }}
                               </span>
                             }
@@ -110,16 +110,16 @@ declare var html2pdf: any;
                         <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 max-w-xs truncate">{{ e.summary || '—' }}</td>
                         <td class="px-6 py-4">
                           <div class="flex items-center justify-end gap-1">
-                            <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Exportar PDF" (click)="exportFrequencySheet(e)">
+                            <button class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Exportar PDF" (click)="exportFrequencySheet(e)">
                               <span class="material-icons text-lg">picture_as_pdf</span>
                             </button>
-                            <button class="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar" (click)="openShareModal(e)">
+                            <button class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar" (click)="openShareModal(e)">
                               <span class="material-icons text-lg">share</span>
                             </button>
-                            <a [routerLink]="['/app/evolucoes', e.id]" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
+                            <a [routerLink]="['/app/evolucoes', e.id]" class="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Ver detalhes">
                               <span class="material-icons text-lg">visibility</span>
                             </a>
-                            <a [routerLink]="['/app/evolucoes', e.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                            <a [routerLink]="['/app/evolucoes', e.id, 'editar']" class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                               <span class="material-icons text-lg">edit</span>
                             </a>
                           </div>
@@ -150,7 +150,7 @@ declare var html2pdf: any;
             <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
               <div>
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white">Evolução das métricas</h2>
-                <p class="text-sm text-slate-400 mt-0.5">
+                <p class="text-sm text-slate-500 mt-0.5">
                   {{ selectedPatient() === 'all' ? 'Média por data · todos os pacientes' : 'Paciente selecionado' }}
                   · {{ chartPoints().length }} registro{{ chartPoints().length === 1 ? '' : 's' }}
                 </p>
@@ -184,13 +184,13 @@ declare var html2pdf: any;
             </div>
             <div class="min-w-0">
               <p class="font-black text-slate-900 dark:text-white">{{ evoToShare()?.paciente?.name || '—' }}</p>
-              <p class="text-xs text-slate-400 mt-0.5">{{ evoToShare()?.date | date:'dd/MM/yyyy' }} · Foco {{ ratingOf(evoToShare(), 'focus') }}/5</p>
+              <p class="text-xs text-slate-500 mt-0.5">{{ evoToShare()?.date | date:'dd/MM/yyyy' }} · Foco {{ ratingOf(evoToShare(), 'focus') }}/5</p>
             </div>
           </div>
 
           <!-- Opção principal: compartilhar com o responsável (LGPD seguro) -->
           <div>
-            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Recomendado · e seguro</p>
+            <p class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Recomendado · e seguro</p>
             <div class="p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 ring-1 ring-primary/20 flex items-center justify-between gap-3">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="size-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -206,7 +206,7 @@ declare var html2pdf: any;
               <button class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all"
                 [class]="evoToShare()?.sharedWithGuardian
                   ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 cursor-default'
-                  : 'bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-95'"
+                  : 'bg-primary text-on-primary hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-95'"
                 [disabled]="evoToShare()?.sharedWithGuardian"
                 (click)="shareWithGuardian()">
                 <span class="material-icons text-sm">{{ evoToShare()?.sharedWithGuardian ? 'check_circle' : 'person_add' }}</span>
@@ -220,15 +220,15 @@ declare var html2pdf: any;
             <button class="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
               (click)="showSocialOptions.set(!showSocialOptions())">
               <span class="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
-                <span class="material-icons text-[18px] text-slate-400">share</span>
+                <span class="material-icons text-[18px] text-slate-500">share</span>
                 Redes sociais (desaconselhado)
               </span>
-              <span class="material-icons text-slate-400 transition-transform" [class.rotate-180]="showSocialOptions()">expand_more</span>
+              <span class="material-icons text-slate-500 transition-transform" [class.rotate-180]="showSocialOptions()">expand_more</span>
             </button>
 
             @if (showSocialOptions()) {
               <div class="mt-3 space-y-4">
-                <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Mensagem</p>
+                <p class="text-xs font-black text-slate-500 uppercase tracking-widest">Mensagem</p>
                 <textarea rows="4" class="w-full px-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary transition-all outline-none resize-none"
                   [(ngModel)]="shareMessage"></textarea>
 
@@ -448,7 +448,7 @@ export class EvolucoesListComponent implements OnInit {
   }
 
   getAvatarColor(name: string): string {
-    const colors = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#EF4444', '#06B6D4', '#84CC16'];
+    const colors = ['#2563EB', '#6D28D9', '#BE185D', '#B45309', '#047857', '#B91C1C', '#0E7490', '#4D7C0F'];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
   }

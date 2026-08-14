@@ -24,7 +24,7 @@ const STATUS = STATUS_CONFIG;
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">Solicitações</h1>
           <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Formulários enviados para responsáveis preencherem online</p>
         </div>
-        <a routerLink="/app/solicitacoes/novo" class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/25 hover:opacity-90 transition-all">
+        <a routerLink="/app/solicitacoes/novo" class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-xl text-sm font-bold shadow-lg shadow-primary/25 hover:opacity-90 transition-all">
           <span class="material-icons text-lg">add</span> Nova Solicitação
         </a>
       </div>
@@ -32,7 +32,7 @@ const STATUS = STATUS_CONFIG;
       <div class="flex gap-2 mb-5">
         @for (f of filters; track f.key) {
           <button class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all"
-            [class]="statusFilter() === f.key ? 'bg-primary text-white border-primary' : 'border-slate-200 text-slate-500 hover:border-slate-300 dark:border-slate-700 dark:text-slate-400'"
+            [class]="statusFilter() === f.key ? 'bg-primary text-on-primary border-primary' : 'border-slate-200 text-slate-500 hover:border-slate-300 dark:border-slate-700 dark:text-slate-400'"
             (click)="statusFilter.set(f.key); load()">
             {{ f.label }}
           </button>
@@ -40,7 +40,7 @@ const STATUS = STATUS_CONFIG;
       </div>
 
       @if (loading()) {
-        <p class="text-slate-400 text-sm">Carregando...</p>
+        <p class="text-slate-500 text-sm">Carregando...</p>
       } @else if (items().length === 0) {
         <div class="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
           <span class="material-icons text-5xl text-slate-300">assignment_turned_in</span>

@@ -28,7 +28,7 @@ import { AuthService } from '@core/services/auth.service';
             <input [value]="email()" disabled class="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400">
           </div>
           <button (click)="updateProfile()" [disabled]="saving()" 
-            class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all">
+            class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all">
             {{ saving() ? 'Salvando...' : 'Salvar' }}
           </button>
           @if (saveSuccess()) {

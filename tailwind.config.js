@@ -8,10 +8,11 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: 'rgb(var(--primary-rgb) / <alpha-value>)',
-          dark: 'rgb(var(--primary-dark-rgb) / <alpha-value>)',
-          light: 'rgb(var(--primary-light-rgb) / <alpha-value>)',
-        }
+          DEFAULT: 'rgba(var(--primary-rgb), <alpha-value>)',
+          dark: 'rgba(var(--primary-dark-rgb), <alpha-value>)',
+          light: 'rgba(var(--primary-light-rgb), <alpha-value>)',
+        },
+        'on-primary': 'rgba(var(--on-primary-rgb), <alpha-value>)',
       },
       borderRadius: {
         '2xl': '1rem',

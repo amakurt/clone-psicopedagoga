@@ -39,7 +39,7 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
             Exportar PDF
           </button>
           <button (click)="save()" [disabled]="saving() || !selectedPatientId()"
-            class="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50">
+            class="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50">
             <span class="material-icons text-[18px]">save</span>
             {{ saving() ? 'Salvando...' : 'Salvar' }}
           </button>
@@ -50,7 +50,7 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
       <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Paciente *</label>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Paciente *</label>
             <select [(ngModel)]="selectedPatientId" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
               <option value="">Selecione um paciente</option>
               @for (p of patients(); track p.id) {
@@ -59,11 +59,11 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Data</label>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Data</label>
             <input type="date" [(ngModel)]="assessmentDate" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Buscar Habilidade</label>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Buscar Habilidade</label>
             <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar habilidade..."
               class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
           </div>
@@ -76,7 +76,7 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
           <button (click)="selectedProtocol.set(protocol)"
             class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all"
             [class]="selectedProtocol() === protocol
-              ? 'bg-primary text-white shadow-lg shadow-primary/20'
+              ? 'bg-primary text-on-primary shadow-lg shadow-primary/20'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'">
             <span class="material-icons text-[18px]">{{ getProtocolIcon(protocol) }}</span>
             {{ protocol }}
@@ -102,7 +102,7 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
                       [class]="selectedDomain()?.id === domain.id ? 'text-primary' : 'text-slate-900 dark:text-white'">
                       {{ domain.name }}
                     </p>
-                    <p class="text-xs text-slate-400">{{ getDomainScore(domain) }}/{{ getDomainMax(domain) }}</p>
+                    <p class="text-xs text-slate-500">{{ getDomainScore(domain) }}/{{ getDomainMax(domain) }}</p>
                   </div>
                   <span class="text-xs font-black px-2 py-0.5 rounded-full"
                     [style.background]="domain.color + '20'" [style.color]="domain.color">
@@ -116,16 +116,16 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
             <div class="p-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
               <div class="text-center">
                 <p class="text-4xl font-black text-primary">{{ overallPercentage() }}%</p>
-                <p class="text-xs text-slate-400 mt-1">Pontuação Geral</p>
+                <p class="text-xs text-slate-500 mt-1">Pontuação Geral</p>
               </div>
               <div class="grid grid-cols-2 gap-2">
                 <div class="text-center p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <p class="text-lg font-black text-slate-900 dark:text-white">{{ totalScore() }}</p>
-                  <p class="text-[10px] text-slate-400">Pontos</p>
+                  <p class="text-[10px] text-slate-500">Pontos</p>
                 </div>
                 <div class="text-center p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
                   <p class="text-lg font-black text-slate-900 dark:text-white">{{ totalMax() }}</p>
-                  <p class="text-[10px] text-slate-400">Máximo</p>
+                  <p class="text-[10px] text-slate-500">Máximo</p>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-2">
@@ -158,7 +158,7 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
               <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
                   <h4 class="font-black text-slate-900 dark:text-white text-sm">{{ selectedDomain()!.name }}</h4>
-                  <p class="text-xs text-slate-400 mt-0.5">{{ getDomainItems().length }} habilidades</p>
+                  <p class="text-xs text-slate-500 mt-0.5">{{ getDomainItems().length }} habilidades</p>
                 </div>
                 <span class="px-3 py-1 rounded-full text-xs font-black"
                   [style.background]="selectedDomain()!.color + '20'" [style.color]="selectedDomain()!.color">
@@ -169,10 +169,10 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
                 @for (item of getDomainItems(); track item.id; let i = $index) {
                   @if (!searchTerm || item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.description.toLowerCase().includes(searchTerm.toLowerCase())) {
                     <div class="px-4 py-3 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <span class="text-xs font-bold text-slate-400 w-8 text-center">{{ i + 1 }}</span>
+                      <span class="text-xs font-bold text-slate-500 w-8 text-center">{{ i + 1 }}</span>
                       <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold text-slate-900 dark:text-white">{{ item.name }}</p>
-                        <p class="text-xs text-slate-400 truncate">{{ item.description }}</p>
+                        <p class="text-xs text-slate-500 truncate">{{ item.description }}</p>
                       </div>
                       <div class="flex gap-1 shrink-0">
                         @for (score of getScoreRange(); track score) {
@@ -193,7 +193,7 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
 
             <!-- Notes -->
             <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
-              <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Observações</label>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Observações</label>
               <textarea [(ngModel)]="notes" rows="3" placeholder="Adicione observações sobre a avaliação..."
                 class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium resize-none"></textarea>
             </div>

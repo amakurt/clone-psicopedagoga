@@ -25,7 +25,7 @@ import { ToastService } from '@shared/components/toast.component';
       <div class="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit">
         @for (tab of tabs; track tab.id) {
           <button class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
-            [class]="activeTab() === tab.id ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+            [class]="activeTab() === tab.id ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-600 hover:text-slate-800 dark:hover:text-slate-300'"
             (click)="activeTab.set(tab.id)">
             {{ tab.label }}
           </button>
@@ -57,15 +57,15 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <div class="p-8">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Informações Pessoais</h3>
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Informações Pessoais</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome Completo</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome Completo</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="profileForm.name" placeholder="Seu nome">
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Email</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="profileForm.email" placeholder="seu@email.com" type="email">
               </div>
@@ -78,12 +78,12 @@ import { ToastService } from '@shared/components/toast.component';
                 </app-phone-input>
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Registro Profissional</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Registro Profissional</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="profileForm.registration" placeholder="CRP, CREF etc.">
               </div>
               <div class="md:col-span-2">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Bio</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Bio</label>
                 <textarea class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all min-h-[80px] resize-y"
                   [(ngModel)]="profileForm.bio" placeholder="Conte um pouco sobre você..."></textarea>
               </div>
@@ -91,7 +91,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
               (click)="saveProfile()">
               Salvar Alterações
             </button>
@@ -106,7 +106,7 @@ import { ToastService } from '@shared/components/toast.component';
           <div class="p-8">
             <div class="flex items-center gap-3 mb-2">
               <span class="material-icons text-primary text-2xl">qr_code_2</span>
-              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Recebimento via PIX</h3>
+              <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Recebimento via PIX</h3>
             </div>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
               Configure sua chave PIX para gerar cobranças para os responsáveis. O sistema monta o QR Code e o código
@@ -115,7 +115,7 @@ import { ToastService } from '@shared/components/toast.component';
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tipo de Chave</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Tipo de Chave</label>
                 <select class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="pixForm.pixKeyType">
                   <option value="CPF">CPF</option>
@@ -126,7 +126,7 @@ import { ToastService } from '@shared/components/toast.component';
                 </select>
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Chave PIX</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Chave PIX</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="pixForm.pixKey" [placeholder]="pixForm.pixKeyType === 'PHONE' ? 'Ex.: 85988014049 (com DDD)' : pixForm.pixKeyType === 'RANDOM' ? 'Ex.: a1b2c3d4-e5f6-...' : 'Ex.: seuemail@email.com ou 12345678901'" [attr.maxlength]="pixForm.pixKeyType === 'RANDOM' ? 36 : undefined">
               </div>
@@ -151,7 +151,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
               (click)="savePix()">
               Salvar Chave PIX
             </button>
@@ -164,7 +164,7 @@ import { ToastService } from '@shared/components/toast.component';
           <div class="p-8">
             <div class="flex items-center gap-3 mb-6">
               <span class="material-icons text-primary text-2xl">{{ hasPassword() ? 'lock' : 'lock_open' }}</span>
-              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+              <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
                 {{ hasPassword() ? 'Alterar Senha' : 'Definir Senha' }}
               </h3>
             </div>
@@ -176,19 +176,19 @@ import { ToastService } from '@shared/components/toast.component';
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               @if (hasPassword()) {
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Senha Atual</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Senha Atual</label>
                   <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                     type="password" [(ngModel)]="passwordForm.current" placeholder="Digite sua senha atual">
                 </div>
                 <div></div>
               }
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nova Senha</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nova Senha</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   type="password" [(ngModel)]="passwordForm.newPassword" placeholder="Digite a nova senha">
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Confirmar Nova Senha</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Confirmar Nova Senha</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   type="password" [(ngModel)]="passwordForm.confirm" placeholder="Confirme a nova senha">
               </div>
@@ -196,7 +196,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
               (click)="changePassword()">
               {{ hasPassword() ? 'Alterar Senha' : 'Definir Senha' }}
             </button>
@@ -208,10 +208,10 @@ import { ToastService } from '@shared/components/toast.component';
       @if (activeTab() === 'clinica') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
           <div class="p-8">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Dados da Clínica</h3>
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Dados da Clínica</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div class="md:col-span-2">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome da Clínica</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome da Clínica</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="clinicForm.name" placeholder="Nome da clínica">
               </div>
@@ -233,7 +233,7 @@ import { ToastService } from '@shared/components/toast.component';
                 </app-phone-input>
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Email</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="clinicForm.email" placeholder="contato@clinica.com" type="email">
               </div>
@@ -241,7 +241,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
               (click)="saveClinic()">
               Salvar Clínica
             </button>
@@ -253,7 +253,7 @@ import { ToastService } from '@shared/components/toast.component';
       @if (activeTab() === 'notificacoes') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
           <div class="p-8">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Preferências de Notificação</h3>
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Preferências de Notificação</h3>
             <div class="space-y-4">
               @for (option of notificationOptions; track option.id) {
                 <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
@@ -271,7 +271,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
 
           <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
               (click)="saveNotifications()">
               Salvar Preferências
             </button>
@@ -283,7 +283,7 @@ import { ToastService } from '@shared/components/toast.component';
       @if (activeTab() === 'aparencia') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
           <div class="p-8">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Aparência</h3>
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6">Aparência</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               @for (theme of themes; track theme.id) {
                 <button class="relative flex flex-col items-center gap-3 p-6 rounded-2xl ring-2 transition-all hover:scale-[1.02]"
@@ -299,7 +299,7 @@ import { ToastService } from '@shared/components/toast.component';
                   <div class="size-16 rounded-2xl flex items-center justify-center"
                     [class]="currentTheme() === theme.id ? 'bg-primary/10' : 'bg-slate-200 dark:bg-slate-700'">
                     <span class="material-icons text-3xl"
-                      [class]="currentTheme() === theme.id ? 'text-primary' : 'text-slate-400 dark:text-slate-500'">
+                      [class]="currentTheme() === theme.id ? 'text-primary' : 'text-slate-500 dark:text-slate-400'">
                       {{ theme.icon }}
                     </span>
                   </div>
@@ -317,37 +317,37 @@ import { ToastService } from '@shared/components/toast.component';
 
           <!-- Simulação de cores -->
           <div class="p-8 border-t border-slate-100 dark:border-slate-800">
-            <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Cores do Tema</h3>
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Cores do Tema</h3>
             <div class="flex flex-wrap gap-3">
               <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #6366f1"
-                [class]="accentColor() === '#6366f1' ? 'ring-indigo-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#6366f1')"></button>
+                style="background: #4f46e5"
+                [class]="accentColor() === '#4f46e5' ? 'ring-indigo-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#4f46e5')"></button>
               <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #8b5cf6"
-                [class]="accentColor() === '#8b5cf6' ? 'ring-violet-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#8b5cf6')"></button>
+                style="background: #6d28d9"
+                [class]="accentColor() === '#6d28d9' ? 'ring-violet-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#6d28d9')"></button>
               <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #ec4899"
-                [class]="accentColor() === '#ec4899' ? 'ring-pink-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#ec4899')"></button>
+                style="background: #be185d"
+                [class]="accentColor() === '#be185d' ? 'ring-pink-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#be185d')"></button>
               <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #10b981"
-                [class]="accentColor() === '#10b981' ? 'ring-emerald-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#10b981')"></button>
+                style="background: #047857"
+                [class]="accentColor() === '#047857' ? 'ring-emerald-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#047857')"></button>
               <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #f59e0b"
-                [class]="accentColor() === '#f59e0b' ? 'ring-amber-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#f59e0b')"></button>
+                style="background: #b45309"
+                [class]="accentColor() === '#b45309' ? 'ring-amber-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#b45309')"></button>
               <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #ef4444"
-                [class]="accentColor() === '#ef4444' ? 'ring-red-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#ef4444')"></button>
+                style="background: #b91c1c"
+                [class]="accentColor() === '#b91c1c' ? 'ring-red-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
+                (click)="setAccentColor('#b91c1c')"></button>
             </div>
           </div>
 
           <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
               (click)="saveAppearance()">
               Salvar Aparência
             </button>
@@ -361,10 +361,10 @@ import { ToastService } from '@shared/components/toast.component';
           <div class="p-8">
             <div class="flex items-center justify-between mb-6">
               <div>
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Horários Disponíveis</h3>
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Horários Disponíveis</h3>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Configure os dias e horários em que você atende. Desative um horário sem precisar excluí-lo.</p>
               </div>
-              <button class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95"
+              <button class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95"
                 (click)="addAvailability()">
                 + Novo Horário
               </button>
@@ -372,7 +372,7 @@ import { ToastService } from '@shared/components/toast.component';
 
             @if (availabilities().length === 0) {
               <div class="p-10 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
-                <span class="material-icons text-5xl text-slate-300 dark:text-slate-600">schedule</span>
+                <span class="material-icons text-5xl text-slate-500 dark:text-slate-500">schedule</span>
                 <p class="mt-3 text-sm font-bold text-slate-700 dark:text-slate-300">Nenhum horário configurado</p>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Clique em "+ Novo Horário" para começar</p>
               </div>
@@ -382,7 +382,7 @@ import { ToastService } from '@shared/components/toast.component';
                   <div class="flex items-center gap-4 p-4 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-700 transition-all"
                     [class]="av.active ? 'bg-slate-50 dark:bg-slate-800/50' : 'bg-slate-50/50 dark:bg-slate-800/20 opacity-60'">
                     <div class="size-11 rounded-xl flex items-center justify-center shrink-0"
-                      [class]="av.active ? 'bg-primary/10 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'">
+                      [class]="av.active ? 'bg-primary/10 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'">
                       <span class="material-icons text-xl">{{ av.active ? 'event_available' : 'event_busy' }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -397,7 +397,7 @@ import { ToastService } from '@shared/components/toast.component';
                         <div class="absolute top-0.5 left-0.5 size-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
                       </div>
                     </label>
-                    <button class="size-9 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-600 transition-all flex items-center justify-center shrink-0" title="Excluir"
+                    <button class="size-9 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-600 transition-all flex items-center justify-center shrink-0" title="Excluir"
                       (click)="deleteAvailability(av)">
                       <span class="material-icons text-lg">delete</span>
                     </button>
@@ -410,10 +410,10 @@ import { ToastService } from '@shared/components/toast.component';
           <!-- Form de novo horário -->
           @if (showAvailabilityForm()) {
             <div class="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
-              <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Novo Horário</h3>
+              <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Novo Horário</h3>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dia da Semana *</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dia da Semana *</label>
                   <select class="w-full px-4 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                     [(ngModel)]="availabilityForm.dayOfWeek">
                     @for (d of dayNames; track $index) {
@@ -422,12 +422,12 @@ import { ToastService } from '@shared/components/toast.component';
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Início *</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Início *</label>
                   <input type="time" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                     [(ngModel)]="availabilityForm.startTime">
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Fim *</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Fim *</label>
                   <input type="time" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                     [(ngModel)]="availabilityForm.endTime">
                 </div>
@@ -435,7 +435,7 @@ import { ToastService } from '@shared/components/toast.component';
               <div class="flex justify-end gap-3 mt-6">
                 <button class="px-5 py-2.5 rounded-2xl text-sm font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all"
                   (click)="showAvailabilityForm.set(false)">Cancelar</button>
-                <button class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm transition-all active:scale-95"
+                <button class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm transition-all active:scale-95"
                   (click)="saveAvailability()" [disabled]="savingAvailability()">
                   {{ savingAvailability() ? 'Salvando...' : 'Salvar Horário' }}
                 </button>
@@ -453,7 +453,7 @@ import { ToastService } from '@shared/components/toast.component';
           <div class="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/10 rounded-2xl">
             <div>
               <p class="text-sm font-bold text-slate-900 dark:text-white">Sair do Sistema</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Encerrar sua sessão atual</p>
+              <p class="text-xs text-slate-600 dark:text-slate-400">Encerrar sua sessão atual</p>
             </div>
             <button class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition-all"
               (click)="auth.logout()">
@@ -465,7 +465,7 @@ import { ToastService } from '@shared/components/toast.component';
     </div>
 
     @if (showToast()) {
-      <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg bg-emerald-500 text-white">
+      <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg bg-emerald-600 text-white">
         <span class="material-icons">check_circle</span>
         <span class="text-sm font-medium">{{ toastMessage() }}</span>
       </div>
@@ -571,7 +571,7 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   getAvatarColor(name: string): string {
-    const colors = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#EF4444', '#06B6D4', '#84CC16'];
+    const colors = ['#2563EB', '#6D28D9', '#BE185D', '#B45309', '#047857', '#B91C1C', '#0E7490', '#4D7C0F'];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
   }

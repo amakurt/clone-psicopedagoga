@@ -17,7 +17,7 @@ Chart.register(...registerables);
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div>
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">Dashboard</h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 capitalize">{{ todayLabel() }}</p>
+          <p class="text-sm text-slate-500 dark:text-slate-500 mt-1 capitalize">{{ todayLabel() }}</p>
         </div>
         <a routerLink="/app/agenda" class="inline-flex items-center gap-2 text-primary font-bold text-sm hover:opacity-80 transition-opacity">
           <span class="material-icons text-[18px]">event</span> Ver agenda completa
@@ -42,7 +42,7 @@ Chart.register(...registerables);
                 [class]="card.iconClass">
                 <span class="material-icons text-[22px]">{{ card.icon }}</span>
               </div>
-              <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">{{ card.label }}</p>
+              <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-1">{{ card.label }}</p>
               <p class="text-3xl font-black text-slate-900 dark:text-white leading-tight">{{ card.value }}</p>
             </button>
           }
@@ -70,8 +70,8 @@ Chart.register(...registerables);
             </div>
           } @else if (todaysAppointments().length === 0) {
             <div class="text-center py-10">
-              <span class="material-icons text-5xl text-slate-200 dark:text-slate-700">event_available</span>
-              <p class="text-slate-400 dark:text-slate-500 mt-3 text-sm">Nenhum agendamento para hoje</p>
+              <span class="material-icons text-5xl text-slate-500 dark:text-slate-700">event_available</span>
+              <p class="text-slate-500 dark:text-slate-500 mt-3 text-sm">Nenhum agendamento para hoje</p>
             </div>
           } @else {
             <div class="space-y-3">
@@ -80,12 +80,12 @@ Chart.register(...registerables);
                   class="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group">
                   <div class="w-16 text-center shrink-0">
                     <p class="text-sm font-black text-slate-900 dark:text-white">{{ a.startTime }}</p>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-wider">{{ a.endTime }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-wider">{{ a.endTime }}</p>
                   </div>
                   <div class="h-8 w-1 rounded-full shrink-0" [class]="apptDot(a.status)"></div>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ a.patientName }}</p>
-                    <p class="text-xs text-slate-400 mt-0.5">{{ a.type || 'Sessão' }}</p>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ a.type || 'Sessão' }}</p>
                   </div>
                   <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0" [class]="apptChip(a.status)">{{ a.status }}</span>
                 </a>
@@ -117,8 +117,8 @@ Chart.register(...registerables);
             </div>
           } @else if (queue().length === 0) {
             <div class="text-center py-10">
-              <span class="material-icons text-5xl text-slate-200 dark:text-slate-700">event_seat</span>
-              <p class="text-slate-400 dark:text-slate-500 mt-3 text-sm">Ninguém aguardando</p>
+              <span class="material-icons text-5xl text-slate-500 dark:text-slate-700">event_seat</span>
+              <p class="text-slate-500 dark:text-slate-500 mt-3 text-sm">Ninguém aguardando</p>
             </div>
           } @else {
             <div class="space-y-3">
@@ -129,7 +129,7 @@ Chart.register(...registerables);
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ q.paciente?.name || q.patientName }}</p>
-                    <p class="text-xs text-slate-400 mt-0.5">{{ waitSince(q.checkInAt) }}</p>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ waitSince(q.checkInAt) }}</p>
                   </div>
                   <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0" [class]="waitChip(q.status)">{{ waitLabel(q.status) }}</span>
                 </div>
@@ -160,16 +160,16 @@ Chart.register(...registerables);
               @if (chartEmpty()) {
                 <div class="absolute inset-0 flex items-center justify-center">
                   <div class="text-center">
-                    <span class="material-icons text-4xl text-slate-200 dark:text-slate-700">bar_chart</span>
-                    <p class="text-slate-400 dark:text-slate-500 mt-2 text-sm">Sem movimentações financeiras no período</p>
+                    <span class="material-icons text-4xl text-slate-500 dark:text-slate-700">bar_chart</span>
+                    <p class="text-slate-500 dark:text-slate-500 mt-2 text-sm">Sem movimentações financeiras no período</p>
                   </div>
                 </div>
               }
               @if (chartError()) {
                 <div class="absolute inset-0 flex items-center justify-center">
                   <div class="text-center">
-                    <span class="material-icons text-4xl text-slate-200 dark:text-slate-700">cloud_off</span>
-                    <p class="text-slate-400 dark:text-slate-500 mt-2 text-sm">Não foi possível carregar os dados</p>
+                    <span class="material-icons text-4xl text-slate-500 dark:text-slate-700">cloud_off</span>
+                    <p class="text-slate-500 dark:text-slate-500 mt-2 text-sm">Não foi possível carregar os dados</p>
                     <button class="mt-3 text-sm font-bold text-primary hover:opacity-80 transition-opacity" (click)="loadFinancialChart()">Tentar novamente</button>
                   </div>
                 </div>
@@ -211,8 +211,8 @@ Chart.register(...registerables);
             </div>
           } @else if (planError()) {
             <div class="text-center py-12">
-              <span class="material-icons text-5xl text-slate-200 dark:text-slate-700">credit_card_off</span>
-              <p class="text-slate-400 dark:text-slate-500 mt-3 text-sm">Não foi possível carregar o plano</p>
+              <span class="material-icons text-5xl text-slate-500 dark:text-slate-700">credit_card_off</span>
+              <p class="text-slate-500 dark:text-slate-500 mt-3 text-sm">Não foi possível carregar o plano</p>
             </div>
           } @else {
             <div class="flex items-center gap-3 mt-5">
@@ -221,7 +221,7 @@ Chart.register(...registerables);
               </div>
               <div>
                 <p class="font-black text-slate-900 dark:text-white">{{ planName() }}</p>
-                <p class="text-xs text-slate-400 mt-0.5">Vence em {{ planExpiry() }}</p>
+                <p class="text-xs text-slate-500 mt-0.5">Vence em {{ planExpiry() }}</p>
               </div>
             </div>
 
@@ -280,14 +280,14 @@ Chart.register(...registerables);
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm text-slate-900 dark:text-white truncate">{{ activity.message }}</p>
-                  <p class="text-xs text-slate-400 mt-0.5">{{ activity.time }}</p>
+                  <p class="text-xs text-slate-500 mt-0.5">{{ activity.time }}</p>
                 </div>
               </div>
             }
             @if (activities().length === 0) {
               <div class="col-span-full text-center py-8">
                 <span class="material-icons text-4xl text-slate-300">notifications_none</span>
-                <p class="text-slate-400 mt-3 text-sm">Nenhuma atividade recente</p>
+                <p class="text-slate-500 mt-3 text-sm">Nenhuma atividade recente</p>
               </div>
             }
           </div>
@@ -351,9 +351,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   statCards() {
     return [
-      { key: 'totalPacientes', label: 'Pacientes Ativos', value: this.stats()?.totalPacientes || 0, icon: 'people', route: '/app/pacientes', iconClass: 'bg-primary text-white shadow-primary/20' },
+      { key: 'totalPacientes', label: 'Pacientes Ativos', value: this.stats()?.totalPacientes || 0, icon: 'people', route: '/app/pacientes', iconClass: 'bg-primary text-on-primary shadow-primary/20' },
       { key: 'totalSessoes', label: 'Sessões', value: this.stats()?.totalSessoes || 0, icon: 'psychology_alt', route: '/app/sessoes', iconClass: 'bg-emerald-100 text-emerald-600 shadow-emerald-100' },
-      { key: 'documentosPendentes', label: 'Documentos Pendentes', value: this.stats()?.documentosPendentes || 0, icon: 'description', route: '/app/documentos', iconClass: 'bg-amber-100 text-amber-600 shadow-amber-100' },
+      { key: 'documentosPendentes', label: 'Documentos Pendentes', value: this.stats()?.documentosPendentes || 0, icon: 'description', route: '/app/documentos', iconClass: 'bg-amber-100 text-amber-700 shadow-amber-100' },
       { key: 'totalEncaminhamentos', label: 'Encaminhamentos', value: this.stats()?.totalEncaminhamentos || 0, icon: 'forward', route: '/app/encaminhamentos', iconClass: 'bg-sky-100 text-sky-600 shadow-sky-100' },
       { key: 'casosArquivados', label: 'Casos Arquivados', value: this.stats()?.casosArquivados || 0, icon: 'archive', route: '/app/sessoes', iconClass: 'bg-slate-100 text-slate-600 shadow-slate-100' },
       { key: 'protocolosTEA', label: 'Protocolos TEA', value: this.stats()?.protocolosTEA || 0, icon: 'psychology', route: '/app/protocolos', iconClass: 'bg-purple-100 text-purple-600 shadow-purple-100' },
@@ -598,7 +598,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   getNotifColor(type: string): string {
     if (type.includes('paciente') || type.includes('Paciente')) return 'bg-blue-100 text-blue-600';
-    if (type.includes('documento') || type.includes('Documento')) return 'bg-amber-100 text-amber-600';
+    if (type.includes('documento') || type.includes('Documento')) return 'bg-amber-100 text-amber-700';
     if (type.includes('sessao') || type.includes('Sessão') || type.includes('evolucao')) return 'bg-green-100 text-green-600';
     if (type.includes('pagamento') || type.includes('Pagamento') || type.includes('Financeiro')) return 'bg-purple-100 text-purple-600';
     if (type.includes('agendamento') || type.includes('Agendamento')) return 'bg-cyan-100 text-cyan-600';
@@ -628,7 +628,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   waitIconClass(status: string): string {
     if (status === 'CHAMADO') return 'bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-400';
     if (status === 'EM_SESSAO') return 'bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400';
-    return 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400';
+    return 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400';
   }
 
   waitLabel(status: string): string {

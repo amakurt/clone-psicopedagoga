@@ -93,7 +93,7 @@ const STATUS = STATUS_CONFIG;
           </div>
 
           @if (doc().status !== 'RESPONDIDO') {
-            <p class="text-sm text-slate-400 text-center py-8">
+            <p class="text-sm text-slate-500 text-center py-8">
               Ainda aguardando o responsável preencher. Compartilhe o link acima.
             </p>
           } @else {
@@ -101,7 +101,7 @@ const STATUS = STATUS_CONFIG;
               @for (f of doc().template; track f.id) {
                 @if (hasAnswer(f.id)) {
                   <div class="py-3">
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400 mb-1">
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
                       {{ f.label }} @if (f.required) { <span class="text-red-400">*</span> }
                     </p>
                     <p class="text-sm text-slate-800 dark:text-slate-100 whitespace-pre-wrap">{{ displayAnswer(f) }}</p>

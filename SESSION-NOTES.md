@@ -6,7 +6,33 @@
 
 ---
 
-## Sessão 13/08/2026 (Quinta) — PIX próprio (cobrança sem gateway) + tema escuro completo
+## Sessão 14/08/2026 (Sexta) — Correções de visibilidade no tema claro (fontes/ícones "invisíveis")
+
+### 63. Causa raiz: `bg-primary` transparente no runtime (bug herdado da sessão 13)
+- **Sintoma:** no tema claro, textos e ícones teal sumiam em botões/badges da landing e páginas internas — o usuário relatou "fontes e ícones não visíveis"
+- **Causa raiz:** a sessão 13 mudou `tailwind.config.js` para `rgb(var(--primary-rgb) / <alpha-value>)` — sintaxe inválida quando a variável contém vírgulas (`0, 127, 128`); o browser descarta a regra inteira → **todo `bg-primary`/`text-primary` ficou transparente** (texto branco sobre fundo transparente sobre fundo branco = invisível). O botão "Salvar" que parecia HMR corrompido era, na verdade, esse bug generalizado
+- **Correção:** `tailwind.config.js` → `rgba(var(--primary-rgb), <alpha-value>)` (vírgula em vez de barra) para `primary`/`primary.dark`/`primary.light` + nova cor `on-primary`; validado no CSS compilado e com Playwright (cor computada correta + contraste)
+
+### 64. `--on-primary` por luminância (texto do accent legível sempre)
+- **Problema:** o texto dos botões era `text-white` fixo — com accent claro (ex.: amber-500) branco sobre âmbar falha contraste (2.2:1)
+- **Correção:** `src/app/core/utils/theme.ts` ganhou `luminance()` + `onPrimaryColor()`; `applyAccentColor` agora seta `--on-primary`/`--on-primary-rgb` (branco para accents escuros, `#0F172A` para claros) + fallbacks no `:root` de `styles.scss`; `text-white` → `text-on-primary` em 55 arquivos (script Python: só onde `bg-primary` está na mesma string de classe, sem conflito com `dark:bg-slate`/`dark:bg-gray`; caso `file:bg-primary file:text-white` manual)
+- **Swatches de accent escurecidos** em Configurações: indigo-600, purple-700, pink-700, emerald-700, amber-700, red-700 (branco sempre ≥4.5:1)
+
+### 65. Auditoria WCAG automatizada (Playwright) + correções de contraste
+- **Ferramenta:** script Python (`/tmp/audit-final.py`) que computa o contraste real de TODOS os elementos visíveis (compondo alfa dos fundos, ignorando decorativos) — usado para iterar até passar
+- **Landing:** SVG underline `stroke="#007F80"` → `currentColor`; CTA do banner `to-teal-600` → `to-primary-dark`; botão do banner `text-primary` → `text-primary-dark`; footer `text-gray-500` → `text-gray-400`; ícones de features `*-500` → `*-600` (blue/teal/purple/orange); badge "Para os Pais" orange-600
+- **Login/select-clinic:** `to-[#007F80]` → `to-primary`; `text-red-600`→`text-red-700`; `text-emerald-600`→`text-emerald-700`; `text-slate-400`→`text-slate-500`
+- **Global:** `text-slate-400` → `text-slate-500` em todos os módulos (cabeçalhos de tabela 2.52:1 → 4.83:1, labels, ícones de ação, dias da semana da agenda) preservando `dark:text-slate-*` (perl com lookbehind); estrelas de avaliação `amber-400`→`amber-600`; `text-slate-200`→`text-slate-400`
+- **Paletas de avatar** (getAvatarColor em 7 listas): tons 500 → tons 700 (`#2563EB, #6D28D9, #BE185D, #B45309, #047857, #B91C1C, #0E7490, #4D7C0F`) — iniciais brancas ≥4.5:1
+- **Dashboard:** labels dos cards, empty states (`text-slate-200`→`text-slate-400`), ícones `amber-600`→`amber-700`, badge `red-500`→`red-600`
+- **Configurações:** tabs inativas `slate-500`→`slate-600`; avatar `slate-500`→`slate-600`; "Encerrar sessão" `slate-500`→`slate-600`; main-layout: logout `red-500`→`red-600`, badges `red-500`→`red-600`, chevron do sidebar `slate-400`→`slate-500`, avatar placeholder `slate-300`→`slate-600`; phone-input: "WhatsApp" `gray-500`→`gray-600`
+- **Financeiro:** totais e valores de receita `emerald-600`→`emerald-700` (3.60:1 → 5.9:1); botão "Gerar Códigos" (pacientes) `amber-600`→`amber-700`
+- **Resultado final:** Landing/Login/Dashboard/Configurações/Agenda/Pacientes/Sessões/Financeiro/Evoluções/Planos — 0 problemas reais de contraste (restantes são ícones decorativos ≥3:1, itens borderline 4.2-4.3, ou overlay de foto por design)
+
+### 66. Validação
+- `ng build` limpo após cada rodada; dev server reiniciado após mudança no tailwind.config.js (lição da sessão 13 mantida); auditorias Playwright re-executadas em todas as páginas principais (10 telas, tema claro) com contraste composto real
+
+---
 
 ### 61. Cobrança via PIX própria do profissional — validada de ponta a ponta
 - **Decisão:** sem gateway — cada profissional cadastra sua própria chave PIX em Configurações → Recebimento; o sistema monta o QR Code/copia-e-cola (padrão EMV/BR Code estático); o profissional exibe/compartilha (WhatsApp); o portal do responsável recebe as cobranças e paga ("Já paguei" notifica a equipe). Asaas segue só para a assinatura do dono do sistema

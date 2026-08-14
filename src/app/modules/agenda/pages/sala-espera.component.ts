@@ -25,7 +25,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
             <span class="material-icons text-[18px]">tv</span>
           </button>
           <button (click)="showCheckinForm.set(true)"
-            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">person_add</span> Check-in
           </button>
         </div>
@@ -35,19 +35,19 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="p-5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 text-center">
           <p class="text-3xl font-black text-amber-600">{{ waitingCount() }}</p>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Aguardando</p>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Aguardando</p>
         </div>
         <div class="p-5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 text-center">
           <p class="text-3xl font-black text-blue-600">{{ calledCount() }}</p>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Chamados</p>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Chamados</p>
         </div>
         <div class="p-5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 text-center">
           <p class="text-3xl font-black text-purple-600">{{ inSessionCount() }}</p>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Em Sessão</p>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Em Sessão</p>
         </div>
         <div class="p-5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 text-center">
           <p class="text-3xl font-black text-emerald-600">{{ avgWait() }}</p>
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Min Médio</p>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Min Médio</p>
         </div>
       </div>
 
@@ -55,7 +55,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
         <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h2 class="text-lg font-bold text-slate-900 dark:text-white">Fila de Atendimento</h2>
-          <button class="p-2 text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" (click)="load()">
+          <button class="p-2 text-slate-500 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all" (click)="load()">
             <span class="material-icons">refresh</span>
           </button>
         </div>
@@ -67,7 +67,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
         } @else if (queue().length === 0) {
           <div class="text-center py-16">
             <span class="material-icons text-7xl text-slate-200 dark:text-slate-700">event_seat</span>
-            <p class="text-slate-400 dark:text-slate-500 mt-4 text-lg">Nenhum paciente na sala de espera</p>
+            <p class="text-slate-500 dark:text-slate-500 mt-4 text-lg">Nenhum paciente na sala de espera</p>
             <p class="text-slate-300 dark:text-slate-600 text-sm">Pacientes que fizerem check-in aparecerão aqui</p>
           </div>
         } @else {
@@ -90,7 +90,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                     Check-in: {{ formatTime(item.checkInAt) }} • Aguardando {{ getWaitTime(item.checkInAt) }}
                   </p>
                   @if (item.notes) {
-                    <p class="text-xs text-slate-400 mt-1 italic">"{{ item.notes }}"</p>
+                    <p class="text-xs text-slate-500 mt-1 italic">"{{ item.notes }}"</p>
                   }
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
@@ -112,7 +112,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                       <span class="material-icons text-sm mr-1">check</span> Concluir
                     </button>
                   }
-                  <button class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                  <button class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
                     (click)="openRemoveModal(item.id)" title="Remover">
                     <span class="material-icons text-lg">close</span>
                   </button>
@@ -168,7 +168,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
 
           <div class="flex justify-end gap-3 mt-6">
             <button class="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all" (click)="showCheckinForm.set(false)">Cancelar</button>
-            <button class="px-5 py-2.5 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+            <button class="px-5 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
               (click)="checkin()" [disabled]="saving()">
               {{ saving() ? 'Registrando...' : 'Fazer Check-in' }}
             </button>

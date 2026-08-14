@@ -30,7 +30,7 @@ import { AuthService } from '../../../../core/services/auth.service';
       <!-- Plano atual -->
       <div class="grid md:grid-cols-2 gap-6">
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Plano atual</p>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Plano atual</p>
           <div class="mt-3 flex items-end justify-between">
             <div>
               <p class="text-2xl font-black text-slate-900 dark:text-white">{{ currentPlan()?.name || '—' }}</p>
@@ -47,7 +47,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 
         <!-- Uso -->
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Uso da clínica</p>
+          <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Uso da clínica</p>
           <div class="mt-4 space-y-4">
             <div>
               <div class="flex justify-between text-sm font-semibold text-slate-600 dark:text-slate-300">
@@ -75,7 +75,7 @@ import { AuthService } from '../../../../core/services/auth.service';
       <div>
         @if (hasActiveSubscription()) {
           <button (click)="showPlans.set(!showPlans())"
-            class="mt-2 inline-flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-slate-500 hover:text-primary transition-colors"
+            class="mt-2 inline-flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-500 hover:text-primary transition-colors"
             title="Ver outros planos">
             <span class="material-icons text-[18px]">swap_horiz</span>
             {{ showPlans() ? 'Ocultar planos' : 'Trocar de plano' }}
@@ -95,7 +95,7 @@ import { AuthService } from '../../../../core/services/auth.service';
                   <p class="font-bold text-slate-900 dark:text-white">{{ plan.name }}</p>
                   <p class="text-2xl font-black mt-2 text-slate-900 dark:text-white">
                     {{ plan.priceCents ? 'R$ ' + (plan.priceCents / 100).toFixed(2) : 'Grátis' }}
-                    <span class="text-sm font-semibold text-slate-400">/mês</span>
+                    <span class="text-sm font-semibold text-slate-500">/mês</span>
                   </p>
                   <p class="text-xs text-slate-500 mt-1">{{ plan.maxPacientes >= 100000 ? 'Pacientes ilimitados' : plan.maxPacientes + ' pacientes' }} · {{ plan.maxProfissionais >= 1000 ? 'Profissionais ilimitados' : plan.maxProfissionais + ' profissionais' }}</p>
                   <div class="mt-4 text-sm text-slate-600 dark:text-slate-300 space-y-1 flex-1">
@@ -109,7 +109,7 @@ import { AuthService } from '../../../../core/services/auth.service';
                     class="mt-4 w-full py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
                     [class]="plan.code === currentPlan()?.code
                       ? 'bg-primary/10 text-primary'
-                      : 'bg-primary hover:bg-primary-dark text-white'"
+                      : 'bg-primary hover:bg-primary-dark text-on-primary'"
                     [disabled]="plan.code === currentPlan()?.code || loading()"
                     (click)="subscribe(plan)">
                     {{ plan.code === currentPlan()?.code ? 'Plano atual' : (plan.priceCents ? 'Assinar' : 'Iniciar trial') }}
@@ -151,7 +151,7 @@ import { AuthService } from '../../../../core/services/auth.service';
               }
             </div>
           }
-          <p class="text-xs text-slate-400 mt-3">Aguardando confirmação do pagamento<span class="animate-pulse">…</span></p>
+          <p class="text-xs text-slate-500 mt-3">Aguardando confirmação do pagamento<span class="animate-pulse">…</span></p>
         </div>
       }
     </div>

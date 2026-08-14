@@ -91,7 +91,7 @@ import { WhatsAppService, WhatsAppLog } from '../services/whatsapp.service';
             <div class="size-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         } @else if (logs().length === 0) {
-          <div class="text-center py-8 text-slate-400">
+          <div class="text-center py-8 text-slate-500">
             <span class="material-icons text-4xl mb-2">inbox</span>
             <p class="text-sm">Nenhuma mensagem enviada ainda</p>
           </div>

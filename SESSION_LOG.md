@@ -1,6 +1,30 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 13 de Agosto de 2026
+## Última Atualização: 14 de Agosto de 2026
+
+---
+
+## Sessão 17 - 14/08/2026 (Sexta) — Correções de visibilidade no tema claro (fontes/ícones "invisíveis")
+
+### O que foi feito
+
+#### 1. Causa raiz encontrada: `bg-primary` transparente no runtime
+- Usuário relatou fontes/ícones invisíveis no tema claro (landing etc.) → investigação com skill `frontend-design` + agente frontend-specialist (.agent)
+- A sessão 13 trocou o tailwind.config.js para `rgb(var(--primary-rgb) / <alpha-value>)` — sintaxe inválida com variável em formato vírgula → browser descarta a regra → TODO `bg-primary`/`text-primary` transparente (texto branco invisível sobre branco)
+- Corrigido para `rgba(var(--primary-rgb), <alpha-value>)` (vírgula) + validado no CSS compilado e via Playwright
+
+#### 2. Contraste do accent garantido por luminância
+- Novo `--on-primary`/`--on-primary-rgb` calculado em `theme.ts` (`luminance()`/`onPrimaryColor()`): branco para accents escuros, `#0F172A` para claros; fallbacks no `:root` de `styles.scss`
+- `text-white` → `text-on-primary` em 55 arquivos (script com heurística segura) + swatches de accent escurecidos para tons 700 (indigo/purple/pink/emerald/amber/red)
+
+#### 3. Auditoria WCAG automatizada (Playwright) em 10 telas
+- Script de auditoria compõe alfa dos fundos e calcula contraste real de todos os elementos visíveis; iterações até 0 problemas reais
+- Landing: SVG underline `currentColor`, CTA `to-primary-dark`, botão do banner `text-primary-dark`, footer `text-gray-400`, ícones features `*-600`, badge "Para os Pais" orange-600
+- Login/select-clinic: gradiente `to-primary`, `text-red-700`/`text-emerald-700`/`text-slate-500`
+- Global: `text-slate-400`→`text-slate-500` (cabeçalhos de tabela, labels, ícones de ação, agenda) preservando `dark:`; estrelas `amber-600`; paletas de avatar tons 700 (7 listas); badges `red-600`; `emerald-700` em valores financeiros; botão "Gerar Códigos" `amber-700`; tabs/avatars configurações `slate-600`; chevron sidebar `slate-500`
+
+#### 4. Validação
+- `ng build` limpo; dev server reiniciado após mudança do tailwind.config.js; auditorias Playwright re-executadas nas 10 telas principais (tema claro): 0 problemas reais (restam só ícones decorativos ≥3:1 e itens borderline 4.2-4.3)
 
 ---
 

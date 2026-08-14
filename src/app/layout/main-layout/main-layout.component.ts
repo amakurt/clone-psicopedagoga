@@ -29,13 +29,13 @@ type NavItem = {
         [class.w-64]="sidebarOpen()"
         [class.w-20]="!sidebarOpen()">
 
-        <button class="absolute -right-3 top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-1 text-slate-400 hover:text-primary transition-colors shadow-sm z-50"
+        <button class="absolute -right-3 top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-1 text-slate-500 hover:text-primary transition-colors shadow-sm z-50"
           (click)="toggleSidebar()">
           <span class="material-icons text-[14px]">{{ sidebarOpen() ? 'chevron_left' : 'chevron_right' }}</span>
         </button>
 
         <div class="p-6 flex items-center gap-3" [class.justify-center]="!sidebarOpen()" [class.px-4]="!sidebarOpen()">
-          <div class="size-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 shrink-0">
+          <div class="size-10 bg-primary rounded-xl flex items-center justify-center text-on-primary shadow-lg shadow-primary/20 shrink-0">
             <span class="material-icons text-[24px]">dashboard</span>
           </div>
           <div class="overflow-hidden transition-all duration-300" [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()" [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
@@ -76,7 +76,7 @@ type NavItem = {
                             @if (auth.user()?.avatarUrl) {
                               <img [src]="auth.user()?.avatarUrl" class="size-full object-cover">
                             } @else {
-                              <span class="material-icons text-slate-300 text-xl">person</span>
+                              <span class="material-icons text-slate-600 text-xl">person</span>
                             }
                           </div>
                           <div class="flex-1 min-w-0">
@@ -86,7 +86,7 @@ type NavItem = {
                         </div>
                       } @else if (child.action) {
                         <button (click)="handleChildAction(child)"
-                          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
+                          class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
                           [title]="child.label">
                           <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
                           <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
@@ -122,7 +122,7 @@ type NavItem = {
                   {{ item.label }}
                 </span>
                 @if (item.count && item.count() > 0) {
-                  <span class="absolute flex items-center justify-center bg-red-500 text-white text-[8px] font-black rounded-full transition-all"
+                  <span class="absolute flex items-center justify-center bg-red-600 text-white text-[8px] font-black rounded-full transition-all"
                     [class.right-3]="sidebarOpen()" [class.min-w-[14px]]="sidebarOpen()" [class.h-[14px]]="sidebarOpen()" [class.px-1]="sidebarOpen()"
                     [class.top-1.5]="!sidebarOpen()" [class.right-1.5]="!sidebarOpen()" [class.size-2]="!sidebarOpen()">
                     {{ sidebarOpen() ? item.count() : '' }}
@@ -191,7 +191,7 @@ type NavItem = {
                 (click)="toggleNotifications()">
                 <span class="material-icons text-xl">notifications</span>
                 @if (notifCount() > 0) {
-                  <span class="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
+                  <span class="absolute -top-1 -right-1 size-5 bg-red-600 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
                     {{ notifCount() }}
                   </span>
                 }

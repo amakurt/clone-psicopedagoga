@@ -16,7 +16,7 @@ import { EscolasService } from '../services/escolas.service';
           <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Cadastro de instituições de ensino</p>
         </div>
         <a routerLink="/app/escolas/novo"
-          class="px-5 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold flex items-center gap-2 transition-all">
+          class="px-5 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-semibold flex items-center gap-2 transition-all">
           <span class="material-icons">add</span>
           Nova Escola
         </a>

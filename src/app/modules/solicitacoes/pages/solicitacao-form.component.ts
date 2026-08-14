@@ -91,17 +91,17 @@ const FIELD_TYPES = [
       <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 mb-5">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-bold text-slate-900 dark:text-white">Campos do formulário</h2>
-          <span class="text-xs text-slate-400">{{ fields().length }} campo(s)</span>
+          <span class="text-xs text-slate-500">{{ fields().length }} campo(s)</span>
         </div>
 
         @if (fields().length === 0) {
-          <p class="text-sm text-slate-400 text-center py-8">Nenhum campo adicionado ainda</p>
+          <p class="text-sm text-slate-500 text-center py-8">Nenhum campo adicionado ainda</p>
         }
 
         <div class="space-y-3">
           @for (f of fields(); track f.id; let i = $index) {
             <div class="flex items-center gap-3 p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-700/50">
-              <span class="material-icons text-slate-400">{{ iconOf(f.type) }}</span>
+              <span class="material-icons text-slate-500">{{ iconOf(f.type) }}</span>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <input class="flex-1 px-3 py-1.5 border rounded-lg text-sm font-semibold outline-none bg-white dark:bg-slate-700 dark:text-white dark:border-slate-600"
@@ -110,7 +110,7 @@ const FIELD_TYPES = [
                     [(ngModel)]="f.type" [ngModelOptions]="{standalone: true}" (ngModelChange)="onTypeChange(f)">
                     @for (t of FIELD_TYPES; track t.type) { <option [value]="t.type">{{ t.label }}</option> }
                   </select>
-                  <button class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                  <button class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                     (click)="toggleRequired(f)" [title]="f.required ? 'Obrigatório' : 'Opcional'">
                     <span class="material-icons text-base" [class.text-red-500]="f.required">star</span>
                   </button>
@@ -124,7 +124,7 @@ const FIELD_TYPES = [
                     @for (opt of f.options; track $index) {
                       <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs">
                         {{ opt }}
-                        <button (click)="removeOption(f, $index)" class="text-slate-400 hover:text-red-500">✕</button>
+                        <button (click)="removeOption(f, $index)" class="text-slate-500 hover:text-red-500">✕</button>
                       </span>
                     }
                     <input class="w-36 px-2 py-1 border rounded-lg text-xs outline-none bg-white dark:bg-slate-700 dark:text-white dark:border-slate-600"
@@ -148,7 +148,7 @@ const FIELD_TYPES = [
       </div>
 
       <div class="flex gap-3">
-        <button class="flex-1 py-3.5 bg-primary hover:opacity-90 text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
+        <button class="flex-1 py-3.5 bg-primary hover:opacity-90 text-on-primary rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
           [disabled]="saving()" (click)="save()">
           {{ saving() ? 'Criando...' : 'Criar Solicitação' }}
         </button>

@@ -30,7 +30,7 @@ import { EscolasService } from '../services/escolas.service';
           </div>
         </div>
         <a [routerLink]="['/app/escolas', id, 'editar']" 
-          class="px-5 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold flex items-center gap-2 transition-all">
+          class="px-5 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-semibold flex items-center gap-2 transition-all">
           <span class="material-icons text-[18px]">edit</span>
           Editar
         </a>

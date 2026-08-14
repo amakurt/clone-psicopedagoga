@@ -20,7 +20,7 @@ import { AuthService } from '../../../../core/services/auth.service';
           <div class="flex flex-col items-center gap-4">
             <span class="material-icons text-[56px] text-red-500">error</span>
             <p class="text-red-600 font-semibold">{{ error() }}</p>
-            <button (click)="goToLogin()" class="px-6 py-2 bg-primary text-white rounded-xl font-semibold">
+            <button (click)="goToLogin()" class="px-6 py-2 bg-primary text-on-primary rounded-xl font-semibold">
               Voltar ao Login
             </button>
           </div>

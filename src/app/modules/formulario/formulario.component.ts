@@ -13,7 +13,7 @@ import { environment } from '@env/environment';
       <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-xl overflow-hidden my-8 legacy-card">
         @if (loading()) {
           <div class="p-12 text-center">
-            <p class="text-slate-400 text-sm">Carregando formulário...</p>
+            <p class="text-slate-500 text-sm">Carregando formulário...</p>
           </div>
         } @else if (error()) {
           <div class="p-12 text-center">
@@ -35,17 +35,17 @@ import { environment } from '@env/environment';
           <div class="p-8">
             <div class="flex items-center gap-3 mb-1">
               <span class="material-icons text-primary text-3xl">psychology</span>
-              <span class="text-xs font-bold uppercase tracking-widest text-slate-400">EduPsych Pro</span>
+              <span class="text-xs font-bold uppercase tracking-widest text-slate-500">EduPsych Pro</span>
             </div>
             <h1 class="text-2xl font-black text-slate-900 mt-2">{{ form()?.title }}</h1>
             @if (form()?.description) {
               <p class="text-sm text-slate-500 mt-2 whitespace-pre-wrap">{{ form()?.description }}</p>
             }
             @if (form()?.responsibleName) {
-              <p class="text-xs text-slate-400 mt-3">Solicitado para: <strong>{{ form()?.responsibleName }}</strong></p>
+              <p class="text-xs text-slate-500 mt-3">Solicitado para: <strong>{{ form()?.responsibleName }}</strong></p>
             }
             @if (form()?.dueDate) {
-              <p class="text-xs text-slate-400 mt-1">Prazo: {{ form()?.dueDate | date:'dd/MM/yyyy' }}</p>
+              <p class="text-xs text-slate-500 mt-1">Prazo: {{ form()?.dueDate | date:'dd/MM/yyyy' }}</p>
             }
           </div>
 
@@ -111,7 +111,7 @@ import { environment } from '@env/environment';
                 </div>
               }
 
-              <button class="w-full py-3.5 bg-primary hover:opacity-90 text-white rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
+              <button class="w-full py-3.5 bg-primary hover:opacity-90 text-on-primary rounded-xl font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50"
                 type="submit" [disabled]="sending()">
                 {{ sending() ? 'Enviando...' : 'Enviar Formulário' }}
               </button>

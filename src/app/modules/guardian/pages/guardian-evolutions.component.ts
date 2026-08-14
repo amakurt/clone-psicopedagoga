@@ -41,7 +41,7 @@ declare var html2pdf: any;
         @if (filteredRecords().length > 0 && filteredRecords().length % 2 === 0 && filteredRecords().length >= 2) {
           <button (click)="toggleComparison()"
             class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-            [class]="comparisonMode() ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300'">
+            [class]="comparisonMode() ? 'bg-primary text-on-primary' : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300'">
             <span class="material-icons text-lg">compare</span> Comparar
           </button>
         }

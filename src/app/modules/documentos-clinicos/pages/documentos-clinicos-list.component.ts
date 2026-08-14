@@ -26,7 +26,7 @@ import { RouterLink } from '@angular/router';
               <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{{ doc.description }}</p>
             </div>
             <div class="px-8 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">{{ doc.category }}</span>
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">{{ doc.category }}</span>
               <span class="material-icons text-slate-300 dark:text-slate-600 group-hover:text-primary group-hover:translate-x-1 transition-all">arrow_forward</span>
             </div>
           </a>

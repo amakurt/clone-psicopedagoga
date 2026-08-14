@@ -1,6 +1,23 @@
 // Aplica a cor de destaque (accent) escolhida em "Configurações → Aparência".
 // O tema consome as variáveis --primary/--primary-dark/--primary-light (e
 // --primary-rgb para sombras rgba em styles.scss).
+// --on-primary é a cor de texto legível sobre superfícies primárias (branco
+// para accents escuros, escuro para accents claros) — garante contraste WCAG
+// mesmo com accent claro (amber/emerald/pink).
+
+function luminance(hex: string): number {
+  const h = normalizeHex(hex);
+  const n = parseInt(h, 16);
+  const toLin = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * toLin((n >> 16) & 255) + 0.7152 * toLin((n >> 8) & 255) + 0.0722 * toLin(n & 255);
+}
+
+export function onPrimaryColor(hex: string): string {
+  return luminance(hex) < 0.35 ? '#FFFFFF' : '#0F172A';
+}
 
 function normalizeHex(hex: string): string {
   const h = hex.trim().replace('#', '');
@@ -48,4 +65,6 @@ export function applyAccentColor(color: string) {
   el.style.setProperty('--primary-dark-rgb', hexToRgb(shade(color, 0.8)));
   el.style.setProperty('--primary-light', mix(color, '#ffffff', 0.85));
   el.style.setProperty('--primary-light-rgb', hexToRgb(mix(color, '#ffffff', 0.85)));
+  el.style.setProperty('--on-primary', onPrimaryColor(color));
+  el.style.setProperty('--on-primary-rgb', hexToRgb(onPrimaryColor(color)));
 }

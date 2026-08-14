@@ -65,7 +65,7 @@ declare var html2pdf: any;
 
         <div class="mt-6 flex justify-end">
           <button (click)="generatePlan()" [disabled]="loading() || !form.diagnosis || !form.age || !form.goals"
-            class="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50">
+            class="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50">
             @if (loading()) {
               <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
               Gerando...
@@ -81,7 +81,7 @@ declare var html2pdf: any;
       @if (plan()) {
         <div class="space-y-6">
           <!-- Overall Plan -->
-          <div class="bg-gradient-to-r from-primary to-teal-600 rounded-3xl p-8 text-white">
+          <div class="bg-gradient-to-r from-primary to-primary-dark rounded-3xl p-8 text-on-primary">
             <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
               <span class="material-icons">summarize</span>
               Plano Geral de Intervenção
@@ -202,7 +202,7 @@ declare var html2pdf: any;
               <span class="material-icons text-lg">picture_as_pdf</span> Exportar PDF
             </button>
             <button (click)="applyPlan()"
-              class="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all">
+              class="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all">
               <span class="material-icons text-[18px]">save</span> Aplicar ao Plano
             </button>
           </div>

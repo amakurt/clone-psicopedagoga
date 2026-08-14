@@ -13,7 +13,7 @@ import { Paciente, Appointment, SessionRecord } from '@core/models';
   template: `
     <div class="space-y-6">
       <!-- Welcome -->
-      <div class="bg-gradient-to-r from-primary to-teal-600 rounded-2xl p-8 text-white">
+      <div class="bg-gradient-to-r from-primary to-primary-dark rounded-2xl p-8 text-on-primary">
         <h2 class="text-2xl font-bold">Olá, {{ userName() }}!</h2>
         <p class="mt-2 opacity-90">Acompanhe o progresso do seu filho</p>
       </div>
@@ -80,7 +80,7 @@ import { Paciente, Appointment, SessionRecord } from '@core/models';
             <button
               (click)="linkPatient()"
               [disabled]="!accessCode || linking()"
-              class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all">
+              class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all">
               {{ linking() ? 'Vinculando...' : 'Vincular' }}
             </button>
           </div>
@@ -236,7 +236,7 @@ import { Paciente, Appointment, SessionRecord } from '@core/models';
             <button
               (click)="linkPatient()"
               [disabled]="!accessCode || linking()"
-              class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all">
+              class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all">
               Vincular
             </button>
           </div>

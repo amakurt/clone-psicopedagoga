@@ -27,7 +27,7 @@ declare var html2pdf: any;
             <span class="material-icons text-lg">picture_as_pdf</span> Relatório Mensal
           </button>
           <a routerLink="/app/financeiro/novo"
-            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+            class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
             <span>Nova Transação</span>
           </a>
@@ -41,8 +41,8 @@ declare var html2pdf: any;
             <span class="material-icons text-emerald-600 dark:text-emerald-400 text-xl">trending_up</span>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Receitas</p>
-            <p class="text-xl font-black text-emerald-600">{{ totalReceitas() | currency:'BRL' }}</p>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Receitas</p>
+            <p class="text-xl font-black text-emerald-700">{{ totalReceitas() | currency:'BRL' }}</p>
           </div>
         </div>
         <div class="p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 flex items-center gap-4">
@@ -50,7 +50,7 @@ declare var html2pdf: any;
             <span class="material-icons text-red-600 dark:text-red-400 text-xl">trending_down</span>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Despesas</p>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Despesas</p>
             <p class="text-xl font-black text-red-600">{{ totalDespesas() | currency:'BRL' }}</p>
           </div>
         </div>
@@ -59,7 +59,7 @@ declare var html2pdf: any;
             <span class="material-icons text-amber-600 dark:text-amber-400 text-xl">schedule</span>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">A Receber</p>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">A Receber</p>
             <p class="text-xl font-black text-amber-600">{{ aReceber() | currency:'BRL' }}</p>
           </div>
         </div>
@@ -68,7 +68,7 @@ declare var html2pdf: any;
             <span class="material-icons text-blue-600 dark:text-blue-400 text-xl">account_balance_wallet</span>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo</p>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saldo</p>
             <p class="text-xl font-black text-blue-600">{{ saldo() | currency:'BRL' }}</p>
           </div>
         </div>
@@ -78,7 +78,7 @@ declare var html2pdf: any;
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
         <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
           <div class="relative flex-1 max-w-md">
-            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
             <input class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
               placeholder="Buscar transação..." [(ngModel)]="searchTerm" (input)="onSearch()">
           </div>
@@ -106,12 +106,12 @@ declare var html2pdf: any;
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Paciente</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Data</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Valor</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Tipo</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Data</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Valor</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Tipo</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -127,7 +127,7 @@ declare var html2pdf: any;
                         </div>
                       </td>
                       <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ item.date | date:'dd/MM/yyyy' }}</td>
-                      <td class="px-6 py-4 text-sm font-bold" [class]="item.type === 'receita' ? 'text-emerald-600' : 'text-red-600'">
+                      <td class="px-6 py-4 text-sm font-bold" [class]="item.type === 'receita' ? 'text-emerald-700' : 'text-red-600'">
                         {{ item.type === 'receita' ? '+' : '-' }}{{ item.value | currency:'BRL' }}
                       </td>
                       <td class="px-6 py-4">
@@ -145,22 +145,22 @@ declare var html2pdf: any;
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-end gap-1">
                           @if (item.status === 'pendente' && item.type === 'receita') {
-                            <button class="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Cobrar via PIX" (click)="openPixModal(item)">
+                            <button class="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" title="Cobrar via PIX" (click)="openPixModal(item)">
                               <span class="material-icons text-lg">qr_code</span>
                             </button>
                           }
                           @if (item.status === 'pendente') {
-                            <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Confirmar pagamento" (click)="openConfirmPaymentModal(item)">
+                            <button class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Confirmar pagamento" (click)="openConfirmPaymentModal(item)">
                               <span class="material-icons text-lg">check_circle</span>
                             </button>
                           }
-                          <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Gerar recibo" (click)="generateReceipt(item)">
+                          <button class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Gerar recibo" (click)="generateReceipt(item)">
                             <span class="material-icons text-lg">receipt</span>
                           </button>
-                          <a [routerLink]="['/app/financeiro', item.id, 'editar']" class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
+                          <a [routerLink]="['/app/financeiro', item.id, 'editar']" class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
-                          <button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir" (click)="confirmDelete(item)">
+                          <button class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir" (click)="confirmDelete(item)">
                             <span class="material-icons text-lg">delete</span>
                           </button>
                         </div>
@@ -219,7 +219,7 @@ declare var html2pdf: any;
                 <p class="text-xs text-slate-500 dark:text-slate-400">{{ pixTarget()?.paciente?.name || '' }} · R$ {{ pixValue() }}</p>
               </div>
             </div>
-            <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" (click)="closePixModal()">
+            <button class="text-slate-500 hover:text-slate-600 dark:hover:text-slate-200" (click)="closePixModal()">
               <span class="material-icons">close</span>
             </button>
           </div>
@@ -248,7 +248,7 @@ declare var html2pdf: any;
                 class="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold transition-all">
                 <span class="material-icons text-[18px]">chat</span> Compartilhar no WhatsApp
               </a>
-              <p class="text-[11px] text-slate-400 text-center">O responsável também vê esta cobrança no Portal da Família</p>
+              <p class="text-[11px] text-slate-500 text-center">O responsável também vê esta cobrança no Portal da Família</p>
             </div>
           } @else {
             <div class="flex flex-col items-center justify-center py-10">
@@ -344,7 +344,7 @@ export class FinanceiroListComponent implements OnInit {
   }
 
   getAvatarColor(name: string): string {
-    const colors = ['#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#EF4444', '#06B6D4', '#84CC16'];
+    const colors = ['#2563EB', '#6D28D9', '#BE185D', '#B45309', '#047857', '#B91C1C', '#0E7490', '#4D7C0F'];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
   }

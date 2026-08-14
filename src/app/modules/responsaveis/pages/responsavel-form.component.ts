@@ -26,7 +26,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
         </div>
         <button (click)="save()" [disabled]="saving() || !form.name"
-          class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
+          class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
           <span class="material-icons">save</span>
           {{ saving() ? 'Salvando...' : 'Salvar' }}
         </button>
@@ -177,7 +177,7 @@ import { ToastService } from '@shared/components/toast.component';
               Cancelar
             </button>
             <button (click)="createPaciente()" [disabled]="!newPaciente.name || savingNewPaciente()"
-              class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl font-medium text-sm disabled:opacity-50 transition-all flex items-center gap-2">
+              class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-medium text-sm disabled:opacity-50 transition-all flex items-center gap-2">
               @if (savingNewPaciente()) {
                 <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               }
@@ -201,7 +201,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
           <div class="p-6">
             <div class="relative mb-4">
-              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">search</span>
               <input [(ngModel)]="pacienteSearch" (input)="filterPacientes()"
                 class="w-full pl-10 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
                 placeholder="Buscar por nome, telefone...">
@@ -219,7 +219,7 @@ import { ToastService } from '@shared/components/toast.component';
                       <p class="text-sm font-medium text-slate-900 dark:text-white">{{ p.name }}</p>
                       <p class="text-xs text-slate-500">{{ p.grade || 'Sem série' }} • {{ p.phone || 'Sem telefone' }}</p>
                     </div>
-                    <span class="material-icons text-slate-400">add_circle_outline</span>
+                    <span class="material-icons text-slate-500">add_circle_outline</span>
                   </button>
                 }
               </div>

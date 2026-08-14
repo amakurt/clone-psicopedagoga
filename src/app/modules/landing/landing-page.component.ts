@@ -30,7 +30,7 @@ import { environment } from '../../../environments/environment';
 
           <div class="hidden md:flex items-center gap-3">
             <a routerLink="/login" class="px-5 py-2 text-sm font-semibold text-gray-700 dark:text-slate-300 hover:text-primary transition-colors">Entrar</a>
-            <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25">Começar Agora</a>
+            <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25">Começar Agora</a>
           </div>
 
           <button (click)="mobileMenu.set(!mobileMenu())" class="md:hidden p-2 text-gray-600 dark:text-slate-300">
@@ -48,7 +48,7 @@ import { environment } from '../../../environments/environment';
           <a href="#parents" (click)="mobileMenu.set(false); scrollTo('parents', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Para Pais</a>
           <hr class="border-gray-200 dark:border-slate-700">
           <a routerLink="/login" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Entrar</a>
-          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="block py-3 bg-primary text-white rounded-xl text-sm font-bold text-center">Começar Agora</a>
+          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="block py-3 bg-primary text-on-primary rounded-xl text-sm font-bold text-center">Começar Agora</a>
         </div>
       }
     </nav>
@@ -71,7 +71,7 @@ import { environment } from '../../../environments/environment';
               <span class="text-primary relative">
                 Inteligência
                 <svg class="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
-                  <path d="M2 8C40 2 80 2 100 6C120 10 160 10 198 4" stroke="#007F80" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M2 8C40 2 80 2 100 6C120 10 160 10 198 4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
                 </svg>
               </span>
               e
@@ -83,7 +83,7 @@ import { environment } from '../../../environments/environment';
             </p>
 
             <div class="mt-8 flex flex-wrap gap-4">
-              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
+              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-8 py-4 bg-primary hover:bg-primary-dark text-on-primary rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
                 Começar Agora Grátis
                 <span class="material-icons">arrow_forward</span>
               </a>
@@ -165,7 +165,7 @@ import { environment } from '../../../environments/environment';
               <div class="p-3 bg-gray-50 dark:bg-slate-700 rounded-xl">
                 <div class="flex items-center gap-3">
                   <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                    <span class="material-icons text-purple-500 text-sm">trending_up</span>
+                    <span class="material-icons text-purple-600 text-sm">trending_up</span>
                   </div>
                   <div class="flex-1">
                     <div class="h-3 bg-gray-200 dark:bg-slate-600 rounded w-20 mb-1"></div>
@@ -178,9 +178,9 @@ import { environment } from '../../../environments/environment';
             <!-- Floating notification -->
             <div class="absolute -right-8 top-12 bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-gray-100 dark:border-slate-700 animate-bounce">
               <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                  <span class="material-icons text-green-500 text-sm">verified</span>
-                </div>
+<div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <span class="material-icons text-green-600 text-sm">verified</span>
+                  </div>
                 <span class="text-xs font-semibold text-gray-700 dark:text-slate-300">Atividade recebida!</span>
               </div>
             </div>
@@ -194,8 +194,8 @@ import { environment } from '../../../environments/environment';
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <span class="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/30 rounded-full mb-4">
-            <span class="material-icons text-orange-500 text-sm">family_restroom</span>
-            <span class="text-sm font-semibold text-orange-500">Para os Pais</span>
+            <span class="material-icons text-orange-600 text-sm">family_restroom</span>
+            <span class="text-sm font-semibold text-orange-600">Para os Pais</span>
           </span>
           <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">Acompanhe cada passo do desenvolvimento</h2>
           <p class="mt-4 text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">Transparência e conexão direta com o profissional que cuida do seu filho.</p>
@@ -234,7 +234,7 @@ import { environment } from '../../../environments/environment';
                 ? 'bg-primary/5 dark:bg-primary/10 border-primary shadow-2xl shadow-primary/20 md:-mt-4 md:mb-4'
                 : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-xl'">
               @if (plan.code === 'BASICO') {
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-xs font-bold rounded-full">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-on-primary text-xs font-bold rounded-full">
                   MAIS POPULAR
                 </div>
               }
@@ -260,7 +260,7 @@ import { environment } from '../../../environments/environment';
               <a routerLink="/login" [queryParams]="{mode: 'register', plan: plan.code}"
                 class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm transition-all"
                 [class]="plan.code === 'BASICO'
-                  ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25'
+                  ? 'bg-primary hover:bg-primary-dark text-on-primary shadow-lg shadow-primary/25'
                   : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600'">
                 {{ plan.code === 'TRIAL' ? 'Começar Grátis' : 'Assinar ' + plan.name }}
                 <span class="material-icons text-base">arrow_forward</span>
@@ -307,10 +307,10 @@ import { environment } from '../../../environments/environment';
         </div>
 
         <!-- CTA Banner -->
-        <div class="mt-16 bg-gradient-to-r from-primary to-teal-600 rounded-3xl p-8 md:p-12 text-center text-white">
+        <div class="mt-16 bg-gradient-to-r from-primary to-primary-dark rounded-3xl p-8 md:p-12 text-center text-white">
           <h3 class="text-2xl md:text-3xl font-black mb-4">Pronto para transformar sua clínica?</h3>
           <p class="text-white/80 mb-8 max-w-xl mx-auto">Comece a usar o EduPsych Pro hoje mesmo e leve seu atendimento para o próximo nível.</p>
-          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary rounded-2xl font-bold hover:bg-gray-100 transition-all shadow-lg">
+          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-dark rounded-2xl font-bold hover:bg-gray-100 transition-all shadow-lg">
             Começar Agora
             <span class="material-icons">arrow_forward</span>
           </a>
@@ -366,8 +366,8 @@ import { environment } from '../../../environments/environment';
         <hr class="border-gray-800 my-12">
 
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-          <p class="text-gray-500 text-sm">2024 EduPsych Pro. Todos os direitos reservados.</p>
-          <p class="text-gray-500 text-sm flex items-center gap-1">
+          <p class="text-gray-400 text-sm">2024 EduPsych Pro. Todos os direitos reservados.</p>
+          <p class="text-gray-400 text-sm flex items-center gap-1">
             Feito com <span class="material-icons text-red-500 text-sm">favorite</span> para quem cuida de crianças especiais
           </p>
         </div>
@@ -417,21 +417,21 @@ export class LandingPageComponent implements OnInit {
       title: 'Digitalização Completa',
       description: 'Prontuários, anamneses e laudos 100% digitais. Acesse de qualquer lugar, a qualquer momento.',
       bgClass: 'bg-blue-100 dark:bg-blue-900/30',
-      iconClass: 'text-blue-500'
+      iconClass: 'text-blue-600'
     },
     {
       icon: 'event',
       title: 'Agenda Inteligente',
       description: 'Gerencie sessões, compromissos e lembretes automáticos em uma única interface visual.',
       bgClass: 'bg-teal-100 dark:bg-teal-900/30',
-      iconClass: 'text-teal-500'
+      iconClass: 'text-teal-600'
     },
     {
       icon: 'bar_chart',
       title: 'Relatórios em Segundos',
       description: 'Gere relatórios de evolução, financeiros e estatísticos com um único clique.',
       bgClass: 'bg-purple-100 dark:bg-purple-900/30',
-      iconClass: 'text-purple-500'
+      iconClass: 'text-purple-600'
     }
   ];
 
@@ -441,21 +441,21 @@ export class LandingPageComponent implements OnInit {
       title: 'Acompanhamento Real',
       description: 'Veja a evolução do seu filho com gráficos claros e relatórios compartilhados pelo profissional.',
       bgClass: 'bg-orange-100 dark:bg-orange-900/30',
-      iconClass: 'text-orange-500'
+      iconClass: 'text-orange-600'
     },
     {
       icon: 'menu_book',
       title: 'Biblioteca de Apoio',
       description: 'Acesse materiais, artigos e atividades recomendadas para estimular o desenvolvimento em casa.',
       bgClass: 'bg-teal-100 dark:bg-teal-900/30',
-      iconClass: 'text-teal-500'
+      iconClass: 'text-teal-600'
     },
     {
       icon: 'chat',
       title: 'Canal Direto',
       description: 'Converse diretamente com o profissional responsável pelo atendimento do seu filho.',
       bgClass: 'bg-blue-100 dark:bg-blue-900/30',
-      iconClass: 'text-blue-500'
+      iconClass: 'text-blue-600'
     }
   ];
 

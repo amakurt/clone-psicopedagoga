@@ -18,7 +18,7 @@ declare var html2pdf: any;
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Notas Fiscais de Serviço Eletrônica</p>
         </div>
         <button (click)="showForm.set(true)"
-          class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+          class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
           <span class="material-icons text-[18px]">add</span> Nova NFS-e
         </button>
       </div>
@@ -30,7 +30,7 @@ declare var html2pdf: any;
             <span class="material-icons text-amber-600 dark:text-amber-400 text-xl">pending</span>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pendentes</p>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pendentes</p>
             <p class="text-xl font-black text-amber-600">{{ pendingCount() }}</p>
           </div>
         </div>
@@ -39,8 +39,8 @@ declare var html2pdf: any;
             <span class="material-icons text-emerald-600 dark:text-emerald-400 text-xl">check_circle</span>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Emitidas</p>
-            <p class="text-xl font-black text-emerald-600">{{ issuedCount() }}</p>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Emitidas</p>
+            <p class="text-xl font-black text-emerald-700">{{ issuedCount() }}</p>
           </div>
         </div>
         <div class="p-6 bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 flex items-center gap-4">
@@ -48,7 +48,7 @@ declare var html2pdf: any;
             <span class="material-icons text-blue-600 dark:text-blue-400 text-xl">payments</span>
           </div>
           <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Emitido</p>
+            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Emitido</p>
             <p class="text-xl font-black text-blue-600">{{ totalIssued() | currency:'BRL' }}</p>
           </div>
         </div>
@@ -81,14 +81,14 @@ declare var html2pdf: any;
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Nº</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Paciente</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Descrição</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Valor</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">ISS</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                    <th class="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Nº</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Descrição</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Valor</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">ISS</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Total</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                    <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -99,7 +99,7 @@ declare var html2pdf: any;
                       <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 max-w-[200px] truncate">{{ item.description }}</td>
                       <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ item.value | currency:'BRL' }}</td>
                       <td class="px-6 py-4 text-sm text-red-600">-{{ item.taxValue | currency:'BRL' }}</td>
-                      <td class="px-6 py-4 text-sm font-bold text-emerald-600">{{ item.totalValue | currency:'BRL' }}</td>
+                      <td class="px-6 py-4 text-sm font-bold text-emerald-700">{{ item.totalValue | currency:'BRL' }}</td>
                       <td class="px-6 py-4">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
                           [class]="getStatusClass(item.status)">
@@ -109,16 +109,16 @@ declare var html2pdf: any;
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-end gap-1">
                           @if (item.status === 'PENDENTE') {
-                            <button class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Emitir" (click)="updateStatus(item.id, 'EMITIDA')">
+                            <button class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Emitir" (click)="updateStatus(item.id, 'EMITIDA')">
                               <span class="material-icons text-lg">check_circle</span>
                             </button>
                           }
                           @if (item.status !== 'CANCELADA') {
-                            <button class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Cancelar" (click)="updateStatus(item.id, 'CANCELADA')">
+                            <button class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Cancelar" (click)="updateStatus(item.id, 'CANCELADA')">
                               <span class="material-icons text-lg">cancel</span>
                             </button>
                           }
-                          <button class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="PDF" (click)="generatePdf(item)">
+                          <button class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="PDF" (click)="generatePdf(item)">
                             <span class="material-icons text-lg">picture_as_pdf</span>
                           </button>
                         </div>
@@ -189,7 +189,7 @@ declare var html2pdf: any;
               <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
                 <p class="text-sm text-slate-600 dark:text-slate-400">Valor do serviço: <span class="font-bold">{{ form.value | currency:'BRL' }}</span></p>
                 <p class="text-sm text-slate-600 dark:text-slate-400">ISS ({{ form.taxRate }}%): <span class="font-bold text-red-600">-{{ calcTax() | currency:'BRL' }}</span></p>
-                <p class="text-sm font-bold text-emerald-600 mt-1">Total: {{ calcTotal() | currency:'BRL' }}</p>
+                <p class="text-sm font-bold text-emerald-700 mt-1">Total: {{ calcTotal() | currency:'BRL' }}</p>
               </div>
             }
             <div>
@@ -201,7 +201,7 @@ declare var html2pdf: any;
 
           <div class="flex justify-end gap-3 mt-6">
             <button class="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all" (click)="showForm.set(false)">Cancelar</button>
-            <button class="px-5 py-2.5 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+            <button class="px-5 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
               (click)="save()" [disabled]="saving()">
               {{ saving() ? 'Salvando...' : 'Emitir NFS-e' }}
             </button>

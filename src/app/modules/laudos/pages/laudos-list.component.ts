@@ -14,7 +14,7 @@ import { LaudoService } from '../services/laudo.service';
           <h1 class="text-2xl font-bold m-0">Laudos</h1>
           <p class="text-sm text-slate-500 mt-1">Laudos e pareceres</p>
         </div>
-        <a routerLink="/app/laudos/novo" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all shadow-sm no-underline">
+        <a routerLink="/app/laudos/novo" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold hover:bg-primary-dark transition-all shadow-sm no-underline">
           <span class="material-icons text-[18px]">add</span>
           Novo
         </a>

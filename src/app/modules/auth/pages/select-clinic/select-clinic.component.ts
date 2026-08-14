@@ -8,7 +8,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1E1B4B] to-[#007F80] p-5">
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1E1B4B] to-primary p-5">
       <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-[520px] overflow-hidden legacy-card">
         <div class="p-10 pb-6 text-center">
           <span class="material-icons text-[56px] text-primary">domain</span>
@@ -59,7 +59,7 @@ import { AuthService } from '../../../../core/services/auth.service';
           }
 
           <div class="text-center pt-2">
-            <button class="text-sm text-slate-400 hover:text-primary font-semibold" (click)="auth.logout()">
+            <button class="text-sm text-slate-500 hover:text-primary font-semibold" (click)="auth.logout()">
               Sair e trocar de conta
             </button>
           </div>

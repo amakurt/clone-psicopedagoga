@@ -140,7 +140,7 @@ declare var html2pdf: any;
               class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm resize-none focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
           </div>
 
-          <button (click)="saveConsent()" [disabled]="!consent.patientId" class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:active:scale-100">
+          <button (click)="saveConsent()" [disabled]="!consent.patientId" class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:active:scale-100">
             <span class="material-icons text-[18px]">save</span>
             <span>Registrar Consentimento</span>
           </button>

@@ -17,7 +17,7 @@ import { CommonModule } from '@angular/common';
           @if (title) {
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ title }}</h3>
-              <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+              <button class="p-2 text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
                 (click)="close()">
                 <span class="material-icons">close</span>
               </button>
@@ -36,7 +36,7 @@ import { CommonModule } from '@angular/common';
                 (click)="close()">
                 {{ cancelText }}
               </button>
-              <button class="px-5 py-2.5 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20"
+              <button class="px-5 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20"
                 (click)="confirm()">
                 {{ confirmText }}
               </button>

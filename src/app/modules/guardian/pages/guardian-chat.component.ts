@@ -29,7 +29,7 @@ import { AuthService } from '@core/services/auth.service';
             <div class="flex" [class.justify-end]="msg.senderId === currentUserId()">
               <div class="max-w-xs lg:max-w-md px-4 py-3 rounded-2xl"
                 [class]="msg.senderId === currentUserId() 
-                  ? 'bg-primary text-white rounded-br-md' 
+                  ? 'bg-primary text-on-primary rounded-br-md' 
                   : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-bl-md'">
                 <p class="text-sm font-medium" *ngIf="msg.senderId !== currentUserId()">{{ msg.senderName }}</p>
                 <p class="text-sm">{{ msg.message }}</p>
@@ -50,7 +50,7 @@ import { AuthService } from '@core/services/auth.service';
             <button 
               (click)="sendMessage()" 
               [disabled]="!newMessage.trim()"
-              class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all">
+              class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all">
               <span class="material-icons">send</span>
             </button>
           </div>

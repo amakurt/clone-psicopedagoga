@@ -20,7 +20,7 @@ import { ApiService } from '../../../core/services/api.service';
             <span class="material-icons text-[18px]">arrow_back</span>
             <span>Voltar</span>
           </a>
-          <button (click)="savePermissions()" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-xl font-bold text-sm transition-all">
+          <button (click)="savePermissions()" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-2 rounded-xl font-bold text-sm transition-all">
             <span class="material-icons text-[18px]">save</span>
             <span>Salvar</span>
           </button>
@@ -46,10 +46,10 @@ import { ApiService } from '../../../core/services/api.service';
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                <th class="px-4 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Módulo</th>
-                <th class="px-4 py-3 text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">Leitura</th>
-                <th class="px-4 py-3 text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">Escrita</th>
-                <th class="px-4 py-3 text-center text-[11px] font-bold text-slate-400 uppercase tracking-widest">Exclusão</th>
+                <th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Módulo</th>
+                <th class="px-4 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">Leitura</th>
+                <th class="px-4 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">Escrita</th>
+                <th class="px-4 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">Exclusão</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -57,7 +57,7 @@ import { ApiService } from '../../../core/services/api.service';
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-3">
-                      <span class="material-icons text-slate-400">{{ module.icon }}</span>
+                      <span class="material-icons text-slate-500">{{ module.icon }}</span>
                       <span class="text-sm font-bold text-slate-900 dark:text-white">{{ module.label }}</span>
                     </div>
                   </td>
@@ -107,7 +107,7 @@ import { ApiService } from '../../../core/services/api.service';
               <option value="write">Escrita</option>
               <option value="delete">Exclusão</option>
             </select>
-            <button (click)="applyBulkPermission()" [disabled]="bulkModules().length === 0" class="mt-4 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:bg-slate-300 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all">
+            <button (click)="applyBulkPermission()" [disabled]="bulkModules().length === 0" class="mt-4 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:bg-slate-300 text-on-primary px-4 py-2 rounded-xl font-bold text-sm transition-all">
               <span class="material-icons text-[18px]">done_all</span>
               <span>Aplicar Seleção</span>
             </button>

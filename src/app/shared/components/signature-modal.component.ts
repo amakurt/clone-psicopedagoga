@@ -23,7 +23,7 @@ import { DigitalSignatureComponent } from './digital-signature.component';
                 <p class="text-xs text-slate-500">{{ subtitle }}</p>
               </div>
             </div>
-            <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+            <button class="p-2 text-slate-500 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
               (click)="close()">
               <span class="material-icons">close</span>
             </button>
@@ -44,7 +44,7 @@ import { DigitalSignatureComponent } from './digital-signature.component';
               (click)="close()">
               Cancelar
             </button>
-            <button class="px-5 py-2.5 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+            <button class="px-5 py-2.5 text-sm font-bold text-on-primary bg-primary rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
               (click)="confirmSignature()" [disabled]="!signatureData()">
               <span class="material-icons text-[16px]">check_circle</span>
               Confirmar

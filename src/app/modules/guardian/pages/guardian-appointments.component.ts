@@ -22,7 +22,7 @@ import { Paciente, Appointment } from '@core/models';
           </div>
         </div>
         <button (click)="showRequestForm.set(true)"
-          class="flex items-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold text-sm shadow-lg transition-all">
+          class="flex items-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-semibold text-sm shadow-lg transition-all">
           <span class="material-icons text-[18px]">add</span> Solicitar Agendamento
         </button>
       </div>
@@ -116,7 +116,7 @@ import { Paciente, Appointment } from '@core/models';
             <div class="flex justify-end gap-3 mt-6">
               <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all" (click)="showRequestForm.set(false)">Cancelar</button>
               <button (click)="requestAppointment()" [disabled]="saving()"
-                class="px-5 py-2 text-sm font-medium text-white bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50">
+                class="px-5 py-2 text-sm font-medium text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50">
                 {{ saving() ? 'Enviando...' : 'Solicitar' }}
               </button>
             </div>
@@ -152,7 +152,7 @@ import { Paciente, Appointment } from '@core/models';
             <div class="flex justify-end gap-3 mt-6">
               <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all" (click)="closeReschedule()">Voltar</button>
               <button (click)="submitReschedule()" [disabled]="saving()"
-                class="px-5 py-2 text-sm font-medium text-white bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50">
+                class="px-5 py-2 text-sm font-medium text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50">
                 {{ saving() ? 'Enviando...' : 'Salvar Alteração' }}
               </button>
             </div>

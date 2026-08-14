@@ -29,7 +29,7 @@ import { ToastService } from '@shared/components/toast.component';
             Exportar PDF
           </button>
           <button (click)="save()" [disabled]="saving() || !form.pacienteId || !form.date"
-            class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold text-sm disabled:opacity-50 transition-all flex items-center gap-2 shadow-xl shadow-primary/20 active:scale-95">
+            class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm disabled:opacity-50 transition-all flex items-center gap-2 shadow-xl shadow-primary/20 active:scale-95">
             <span class="material-icons text-[18px]">save</span>
             {{ saving() ? 'Salvando...' : 'Salvar' }}
           </button>
@@ -54,7 +54,7 @@ import { ToastService } from '@shared/components/toast.component';
             <div class="p-6">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Paciente *</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Paciente *</label>
                   <select [(ngModel)]="form.pacienteId"
                     class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
                     <option value="">Selecione um paciente</option>
@@ -64,18 +64,18 @@ import { ToastService } from '@shared/components/toast.component';
                   </select>
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Data *</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Data *</label>
                   <input type="date" [(ngModel)]="form.date"
                     class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Nº da Sessão</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nº da Sessão</label>
                   <input type="number" [(ngModel)]="form.sessionNumber"
                     class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white"
                     placeholder="Ex: 1">
                 </div>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Profissional</label>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Profissional</label>
                   <input type="text" [(ngModel)]="form.professionalName"
                     class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white"
                     placeholder="Nome do profissional">
@@ -97,7 +97,7 @@ import { ToastService } from '@shared/components/toast.component';
             </div>
             <div class="p-6 space-y-5">
               <div>
-                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">flag</span>
                   Objetivo
                 </label>
@@ -106,7 +106,7 @@ import { ToastService } from '@shared/components/toast.component';
                   placeholder="Qual o objetivo desta sessão?"></textarea>
               </div>
               <div>
-                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">build</span>
                   Instrumentos Utilizados
                 </label>
@@ -115,7 +115,7 @@ import { ToastService } from '@shared/components/toast.component';
                   placeholder="Materiais e instrumentos utilizados"></textarea>
               </div>
               <div>
-                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">psychology</span>
                   Comportamento do Aluno
                 </label>
@@ -124,7 +124,7 @@ import { ToastService } from '@shared/components/toast.component';
                   placeholder="Como o aluno se comportou durante a sessão?"></textarea>
               </div>
               <div>
-                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">assignment</span>
                   Atividades Realizadas
                 </label>
@@ -133,7 +133,7 @@ import { ToastService } from '@shared/components/toast.component';
                   placeholder="Descreva as atividades realizadas na sessão"></textarea>
               </div>
               <div>
-                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">sticky_note_2</span>
                   Observações
                 </label>

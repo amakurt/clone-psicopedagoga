@@ -25,7 +25,7 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
         </div>
         <button (click)="save()" [disabled]="saving() || !form.name"
-          class="px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
+          class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
           <span class="material-icons">save</span>
           {{ saving() ? 'Salvando...' : 'Salvar' }}
         </button>
