@@ -6,7 +6,19 @@
 
 ---
 
-## Sessão 14/08/2026 (Sexta) — Fix: documentos enviados pelo portal da família não apareciam
+## Sessão 14/08/2026 (Sexta) — Fix: "Cannot GET /api/uploads" no portal + notificação de documento enviado
+
+### 73. Botão "Abrir" do portal da família quebrava (Cannot GET /api/uploads/...)
+- **Causa:** `fileUrl` é salvo relativo (`/api/uploads/...`) e os componentes usavam `[href]` direto — em dev (frontend :4200, backend :3000) o link resolvia contra o frontend, que não serve `/api/uploads`
+- **Fix:** novo helper `src/app/core/utils/file-url.ts` (`resolveFileUrl`) — prefixa `environment.apiUrl` quando a URL é relativa; em produção (`apiUrl: '/api'`) mantém o caminho relativo
+- **Aplicado em:** `guardian-documents`, `documento-detail` (abrir/baixar/img), `documento-form` (prévia após upload)
+
+### 74. Notificação ao profissional quando a família envia documento
+- `POST /guardian/documents` agora cria notificação `type: 'document'` para toda a equipe do tenant (`getTenantStaff`: GESTOR/PROFISSIONAL/PSICOPEDAGOGO/SECRETARIA): "Novo documento enviado pela família — {responsável} enviou \"{nome}\" para {paciente}"
+- `notification-dropdown.component.ts`: ícone `description` + cor âmbar para tipo `document`
+- **Validado via API:** documento criado (201) + 3 notificações no banco; URL resolvida responde 200
+
+---
 
 ### 72. Portal da família: envio de documento salvava mas não aparecia
 - **Relato:** usuário enviou um documento pelo portal da família e "nada aconteceu"

@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { GuardianService } from '../services/guardian.service';
 import { ApiService } from '@core/services/api.service';
 import { Document } from '@core/models';
+import { resolveFileUrl } from '@core/utils/file-url';
 
 @Component({
   selector: 'app-guardian-documents',
@@ -85,7 +86,7 @@ import { Document } from '@core/models';
               </div>
               <div class="mt-4 flex gap-2">
                 @if (doc.fileUrl) {
-                  <a [href]="doc.fileUrl" target="_blank" class="flex-1 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 text-center transition-all">
+                  <a [href]="resolveFileUrl(doc.fileUrl)" target="_blank" class="flex-1 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 text-center transition-all">
                     Abrir
                   </a>
                 }

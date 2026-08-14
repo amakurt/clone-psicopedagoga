@@ -6,6 +6,7 @@ import { DocumentosService } from '../services/documentos.service';
 import { UploadService, UploadResponse } from '@core/services/upload.service';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { resolveFileUrl } from '@core/utils/file-url';
 
 @Component({
   selector: 'app-documento-form',
@@ -137,7 +138,7 @@ import { ToastService } from '@shared/components/toast.component';
               <div class="space-y-4">
                 <div class="aspect-[3/4] bg-gray-100 dark:bg-slate-700 rounded-xl flex items-center justify-center overflow-hidden">
                   @if (isImage(uploadedFile()!.mimetype)) {
-                    <img [src]="uploadedFile()!.url" class="w-full h-full object-contain">
+                    <img [src]="resolveFileUrl(uploadedFile()!.url)" class="w-full h-full object-contain">
                   } @else {
                     <div class="text-center p-4">
                       <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">{{ getFileIcon(uploadedFile()!.mimetype) }}</span>
@@ -145,7 +146,7 @@ import { ToastService } from '@shared/components/toast.component';
                     </div>
                   }
                 </div>
-                <a [href]="uploadedFile()!.url" target="_blank" 
+                <a [href]="resolveFileUrl(uploadedFile()!.url)" target="_blank" 
                   class="block w-full py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 text-center transition-all">
                   Abrir em nova aba
                 </a>

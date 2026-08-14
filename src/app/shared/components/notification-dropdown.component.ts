@@ -90,7 +90,7 @@ export class NotificationDropdownComponent implements OnInit {
 
   getNotifIcon(type: string): string {
     if (type?.includes('paciente') || type?.includes('Paciente')) return 'person_add';
-    if (type?.includes('documento') || type?.includes('Documento')) return 'description';
+    if (type?.includes('documento') || type?.includes('Documento') || type?.toLowerCase() === 'document') return 'description';
     if (type?.includes('sessao') || type?.includes('Sessão') || type?.includes('evolucao')) return 'check_circle';
     if (type?.includes('pagamento') || type?.includes('Pagamento') || type?.includes('Financeiro')) return 'payments';
     if (type?.includes('agendamento') || type?.includes('Agendamento')) return 'calendar_month';
@@ -100,7 +100,7 @@ export class NotificationDropdownComponent implements OnInit {
 
   getNotifColor(type: string): string {
     if (type?.includes('paciente') || type?.includes('Paciente')) return 'bg-blue-100 text-blue-600';
-    if (type?.includes('documento') || type?.includes('Documento')) return 'bg-amber-100 text-amber-600';
+    if (type?.includes('documento') || type?.includes('Documento') || type?.toLowerCase() === 'document') return 'bg-amber-100 text-amber-600';
     if (type?.includes('sessao') || type?.includes('Sessão') || type?.includes('evolucao')) return 'bg-green-100 text-green-600';
     if (type?.includes('pagamento') || type?.includes('Pagamento') || type?.includes('Financeiro')) return 'bg-purple-100 text-purple-600';
     if (type?.includes('agendamento') || type?.includes('Agendamento')) return 'bg-cyan-100 text-cyan-600';

@@ -291,6 +291,22 @@ router.post('/documents', async (req, res) => {
     }
   });
 
+  // Notify clinic staff that a document was uploaded by the responsible
+  const patient = await db.paciente.findUnique({ where: { id: pacienteId } });
+  const staff = await getTenantStaff(req.user?.tenantId as string);
+  if (staff.length > 0) {
+    const patientName = patient?.name || 'Paciente';
+    const responsibleName = responsible?.name || 'Responsável';
+    await db.notification.createMany({
+      data: staff.map(u => ({
+        userId: u.id,
+        title: 'Novo documento enviado pela família',
+        message: `${responsibleName} enviou "${name}" para ${patientName}`,
+        type: 'document'
+      }))
+    });
+  }
+
   res.status(201).json(document);
 });
 

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DocumentosService } from '../services/documentos.service';
 import { UploadService } from '@core/services/upload.service';
+import { resolveFileUrl } from '@core/utils/file-url';
 
 @Component({
   selector: 'app-documento-detail',
@@ -40,7 +41,7 @@ import { UploadService } from '@core/services/upload.service';
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Arquivo</h3>
                 <div class="aspect-[3/4] bg-gray-100 dark:bg-slate-700 rounded-xl flex items-center justify-center overflow-hidden">
                   @if (isImage(item()?.fileUrl)) {
-                    <img [src]="item()?.fileUrl" class="w-full h-full object-contain">
+                    <img [src]="resolveFileUrl(item()?.fileUrl)" class="w-full h-full object-contain">
                   } @else {
                     <div class="text-center p-4">
                       <span class="material-icons text-7xl text-gray-300 dark:text-slate-600">{{ getFileIcon(item()?.fileUrl) }}</span>
@@ -49,12 +50,12 @@ import { UploadService } from '@core/services/upload.service';
                   }
                 </div>
                 <div class="flex gap-2 mt-4">
-                  <a [href]="item()?.fileUrl" target="_blank" 
+                  <a [href]="resolveFileUrl(item()?.fileUrl)" target="_blank" 
                     class="flex-1 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-semibold text-sm text-center transition-all flex items-center justify-center gap-2">
                     <span class="material-icons text-[18px]">open_in_new</span>
                     Abrir em nova aba
                   </a>
-                  <a [href]="item()?.fileUrl" download 
+                  <a [href]="resolveFileUrl(item()?.fileUrl)" download 
                     class="flex-1 py-3 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl font-semibold text-sm text-gray-700 dark:text-slate-300 text-center transition-all flex items-center justify-center gap-2">
                     <span class="material-icons text-[18px]">download</span>
                     Baixar
