@@ -18,3 +18,4 @@ logs/
 backend/.env
 evolution-api/.env
 *.env.local
+backend/uploads/
