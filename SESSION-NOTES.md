@@ -6,7 +6,16 @@
 
 ---
 
-## Sessão 14/08/2026 (Sexta) — Auditoria de segurança completa (OWASP + testes dinâmicos)
+## Sessão 14/08/2026 (Sexta) — Sessão por navegador: fechar aba/navegador exige login novamente
+
+### 71. Sessão movida de localStorage → sessionStorage
+- **Relato do usuário:** logado como profissional no Chrome, colou a URL no Safari e "logou direto" — investigado: não era vazamento entre navegadores (contexto limpo redireciona para /login), mas sim sessão antiga do próprio Safari (JWT de 7 dias persistia no localStorage)
+- **Decisão:** credenciais (`auth_token`, `auth_user`, `auth_tenants`, `auth_tenant`) movidas de `localStorage` para `sessionStorage` — fechar aba/navegador limpa a sessão e pede login de novo; F5 mantém a sessão
+- **Arquivos:** `auth.service.ts` (todas as leituras/escritas de credenciais → sessionStorage + migração: remove chaves antigas do localStorage no constructor); `guardian-settings.component.ts` (duplicação `auth_user` manual → `auth.updateUser()`); `error.interceptor.ts` (401 → limpa sessionStorage + chaves legadas de auth, sem apagar preferências como tema/cor)
+- **Preferências não-sensíveis permanecem no localStorage:** `theme`, `accentColor`, `sidebar_open`, `guardian_patient_id`, `clinic_config`, `notification_prefs`
+- **Validação:** `ng build` limpo + Playwright: login → dashboard ✓; F5 mantém ✓; fechar contexto (novo navegador) → `/login` ✓; localStorage sem `auth_*` ✓
+
+---
 
 ### 67. Auditoria: escopo e metodologia
 - Skills usadas: `security-scan` (OWASP Top 10/secrets/misconfig) + subagente de análise frontend; testes dinâmicos na API real (`:3000`) com token real

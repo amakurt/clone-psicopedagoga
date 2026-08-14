@@ -15,18 +15,24 @@ export class AuthService {
   isLoggedIn = computed(() => !!this.token);
 
   constructor(private router: Router) {
-    const savedUser = localStorage.getItem(this.userKey);
+    // Migração: remover credenciais antigas do localStorage (agora a sessão é sessionStorage)
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userKey);
+    localStorage.removeItem(this.tenantsKey);
+    localStorage.removeItem(this.tenantKey);
+
+    const savedUser = sessionStorage.getItem(this.userKey);
     if (savedUser) this.user.set(JSON.parse(savedUser));
 
-    const savedTenants = localStorage.getItem(this.tenantsKey);
+    const savedTenants = sessionStorage.getItem(this.tenantsKey);
     if (savedTenants) this.tenants.set(JSON.parse(savedTenants));
 
-    const savedTenant = localStorage.getItem(this.tenantKey);
+    const savedTenant = sessionStorage.getItem(this.tenantKey);
     if (savedTenant) this.tenant.set(JSON.parse(savedTenant));
   }
 
   get token(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    return sessionStorage.getItem(this.tokenKey);
   }
 
   get tenantId(): string | null {
@@ -34,16 +40,16 @@ export class AuthService {
   }
 
   login(token: string, user: any, tenants?: any[], tenant?: any) {
-    localStorage.setItem(this.tokenKey, token);
-    localStorage.setItem(this.userKey, JSON.stringify(user));
+    sessionStorage.setItem(this.tokenKey, token);
+    sessionStorage.setItem(this.userKey, JSON.stringify(user));
     this.user.set(user);
 
     if (tenants) {
-      localStorage.setItem(this.tenantsKey, JSON.stringify(tenants));
+      sessionStorage.setItem(this.tenantsKey, JSON.stringify(tenants));
       this.tenants.set(tenants);
     }
     if (tenant) {
-      localStorage.setItem(this.tenantKey, JSON.stringify(tenant));
+      sessionStorage.setItem(this.tenantKey, JSON.stringify(tenant));
       this.tenant.set(tenant);
     }
 
@@ -59,10 +65,10 @@ export class AuthService {
     if (!res.ok) return;
     const data = await res.json();
     this.tenants.set(data.tenants || []);
-    localStorage.setItem(this.tenantsKey, JSON.stringify(data.tenants || []));
+    sessionStorage.setItem(this.tenantsKey, JSON.stringify(data.tenants || []));
     if (data.tenant) {
       this.tenant.set(data.tenant);
-      localStorage.setItem(this.tenantKey, JSON.stringify(data.tenant));
+      sessionStorage.setItem(this.tenantKey, JSON.stringify(data.tenant));
     }
   }
 
@@ -78,15 +84,15 @@ export class AuthService {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro ao trocar de clínica');
     this.tenant.set(data.tenant);
-    localStorage.setItem(this.tenantKey, JSON.stringify(data.tenant));
+    sessionStorage.setItem(this.tenantKey, JSON.stringify(data.tenant));
     return data.tenant;
   }
 
   logout() {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-    localStorage.removeItem(this.tenantsKey);
-    localStorage.removeItem(this.tenantKey);
+    sessionStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.userKey);
+    sessionStorage.removeItem(this.tenantsKey);
+    sessionStorage.removeItem(this.tenantKey);
     this.user.set(null);
     this.tenants.set([]);
     this.tenant.set(null);
@@ -102,6 +108,6 @@ export class AuthService {
     const current = this.user() || {};
     const next = { ...current, ...patch };
     this.user.set(next);
-    localStorage.setItem(this.userKey, JSON.stringify(next));
+    sessionStorage.setItem(this.userKey, JSON.stringify(next));
   }
 }

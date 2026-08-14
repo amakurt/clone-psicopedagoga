@@ -8,7 +8,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError(err => {
       if (err.status === 401 && !req.url.includes('/auth/')) {
-        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        localStorage.removeItem('auth_tenants');
+        localStorage.removeItem('auth_tenant');
         router.navigate(['/login']);
       }
       return throwError(() => err);

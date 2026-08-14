@@ -4,6 +4,17 @@
 
 ---
 
+## Sessão 17c - 14/08/2026 (Sexta) — Sessão por navegador (fechar aba/navegador exige login)
+
+### O que foi feito
+- Usuário relatou que colar a URL do Chrome no Safari "logou direto" → investigado: contexto limpo NÃO loga (redireciona p/ /login) — era a sessão antiga do próprio Safari (JWT 7d no localStorage)
+- Decisão: credenciais movidas de `localStorage` → `sessionStorage` (limpo ao fechar aba/navegador; F5 mantém)
+- `auth.service.ts` (credenciais → sessionStorage + migração removendo chaves legadas), `guardian-settings.component.ts` (usa `auth.updateUser()`), `error.interceptor.ts` (401 limpa sessionStorage + chaves legadas, preservando preferências)
+- Preferências (tema/cor/sidebar/patient_id) permanecem no localStorage
+- Validado via Playwright: login → F5 mantém → fechar contexto pede login ✓; localStorage sem `auth_*` ✓
+
+---
+
 ## Sessão 17b - 14/08/2026 (Sexta) — Auditoria de segurança (OWASP + testes dinâmicos)
 
 ### O que foi feito

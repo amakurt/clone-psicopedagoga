@@ -106,7 +106,7 @@ export class GuardianSettingsComponent implements OnInit {
         const user = this.auth.user();
         if (user) {
           user.name = this.name;
-          localStorage.setItem('auth_user', JSON.stringify(user));
+          this.auth.updateUser({ name: this.name });
         }
       },
       error: () => this.saving.set(false)
