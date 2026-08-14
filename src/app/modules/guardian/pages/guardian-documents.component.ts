@@ -84,6 +84,18 @@ import { resolveFileUrl } from '@core/utils/file-url';
                   <p class="text-xs text-gray-400 dark:text-slate-500 mt-1">{{ doc.createdAt }}</p>
                 </div>
               </div>
+              <div class="mt-3 flex items-center gap-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+                  [class]="statusClass(doc.status)">
+                  {{ statusLabel(doc.status) }}
+                </span>
+              </div>
+              @if (doc.status === 'RECUSADO' && doc.approvalFeedback) {
+                <div class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
+                  <p class="font-semibold text-xs mb-1">Motivo da recusa:</p>
+                  <p>{{ doc.approvalFeedback }}</p>
+                </div>
+              }
               <div class="mt-4 flex gap-2">
                 @if (doc.fileUrl) {
                   <a [href]="resolveFileUrl(doc.fileUrl)" target="_blank" class="flex-1 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 text-center transition-all">
@@ -102,6 +114,8 @@ export class GuardianDocumentsComponent implements OnInit {
   private guardianService = inject(GuardianService);
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+
+  resolveFileUrl = resolveFileUrl;
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
@@ -150,6 +164,24 @@ export class GuardianDocumentsComponent implements OnInit {
     this.newDoc = { name: '', category: 'ESCOLA' };
     if (this.fileInput) {
       this.fileInput.nativeElement.value = '';
+    }
+  }
+
+  statusLabel(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'AGUARDANDO_APROVACAO': return 'Aguardando aprovação';
+      case 'APROVADO': return 'Aprovado';
+      case 'RECUSADO': return 'Recusado';
+      default: return status || '—';
+    }
+  }
+
+  statusClass(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'AGUARDANDO_APROVACAO': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'APROVADO': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+      case 'RECUSADO': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
     }
   }
 

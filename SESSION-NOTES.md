@@ -6,7 +6,25 @@
 
 ---
 
-## Sessão 14/08/2026 (Sexta) — Fix: "Cannot GET /api/uploads" no portal + notificação de documento enviado
+## Sessão 14/08/2026 (Sexta) — Fluxo de aprovação de documentos pelo profissional
+
+### 75. Documento enviado pelo portal da família agora tem status AGUARDANDO_APROVAÇÃO
+- **Backend `POST /guardian/documents`:** documento criado com `status: 'AGUARDANDO_APROVACAO'`. Notificação enviada à equipe do clínica (gestor, profissional, psicopedagogo, secretária).
+- **Backend `PATCH /api/documentos/:id/aprovar`:** só staff pode aprovar (`APROVADO`) ou recusar (`RECUSADO`, com `feedback?`). Ao aprovar/recusar, o sistema notifica o responsável (autor do documento) via `notification.create` — mensagem "Seu documento 'X' foi aprovado/recusado", com opcional motivo da recusa.
+
+### 76. Interface clínica: listagem e aprovação de documentos pendentes
+- `documentos-list.component.ts`: botões **Aprovar** e **Recusar** aparecem quando `status === 'AGUARDANDO_APROVACAO'` (coluna ações).
+- Modal de aprovação (confirma "Aprovar documento enviado pela família?").
+- Modal de recusa: campo **textarea** de feedback + confirmação "Recusar documento" → família recebe o motivo.
+- `getStatusLabel()` traduz: 'Aguardando aprovação', 'Aprovado', 'Recusado'.
+- `getStatusClass()` define cores: azul (aguardando), verde (aprovado), vermelho (recusado).
+
+### 77. Interface portal da família: visualização do status
+- `guardian-documents.component.ts`: badge de status abaixo do nome do documento.
+- Se `status === 'RECUSADO'` e houver `approvalFeedback`, exibe o motivo da recusa em um card estilizado (âmbar/vermelho).
+- O responsável vê se seu documento foi aceito ou rejeitado com motivo.
+
+---
 
 ### 73. Botão "Abrir" do portal da família quebrava (Cannot GET /api/uploads/...)
 - **Causa:** `fileUrl` é salvo relativo (`/api/uploads/...`) e os componentes usavam `[href]` direto — em dev (frontend :4200, backend :3000) o link resolvia contra o frontend, que não serve `/api/uploads`

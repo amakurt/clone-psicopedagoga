@@ -105,12 +105,20 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                       <td class="px-6 py-4">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
                           [class]="getStatusClass(d.status)">
-                          {{ d.status }}
+                          {{ getStatusLabel(d.status) }}
                         </span>
                       </td>
                       <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ d.createdAt | date:'dd/MM/yyyy' }}</td>
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-end gap-1">
+                          @if (d.status === 'AGUARDANDO_APROVACAO') {
+                            <button class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Aprovar" (click)="openApproveModal(d)">
+                              <span class="material-icons text-lg">check_circle</span>
+                            </button>
+                            <button class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Recusar" (click)="openRejectModal(d)">
+                              <span class="material-icons text-lg">cancel</span>
+                            </button>
+                          }
                           <button class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Baixar" (click)="downloadDocument(d)">
                             <span class="material-icons text-lg">download</span>
                           </button>
@@ -155,6 +163,28 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
       (confirmed)="executeShare()">
     </app-confirm-modal>
 
+    <app-confirm-modal
+      [isOpen]="showApproveModal()"
+      title="Aprovar Documento"
+      message="Aprovar este documento enviado pela família?"
+      confirmText="Aprovar"
+      [dangerMode]="false"
+      (closed)="showApproveModal.set(false)"
+      (confirmed)="executeApprove()">
+    </app-confirm-modal>
+
+    <app-confirm-modal
+      [isOpen]="showRejectModal()"
+      title="Recusar Documento"
+      message="Informe o motivo para o responsável:"
+      confirmText="Recusar"
+      [dangerMode]="true"
+      (closed)="showRejectModal.set(false)"
+      (confirmed)="executeReject()">
+      <textarea [(ngModel)]="rejectFeedback" rows="3" placeholder="Ex.: documento ilegível, faltou o nome do paciente..."
+        class="w-full mt-2 p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-red-500 outline-none resize-none"></textarea>
+    </app-confirm-modal>
+
     @if (showToast()) {
       <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg"
         [class]="toastType() === 'success' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'">
@@ -182,6 +212,10 @@ export class DocumentosListComponent implements OnInit {
   docToSign = signal<any>(null);
   showShareModal = signal(false);
   docToShare = signal<any>(null);
+  showApproveModal = signal(false);
+  showRejectModal = signal(false);
+  docToReview = signal<any>(null);
+  rejectFeedback = '';
   private timeout: any;
 
   categories = [
@@ -268,8 +302,23 @@ export class DocumentosListComponent implements OnInit {
     }
   }
 
+  getStatusLabel(status: string): string {
+    switch (status?.toUpperCase()) {
+      case 'AGUARDANDO_APROVACAO': return 'Aguardando aprovação';
+      case 'APROVADO': return 'Aprovado';
+      case 'RECUSADO': return 'Recusado';
+      case 'PRONTO': return 'Pronto';
+      case 'RASCUNHO': return 'Rascunho';
+      case 'PENDENTE': return 'Pendente';
+      default: return status || '—';
+    }
+  }
+
   getStatusClass(status: string): string {
     switch (status?.toUpperCase()) {
+      case 'AGUARDANDO_APROVACAO': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'APROVADO': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+      case 'RECUSADO': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
       case 'PRONTO': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
       case 'RASCUNHO': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
       case 'PENDENTE': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
@@ -319,6 +368,43 @@ export class DocumentosListComponent implements OnInit {
     } else {
       this.showNotification('Arquivo não disponível para download', 'info');
     }
+  }
+
+  openApproveModal(doc: any) {
+    this.docToReview.set(doc);
+    this.showApproveModal.set(true);
+  }
+
+  openRejectModal(doc: any) {
+    this.docToReview.set(doc);
+    this.rejectFeedback = '';
+    this.showRejectModal.set(true);
+  }
+
+  executeApprove() {
+    const doc = this.docToReview();
+    this.showApproveModal.set(false);
+    if (!doc) return;
+    this.service.approve(doc.id, true).subscribe({
+      next: () => {
+        this.showNotification('Documento aprovado. A família foi notificada.', 'success');
+        this.load();
+      },
+      error: () => this.showNotification('Erro ao aprovar documento', 'error'),
+    });
+  }
+
+  executeReject() {
+    const doc = this.docToReview();
+    this.showRejectModal.set(false);
+    if (!doc) return;
+    this.service.approve(doc.id, false, this.rejectFeedback).subscribe({
+      next: () => {
+        this.showNotification('Documento recusado. A família foi notificada.', 'success');
+        this.load();
+      },
+      error: () => this.showNotification('Erro ao recusar documento', 'error'),
+    });
   }
 
   openSignModal(doc: any) {

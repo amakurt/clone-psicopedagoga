@@ -286,6 +286,7 @@ router.post('/documents', async (req, res) => {
       uploadedBy: 'guardian',
       fileUrl,
       size,
+      status: 'AGUARDANDO_APROVACAO',
       isShared: true,
       autorId: userId
     }

@@ -139,6 +139,8 @@ export class DocumentoDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   uploadService = inject(UploadService);
 
+  resolveFileUrl = resolveFileUrl;
+
   id = '';
   item = signal<any>(null);
 

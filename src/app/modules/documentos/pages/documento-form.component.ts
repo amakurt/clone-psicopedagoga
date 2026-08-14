@@ -173,6 +173,8 @@ export class DocumentoFormComponent implements OnInit {
   uploadService = inject(UploadService);
   private toast = inject(ToastService);
 
+  resolveFileUrl = resolveFileUrl;
+
   isEdit = false;
   id = '';
   saving = signal(false);

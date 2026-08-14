@@ -22,6 +22,7 @@ import { CommonModule } from '@angular/common';
             </div>
             <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">{{ title }}</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400">{{ message }}</p>
+            <ng-content></ng-content>
           </div>
 
           <div class="p-6 border-t border-slate-100 dark:border-slate-800 flex gap-3">

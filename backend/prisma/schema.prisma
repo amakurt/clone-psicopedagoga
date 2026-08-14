@@ -548,6 +548,7 @@ model Document {
   uploadedBy       String   @default("professional")
   fileUrl          String?
   isShared         Boolean  @default(false)
+  approvalFeedback String?
   signedAt         String?
   guardianSignedAt String?
   autorId          String?

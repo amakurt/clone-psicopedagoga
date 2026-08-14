@@ -228,11 +228,12 @@ export interface Document {
   name: string;
   pacienteId?: string;
   size?: string;
-  status: 'RASCUNHO' | 'ATIVO' | 'ARQUIVADO';
+  status: 'RASCUNHO' | 'ATIVO' | 'ARQUIVADO' | 'AGUARDANDO_APROVACAO' | 'APROVADO' | 'RECUSADO';
   category: 'GERAL' | 'RELATORIO' | 'ANAMNESE' | 'ESCOLA' | 'CONSENTIMENTO';
   uploadedBy: 'professional' | 'guardian';
   fileUrl?: string;
   isShared: boolean;
+  approvalFeedback?: string;
   signedAt?: string;
   guardianSignedAt?: string;
   autorId?: string;
