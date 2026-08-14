@@ -6,7 +6,17 @@
 
 ---
 
-## Sessão 14/08/2026 (Sexta) — Sessão por navegador: fechar aba/navegador exige login novamente
+## Sessão 14/08/2026 (Sexta) — Fix: documentos enviados pelo portal da família não apareciam
+
+### 72. Portal da família: envio de documento salvava mas não aparecia
+- **Relato:** usuário enviou um documento pelo portal da família e "nada aconteceu"
+- **Causa raiz:** `POST /guardian/documents` (`guardian.ts`) criava o documento com `isShared: false`, mas `GET /guardian/documents/:patientId` listava **apenas** `isShared: true` → o envio gravava no banco, porém nunca aparecia na lista
+- **Fix:** `isShared: true` ao criar documento pelo responsável (afinal, ele compartilhou com a clínica); a listagem da clínica (`documentos.ts`) não filtra `isShared`, então o documento passa a aparecer nos dois lados
+- **Validado via API:** upload (200) → criar documento (201) → listar mostra o documento ✓
+- **Dado migrado:** o documento já enviado pelo usuário ("Declaração de Frequência") teve `isShared` atualizado para `true` no banco, passando a aparecer no portal
+- **Nota de ambiente:** havia **dois backends rodando** na porta 3000 (um de 09:59, um de 12:04) com `.env`/estado divergentes → todos os processos `tsx watch` foram encerrados e um único backend foi reiniciado
+
+---
 
 ### 71. Sessão movida de localStorage → sessionStorage
 - **Relato do usuário:** logado como profissional no Chrome, colou a URL no Safari e "logou direto" — investigado: não era vazamento entre navegadores (contexto limpo redireciona para /login), mas sim sessão antiga do próprio Safari (JWT de 7 dias persistia no localStorage)

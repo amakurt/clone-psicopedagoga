@@ -286,7 +286,7 @@ router.post('/documents', async (req, res) => {
       uploadedBy: 'guardian',
       fileUrl,
       size,
-      isShared: false,
+      isShared: true,
       autorId: userId
     }
   });
