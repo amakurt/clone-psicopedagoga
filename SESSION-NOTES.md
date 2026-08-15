@@ -6,6 +6,17 @@
 
 ---
 
+## Sessão 14/08/2026 (Sexta, noite) — Retomada no Windows: verificação de sync + sistema no ar local
+
+### 64. Verificação local vs GitHub + subida do sistema no Windows
+- **Verificação:** `git fetch --all --prune`, `branch -a` e logs — local (Windows) é **idêntico** ao `origin/main` (`3d6d81f`); working tree limpo, 0 untracked; arquivos-chave do último commit de trabalho do Mac (`0e9d5f1` 13/08 17:00 — PIX/tema escuro) presentes no disco (`src/app/core/utils/theme.ts`, `backend/src/lib/pix.ts`, `tailwind.config.js`, `configuracoes.component.ts` 40KB) e `backend/prisma/dev.db` (638KB) versionado
+- **Sistema no ar (Windows):** backend `npm run dev` (tsx watch, porta 3000) e frontend `npm start` (ng serve, porta 4200) subidos desanexados via `Start-Process cmd /c ...` (Hidden) — logs `backend.log`/`frontend.log` na raiz; validado login real (`sarah@edupsych.com` → Dra. Sarah Miller, GESTOR) e frontend HTTP 200
+- **Achado importante:** o usuário relatou que fez um **commit HOJE (14/08) no Mac** que não existe no GitHub (último lá é `0e9d5f1` de 13/08) — ou seja, o push não foi feito do Mac; quando ele ligar o Mac: `git push origin main` e depois `git pull` aqui para trazer as alterações novas
+- **Backup da conversa:** `session-backup/2026-08-14-retomada-windows.json`
+- **Pendência:** receber o push do Mac (commit de 14/08) → pull aqui → reiniciar o sistema
+
+---
+
 ## Sessão 14/08/2026 (Sexta) — Sincronização com o GitHub (atualização do repositório)
 
 ### 63. Git pull de 30 commits + npm install + prisma generate

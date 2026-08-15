@@ -4,6 +4,29 @@
 
 ---
 
+## Sessão 18 - 14/08/2026 (Sexta, noite) — Retomada no Windows: sync verificado + sistema no ar
+
+### O que foi feito
+
+#### 1. Verificação local vs GitHub
+- `git fetch --all --prune`, `branch -a`, logs com autor/data — local (Windows) idêntico ao `origin/main` (`3d6d81f`), working tree limpo, 0 untracked
+- Arquivos-chave do último commit de trabalho do Mac (`0e9d5f1` 13/08 17:00) confirmados no disco (`theme.ts`, `pix.ts`, `tailwind.config.js`, `configuracoes.component.ts`, `dev.db` 638KB)
+
+#### 2. Sistema no ar localmente (Windows)
+- Backend `npm run dev` (porta 3000) e frontend `npm start` (porta 4200) desanexados via `Start-Process cmd /c` (WindowStyle Hidden), logs `backend.log`/`frontend.log` na raiz
+- Validado: login real `sarah@edupsych.com` → Dra. Sarah Miller (GESTOR); frontend HTTP 200
+
+#### 3. Achado importante (pendência)
+- Usuário relatou commit feito HOJE (14/08) no Mac que **não está no GitHub** (último lá: `0e9d5f1` 13/08) — push pendente do Mac (`git push origin main`); depois `git pull` aqui e reiniciar o sistema com as alterações novas
+
+### Backup da conversa
+- `session-backup/2026-08-14-retomada-windows.json` — histórico completo desta sessão (formato opencode, como os anteriores)
+
+### Commits
+- (registrado neste commit — backup da sessão 18)
+
+---
+
 ## Sessão 17 - 14/08/2026 (Sexta) — Sincronização com o GitHub
 
 ### O que foi feito
