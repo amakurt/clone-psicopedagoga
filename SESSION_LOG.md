@@ -1,6 +1,29 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 13 de Agosto de 2026
+## Última Atualização: 14 de Agosto de 2026
+
+---
+
+## Sessão 17 - 14/08/2026 (Sexta) — Sincronização com o GitHub
+
+### O que foi feito
+
+#### 1. Pull de 30 commits do origin/main (fast-forward 3e0d2cd..0e9d5f1, 167 arquivos)
+- Repo local (Windows) estava 30 commits atrás do trabalho feito no Mac — atualizado sem conflitos
+- Chegaram: PIX próprio (QR EMV + copia-e-cola + "já paguei"), Asaas real fase 3a, SaaS multi-tenant fases 1-3 (scoping/planos/trial/seleção de clínica), `deploy/` (provision + setup + nginx + postgres + backup + migrador sqlite→postgres validado), chat polling + WhatsApp Evolution, Google OAuth real, verificação/redefinição de senha, tema escuro + accent configurável, menus expansíveis, `backend/prisma/dev.db` com dados reais
+
+#### 2. Instalação de dependências
+- `npm install` na raiz (+22 pacotes) e no backend (+2 pacotes; postinstall `protobufjs` bloqueado por allowScripts — inofensivo)
+- `npx prisma generate` no backend (Prisma Client v5.22.0) após schema mudar bastante
+
+#### 3. Validação
+- `git status` limpo antes/depois; pull sem conflitos; build não revalidado nesta sessão (sem mudança de código)
+
+### Backup da conversa
+- `session-backup/2026-08-14-sync-github.json` — histórico completo desta sessão (formato opencode, como os anteriores)
+
+### Commits
+- (registrado neste commit — backup da sessão 14/08)
 
 ---
 

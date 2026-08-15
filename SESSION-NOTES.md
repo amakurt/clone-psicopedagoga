@@ -1,8 +1,20 @@
 # EduPsych Pro - Clone Angular Session Notes
 
-## Data: 13/08/2026
+## Data: 14/08/2026
 
 ## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída + Fase 3a gateway real Asaas (Pix recorrente) concluída + Fase 5 venda concluída (landing com planos e preços + registro de clínica self-service) + Navegação reorganizada (menu Documentos e Protocolos expansíveis com submenus; /app/plano sem cards de planos para assinantes ativos) + **Cobrança PIX própria (sem gateway) validada de ponta a ponta** + **Tema escuro completo (páginas legadas + cor de destaque configurável)** — Fase 4 adiada — deploy pausado (Oracle A1 sem capacidade; continuamos no ambiente local; pacote `deploy/` pronto + migração SQLite→Postgres validada: 321 linhas/40 tabelas)**
+
+---
+
+## Sessão 14/08/2026 (Sexta) — Sincronização com o GitHub (atualização do repositório)
+
+### 63. Git pull de 30 commits + npm install + prisma generate
+- Repo local estava **30 commits atrás** do `origin/main` (fast-forward `3e0d2cd..0e9d5f1`, 167 arquivos, +115k linhas) — trabalho feito em outro PC (Mac) foi trazido para o Windows
+- **O que veio:** billing/PIX próprio (QR EMV + copia-e-cola + "já paguei" no portal do responsável), Asaas real (fase 3a), SaaS multi-tenant fases 1-3 (scoping, planos, trial 14d, limites, seleção de clínica), migrador SQLite→Postgres (`deploy/migrate/`), pacote `deploy/` completo, chat em tempo real (polling) + WhatsApp Evolution API, Google OAuth real, verificação de conta/recuperação de senha, tema escuro + cor de destaque configurável, menus expansíveis Documentos/Protocolos, `backend/prisma/dev.db` com dados reais (25 pacientes, 8 usuários, plano PRO ativo)
+- **Comandos executados:** `git fetch` → `git pull origin main` (fast-forward limpo, sem conflitos — working tree estava limpo) → `npm install` na raiz (+22 pacotes) e no `backend/` (+2 pacotes; aviso inofensivo do postinstall do `protobufjs` bloqueado por allowScripts) → `npx prisma generate` no backend (Prisma Client v5.22.0 ok)
+- **Estado final:** repo em `0e9d5f1`, dependências instaladas, Prisma Client gerado — pronto para rodar (`npm run start` / backend `npm run dev`)
+- **Backup da conversa:** `session-backup/2026-08-14-sync-github.json`
+- **Validação:** `git status` limpo antes e depois do pull; npm install sem erros; prisma generate concluído
 
 ---
 
