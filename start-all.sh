@@ -39,7 +39,7 @@ fi
 if [ "$EVO_UP" = "1" ]; then
   echo "==> Evolution API: OK (http://localhost:8080)"
   curl -s http://localhost:8080/instance/connectionState/edupsych \
-    -H "apikey: edupsych-localtest-apikey-2026" 2>/dev/null \
+    -H "apikey: 34aa2d83eef4cf4e74691e0ef22b8ac4e3c8c343f9b66822" 2>/dev/null \
     | grep -q '"state":"open"' && echo "    instância edupsych: conectada" || echo "    instância edupsych: DESCONECTADA (escaneie o QR em http://localhost:8080/manager)"
 else
   echo "!! Evolution API não subiu (veja logs/evolution.log)"
