@@ -131,6 +131,9 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                           <a [routerLink]="['/app/documentos', d.id, 'editar']" class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
                             <span class="material-icons text-lg">edit</span>
                           </a>
+                          <button class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir" (click)="openDeleteModal(d)">
+                            <span class="material-icons text-lg">delete</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -185,6 +188,16 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
         class="w-full mt-2 p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-red-500 outline-none resize-none"></textarea>
     </app-confirm-modal>
 
+    <app-confirm-modal
+      [isOpen]="showDeleteModal()"
+      title="Excluir Documento"
+      message="ATENÇÃO: esta ação é PERMANENTE e não pode ser desfeita. O documento será removido definitivamente e, se já estiver compartilhado, o responsável perderá o acesso a ele."
+      confirmText="Excluir definitivamente"
+      [dangerMode]="true"
+      (closed)="showDeleteModal.set(false)"
+      (confirmed)="executeDelete()">
+    </app-confirm-modal>
+
     @if (showToast()) {
       <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg"
         [class]="toastType() === 'success' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'">
@@ -216,6 +229,8 @@ export class DocumentosListComponent implements OnInit {
   showRejectModal = signal(false);
   docToReview = signal<any>(null);
   rejectFeedback = '';
+  showDeleteModal = signal(false);
+  docToDelete = signal<any>(null);
   private timeout: any;
 
   categories = [
@@ -404,6 +419,24 @@ export class DocumentosListComponent implements OnInit {
         this.load();
       },
       error: () => this.showNotification('Erro ao recusar documento', 'error'),
+    });
+  }
+
+  openDeleteModal(doc: any) {
+    this.docToDelete.set(doc);
+    this.showDeleteModal.set(true);
+  }
+
+  executeDelete() {
+    const doc = this.docToDelete();
+    this.showDeleteModal.set(false);
+    if (!doc) return;
+    this.service.delete(doc.id).subscribe({
+      next: () => {
+        this.showNotification('Documento excluído permanentemente', 'success');
+        this.load();
+      },
+      error: () => this.showNotification('Erro ao excluir documento', 'error')
     });
   }
 

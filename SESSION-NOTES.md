@@ -1,5 +1,33 @@
 # EduPsych Pro - Clone Angular Session Notes
 
+---
+
+## Sessão 17/08/2026 (Segunda) — Dados de teste do Theo (módulos clínicos completos) + listagem de registros nos documentos clínicos + exclusão com modal de perigo em Documentos
+
+### 78. Dados de teste completos do Theo Mendes Rocha (id `cmsezw1em000f8882p6561p4b`)
+- **Avaliações ABA (2 rodadas × 3 protocolos = 6):** ABLLS-R 116→132, VB-MAPP 77→114, DENVER 62→87; baseline 10/08 (Carlos Eduardo `cmsezw1du00038882y8j151yr`) + reavaliação 17/08 (Ana Carolina `cmsezw1dr00028882hv5std1k`); todos os itens pontuados com variação orgânica (scripts `fill-aba.py`/`fill-aba2.py` em `/var/folders/.../T/opencode/`)
+- **Documentos clínicos:** 3 laudos (TEA F84.0 CONCLUIDO/Iarlley `cmshxmfll0000pnbsxwtpb2ww`; Relatório Psicopedagógico CONCLUIDO/Maria José `cmsezw1dy00048882s26cj41j`; Neuropsicológico RASCUNHO/Carlos); 3 documentos novos (Termo Consentimento LGPD, Declaração de Matrícula, Cronograma ABA) + 4 existentes = 7; 1 anamnese completa; 2 prontuários; 6 evoluções (10–17/08, estrelas 2–5); 1 protocolo TEA (200 itens, 156 pts/39%); 4 diários de sessão; 4 fichas de frequência; 2 planos de intervenção; 2 encaminhamentos; 3 financeiro (2 PIX PAGO, 1 PENDENTE); 3 agendamentos futuros (19/20/22/08); 3 programas ABA novos com 6 data points cada + 2 pré-existentes (script `fill-theo.py`)
+- **Dedupe:** script rodou 2× criou duplicatas → removidas via API onde existe DELETE; **prontuários e encaminhamentos NÃO têm rota DELETE** → limpeza via `sqlite3 backend/prisma/dev.db` (script `dedupe-theo.py`)
+
+### 79. Bugs corrigidos na avaliação ABA
+- `assessedAt` com só data (dd/mm/aaaa) dava **400 do Prisma** — precisa ISO-8601 completo → fix em `aba-assessment.component.ts` (`toISOString()`)
+- Frontend **não carregava avaliações existentes** ao selecionar paciente/protocolo → auto-load + **chips "Avaliações salvas"** clicáveis + save com **PUT** quando a avaliação já existe (em vez de duplicar)
+
+### 80. Páginas de documentos clínicos eram só formulário → seção "Registros Anteriores"
+- **diario-sessao, frequencia-form e plano-intervencao-doc** (módulo `documentos-clinicos`): signals `records`/`editingId`; `loadRecords()` (GET `?pacienteId=`), **Editar** (carrega no form → save vira PUT), **Excluir** (confirm + DELETE + reload), `resetForm()` (preserva pacienteId), `(change)="loadRecords()"` no select de paciente, contador de registros no header
+- Ciclo POST/PUT/DELETE **validado via API** (cria→edita→exclui, 201/200/204)
+
+### 81. Documentos: botão excluir + modal de aviso de perigo
+- `documentos-list.component.ts`: botão **lixeira** na coluna Ações (usando `DocumentosService.delete` → `DELETE /documentos/:id`, rota já existia)
+- Modal `dangerMode: true` (ícone `delete_forever` vermelho): *"ATENÇÃO: esta ação é PERMANENTE e não pode ser desfeita. O documento será removido definitivamente e, se já estiver compartilhado, o responsável perderá o acesso a ele."* — confirmText **"Excluir definitivamente"**
+
+### 82. Ambiente e backup
+- Serviços: backend :3000, frontend :4200, Evolution API :8080 (login sarah@edupsych.com/123456, token em `/tmp/edupsych_token`)
+- `npx ng build` limpo após todas as mudanças
+- Backup da conversa: `session-backup/2026-08-17-dados-testes-documentos-clinicos.json` (137 mensagens)
+
+---
+
 ## Data: 13/08/2026
 
 ## Status: 100% Implementado + Verificação de Conta + Recuperação de Senha + Solicitações de Formulário Online + Agenda (Solicitação com Notificação) + WhatsApp Integrado + Chat em Tempo Real (polling) + Acesso pela Rede Local + "Marcar todas como lidas" validado + **Fases 1-2 SAAS multi-tenant concluídas (scoping + teste de isolamento) + Fase 3 billing (planos/trial/limite/assinatura, page /app/plano) concluída + Fase 3a gateway real Asaas (Pix recorrente) concluída + Fase 5 venda concluída (landing com planos e preços + registro de clínica self-service) + Navegação reorganizada (menu Documentos e Protocolos expansíveis com submenus; /app/plano sem cards de planos para assinantes ativos) + **Cobrança PIX própria (sem gateway) validada de ponta a ponta** + **Tema escuro completo (páginas legadas + cor de destaque configurável)** — Fase 4 adiada — deploy pausado (Oracle A1 sem capacidade; continuamos no ambiente local; pacote `deploy/` pronto + migração SQLite→Postgres validada: 321 linhas/40 tabelas)**

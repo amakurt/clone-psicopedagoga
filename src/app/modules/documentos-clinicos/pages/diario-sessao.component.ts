@@ -55,7 +55,7 @@ import { ToastService } from '@shared/components/toast.component';
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Paciente *</label>
-                  <select [(ngModel)]="form.pacienteId"
+                  <select [(ngModel)]="form.pacienteId" (change)="loadRecords()"
                     class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
                     <option value="">Selecione um paciente</option>
                     @for (p of patients(); track p.id) {
@@ -209,6 +209,61 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
         </div>
       </div>
+
+      <!-- Registros Anteriores -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+              <span class="material-icons text-indigo-500 text-xl">history</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-900 dark:text-white">Registros Anteriores</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ records().length }} registro(s) de {{ getPatientName() }}</p>
+            </div>
+          </div>
+          @if (editingId()) {
+            <button (click)="resetForm()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all">
+              <span class="material-icons text-[16px]">add</span>
+              Novo registro
+            </button>
+          }
+        </div>
+        @if (records().length === 0) {
+          <div class="p-10 text-center">
+            <span class="material-icons text-4xl text-slate-300 dark:text-slate-600">event_note</span>
+            <p class="mt-3 text-sm font-semibold text-slate-500 dark:text-slate-400">Nenhum registro para este paciente</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Selecione um paciente para listar os diários salvos</p>
+          </div>
+        } @else {
+          <div class="divide-y divide-slate-100 dark:divide-slate-800">
+            @for (r of records(); track r.id) {
+              <div class="px-6 py-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
+                  <span class="material-icons text-indigo-500 text-lg">edit_note</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ r.objective || 'Sem objetivo' }}</p>
+                    <span class="text-xs font-black px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 shrink-0">Sessão {{ r.sessionNumber }}</span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5 truncate">
+                    {{ r.date }} · {{ r.professionalName || '—' }} · {{ r.activities || '' }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button (click)="editRecord(r)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all" title="Editar">
+                    <span class="material-icons text-[18px] text-slate-500 dark:text-slate-400">edit</span>
+                  </button>
+                  <button (click)="deleteRecord(r)" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Excluir">
+                    <span class="material-icons text-[18px] text-red-500">delete</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   `,
   styles: [`:host { display: block; }`]
@@ -220,6 +275,8 @@ export class DiarioSessaoComponent implements OnInit {
 
   saving = signal(false);
   patients = signal<any[]>([]);
+  records = signal<any[]>([]);
+  editingId = signal('');
 
   form: any = {
     pacienteId: '',
@@ -237,6 +294,47 @@ export class DiarioSessaoComponent implements OnInit {
     this.api.get('/pacientes').subscribe((res: any) => this.patients.set(res.data || []));
   }
 
+  loadRecords() {
+    if (!this.form.pacienteId) {
+      this.records.set([]);
+      return;
+    }
+    this.api.get('/session-diaries', { pacienteId: this.form.pacienteId }).subscribe((res: any) => {
+      this.records.set((res.data || []).sort((a: any, b: any) => (b.date || '').localeCompare(a.date || '')));
+    });
+  }
+
+  editRecord(r: any) {
+    this.editingId.set(r.id);
+    this.form = { ...r };
+  }
+
+  resetForm() {
+    this.editingId.set('');
+    this.form = {
+      pacienteId: this.form.pacienteId,
+      sessionNumber: 1,
+      date: new Date().toISOString().split('T')[0],
+      professionalName: '',
+      objective: '',
+      instruments: '',
+      studentBehavior: '',
+      activities: '',
+      observations: ''
+    };
+  }
+
+  deleteRecord(r: any) {
+    if (!confirm(`Excluir o diário da sessão ${r.sessionNumber} (${r.date})?`)) return;
+    this.api.delete(`/session-diaries/${r.id}`).subscribe({
+      next: () => {
+        this.toast.success('Diário excluído');
+        this.loadRecords();
+      },
+      error: () => this.toast.error('Erro ao excluir diário')
+    });
+  }
+
   getPatientName(): string {
     const p = this.patients().find(p => p.id === this.form.pacienteId);
     return p?.name || '-';
@@ -245,10 +343,15 @@ export class DiarioSessaoComponent implements OnInit {
   save() {
     if (!this.form.pacienteId || !this.form.date) return;
     this.saving.set(true);
-    this.api.post('/session-diaries', this.form).subscribe({
+    const req = this.editingId()
+      ? this.api.put(`/session-diaries/${this.editingId()}`, this.form)
+      : this.api.post('/session-diaries', this.form);
+    req.subscribe({
       next: () => {
         this.saving.set(false);
         this.toast.success('Diário salvo com sucesso!');
+        this.resetForm();
+        this.loadRecords();
       },
       error: () => {
         this.saving.set(false);

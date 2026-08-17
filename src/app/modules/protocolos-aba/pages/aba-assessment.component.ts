@@ -52,7 +52,7 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Paciente *</label>
-            <select [(ngModel)]="selectedPatientId" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
+            <select [(ngModel)]="selectedPatientId" (change)="onPatientChange()" class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
               <option value="">Selecione um paciente</option>
               @for (p of patients(); track p.id) {
                 <option [value]="p.id">{{ p.name }}</option>
@@ -84,6 +84,23 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
           </button>
         }
       </div>
+
+      <!-- Saved Assessments -->
+      @if (savedAssessments().length > 0) {
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Avaliações salvas:</span>
+          @for (a of savedAssessments(); track a.id) {
+            <button (click)="loadAssessmentById(a.id)"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              [class]="loadedAssessmentId() === a.id
+                ? 'bg-primary text-on-primary shadow-lg shadow-primary/20'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'">
+              <span class="material-icons text-[14px]">assessment</span>
+              {{ a.protocolType }} · {{ a.totalScore }} pts · {{ a.assessedAt ? (a.assessedAt | date:'dd/MM/yyyy') : '' }}
+            </button>
+          }
+        </div>
+      }
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Domains Sidebar -->
@@ -243,6 +260,8 @@ export class AbaAssessmentComponent implements OnInit {
   private chart: Chart | null = null;
   isEdit = false;
   assessmentId = '';
+  savedAssessments = signal<any[]>([]);
+  loadedAssessmentId = signal('');
 
   ngOnInit() {
     this.assessmentId = this.route.snapshot.paramMap.get('id') || '';
@@ -262,11 +281,67 @@ export class AbaAssessmentComponent implements OnInit {
       this.selectedProtocol();
       this.evaluations.set({});
       this.selectedDomain.set(null);
+      this.loadAssessmentForProtocol();
       setTimeout(() => {
         const domains = this.currentDomains();
         if (domains.length > 0) this.selectDomain(domains[0]);
       }, 50);
     });
+  }
+
+  onPatientChange() {
+    this.loadSavedAssessments();
+  }
+
+  loadSavedAssessments() {
+    const pid = this.selectedPatientId();
+    if (!pid) {
+      this.savedAssessments.set([]);
+      this.applyAssessment(null);
+      return;
+    }
+    this.api.get('/aba/assessments', { patientId: pid }).subscribe({
+      next: (res: any) => {
+        const list = res.data || [];
+        this.savedAssessments.set(list);
+        this.applyAssessment(list.find((a: any) => a.protocolType === this.selectedProtocol()));
+      }
+    });
+  }
+
+  loadAssessmentForProtocol() {
+    const pid = this.selectedPatientId();
+    if (!pid) return;
+    this.api.get('/aba/assessments', { patientId: pid }).subscribe({
+      next: (res: any) => {
+        this.savedAssessments.set(res.data || []);
+        this.applyAssessment((res.data || []).find((a: any) => a.protocolType === this.selectedProtocol()));
+      }
+    });
+  }
+
+  applyAssessment(a: any) {
+    if (a) {
+      this.loadedAssessmentId.set(a.id);
+      this.assessmentDate = a.assessedAt ? new Date(a.assessedAt).toISOString().split('T')[0] : this.assessmentDate;
+      this.notes = a.notes || '';
+      try { this.evaluations.set(JSON.parse(a.evaluations)); } catch { this.evaluations.set({}); }
+    } else {
+      this.loadedAssessmentId.set('');
+      this.evaluations.set({});
+      this.notes = '';
+    }
+  }
+
+  loadAssessmentById(id: string) {
+    const a = this.savedAssessments().find(x => x.id === id);
+    if (!a) return;
+    this.selectedProtocol.set(a.protocolType as ProtocolType);
+    this.applyAssessment(a);
+    setTimeout(() => {
+      const domains = this.currentDomains();
+      if (domains.length > 0) this.selectDomain(domains[0]);
+    }, 50);
   }
 
   loadAssessment() {
@@ -476,17 +551,20 @@ export class AbaAssessmentComponent implements OnInit {
       totalScore,
       domainScores: JSON.stringify(domainScores),
       notes: this.notes,
-      assessedAt: this.assessmentDate
+      assessedAt: this.assessmentDate ? new Date(this.assessmentDate + 'T12:00:00').toISOString() : new Date().toISOString()
     };
 
     const req = this.isEdit
       ? this.api.put(`/aba/assessments/${this.assessmentId}`, data)
-      : this.api.post('/aba/assessments', data);
+      : this.loadedAssessmentId()
+        ? this.api.put(`/aba/assessments/${this.loadedAssessmentId()}`, data)
+        : this.api.post('/aba/assessments', data);
 
     req.subscribe({
       next: () => {
         this.saving.set(false);
         this.toast('Avaliação salva com sucesso!');
+        this.loadSavedAssessments();
         setTimeout(() => this.router.navigate(['/app/protocolos-aba']), 1500);
       },
       error: () => { this.saving.set(false); this.toast('Erro ao salvar avaliação'); }

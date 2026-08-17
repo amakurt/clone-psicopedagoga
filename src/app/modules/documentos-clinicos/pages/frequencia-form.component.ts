@@ -44,7 +44,7 @@ import { ToastService } from '@shared/components/toast.component';
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Paciente *</label>
-                <select [(ngModel)]="form.pacienteId"
+                <select [(ngModel)]="form.pacienteId" (change)="loadRecords()"
                   class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
                   <option value="">Selecione um paciente</option>
                   @for (p of patients(); track p.id) {
@@ -140,6 +140,58 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
         </div>
       </div>
+
+      <!-- Registros Anteriores -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div class="p-5 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-xl bg-green-600/10 flex items-center justify-center">
+              <span class="material-icons text-green-600 text-xl">history</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-900 dark:text-white">Registros Anteriores</h3>
+              <p class="text-xs text-gray-500 dark:text-slate-400">{{ records().length }} registro(s) de {{ getPatientName() }}</p>
+            </div>
+          </div>
+          @if (editingId()) {
+            <button (click)="resetForm()" class="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-gray-700 dark:text-slate-300 font-semibold text-xs transition-all">
+              <span class="material-icons text-[16px]">add</span>
+              Novo registro
+            </button>
+          }
+        </div>
+        @if (records().length === 0) {
+          <div class="p-10 text-center">
+            <span class="material-icons text-4xl text-gray-300 dark:text-slate-600">fact_check</span>
+            <p class="mt-3 text-sm font-semibold text-gray-500 dark:text-slate-400">Nenhum registro para este paciente</p>
+            <p class="text-xs text-gray-400 dark:text-slate-500 mt-1">Selecione um paciente para listar as fichas salvas</p>
+          </div>
+        } @else {
+          <div class="divide-y divide-gray-100 dark:divide-slate-700">
+            @for (r of records(); track r.id) {
+              <div class="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                <div class="w-10 h-10 rounded-xl bg-green-600/10 flex items-center justify-center shrink-0">
+                  <span class="material-icons text-green-600 text-lg">fact_check</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ r.date }} · {{ r.entryTime || '—' }} – {{ r.exitTime || '—' }}</p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">
+                    {{ r.activities || 'Sem atividades' }} · {{ r.guardianSignature ? 'Rubrica: ' + r.guardianSignature : '' }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button (click)="editRecord(r)" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-600 rounded-lg transition-all" title="Editar">
+                    <span class="material-icons text-[18px] text-gray-500 dark:text-slate-400">edit</span>
+                  </button>
+                  <button (click)="deleteRecord(r)" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Excluir">
+                    <span class="material-icons text-[18px] text-red-500">delete</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   `,
   styles: [`:host { display: block; }`]
@@ -151,6 +203,8 @@ export class FrequenciaFormComponent implements OnInit {
 
   saving = signal(false);
   patients = signal<any[]>([]);
+  records = signal<any[]>([]);
+  editingId = signal('');
 
   form: any = {
     pacienteId: '',
@@ -167,6 +221,46 @@ export class FrequenciaFormComponent implements OnInit {
     this.api.get('/pacientes').subscribe((res: any) => this.patients.set(res.data || []));
   }
 
+  loadRecords() {
+    if (!this.form.pacienteId) {
+      this.records.set([]);
+      return;
+    }
+    this.api.get('/frequency-sheets', { pacienteId: this.form.pacienteId }).subscribe((res: any) => {
+      this.records.set((res.data || []).sort((a: any, b: any) => (b.date || '').localeCompare(a.date || '')));
+    });
+  }
+
+  editRecord(r: any) {
+    this.editingId.set(r.id);
+    this.form = { ...r };
+  }
+
+  resetForm() {
+    this.editingId.set('');
+    this.form = {
+      pacienteId: this.form.pacienteId,
+      date: new Date().toISOString().split('T')[0],
+      entryTime: '',
+      exitTime: '',
+      activities: '',
+      instruments: '',
+      observations: '',
+      guardianSignature: ''
+    };
+  }
+
+  deleteRecord(r: any) {
+    if (!confirm(`Excluir a ficha de ${r.date}?`)) return;
+    this.api.delete(`/frequency-sheets/${r.id}`).subscribe({
+      next: () => {
+        this.toast.success('Ficha excluída');
+        this.loadRecords();
+      },
+      error: () => this.toast.error('Erro ao excluir ficha')
+    });
+  }
+
   getPatientName(): string {
     const p = this.patients().find(p => p.id === this.form.pacienteId);
     return p?.name || '-';
@@ -175,10 +269,15 @@ export class FrequenciaFormComponent implements OnInit {
   save() {
     if (!this.form.pacienteId || !this.form.date) return;
     this.saving.set(true);
-    this.api.post('/frequency-sheets', this.form).subscribe({
+    const req = this.editingId()
+      ? this.api.put(`/frequency-sheets/${this.editingId()}`, this.form)
+      : this.api.post('/frequency-sheets', this.form);
+    req.subscribe({
       next: () => {
         this.saving.set(false);
         this.toast.success('Ficha de frequência salva com sucesso!');
+        this.resetForm();
+        this.loadRecords();
       },
       error: () => {
         this.saving.set(false);

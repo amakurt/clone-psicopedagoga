@@ -1,6 +1,23 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 14 de Agosto de 2026
+## Última Atualização: 17 de Agosto de 2026
+
+---
+
+## Sessão 18 - 17/08/2026 (Segunda) — Dados de teste do Theo + listagem de registros nos documentos clínicos + exclusão com modal de perigo
+
+### O que foi feito
+- **Avaliações ABA do Theo** (id `cmsezw1em000f8882p6561p4b`): 6 avaliações (ABLLS-R 116→132, VB-MAPP 77→114, DENVER 62→87) em 2 rodadas (baseline 10/08 Carlos Eduardo + reavaliação 17/08 Ana Carolina), todos os itens pontuados
+- **Bug fix ABA:** `assessedAt` precisava de ISO-8601 completo (data só dava 400 Prisma) + página não listava avaliações existentes → auto-load + chips + save com PUT quando já existe
+- **Dados completos do Theo:** 3 laudos, 7 documentos, 1 anamnese, 2 prontuários, 6 evoluções, 1 protocolo TEA (200 itens/39%), 4 diários, 4 fichas de frequência, 2 planos de intervenção, 2 encaminhamentos, 3 financeiro, 3 agendamentos, 3 programas ABA com data points
+- **Dedupe:** script rodou 2× → duplicatas removidas (API; prontuários/encaminhamentos sem rota DELETE → SQL direto no dev.db)
+- **"Registros Anteriores"** em diario-sessao, frequencia-form e plano-intervencao-doc: listagem por paciente, editar (PUT), excluir (DELETE), resetForm, contador — páginas antes só de formulário
+- **Documentos:** botão excluir (lixeira) + modal de perigo ("ação PERMANENTE, responsável perde acesso") com confirmText "Excluir definitivamente"
+- `ng build` limpo; ciclo POST/PUT/DELETE validado via API; backup da conversa em `session-backup/2026-08-17-dados-testes-documentos-clinicos.json`
+
+### Onde continuar (pós-almoço)
+- Testar no navegador: `/app/documentos-clinicos/diario|frequencia|plano` (selecionar Theo → registros anteriores com editar/excluir) e `/app/documentos` (lixeira → modal de perigo → excluir)
+- Candidatos naturais para o mesmo padrão "Registros Anteriores": evoluções (session-records), anamnese, laudos, prontuários, encaminhamentos, agendamentos
 
 ---
 

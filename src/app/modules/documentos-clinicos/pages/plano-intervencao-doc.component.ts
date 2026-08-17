@@ -70,7 +70,7 @@ import { ToastService } from '@shared/components/toast.component';
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Paciente *</label>
-                  <select [(ngModel)]="form.pacienteId"
+                  <select [(ngModel)]="form.pacienteId" (change)="loadRecords()"
                     class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
                     <option value="">Selecione um paciente</option>
                     @for (p of patients(); track p.id) {
@@ -213,6 +213,62 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
         </div>
       </div>
+
+      <!-- Registros Anteriores -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div class="p-5 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-xl bg-amber-600/10 flex items-center justify-center">
+              <span class="material-icons text-amber-600 text-xl">history</span>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-900 dark:text-white">Registros Anteriores</h3>
+              <p class="text-xs text-gray-500 dark:text-slate-400">{{ records().length }} registro(s) de {{ getPatientName() }}</p>
+            </div>
+          </div>
+          @if (editingId()) {
+            <button (click)="resetForm()" class="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-gray-700 dark:text-slate-300 font-semibold text-xs transition-all">
+              <span class="material-icons text-[16px]">add</span>
+              Novo registro
+            </button>
+          }
+        </div>
+        @if (records().length === 0) {
+          <div class="p-10 text-center">
+            <span class="material-icons text-4xl text-gray-300 dark:text-slate-600">assignment</span>
+            <p class="mt-3 text-sm font-semibold text-gray-500 dark:text-slate-400">Nenhum registro para este paciente</p>
+            <p class="text-xs text-gray-400 dark:text-slate-500 mt-1">Selecione um paciente para listar os planos salvos</p>
+          </div>
+        } @else {
+          <div class="divide-y divide-gray-100 dark:divide-slate-700">
+            @for (r of records(); track r.id) {
+              <div class="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+                <div class="w-10 h-10 rounded-xl bg-amber-600/10 flex items-center justify-center shrink-0">
+                  <span class="material-icons text-amber-600 text-lg">assignment</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ r.step1 || 'Plano de intervenção' }}</p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5 truncate">
+                    {{ r.sessionCount }} sessões · {{ r.frequency || '—' }} · {{ r.duration || '—' }} · {{ r.professionalName || '' }}
+                  </p>
+                </div>
+                <span class="text-xs font-bold px-2 py-1 rounded-full shrink-0"
+                  [class]="r.status === 'APROVADO' ? 'bg-emerald-500/10 text-emerald-600' : r.status === 'RASCUNHO' ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-500/10 text-slate-500'">
+                  {{ r.status || 'RASCUNHO' }}
+                </span>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button (click)="editRecord(r)" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-600 rounded-lg transition-all" title="Editar">
+                    <span class="material-icons text-[18px] text-gray-500 dark:text-slate-400">edit</span>
+                  </button>
+                  <button (click)="deleteRecord(r)" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Excluir">
+                    <span class="material-icons text-[18px] text-red-500">delete</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   `,
   styles: [`:host { display: block; }`]
@@ -225,6 +281,8 @@ export class PlanoIntervencaoDocComponent implements OnInit {
   saving = signal(false);
   patients = signal<any[]>([]);
   currentStep = signal(1);
+  records = signal<any[]>([]);
+  editingId = signal('');
 
   form: any = {
     pacienteId: '',
@@ -243,6 +301,48 @@ export class PlanoIntervencaoDocComponent implements OnInit {
     this.api.get('/pacientes').subscribe((res: any) => this.patients.set(res.data || []));
   }
 
+  loadRecords() {
+    if (!this.form.pacienteId) {
+      this.records.set([]);
+      return;
+    }
+    this.api.get('/intervention-documents', { pacienteId: this.form.pacienteId }).subscribe((res: any) => {
+      this.records.set((res.data || []).sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || '')));
+    });
+  }
+
+  editRecord(r: any) {
+    this.editingId.set(r.id);
+    this.form = { ...r };
+  }
+
+  resetForm() {
+    this.editingId.set('');
+    this.form = {
+      pacienteId: this.form.pacienteId,
+      professionalName: '',
+      step1: '',
+      step2: '',
+      step3: '',
+      sessionCount: 5,
+      sessionValue: '',
+      totalValue: '',
+      frequency: '',
+      duration: ''
+    };
+  }
+
+  deleteRecord(r: any) {
+    if (!confirm('Excluir este plano de intervenção?')) return;
+    this.api.delete(`/intervention-documents/${r.id}`).subscribe({
+      next: () => {
+        this.toast.success('Plano excluído');
+        this.loadRecords();
+      },
+      error: () => this.toast.error('Erro ao excluir plano')
+    });
+  }
+
   getPatientName(): string {
     const p = this.patients().find(p => p.id === this.form.pacienteId);
     return p?.name || '-';
@@ -251,10 +351,15 @@ export class PlanoIntervencaoDocComponent implements OnInit {
   save() {
     if (!this.form.pacienteId) return;
     this.saving.set(true);
-    this.api.post('/intervention-documents', this.form).subscribe({
+    const req = this.editingId()
+      ? this.api.put(`/intervention-documents/${this.editingId()}`, this.form)
+      : this.api.post('/intervention-documents', this.form);
+    req.subscribe({
       next: () => {
         this.saving.set(false);
         this.toast.success('Plano de intervenção salvo com sucesso!');
+        this.resetForm();
+        this.loadRecords();
       },
       error: () => {
         this.saving.set(false);
