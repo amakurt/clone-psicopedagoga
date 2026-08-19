@@ -29,10 +29,10 @@
 - Validado: `tsc` limpo, `ng build` limpo, ciclos API de criar/editar/DELETE 204 com dados do Theo
 
 ### Backup da conversa
-- (a fazer — export opencode desta sessão)
+- feito: `session-backup/2026-08-18-windows-sync-notificacoes.json` (export opencode da sessão completa)
 
 ### Commits
-- (nenhum — pendente)
+- `e88af76` — registros anteriores nos 6 módulos + notificações de encaminhamento + fix loop do gráfico ABA + docs
 
 ---
 
@@ -51,10 +51,10 @@
 - Fix: wrapper `<div class="h-24">` + atributo `height` removido do canvas; `ng build` limpo
 
 ### Backup da conversa
-- (a fazer — export opencode desta sessão)
+- feito: `session-backup/2026-08-18-windows-sync-notificacoes.json` (export opencode da sessão completa)
 
 ### Commits
-- (nenhum — pendente)
+- `e88af76` (enviado no commit anterior) — este backup é o item pendente da Sessão 20
 
 ---
 
