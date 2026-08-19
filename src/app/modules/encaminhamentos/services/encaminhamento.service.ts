@@ -7,4 +7,5 @@ export class EncaminhamentoService {
   get(id: string) { return this.api.get(`/encaminhamentos/${id}`); }
   create(data: any) { return this.api.post('/encaminhamentos', data); }
   update(id: string, data: any) { return this.api.put(`/encaminhamentos/${id}`, data); }
+  delete(id: string) { return this.api.delete(`/encaminhamentos/${id}`); }
 }

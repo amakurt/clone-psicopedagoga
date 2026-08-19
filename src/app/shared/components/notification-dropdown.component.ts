@@ -95,6 +95,7 @@ export class NotificationDropdownComponent implements OnInit {
     if (type?.includes('pagamento') || type?.includes('Pagamento') || type?.includes('Financeiro')) return 'payments';
     if (type?.includes('agendamento') || type?.includes('Agendamento')) return 'calendar_month';
     if (type?.includes('mensagem') || type?.includes('mensagem') || type?.toLowerCase().startsWith('message')) return 'chat';
+    if (type?.includes('encaminhamento') || type?.includes('Encaminhamento')) return 'forward';
     return 'notifications';
   }
 
@@ -105,6 +106,7 @@ export class NotificationDropdownComponent implements OnInit {
     if (type?.includes('pagamento') || type?.includes('Pagamento') || type?.includes('Financeiro')) return 'bg-purple-100 text-purple-600';
     if (type?.includes('agendamento') || type?.includes('Agendamento')) return 'bg-cyan-100 text-cyan-600';
     if (type?.includes('mensagem') || type?.toLowerCase().startsWith('message')) return 'bg-indigo-100 text-indigo-600';
+    if (type?.includes('encaminhamento') || type?.includes('Encaminhamento')) return 'bg-sky-100 text-sky-600';
     return 'bg-slate-100 text-slate-600';
   }
 

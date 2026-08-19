@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AnamneseService } from '../services/anamnese.service';
 import { ApiService } from '@core/services/api.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
@@ -54,7 +54,7 @@ import { ToastService } from '@shared/components/toast.component';
                   <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Paciente *</label>
                     <select class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      [(ngModel)]="form.pacienteId">
+                      [(ngModel)]="form.pacienteId" (change)="loadRecords()">
                       <option value="">Selecione o paciente</option>
                       @for (p of pacientes(); track p.id) {
                         <option [value]="p.id">{{ p.name }}</option>
@@ -317,6 +317,54 @@ import { ToastService } from '@shared/components/toast.component';
             </div>
           </div>
         </div>
+
+        <div class="bg-white rounded-2xl shadow-sm mt-6">
+          <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                <span class="material-icons text-indigo-600">history</span>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900">Registros Anteriores</h3>
+                <p class="text-xs text-gray-500">{{ records().length }} anamnese(s) de {{ getPatientName() }}</p>
+              </div>
+            </div>
+            @if (editingId()) {
+              <button class="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors" (click)="resetForm()">
+                <span class="material-icons text-lg">add</span> Nova anamnese
+              </button>
+            }
+          </div>
+          @if (records().length === 0) {
+            <div class="p-10 text-center">
+              <span class="material-icons text-4xl text-gray-300">assignment_ind</span>
+              <p class="mt-3 text-sm font-medium text-gray-500">Nenhuma anamnese para este paciente</p>
+              <p class="text-xs text-gray-400 mt-1">Selecione um paciente para listar as anamneses salvas</p>
+            </div>
+          } @else {
+            <div class="divide-y divide-gray-100">
+              @for (r of records(); track r.id) {
+                <div class="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                  <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                    <span class="material-icons text-blue-600 text-lg">assignment_ind</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ r.queixaPrincipal || 'Sem queixa principal' }}</p>
+                    <p class="text-xs text-gray-500 mt-0.5 truncate">{{ r.createdAt | date:'dd/MM/yyyy' }} · {{ r.status || 'PENDENTE' }} · {{ r.autor?.name || '—' }}</p>
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Editar" (click)="editRecord(r)">
+                      <span class="material-icons text-lg text-gray-500">edit</span>
+                    </button>
+                    <button class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Excluir" (click)="deleteRecord(r)">
+                      <span class="material-icons text-lg text-red-500">delete</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
     </div>
   `,
@@ -327,7 +375,6 @@ import { ToastService } from '@shared/components/toast.component';
 export class AnamneseFormComponent implements OnInit {
   private service = inject(AnamneseService);
   private api = inject(ApiService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
 
@@ -335,6 +382,8 @@ export class AnamneseFormComponent implements OnInit {
   id = '';
   saving = signal(false);
   pacientes = signal<any[]>([]);
+  records = signal<any[]>([]);
+  editingId = signal('');
   currentStep = signal(0);
 
   steps = [
@@ -400,6 +449,58 @@ export class AnamneseFormComponent implements OnInit {
     this.form.enderecoEscola = address;
   }
 
+  getPatientName(): string {
+    const p = this.pacientes().find(p => p.id === this.form.pacienteId);
+    return p?.name || '-';
+  }
+
+  loadRecords() {
+    if (!this.form.pacienteId) { this.records.set([]); return; }
+    this.api.get('/anamneses', { pacienteId: this.form.pacienteId }).subscribe((res: any) => this.records.set(res.data || []));
+  }
+
+  editRecord(r: any) {
+    this.editingId.set(r.id);
+    const endereco = typeof r.enderecoEscola === 'string' ? this.parseAddress(r.enderecoEscola) : (r.enderecoEscola || this.form.enderecoEscola);
+    this.form = { ...this.form, ...r, enderecoEscola: endereco, constelacaoFamiliar: r.constelacaoFamiliar || [] };
+    this.currentStep.set(0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  resetForm() {
+    this.editingId.set('');
+    this.form = {
+      pacienteId: this.form.pacienteId,
+      turno: '', telefoneEscola: '',
+      enderecoEscola: { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' },
+      indicacaoTratamento: '', diagnostico: '',
+      profissaoPai: '', idadePai: '', escolaridadePai: '',
+      profissaoMae: '', idadeMae: '', escolaridadeMae: '',
+      queixaPrincipal: '', historiaQueixa: '',
+      constelacaoFamiliar: [],
+      sono: '', alimentacao: '', medicacoes: '', tratamentosAnteriores: '',
+      gestacao: '', dificuldadesAprendizado: '', historicoEscolar: '', observacoesComportamentais: ''
+    };
+    this.currentStep.set(0);
+  }
+
+  deleteRecord(r: any) {
+    if (!confirm(`Excluir a anamnese de ${r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR') : '—'}?`)) return;
+    this.api.delete(`/anamneses/${r.id}`).subscribe({
+      next: () => { this.toast.success('Anamnese excluída'); this.loadRecords(); },
+      error: () => this.toast.error('Erro ao excluir anamnese')
+    });
+  }
+
+  private parseAddress(json: string): Address {
+    try {
+      const obj = JSON.parse(json);
+      return { cep: obj.cep || '', street: obj.street || '', neighborhood: obj.neighborhood || '', number: obj.number || '', complement: obj.complement || '', city: obj.city || '', state: obj.state || '' };
+    } catch {
+      return { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' };
+    }
+  }
+
   save() {
     if (!this.form.pacienteId) return this.toast.warning('Selecione um paciente');
     if (!this.form.queixaPrincipal) return this.toast.warning('Preencha a queixa principal');
@@ -410,9 +511,14 @@ export class AnamneseFormComponent implements OnInit {
       enderecoEscola: JSON.stringify(this.form.enderecoEscola)
     };
 
-    const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
+    const obs = this.editingId() ? this.service.update(this.editingId(), data) : this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
-      next: () => this.router.navigate(['/app/anamnese']),
+      next: () => {
+        this.saving.set(false);
+        this.toast.success('Anamnese salva');
+        this.resetForm();
+        this.loadRecords();
+      },
       error: () => { this.saving.set(false); this.toast.error('Erro ao salvar'); }
     });
   }

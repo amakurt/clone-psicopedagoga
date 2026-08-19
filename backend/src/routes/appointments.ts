@@ -22,11 +22,12 @@ const appointmentSchema = z.object({
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const { search, status, date } = req.query;
+  const { search, status, date, pacienteId } = req.query;
   const where: any = {};
   if (search) where.patientName = { contains: search };
   if (status) where.status = status;
   if (date) where.date = date;
+  if (pacienteId) where.pacienteId = pacienteId;
   const appointments = await db.appointment.findMany({ where, orderBy: { date: 'asc' }, include: { paciente: true, autor: true } });
   res.json({ data: appointments, total: appointments.length });
 });

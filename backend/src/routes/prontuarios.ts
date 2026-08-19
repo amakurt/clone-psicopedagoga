@@ -34,4 +34,10 @@ router.put('/:id', async (req, res) => {
   res.json(prontuario);
 });
 
+router.delete('/:id', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  await db.prontuario.delete({ where: { id: req.params.id } });
+  res.status(204).send();
+});
+
 export default router;

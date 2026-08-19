@@ -174,7 +174,9 @@ Chart.register(...registerables);
                 @if (program.dataPoints && program.dataPoints.length > 0) {
                   <div class="mt-4">
                     <p class="text-xs font-bold text-slate-500 mb-2">Progresso</p>
-                    <canvas #programChart [attr.data-program-id]="program.id" height="80"></canvas>
+                    <div class="h-24">
+                      <canvas #programChart [attr.data-program-id]="program.id"></canvas>
+                    </div>
                   </div>
                 }
 

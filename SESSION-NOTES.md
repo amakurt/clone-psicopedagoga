@@ -2,6 +2,51 @@
 
 ---
 
+## Sessão 18/08/2026 (Terça) — Sync com GitHub + sistema no ar no Windows + Evolution API via Docker Desktop + padrão "Registros Anteriores" nos 6 módulos restantes
+
+### 83. Sync com GitHub (11 commits do Mac) + .env restaurados
+- `git pull` fast-forward `a1ca207..9ca8124` (96 arquivos, +40k linhas): auditoria de segurança (helmet, express-rate-limit, escape.ts, file-url.ts, OAuth com code exchange, rate limiting, XSS nos exports HTML), docs (SESSION-NOTES/SESSION_LOG), backups de sessão, `.env` **removidos do repo** (auditoria 68: `git rm --cached` + gitignore)
+- Usuário forneceu os valores → recriados localmente: `backend/.env` (JWT/SESSION secrets, Google OAuth, FRONTEND_URL, SMTP Gmail, `ALLOW_INSECURE_EMAIL=true`) e `evolution-api/.env` (API key + instance `edupsych`) — cobertos pelo `.gitignore`
+
+### 84. Sistema no ar no Windows
+- Backend precisou de `npm install` no `backend/` (helmet@8.3 + express-rate-limit@8.6 — vieram no pull); aviso postinstall do `protobufjs` bloqueado por allowScripts (inofensivo, já conhecido)
+- **Trap do `backend.log`:** o arquivo ficou com lock do primeiro crash (MODULE_NOT_FOUND) e os `Start-Process` seguintes não truncavam/escreviam nele → o backend subiu com log `backend-test2.log` (o processo real rodando em `..\backend-test2.log`)
+- `environment.ts`: `apiUrl` apontava para o IP do Mac (`192.168.20.132`) → trocado para o IP atual do Windows (`http://192.168.0.100:3000/api`); `FRONTEND_URL` no `.env` ganhou `http://192.168.0.100:4200`
+- Frontend: `npm start -- --host 0.0.0.0` (porta 4200, log `frontend.log`); validado login real (sarah@edupsych.com → Dra. Sarah Miller GESTOR) + frontend HTTP 200
+- Acesso: `http://localhost:4200` ou `http://192.168.0.100:4200` na LAN
+
+### 85. Evolution API — Docker Desktop instalado manualmente + instância criada
+- **Docker não existia no Windows**; `winget install Docker.DockerDesktop` falhou (exit 4294967291 — UAC) e o download manual pendurou → o usuário baixou o instalador (`https://desktop.docker.com/win/main/amd64/236836/Docker Desktop Installer.exe`) e instalou manualmente (4.87.0, instalado em `C:\Users\Usuario\AppData\Local\Programs\DockerDesktop\` — **não** no `Program Files`)
+- CLI do docker fora do PATH do shell → prefixo `C:\Users\Usuario\AppData\Local\Programs\DockerDesktop\resources\bin` + `docker-credential-desktop` no PATH
+- `docker compose up -d` (evolution-api/docker-compose.yml): postgres:16 + redis:7-alpine + `evoapicloud/evolution-api:v2.3.7` na porta 8080; servidor 29.7.2 no contexto desktop-linux
+- Instância `edupsych` não existia no volume novo → `POST /instance/create` com `integration: WHATSAPP-BAILEYS` obrigatório na v2.x (sem ele: 400 "Invalid integration"); QR Code gerado (`GET /instance/connect/edupsych`) e salvo em `whatsapp-qr.png` na raiz
+- **Decisão do usuário:** WhatsApp NÃO será usado por enquanto — instância segue `close`, é só parear com o QR quando quiser
+
+### 86. Padrão "Registros Anteriores" estendido para os 6 módulos restantes
+- **Backend:** `GET /laudos` ganhou filtro `pacienteId`; `GET /appointments` idem; `GET /encaminhamentos` idem; **`DELETE /prontuarios/:id`** criado; **`DELETE /encaminhamentos/:id`** criado (os dois não existiam — eram os que causaram limpeza via SQL na sessão 79)
+- **`evolucao-form`:** lista por paciente com badge de métricas (média colorida: verde ≥4, âmbar ≥3, vermelho <3), editar (PUT), excluir, resetForm preserva paciente
+- **`anamnese-form`:** lista com queixa principal/status/autor; editar carrega o wizard completo e faz parse de `enderecoEscola` JSON (r.route parseAddress); excluir
+- **`laudo-form`:** lista com badge de status (RASCUNHO âmbar / FINALIZADO verde / ASSINADO azul); editar/excluir
+- **`prontuario`:** anotações ganharam editar (PUT) + excluir (DELETE) + empty state; formulário vira "Editar Anotação"/"Salvar Alteração"
+- **`agenda-form`:** lista por paciente ordenada por data+horário desc com chip de status (PENDENTE/CONFIRMADO/CONCLUIDO/CANCELADO); editar/excluir
+- **`encaminhamentos` (não tinha form):** nova página `/app/encaminhamentos/novo` — campos Paciente, De (auto usuário logado, readonly), Para (select `/users/members`), Motivo, Resposta, Status (edit) + Registros Anteriores; rota `novo` registrada ANTES de `:id`; botão "Novo Encaminhamento" na lista; título "Encaminhamentos" no header (main-layout)
+- **Bug FK descoberto no caminho:** `paraUserId: ''` quebrava o Prisma (FK) → payload converte para `null` quando vazio
+- **Forms agora ficam na página após salvar** (antes navegavam para a lista) — sem navegação, `router` não é mais injetado nos 4 forms; `ActivatedRoute` mantido
+- **Validação:** `tsc --noEmit` backend limpo; `ng build` limpo (avisos pré-existentes de html2pdf.js/html2canvas); ciclo API validado com dados do Theo (3 laudos, 3 consultas, 6 evoluções, 1 anamnese, 2 prontuários, 2 encaminhamentos) + criar/DELETE 204 real em prontuários e encaminhamentos (dados de teste removidos)
+
+### 87. Notificações de encaminhamento (profissional de destino + autor)
+- **`POST /encaminhamentos`:** quando o encaminhamento tem `paraUserId`, o profissional de destino recebe notificação **"Novo encaminhamento"** — "Dra. Sarah Miller encaminhou Theo Mendes Rocha para você: 'motivo'" (type `encaminhamento`; pula se o autor for o próprio destino)
+- **`PUT /encaminhamentos/:id`:** quando o destino responde (`resposta`) ou muda o `status`, o autor recebe **"Encaminhamento atualizado"** com o status e a resposta
+- **Dropdown de notificações:** type `encaminhamento` ganhou ícone `forward` + cor sky (antes caía no fallback `notifications` cinza)
+- **Validado ponta a ponta:** criar como Sarah → notificação chegou à Maria José (maria@edupsych.com); responder/ACEITO como Maria → notificação chegou à Sarah; dados de teste removidos (encaminhamento + 2 notificações)
+
+### 88. Fix: gráfico ABA "mexendo" infinitamente
+- **Causa:** Chart.js `responsive: true` + `maintainAspectRatio: false` observa o container via ResizeObserver; o `<canvas>` tinha `height="80"` e estava dentro de `<div class="mt-4">` **sem altura fixa** → o resize do canvas alterava o container → observer disparava de novo → loop infinito (gráfico oscilando + CPU alta)
+- **Fix:** canvas envolvido em `<div class="h-24">` com altura fixa e atributo `height` removido (`aba-programs.component.ts`)
+- O radar de `aba-assessment` usa `maintainAspectRatio: true` + `width/height=400` explícitos (caso mais seguro) — observar se algum dia apresentar o mesmo comportamento
+
+---
+
 ## Sessão 17/08/2026 (Segunda) — Dados de teste do Theo (módulos clínicos completos) + listagem de registros nos documentos clínicos + exclusão com modal de perigo em Documentos
 
 ### 78. Dados de teste completos do Theo Mendes Rocha (id `cmsezw1em000f8882p6561p4b`)

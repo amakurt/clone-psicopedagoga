@@ -257,6 +257,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { id: 'doc-biblioteca', label: 'Biblioteca', icon: 'menu_book', route: '/app/biblioteca' },
         { id: 'doc-laudos', label: 'Laudos', icon: 'description', route: '/app/laudos' },
         { id: 'doc-solicitacoes', label: 'Solicitações', icon: 'assignment_turned_in', route: '/app/solicitacoes' },
+        { id: 'doc-encaminhamentos', label: 'Encaminhamentos', icon: 'forward', route: '/app/encaminhamentos' },
         { id: 'doc-lgpd', label: 'LGPD', icon: 'gpp_good', route: '/app/lgpd' },
       ],
     },
@@ -351,6 +352,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       solicitacoes: 'Solicitações',
       plano: 'Plano e Assinatura',
       lgpd: 'LGPD',
+      encaminhamentos: 'Encaminhamentos',
     };
     let title = titles[path] || 'Dashboard';
     if (path === 'documentos-clinicos' && sub) {

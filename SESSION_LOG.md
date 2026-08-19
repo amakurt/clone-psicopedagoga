@@ -1,6 +1,60 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 17 de Agosto de 2026
+## Última Atualização: 18 de Agosto de 2026
+
+---
+
+## Sessão 20 - 18/08/2026 (Terça) — Sync GitHub + sistema no ar no Windows + Docker/Evolution API + "Registros Anteriores" em todos os módulos
+
+### O que foi feito
+
+#### 1. Sync com GitHub
+- `git pull` de 11 commits (a1ca207 → 9ca8124): auditoria de segurança (helmet, rate limiting, XSS, OAuth code exchange), `.env` removidos do repo, docs e backups de sessão
+- `backend/.env` e `evolution-api/.env` recriados localmente com os valores fornecidos pelo usuário (ignorados pelo git)
+
+#### 2. Sistema no ar no Windows
+- `npm install` no backend (helmet + express-rate-limit que vieram no pull)
+- `environment.ts` ajustado: apiUrl `192.168.20.132` (Mac) → `192.168.0.100` (IP atual do Windows); FRONTEND_URL atualizada
+- Backend :3000 + Frontend :4200 desanexados com logs; login validado (sarah@edupsych.com → Dra. Sarah Miller)
+
+#### 3. Evolution API (WhatsApp)
+- Docker Desktop instalado manualmente pelo usuário (winget falhou no UAC); CLI em `AppData\Local\Programs\DockerDesktop\resources\bin` (fora do PATH)
+- `docker compose up -d` → postgres + redis + evolution-api v2.3.7 na :8080; instância `edupsych` criada (integration WHATSAPP-BAILEYS obrigatória) + QR salvo em `whatsapp-qr.png`
+- Usuário decidiu não usar WhatsApp por enquanto — parear depois quando quiser
+
+#### 4. "Registros Anteriores" nos 6 módulos restantes
+- Backend: filtro `pacienteId` em `/laudos`, `/appointments`, `/encaminhamentos`; rotas `DELETE /prontuarios/:id` e `DELETE /encaminhamentos/:id` criadas
+- Frontend: `evolucao-form` (badge de métricas colorido), `anamnese-form` (wizard + parse de endereço), `laudo-form` (badge de status), `prontuario` (editar/excluir), `agenda-form` (chip de status), **nova página** `encaminhamentos/novo` com form completo + registros anteriores (rota `novo` antes de `:id`, botão na lista, título no header)
+- Bug FK: `paraUserId` vazio → `null` no payload
+- Validado: `tsc` limpo, `ng build` limpo, ciclos API de criar/editar/DELETE 204 com dados do Theo
+
+### Backup da conversa
+- (a fazer — export opencode desta sessão)
+
+### Commits
+- (nenhum — pendente)
+
+---
+
+## Sessão 21 - 18/08/2026 (Terça, continuação) — Notificações de encaminhamento + fix do gráfico ABA
+
+### O que foi feito
+
+#### 1. Notificação ao profissional de destino no encaminhamento
+- `POST /encaminhamentos`: destino (`paraUserId`) recebe "Novo encaminhamento" (autor, paciente e motivo no texto; type `encaminhamento`; pula se autor = destino)
+- `PUT /encaminhamentos/:id`: quando o destino responde ou muda o status, o **autor** recebe "Encaminhamento atualizado" (status + resposta)
+- Dropdown de notificações: type `encaminhamento` → ícone `forward` + cor sky
+- Validado ponta a ponta via API real (Sarah → Maria José; Maria responde → Sarah); dados de teste removidos; `tsc` e `ng build` limpos
+
+#### 2. Bug: gráfico dos programas ABA oscilava infinitamente
+- Causa: Chart.js `responsive: true` + `maintainAspectRatio: false` + canvas `height="80"` dentro de container sem altura fixa → loop infinito de resize (ResizeObserver)
+- Fix: wrapper `<div class="h-24">` + atributo `height` removido do canvas; `ng build` limpo
+
+### Backup da conversa
+- (a fazer — export opencode desta sessão)
+
+### Commits
+- (nenhum — pendente)
 
 ---
 

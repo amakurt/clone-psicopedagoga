@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LaudoService } from '../services/laudo.service';
 import { ApiService } from '@core/services/api.service';
 import { AuthService } from '@core/services/auth.service';
@@ -29,7 +29,7 @@ import { ToastService } from '@shared/components/toast.component';
           <div class="grid grid-cols-2 gap-4">
             <div class="col-span-2 flex flex-col gap-1">
               <label class="text-xs font-semibold text-slate-600">Paciente *</label>
-              <select class="px-3 py-2 border border-slate-300 rounded-lg text-sm w-full" [(ngModel)]="form.pacienteId">
+              <select class="px-3 py-2 border border-slate-300 rounded-lg text-sm w-full" [(ngModel)]="form.pacienteId" (change)="loadRecords()">
                 <option value="">Selecione um paciente</option>
                 @for (p of pacientes(); track p.id) {
                   <option [value]="p.id">{{ p.name }}</option>
@@ -110,12 +110,63 @@ import { ToastService } from '@shared/components/toast.component';
         (confirmed)="onSignatureConfirmed($event)">
       </app-signature-modal>
     </div>
+
+    <div class="mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 legacy-card">
+      <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+            <span class="material-icons text-indigo-600">history</span>
+          </div>
+          <div>
+            <h3 class="font-semibold text-slate-900">Registros Anteriores</h3>
+            <p class="text-xs text-slate-500">{{ records().length }} laudo(s) de {{ getPatientName() }}</p>
+          </div>
+        </div>
+        @if (editingId()) {
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors" (click)="resetForm()">
+            <span class="material-icons text-[16px]">add</span> Novo laudo
+          </button>
+        }
+      </div>
+      @if (records().length === 0) {
+        <div class="p-10 text-center">
+          <span class="material-icons text-4xl text-slate-300">description</span>
+          <p class="mt-3 text-sm font-semibold text-slate-500">Nenhum laudo para este paciente</p>
+          <p class="text-xs text-slate-400 mt-1">Selecione um paciente para listar os laudos salvos</p>
+        </div>
+      } @else {
+        <div class="divide-y divide-slate-100">
+          @for (r of records(); track r.id) {
+            <div class="px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                <span class="material-icons text-amber-600 text-lg">description</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-bold text-slate-900 truncate">{{ r.titulo || 'Sem título' }}</p>
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0"
+                    [class]="r.status === 'FINALIZADO' ? 'bg-emerald-100 text-emerald-700' : r.status === 'ASSINADO' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'">{{ r.status }}</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5 truncate">{{ r.createdAt | date:'dd/MM/yyyy' }} · {{ r.type }} · {{ r.autor?.name || '—' }}</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button class="p-2 hover:bg-slate-100 rounded-lg transition-all" title="Editar" (click)="editRecord(r)">
+                  <span class="material-icons text-[18px] text-slate-500">edit</span>
+                </button>
+                <button class="p-2 hover:bg-red-50 rounded-lg transition-all" title="Excluir" (click)="deleteRecord(r)">
+                  <span class="material-icons text-[18px] text-red-500">delete</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
   `
 })
 export class LaudoFormComponent implements OnInit {
   private service = inject(LaudoService);
   private api = inject(ApiService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
@@ -124,6 +175,8 @@ export class LaudoFormComponent implements OnInit {
   id = '';
   saving = signal(false);
   pacientes = signal<any[]>([]);
+  records = signal<any[]>([]);
+  editingId = signal('');
   showSignatureModal = signal(false);
 
   form: any = {
@@ -143,6 +196,43 @@ export class LaudoFormComponent implements OnInit {
     if (this.isEdit) {
       this.service.get(this.id).subscribe((res: any) => this.form = res);
     }
+  }
+
+  getPatientName(): string {
+    const p = this.pacientes().find(p => p.id === this.form.pacienteId);
+    return p?.name || '-';
+  }
+
+  loadRecords() {
+    if (!this.form.pacienteId) { this.records.set([]); return; }
+    this.api.get('/laudos', { pacienteId: this.form.pacienteId }).subscribe((res: any) => this.records.set(res.data || []));
+  }
+
+  editRecord(r: any) {
+    this.editingId.set(r.id);
+    this.form = { ...r };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  resetForm() {
+    this.editingId.set('');
+    this.form = {
+      pacienteId: this.form.pacienteId,
+      titulo: '',
+      content: '',
+      type: 'LAUDO',
+      status: 'RASCUNHO',
+      signatureImage: null,
+      signedAt: null
+    };
+  }
+
+  deleteRecord(r: any) {
+    if (!confirm(`Excluir o laudo "${r.titulo}"?`)) return;
+    this.api.delete(`/laudos/${r.id}`).subscribe({
+      next: () => { this.toast.success('Laudo excluído'); this.loadRecords(); },
+      error: () => this.toast.error('Erro ao excluir laudo')
+    });
   }
 
   openSignatureModal() {
@@ -166,9 +256,14 @@ export class LaudoFormComponent implements OnInit {
       ...this.form,
       signedAt: this.form.status === 'ASSINADO' ? (this.form.signedAt || new Date().toISOString()) : null
     };
-    const obs = this.isEdit ? this.service.update(this.id, payload) : this.service.create(payload);
+    const obs = this.editingId() ? this.service.update(this.editingId(), payload) : this.isEdit ? this.service.update(this.id, payload) : this.service.create(payload);
     obs.subscribe({
-      next: () => this.router.navigate(['/app/laudos']),
+      next: () => {
+        this.saving.set(false);
+        this.toast.success('Laudo salvo');
+        this.resetForm();
+        this.loadRecords();
+      },
       error: () => {
         this.saving.set(false);
         this.toast.error('Erro ao salvar');

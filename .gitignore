@@ -19,3 +19,6 @@ backend/.env
 evolution-api/.env
 *.env.local
 backend/uploads/
+
+# QR de pareamento da instancia WhatsApp (segredo)
+whatsapp-qr.png

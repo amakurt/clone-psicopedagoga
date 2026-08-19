@@ -8,7 +8,10 @@ router.use(authenticate);
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const laudos = await db.laudo.findMany({ include: { paciente: true, autor: true }, orderBy: { createdAt: 'desc' } });
+  const { pacienteId } = req.query;
+  const where: any = {};
+  if (pacienteId) where.pacienteId = pacienteId;
+  const laudos = await db.laudo.findMany({ where, include: { paciente: true, autor: true }, orderBy: { createdAt: 'desc' } });
   res.json({ data: laudos, total: laudos.length });
 });
 
