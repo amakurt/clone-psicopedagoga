@@ -38,6 +38,9 @@ import waitingRoomRoutes from './waiting-room';
 import aiSuggestionsRoutes from './ai-suggestions';
 import documentRequestsRoutes from './document-requests';
 import billingRoutes from './billing';
+import screeningsRoutes from './screenings';
+import relatoriosRoutes from './relatorios';
+import insightsRoutes from './insights';
 
 const router = Router();
 
@@ -80,5 +83,8 @@ router.use('/ai', aiSuggestionsRoutes);
 router.use('/document-requests', documentRequestsRoutes);
 router.use('/availability', availabilityRoutes);
 router.use('/billing', billingRoutes);
+router.use('/screenings', screeningsRoutes);
+router.use('/relatorios', relatoriosRoutes);
+router.use('/insights', insightsRoutes);
 
 export default router;

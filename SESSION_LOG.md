@@ -1,6 +1,41 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 18 de Agosto de 2026
+## Última Atualização: 19 de Agosto de 2026
+
+---
+
+## Sessão 22 - 19/08/2026 (Quarta) — Sistema no ar no Mac + rastreios com scoring automático (M-CHAT-R, SNAP-IV, ATA, ASRS-18, Habilidades Sociais) + rascunho de laudo com IA + insights no perfil do paciente
+
+### O que foi feito
+
+#### 1. Sistema no ar no Mac
+- `environment.ts`: `apiUrl` `192.168.0.100` (Windows) → `http://localhost:3000/api` (corrige "Failed to fetch"); login real validado (sarah@edupsych.com / 123456)
+- ⚠️ Pendência: decidir o destino do `environment.ts` (localhost vs IP da máquina) antes de push — sempre gera diff
+
+#### 2. Backend — rastreios, IA e insights (completo)
+- **Schema:** model `ScreeningAssessment` no Prisma (+ relações em Tenant/User/Paciente) + `db push`; `tenant.ts` ganhou `screeningAssessment` no `TENANT_MODELS`
+- **`lib/screening-instruments.ts`** (novo): M-CHAT-R (críticos q2/q7/q9/q13/q14/q15, q2 reverse; ≥8 ALTO, ≥3 MODERADO), SNAP-IV (3 dimensões; ≥6 sintomas ELEVADO, ≥3 MODERADO), ATA (23 itens/46 pts; ≥15 ELEVADO, ≥8 MODERADO), ASRS-18 (A≥14 ou B≥15 ELEVADO), Habilidades Sociais (4 dimensões; ≥75% BAIXO, ≥50% MODERADO) — resultados indicativos
+- **`routes/screenings.ts`**: `GET /instruments`, CRUD com scoring automático; **normalização de respostas** (`toLowerCase`) — bug real pego no teste (`"Nao"` maiúsculo zerava o score)
+- **`routes/relatorios.ts`**: `POST /generate-draft` (template: identificação, queixa, instrumentos, evolução, síntese, conduta)
+- **`routes/insights.ts`**: `GET /:pacienteId` — insights + alertas (rastreio de risco, recuo ABA, métricas em queda, pendências)
+- **Tiebreaker** `[{ assessedAt desc }, { createdAt desc }]` nos 3 `findMany` de screenings (mesma data embaralhava o "último")
+- Validado via API: MCHAT MODERADO (3 falhas/3 críticas), relatório gerado, insights corretos; `tsc` EXIT 0; dados de teste excluídos
+
+#### 3. Frontend — módulo Rastreios, IA no laudo, insights no perfil
+- **Módulo `rastreios`** (`/app/rastreios`, menu Protocolos → Rastreios, ícone `biotech`): lista (filtros busca/instrumento/risco, badges, excluir) + form (itens por dimensão, preview de score em tempo real, **radar Chart.js**, registros anteriores com editar/excluir via `sessionStorage 'rastreio_edit'`, POST/PUT)
+- **Laudo:** botão "Gerar rascunho com IA" (`auto_awesome`) preenche título + conteúdo via `POST /relatorios/generate-draft`
+- **Perfil do paciente:** card "Insights Automáticos" (alertas vermelhos + insights com ícone dinâmico) via `GET /insights/:id`
+- **`app.routes.ts`** (rota lazy) + **`main-layout`** (navItem + títulos)
+- Fix: `FormsModule` faltando no rastreios-list (NG8002 no build); scroll pós-save removido do form
+- `ng build` limpo (warnings pré-existentes NG8107/qrcode/html2pdf.js)
+
+### Onde continuar
+- Testar no navegador: `/app/rastreios/novo` (preview + radar), `/app/laudos` (Gerar rascunho com IA), perfil do Davi (insights)
+- IA real (LLM) no lugar do template rule-based, se o usuário quiser
+- Backup da conversa pendente + decidir `environment.ts` antes do próximo push
+
+### Commits
+- (nenhum — trabalho local em andamento)
 
 ---
 

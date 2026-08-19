@@ -54,6 +54,7 @@ export const routes: Routes = [
       { path: 'biblioteca', loadChildren: () => import('./modules/biblioteca/biblioteca.routes').then(m => m.default) },
       { path: 'protocolos', loadChildren: () => import('./modules/protocolos/protocolos.routes').then(m => m.default) },
       { path: 'protocolos-aba', loadChildren: () => import('./modules/protocolos-aba/protocolos-aba.routes').then(m => m.default) },
+      { path: 'rastreios', loadChildren: () => import('./modules/rastreios/rastreios.routes').then(m => m.default) },
       { path: 'planos', loadChildren: () => import('./modules/planos/planos.routes').then(m => m.default) },
       { path: 'documentos-clinicos', loadChildren: () => import('./modules/documentos-clinicos/documentos-clinicos.routes').then(m => m.default) },
       { path: 'whatsapp', loadChildren: () => import('./modules/whatsapp/whatsapp.routes').then(m => m.default) },

@@ -9,7 +9,7 @@ const TENANT_MODELS = new Set<string>([
   'aBAAssessment', 'aBAProgram', 'aBADataPoint', 'protocolEvaluation',
   'interventionPlan', 'chatMessage', 'sessionDiary', 'frequencySheet',
   'interventionDocument', 'consentLog', 'nfse', 'waitingRoom', 'documentRequest',
-  'availability', 'signature', 'whatsAppConfig', 'whatsAppLog',
+  'availability', 'signature', 'whatsAppConfig', 'whatsAppLog', 'screeningAssessment',
 ]);
 
 const WITH_WHERE = new Set(['findMany', 'findFirst', 'count', 'aggregate', 'groupBy', 'updateMany', 'deleteMany']);

@@ -59,7 +59,15 @@ import { ToastService } from '@shared/components/toast.component';
               </div>
             }
             <div class="col-span-2 flex flex-col gap-1">
-              <label class="text-xs font-semibold text-slate-600">Conteúdo *</label>
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-semibold text-slate-600">Conteúdo *</label>
+                <button type="button"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-semibold hover:bg-violet-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="!form.pacienteId || generating()" (click)="generateDraft()">
+                  <span class="material-icons text-[15px]">{{ generating() ? 'hourglass_empty' : 'auto_awesome' }}</span>
+                  {{ generating() ? 'Gerando rascunho...' : 'Gerar rascunho com IA' }}
+                </button>
+              </div>
               <textarea class="px-3 py-2 border border-slate-300 rounded-lg text-sm w-full resize-y" rows="15" [(ngModel)]="form.content"></textarea>
             </div>
           </div>
@@ -174,6 +182,7 @@ export class LaudoFormComponent implements OnInit {
   isEdit = false;
   id = '';
   saving = signal(false);
+  generating = signal(false);
   pacientes = signal<any[]>([]);
   records = signal<any[]>([]);
   editingId = signal('');
@@ -201,6 +210,20 @@ export class LaudoFormComponent implements OnInit {
   getPatientName(): string {
     const p = this.pacientes().find(p => p.id === this.form.pacienteId);
     return p?.name || '-';
+  }
+
+  generateDraft() {
+    if (!this.form.pacienteId) return this.toast.warning('Selecione um paciente');
+    this.generating.set(true);
+    this.api.post('/relatorios/generate-draft', { pacienteId: this.form.pacienteId, tipo: this.form.type || 'LAUDO' }).subscribe({
+      next: (res: any) => {
+        this.generating.set(false);
+        this.form.titulo = res.title;
+        this.form.content = res.content;
+        this.toast.success('Rascunho gerado — revise antes de salvar');
+      },
+      error: () => { this.generating.set(false); this.toast.error('Erro ao gerar rascunho'); }
+    });
   }
 
   loadRecords() {

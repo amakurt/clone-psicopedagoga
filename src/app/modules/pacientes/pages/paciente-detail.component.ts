@@ -2,6 +2,8 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PacientesService } from '../services/pacientes.service';
+import { ApiService } from '@core/services/api.service';
+import { ToastService } from '@shared/components/toast.component';
 
 @Component({
   selector: 'app-paciente-detail',
@@ -55,6 +57,47 @@ import { PacientesService } from '../services/pacientes.service';
               </div>
             </div>
           </div>
+
+          @if (insightsLoading()) {
+            <div class="bg-white rounded-2xl shadow-sm p-8 flex justify-center mb-6">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            </div>
+          } @else if (insights()) {
+            <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center">
+                  <span class="material-icons text-violet-600">auto_awesome</span>
+                </div>
+                <div>
+                  <h3 class="font-semibold text-gray-900">Insights Automáticos</h3>
+                  <p class="text-xs text-gray-500">Síntese gerada a partir dos registros do paciente</p>
+                </div>
+              </div>
+              @if (insights()!.insights.length === 0 && insights()!.alertas.length === 0) {
+                <p class="text-sm text-gray-400 py-2">Registre rastreios, evoluções, sessões ou avaliações para gerar insights.</p>
+              }
+              @if (insights()!.alertas.length > 0) {
+                <div class="space-y-2 mb-3">
+                  @for (a of insights()!.alertas; track $index) {
+                    <div class="flex items-start gap-2.5 p-3 rounded-xl bg-red-50 border border-red-100">
+                      <span class="material-icons text-[18px] text-red-500 mt-0.5">warning</span>
+                      <p class="text-sm text-red-800">{{ a.text }}</p>
+                    </div>
+                  }
+                </div>
+              }
+              @if (insights()!.insights.length > 0) {
+                <div class="space-y-2">
+                  @for (i of insights()!.insights; track $index) {
+                    <div class="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <span class="material-icons text-[18px] text-slate-500 mt-0.5">{{ i.icon }}</span>
+                      <p class="text-sm text-slate-700">{{ i.text }}</p>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white rounded-2xl shadow-sm p-6">
@@ -171,13 +214,29 @@ import { PacientesService } from '../services/pacientes.service';
 })
 export class PacienteDetailComponent implements OnInit {
   private service = inject(PacientesService);
+  private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
   id = '';
   paciente = signal<any>(null);
+  insights = signal<any>(null);
+  insightsLoading = signal(false);
 
   ngOnInit() {
     this.id = this.route.snapshot.params['id'];
     this.service.get(this.id).subscribe((res: any) => this.paciente.set(res));
+    this.loadInsights();
+  }
+
+  loadInsights() {
+    this.insightsLoading.set(true);
+    this.api.get(`/insights/${this.id}`).subscribe({
+      next: (res: any) => {
+        this.insights.set(res);
+        this.insightsLoading.set(false);
+      },
+      error: () => { this.insightsLoading.set(false); this.toast.error('Erro ao carregar insights'); }
+    });
   }
 
   getInitials(name: string): string {

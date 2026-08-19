@@ -2,6 +2,36 @@
 
 ---
 
+## Sessão 19/08/2026 (Quarta) — Sistema no ar no Mac (backend :3000 + frontend :4200) + rastreios com scoring automático (backend e frontend completos) + IA de laudos + insights no perfil do paciente
+
+### 88. Sistema no ar no Mac + "Failed to fetch" resolvido
+- `environment.ts`: `apiUrl` apontava para o IP do Windows (`192.168.0.100`) → trocado para `http://localhost:3000/api`; login real validado (sarah@edupsych.com / 123456, Dra. Sarah Miller)
+- **Atenção:** antes de push/Windows, decidir se o `environment.ts` fica com localhost ou volta ao IP da máquina atual (gera diff no git)
+
+### 89. Backend: rastreios de triagem com scoring automático (completo e validado)
+- `prisma/schema.prisma`: model `ScreeningAssessment` (id, tenantId, pacienteId, profissionalId, instrument, respondent, answers/scores como JSON string, riskLevel, summary, notes, assessedAt, createdAt/updatedAt) + relações em Tenant (`screeningAssessments`), User (`screeningAssessments`) e Paciente; `npx prisma db push` OK
+- `tenant.ts`: `screeningAssessment` adicionado ao `TENANT_MODELS` (scoping por tenant)
+- **`lib/screening-instruments.ts`** (novo): 5 instrumentos — **M-CHAT-R** (20 itens, críticos q2/q7/q9/q13/q14/q15, q2 reverse; ≥8 ALTO, ≥3 MODERADO), **SNAP-IV** (26 itens em 3 dimensões desatento/hiperativo/oposição; ≥6 sintomas com nota ≥2 = ELEVADO, ≥3 = MODERADO; subtipos combinado/desatento/hiperativo), **ATA** (23 itens, 46 pontos; ≥15 ELEVADO, ≥8 MODERADO), **ASRS-18** (parte A desatenção / parte B hiperatividade; A≥14 ou B≥15 ELEVADO; A≥9 ou B≥10 MODERADO), **Habilidades Sociais** (12 itens em 4 dimensões; ≥75% BAIXO, ≥50% MODERADO) — todos com dimensões, opções e textos; resultados **indicativos** (não substituem diagnóstico)
+- **`routes/screenings.ts`**: `GET /instruments`, `GET /instruments/:code`, `GET /` (filtro pacienteId/instrument), `GET/PUT/DELETE /:id`, `POST /` — scoring automático no POST/PUT; **respostas normalizadas** (`trim().toLowerCase()`) — bug pego no teste com `"Nao"` maiúsculo
+- **`routes/relatorios.ts`**: `POST /generate-draft` ({ pacienteId, tipo }) — template rule-based: identificação, queixa (anamnese), instrumentos (rastreios + protocolo TEA + ABA), evolução (últimas 6), síntese e conduta; `Sessao` usa `objective` (não `objetivo`)
+- **`routes/insights.ts`**: `GET /:pacienteId` — insights (evolução ABA, sessões, protocolo TEA, evoluções) + alertas (rastreio de risco alto, recuo ABA, métricas em queda, encaminhamentos/cobranças pendentes)
+- Rotas registradas em `routes/index.ts`; `tsc --noEmit` limpo; **tiebreaker `createdAt desc`** adicionado nos 3 `findMany` de screenings (mesmo `assessedAt` embaralhava o "último rastreio")
+- Ciclo validado via API: MCHAT MODERADO (3 falhas/3 críticas), relatório gerado, insights OK; dados de teste excluídos (total 0)
+
+### 90. Frontend: módulo Rastreios (novo) + IA no laudo + insights no perfil
+- **Módulo `src/app/modules/rastreios/`** (rota `/app/rastreios`, menu Protocolos → "Rastreios", ícone `biotech`): `rastreios.routes.ts` ('' lista, 'novo' form), `rastreio.service.ts`, `rastreios-list.component.ts` (busca, filtros por instrumento/risco, badges de risco, editar via `sessionStorage 'rastreio_edit'`, excluir), `rastreio-form.component.ts` (paciente/instrumento/informante/data, itens agrupados por dimensão, **preview de score em tempo real** `computePreview()`, **radar Chart.js** com `ViewChild`, registros anteriores com editar/excluir, POST/PUT)
+- Bug fix no form: scroll para `.preview` após salvar removido (painel some no resetForm)
+- **Laudo:** botão "Gerar rascunho com IA" (`auto_awesome`, violeta) acima do conteúdo — `POST /relatorios/generate-draft` preenche título + conteúdo; `generating` signal com spinner
+- **Perfil do paciente** (`paciente-detail`): card "Insights Automáticos" (violeta) com alertas (vermelho, `warning`) e insights (slate, ícone dinâmico por tipo); loading spinner; chamada `GET /insights/:id`
+- **`main-layout`**: navItem `proto-rastreios` no grupo Protocolos + título "Rastreios"/"Novo Rastreio" no `updatePageTitle`
+- **`app.routes.ts`**: rota lazy `rastreios` registrada após `protocolos-aba`
+- `ng build` limpo (warning pré-existente NG8107 em solicitacoes-list + CommonJS qrcode/html2pdf.js)
+
+### 91. Validação final
+- `tsc --noEmit` backend: EXIT 0 · `ng build` frontend: OK · API: criação MCHAT_R (MODERADO, scoring correto pós-normalização), relatório, insights com rastreio mais recente correto, DELETE 204 × 2, total 0 registros restantes
+
+---
+
 ## Sessão 18/08/2026 (Terça) — Sync com GitHub + sistema no ar no Windows + Evolution API via Docker Desktop + padrão "Registros Anteriores" nos 6 módulos restantes
 
 ### 83. Sync com GitHub (11 commits do Mac) + .env restaurados

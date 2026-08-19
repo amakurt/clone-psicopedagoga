@@ -267,6 +267,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         { id: 'proto-tea', label: 'Protocolo TEA', icon: 'fact_check', route: '/app/protocolos' },
         { id: 'proto-aba-assessment', label: 'Avaliação ABA', icon: 'psychology', route: '/app/protocolos-aba/assessment' },
         { id: 'proto-aba-programs', label: 'Programas ABA', icon: 'list_alt', route: '/app/protocolos-aba/programs' },
+        { id: 'proto-rastreios', label: 'Rastreios', icon: 'biotech', route: '/app/rastreios' },
       ],
     },
     { id: 'planos', label: 'Planos', icon: 'description', route: '/app/planos', count: signal(0) },
@@ -345,6 +346,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       laudos: 'Laudos',
       protocolos: 'Protocolos',
       'protocolos-aba': 'Protocolos ABA',
+      rastreios: 'Rastreios',
       planos: 'Planos',
       'planos-ia': 'Plano IA',
       configuracoes: 'Configurações',
@@ -360,6 +362,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
     if (path === 'protocolos-aba' && sub) {
       title = ({ assessment: 'Avaliação ABA', programs: 'Programas ABA' } as Record<string, string>)[sub] || title;
+    }
+    if (path === 'rastreios' && sub) {
+      title = ({ novo: 'Novo Rastreio' } as Record<string, string>)[sub] || title;
     }
     this.currentPageTitle.set(title);
     this.syncExpandedMenus();

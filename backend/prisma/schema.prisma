@@ -55,6 +55,7 @@ model Tenant {
   nfse                 Nfse[]
   waitingRoom          WaitingRoom[]
   availabilities       Availability[]
+  screeningAssessments ScreeningAssessment[]
 }
 
 model Membership {
@@ -110,6 +111,7 @@ model User {
   signatures         Signature[]
   abaAssessments     ABAAssessment[]
   abaPrograms        ABAProgram[]
+  screeningAssessments ScreeningAssessment[]
   nfseIssued         Nfse[]
   verificationCodes  VerificationCode[]
   documentRequests   DocumentRequest[]
@@ -200,6 +202,7 @@ model Paciente {
   whatsappLogs         WhatsAppLog[]
   abaAssessments       ABAAssessment[]
   abaPrograms          ABAProgram[]
+  screeningAssessments ScreeningAssessment[]
   documentRequests     DocumentRequest[]
   nfse                 Nfse[]
   waitingRoom          WaitingRoom[]
@@ -674,6 +677,29 @@ model ABAAssessment {
   tenant       Tenant   @relation(fields: [tenantId], references: [id])
   paciente     Paciente @relation(fields: [patientId], references: [id])
   professional User     @relation(fields: [professionalId], references: [id])
+
+  @@index([tenantId])
+}
+
+model ScreeningAssessment {
+  id             String   @id @default(cuid())
+  tenantId       String   @default("")
+  pacienteId     String
+  profissionalId String
+  instrument     String   // MCHAT_R | SNAP_IV | ATA | ASRS_18 | HABILIDADES_SOCIAIS
+  respondent     String?  // informante: PAIS | PROFESSOR | AUTO | PROFISSIONAL
+  answers        String   // JSON: { itemId: value }
+  scores         String   // JSON: { total, max, dimensions: { id: { score, max, label } } }
+  riskLevel      String   // BAIXO | MODERADO | ELEVADO | ALTO
+  summary        String?  // interpretação clínica gerada
+  notes          String?
+  assessedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  paciente     Paciente @relation(fields: [pacienteId], references: [id])
+  profissional User     @relation(fields: [profissionalId], references: [id])
 
   @@index([tenantId])
 }
