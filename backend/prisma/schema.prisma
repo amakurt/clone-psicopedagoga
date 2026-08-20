@@ -693,6 +693,7 @@ model ScreeningAssessment {
   riskLevel      String   // BAIXO | MODERADO | ELEVADO | ALTO
   summary        String?  // interpretação clínica gerada
   notes          String?
+  hidden         Boolean  @default(false) // oculto da lista (arquivado)
   assessedAt     DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

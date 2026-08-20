@@ -2,6 +2,28 @@
 
 ---
 
+## Sessão 20/08/2026 (Quinta) — Validação no navegador + rastreios com busca ampliada e ocultar/mostrar todos
+
+### 92. Sistema no ar + validação das features da sessão 19/08
+- Backend (`tsx watch` :3000, pid 6342) e frontend (`ng serve` :4200, pid 6386) subidos; login validado (sarah@edupsych.com / 123456)
+- **Rastreios:** 5 já criados no browser (Theo Mendes Rocha) — M-CHAT-R ALTO, ATA ELEVADO, SNAP-IV MODERADO, Habilidades Sociais MODERADO, ASRS-18 BAIXO; scoring automático correto (GET /screenings/instruments OK)
+- **Laudo IA:** `POST /relatorios/generate-draft` OK — rascunho com identificação, queixa, histórico escolar e dificuldades do Theo
+- **Insights:** `GET /insights/:id` OK — 4 insights (último rastreio, evolução ABA +37, 6 evoluções, sessões) + 3 alertas (protocolo TEA 10%, encaminhamento pendente, cobrança pendente)
+
+### 93. Rastreios: busca ampliada + ocultar rastreios (backend)
+- `schema.prisma`: campo `hidden Boolean @default(false)` no model `ScreeningAssessment` (arquivado/oculto da lista); `prisma db push` OK
+- `routes/screenings.ts`: `GET /` passa a excluir ocultos por padrão (`hidden=false` no where; `includeHidden=true` no query para listar tudo); `PATCH /:id/hide` (por item); **`PATCH /hide-all`** (`updateMany`, body `{hidden: bool}`) para ocultar/mostrar em massa
+- Validado via API: ocultar 5 → lista padrão total 0 → `includeHidden=true` total 5 → mostrar 5 → lista normal
+
+### 94. Rastreios: busca ampliada + botão único ocultar/mostrar (frontend)
+- **Busca ampliada** (`rastreios-list`): antes só por paciente; agora busca também em instrumento (nome), informante (label) e resumo — `haystack` montado no `applyFilters`
+- **Iteração 1:** botão `visibility_off` por item + badge "Oculto" + checkbox "Mostrar ocultos" — **bug:** a lista nunca renderizava os ocultos (records guardava só não-ocultos), então "mostrar de novo" não funcionava
+- **Iteração 2 (final):** ocultar por-item e checkbox removidos; **um único botão alternável** na barra de filtros — "Ocultar todos" (`visibility_off`) quando há visíveis → vira "Mostrar todos" (`visibility`) quando todos estão ocultos (signal `allHidden` = hiddenCount === total); sem modal de confirmação (pedido do usuário); aviso "N rastreio(s) oculto(s)" quando parcial
+- `rastreio.service.ts`: métodos `hide(id, hidden)` e `hideAll(hidden)` (`PATCH /screenings/hide-all`)
+- `tsc --noEmit` backend EXIT 0 · `ng build` frontend OK
+
+---
+
 ## Sessão 19/08/2026 (Quarta) — Sistema no ar no Mac (backend :3000 + frontend :4200) + rastreios com scoring automático (backend e frontend completos) + IA de laudos + insights no perfil do paciente
 
 ### 88. Sistema no ar no Mac + "Failed to fetch" resolvido

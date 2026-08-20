@@ -30,10 +30,11 @@ router.get('/instruments/:code', (req, res) => {
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const { pacienteId, instrument } = req.query;
+  const { pacienteId, instrument, includeHidden } = req.query;
   const where: any = {};
   if (pacienteId) where.pacienteId = pacienteId;
   if (instrument) where.instrument = instrument;
+  if (includeHidden !== 'true') where.hidden = false;
   const data = await db.screeningAssessment.findMany({
     where,
     include: { paciente: true, profissional: { select: { id: true, name: true } } },
@@ -90,6 +91,23 @@ router.put('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const data = buildPayload(req.body, req.user!.id);
   const updated = await db.screeningAssessment.update({ where: { id: req.params.id }, data });
+  res.json(updated);
+});
+
+router.patch('/hide-all', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const hidden = req.body?.hidden === true;
+  const result = await db.screeningAssessment.updateMany({ where: {}, data: { hidden } });
+  res.json({ updated: result.count, hidden });
+});
+
+router.patch('/:id/hide', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const hidden = req.body?.hidden === true;
+  const updated = await db.screeningAssessment.update({
+    where: { id: req.params.id },
+    data: { hidden },
+  });
   res.json(updated);
 });
 

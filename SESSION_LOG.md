@@ -1,6 +1,34 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 19 de Agosto de 2026
+## Última Atualização: 20 de Agosto de 2026
+
+---
+
+## Sessão 23 - 20/08/2026 (Quinta) — Validação das features da sessão 19/08 no navegador + rastreios com busca ampliada e ocultar/mostrar todos
+
+### O que foi feito
+
+#### 1. Validação das features da sessão anterior (backend :3000 + frontend :4200 no ar)
+- **Rastreios:** 5 rastreios criados no browser (Theo Mendes Rocha): M-CHAT-R ALTO, ATA ELEVADO, SNAP-IV MODERADO, Habilidades Sociais MODERADO, ASRS-18 BAIXO — scoring automático correto
+- **Laudo IA:** rascunho gerado com identificação, queixa, histórico escolar e dificuldades
+- **Insights:** 4 insights + 3 alertas (protocolo TEA 10%, encaminhamento e cobrança pendentes)
+
+#### 2. Rastreios — campo de busca ampliado
+- Busca por paciente, instrumento, informante e resumo (antes só paciente)
+
+#### 3. Rastreios — ocultar/mostrar
+- Backend: campo `hidden` no model `ScreeningAssessment` (db push); `GET /` exclui ocultos por padrão (`includeHidden=true` para listar); `PATCH /:id/hide` e `PATCH /hide-all` (em massa)
+- Frontend: **botão único alternável** "Ocultar todos" ↔ "Mostrar todos" (sem modal de confirmação); aviso com contagem de ocultos
+- Bug corrigido: iteração inicial com ocultar por-item não funcionava (lista nunca renderizava os ocultos) → substituída pela versão em massa
+
+#### 4. Validação
+- Backend `tsc --noEmit`: EXIT 0 · Frontend `ng build`: OK · API: hide-all (5 ocultados → lista vazia → 5 mostrados → lista normal)
+
+### Arquivos alterados
+- `backend/prisma/schema.prisma` — campo hidden
+- `backend/src/routes/screenings.ts` — filtro hidden + PATCH hide/hide-all
+- `src/app/modules/rastreios/services/rastreio.service.ts` — hide/hideAll
+- `src/app/modules/rastreios/pages/rastreios-list.component.ts` — busca ampliada + botão único ocultar/mostrar
 
 ---
 

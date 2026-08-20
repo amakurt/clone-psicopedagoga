@@ -32,4 +32,12 @@ export class RastreioService {
   delete(id: string) {
     return this.api.delete(`/screenings/${id}`);
   }
+
+  hide(id: string, hidden: boolean) {
+    return this.api.patch(`/screenings/${id}/hide`, { hidden });
+  }
+
+  hideAll(hidden: boolean) {
+    return this.api.patch('/screenings/hide-all', { hidden });
+  }
 }

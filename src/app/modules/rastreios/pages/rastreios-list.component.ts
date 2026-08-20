@@ -17,7 +17,7 @@ import { ToastService } from '@shared/components/toast.component';
       </div>
 
       <div class="filters">
-        <input class="form-control" placeholder="Buscar por paciente..." [(ngModel)]="search" (ngModelChange)="applyFilters()" />
+        <input class="form-control" placeholder="Buscar por paciente, instrumento, informante ou resumo..." [(ngModel)]="search" (ngModelChange)="applyFilters()" />
         <select class="form-control" [(ngModel)]="filterInstrument" (ngModelChange)="applyFilters()">
           <option value="">Todos os instrumentos</option>
           @for (i of instruments(); track i.code) { <option [value]="i.code">{{ i.name }}</option> }
@@ -29,7 +29,17 @@ import { ToastService } from '@shared/components/toast.component';
           <option value="MODERADO">Risco moderado</option>
           <option value="BAIXO">Risco baixo</option>
         </select>
+        <button class="btn btn-outline" style="padding:8px 12px" (click)="toggleAll()">
+          <span class="material-icons" style="font-size:16px">{{ allHidden() ? 'visibility' : 'visibility_off' }}</span>
+          {{ allHidden() ? 'Mostrar todos' : 'Ocultar todos' }}
+        </button>
       </div>
+
+      @if (hiddenCount() > 0 && !allHidden()) {
+        <p style="font-size:12px;color:var(--gray-500);margin:0 0 10px">
+          {{ hiddenCount() }} rastreio(s) oculto(s) — use "Mostrar todos" para exibi-los novamente.
+        </p>
+      }
 
       @if (loading()) {
         <div style="text-align:center;padding:40px;color:var(--gray-400)"><span class="material-icons" style="font-size:40px">hourglass_empty</span><p>Carregando...</p></div>
@@ -90,6 +100,8 @@ export class RastreiosListComponent implements OnInit {
   search = '';
   filterInstrument = '';
   filterRisk = '';
+  hiddenCount = signal(0);
+  allHidden = signal(false);
 
   ngOnInit() {
     this.service.instruments().subscribe((res: any) => this.instruments.set(res.data || []));
@@ -98,8 +110,15 @@ export class RastreiosListComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.service.list().subscribe({
-      next: (res: any) => { this.records.set(res.data || []); this.applyFilters(); this.loading.set(false); },
+    this.service.list({ includeHidden: 'true' }).subscribe({
+      next: (res: any) => {
+        const all = res.data || [];
+        this.records.set(all);
+        this.hiddenCount.set(all.filter((r: any) => r.hidden).length);
+        this.allHidden.set(all.length > 0 && this.hiddenCount() === all.length);
+        this.applyFilters();
+        this.loading.set(false);
+      },
       error: () => { this.loading.set(false); this.toast.error('Erro ao carregar rastreios'); }
     });
   }
@@ -107,8 +126,13 @@ export class RastreiosListComponent implements OnInit {
   applyFilters() {
     const term = this.search.trim().toLowerCase();
     this.filtered.set(this.records().filter((r) => {
+      if (r.hidden) return false;
       const name = (r.paciente?.name || '').toLowerCase();
-      const okName = !term || name.includes(term);
+      const inst = this.instrumentName(r.instrument).toLowerCase();
+      const resp = (this.respondentLabel(r.respondent || '') || '').toLowerCase();
+      const summary = (r.summary || '').toLowerCase();
+      const haystack = `${name} ${inst} ${resp} ${summary}`;
+      const okName = !term || haystack.includes(term);
       const okInst = !this.filterInstrument || r.instrument === this.filterInstrument;
       const okRisk = !this.filterRisk || r.riskLevel === this.filterRisk;
       return okName && okInst && okRisk;
@@ -136,6 +160,36 @@ export class RastreiosListComponent implements OnInit {
   edit(r: any) {
     const key = 'rastreio_edit';
     sessionStorage.setItem(key, JSON.stringify(r));
+  }
+
+  toggleHide(r: any) {
+    const hidden = !r.hidden;
+    this.service.hide(r.id, hidden).subscribe({
+      next: () => {
+        this.toast.success(hidden ? 'Rastreio ocultado' : 'Rastreio visível novamente');
+        this.load();
+      },
+      error: () => this.toast.error('Erro ao atualizar rastreio')
+    });
+  }
+
+  hideAll() {
+    this.service.hideAll(true).subscribe({
+      next: () => { this.toast.success('Todos os rastreios foram ocultados'); this.load(); },
+      error: () => this.toast.error('Erro ao ocultar rastreios')
+    });
+  }
+
+  showAll() {
+    this.service.hideAll(false).subscribe({
+      next: () => { this.toast.success('Rastreios visíveis novamente'); this.load(); },
+      error: () => this.toast.error('Erro ao mostrar rastreios')
+    });
+  }
+
+  toggleAll() {
+    if (this.allHidden()) this.showAll();
+    else this.hideAll();
   }
 
   remove(r: any) {
