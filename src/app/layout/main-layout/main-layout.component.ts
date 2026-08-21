@@ -245,8 +245,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     { id: 'agenda', label: 'Agenda', icon: 'calendar_month', route: '/app/agenda', count: signal(0) },
     { id: 'sala-espera', label: 'Sala de Espera', icon: 'event_seat', route: '/app/agenda/sala-espera', count: signal(0) },
     { id: 'tv-sala', label: 'Painel TV', icon: 'tv', route: '/app/agenda/tv', count: signal(0) },
-    { id: 'financeiro', label: 'Financeiro', icon: 'account_balance_wallet', route: '/app/financeiro', count: signal(0) },
-    { id: 'nfse', label: 'NFS-e', icon: 'receipt_long', route: '/app/financeiro/nfse', count: signal(0) },
+    {
+      id: 'financeiro', label: 'Financeiro', icon: 'account_balance_wallet',
+      children: [
+        { id: 'fin-main', label: 'Financeiro', icon: 'account_balance_wallet', route: '/app/financeiro' },
+        { id: 'nfse', label: 'NFS-e', icon: 'receipt_long', route: '/app/financeiro/nfse' },
+        { id: 'fin-dre', label: 'DRE', icon: 'assessment', route: '/app/financeiro/dre' },
+      ],
+    },
     {
       id: 'documentos', label: 'Documentos', icon: 'folder_open',
       children: [
@@ -272,6 +278,15 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     },
     { id: 'planos', label: 'Planos', icon: 'description', route: '/app/planos', count: signal(0) },
     { id: 'planos-ia', label: 'Plano IA', icon: 'auto_awesome', route: '/app/planos/ia', count: signal(0) },
+    { id: 'session-planner', label: 'Planner Sessoes', icon: 'timer', route: '/app/session-planner', count: signal(0) },
+    { id: 'evidencias', label: 'Evidencias', icon: 'menu_book', route: '/app/evidencias', count: signal(0) },
+    { id: 'acordos', label: 'Acordos', icon: 'handshake', route: '/app/acordos', count: signal(0) },
+    { id: 'modelos', label: 'Modelos', icon: 'description', route: '/app/modelos', count: signal(0) },
+    { id: 'jogos', label: 'Jogos', icon: 'sports_esports', route: '/app/jogos', count: signal(0) },
+    { id: 'materiais', label: 'Materiais', icon: 'folder_special', route: '/app/materiais', count: signal(0) },
+    { id: 'academia', label: 'Academia', icon: 'school', route: '/app/academia', count: signal(0) },
+    { id: 'kit-docente', label: 'Kit Docente', icon: 'co_present', route: '/app/kit-docente', count: signal(0) },
+    { id: 'comunidade', label: 'Comunidade', icon: 'forum', route: '/app/comunidade', count: signal(0) },
     { id: 'whatsapp', label: 'WhatsApp', icon: 'chat', route: '/app/whatsapp', count: signal(0) },
     { id: 'plano', label: 'Plano e Assinatura', icon: 'credit_card', route: '/app/plano', count: signal(0) },
     {
@@ -349,12 +364,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       rastreios: 'Rastreios',
       planos: 'Planos',
       'planos-ia': 'Plano IA',
+      'session-planner': 'Planner Sessoes',
       configuracoes: 'Configurações',
+      evidencias: 'Evidências',
+      acordos: 'Acordos',
+      modelos: 'Modelos de Documentos',
+      jogos: 'Jogos Cognitivos',
+      materiais: 'Materiais Terapêuticos',
       whatsapp: 'WhatsApp',
       solicitacoes: 'Solicitações',
       plano: 'Plano e Assinatura',
       lgpd: 'LGPD',
       encaminhamentos: 'Encaminhamentos',
+      dre: 'DRE Financeiro',
     };
     let title = titles[path] || 'Dashboard';
     if (path === 'documentos-clinicos' && sub) {
@@ -362,6 +384,9 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     }
     if (path === 'protocolos-aba' && sub) {
       title = ({ assessment: 'Avaliação ABA', programs: 'Programas ABA' } as Record<string, string>)[sub] || title;
+    }
+    if (path === 'financeiro' && sub) {
+      title = ({ dre: 'DRE Financeiro', nfse: 'NFS-e' } as Record<string, string>)[sub] || title;
     }
     if (path === 'rastreios' && sub) {
       title = ({ novo: 'Novo Rastreio' } as Record<string, string>)[sub] || title;

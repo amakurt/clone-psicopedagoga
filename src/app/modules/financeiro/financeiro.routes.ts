@@ -4,4 +4,5 @@ export default [
   { path: 'nfse', loadComponent: () => import('./pages/nfse.component').then(m => m.NfseComponent) },
   { path: 'novo', loadComponent: () => import('./pages/financeiro-form.component').then(m => m.FinanceiroFormComponent) },
   { path: ':id/editar', loadComponent: () => import('./pages/financeiro-form.component').then(m => m.FinanceiroFormComponent) },
+  { path: 'dre', loadChildren: () => import('./financeiro-dre.routes').then(m => m.default) },
 ] as Routes;

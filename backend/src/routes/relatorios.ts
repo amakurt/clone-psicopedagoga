@@ -159,4 +159,188 @@ router.post('/generate-draft', async (req, res) => {
   res.json({ title, content });
 });
 
+// --- Auditoria LGPD / Risco Jurídico ---
+interface AuditFinding {
+  severity: 'ALTO' | 'MEDIO' | 'BAIXO';
+  category: string;
+  message: string;
+  suggestion: string;
+}
+
+router.post('/audit-lgpd', async (req, res) => {
+  const { content, pacienteId } = req.body;
+  if (!content || typeof content !== 'string') {
+    return res.status(400).json({ error: 'content (texto do documento) é obrigatório' });
+  }
+
+  const findings: AuditFinding[] = [];
+  const text = content.toLowerCase();
+
+  // 1. Dados pessoais expostos indevidamente
+  const cpfPattern = /\d{3}\.?\d{3}\.?\d{3}-?\d{2}/g;
+  if (cpfPattern.test(content)) {
+    findings.push({
+      severity: 'ALTO',
+      category: 'Dados Pessoais',
+      message: 'CPF do paciente ou responsável encontrado no documento.',
+      suggestion: 'Remova o CPF. Para documentos internos, use apenas o nome completo. Se necessário, referencie por código de cadastro.',
+    });
+  }
+
+  const phonePattern = /\(?\d{2}\)?\s?\d{4,5}-?\d{4}/g;
+  if (phonePattern.test(content)) {
+    findings.push({
+      severity: 'MEDIO',
+      category: 'Dados Pessoais',
+      message: 'Número de telefone encontrado no documento.',
+      suggestion: 'Telefones não devem constar em laudos/pareceres. Se essencial, use apenas primeira parte (ex: "(11) 9****-****").',
+    });
+  }
+
+  const emailPattern = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/g;
+  if (emailPattern.test(content)) {
+    findings.push({
+      severity: 'MEDIO',
+      category: 'Dados Pessoais',
+      message: 'Endereço de e-mail encontrado no documento.',
+      suggestion: 'E-mails não devem constar em laudos clínicos. Preserve a privacidade do paciente.',
+    });
+  }
+
+  const cepPattern = /\d{5}-?\d{3}/g;
+  if (cepPattern.test(content)) {
+    findings.push({
+      severity: 'BAIXO',
+      category: 'Dados Pessoais',
+      message: 'CEP/endereço encontrado no documento.',
+      suggestion: 'Endereço completo não deve constar em laudos. Use apenas a cidade/estado se necessário.',
+    });
+  }
+
+  // 2. Diagnóstico fechado demais
+  const diagnosticPatterns = [
+    { pattern: /diagnóstico\s+(definitivo|confirmado|fechado|concluído)/i, msg: 'Diagnóstico apresentado como definitivo/fechado.' },
+    { pattern: /CID[-\s]?\d*[:\s]*[A-Z]\d{2}/gi, msg: 'Código CID detectado no documento.' },
+    { pattern: /laudo\s+de\s+(diagnóstico|diagnose)/i, msg: 'Documento intitulado como "laudo de diagnóstico".' },
+  ];
+  for (const { pattern, msg } of diagnosticPatterns) {
+    if (pattern.test(content)) {
+      findings.push({
+        severity: 'ALTO',
+        category: 'Diagnóstico',
+        message: msg,
+        suggestion: 'Psicopedagogos não emitem diagnóstico médico. Use termos como "sinais compatíveis com", "indicações de", "hipótese clínica". Sempre deixe claro que é parecer clínico, não diagnóstico definitivo.',
+      });
+      break;
+    }
+  }
+
+  // 3. Linguagem arriscada / garantias
+  const riskyPatterns = [
+    { pattern: /garanto|asseguro|certeza\s+absoluta|100%\s+seguro|curar|revert|totalmente\s+recuper/i, msg: 'Linguagem que garante resultado ou cura.' },
+    { pattern: /definitivamente|sem\s+dúvida\s+alguma|irreversível|nunca\s+melhorará|sem\s+chance/i, msg: 'Linguagem definitiva sobre prognóstico.' },
+    { pattern: /o\s+paciente\s+não\s+tem\s+jeito|caso\s+perdido|nada\s+pende\s+feito/i, msg: 'Linguagem depreciativa sobre o paciente.' },
+  ];
+  for (const { pattern, msg } of riskyPatterns) {
+    if (pattern.test(content)) {
+      findings.push({
+        severity: 'ALTO',
+        category: 'Risco Jurídico',
+        message: msg,
+        suggestion: 'Evite garantias de resultado, diagnósticos definitivos e linguagem que possa ser usada contra o profissional. Use "indica", "sugere", "compatível com", "recomenda-se acompanhamento".',
+      });
+      break;
+    }
+  }
+
+  // 4. Menção a outros profissionais sem ressalva
+  if (/o\s+(médico|psicólogo|neurologista|psiquiatra)\s+(errou|estava\s+errado|não\s+sabe|não\s+entende)/i.test(content)) {
+    findings.push({
+      severity: 'ALTO',
+      category: 'Risco Jurídico',
+      message: 'Menção depreciativa a outro profissional de saúde.',
+      suggestion: 'Nunca critique profissionais em documentos oficiais. Use "em complemento à avaliação de..." ou "diferentemente do laudo anterior..." sem julgamento.',
+    });
+  }
+
+  // 5. LGPD - Consentimento
+  if (pacienteId) {
+    const db = scoped(prisma, req.user?.tenantId);
+    const consent = await db.consentLog.findFirst({
+      where: { patientId: pacienteId, status: 'GRANTED' },
+      orderBy: { recordedAt: 'desc' },
+    });
+    if (!consent) {
+      findings.push({
+        severity: 'MEDIO',
+        category: 'LGPD',
+        message: 'Nenhum consentimento LGPD registrado para este paciente.',
+        suggestion: 'Antes de emitir documentos, registre o consentimento do responsável para tratamento de dados pessoais do menor (Art. 14, LGPD).',
+      });
+    }
+  }
+
+  // 6. Estrutura do documento
+  if (content.length < 200) {
+    findings.push({
+      severity: 'MEDIO',
+      category: 'Estrutura',
+      message: 'Documento muito curto (menos de 200 caracteres).',
+      suggestion: 'Laudos e pareceres devem conter: identificação, queixa, instrumentos aplicados, análise clínica, conclusão e conduta. Documentos curtos podem ser questionados.',
+    });
+  }
+
+  if (!/identifica[çc][ãa]o|dados\s+do\s+paciente|nome.*paciente/i.test(content)) {
+    findings.push({
+      severity: 'BAIXO',
+      category: 'Estrutura',
+      message: 'Seção de identificação não encontrada.',
+      suggestion: 'Todo documento clínico deve iniciar com identificação completa: nome, idade, responsável, escola, período de acompanhamento.',
+    });
+  }
+
+  if (!/conduta|recomenda[çc][ãa]o|encaminhamento|plano\s+de\s+acompanhamento/i.test(content)) {
+    findings.push({
+      severity: 'BAIXO',
+      category: 'Estrutura',
+      message: 'Seção de conduta/recomendações não encontrada.',
+      suggestion: 'Todo laudo deve finalizar com conduta clara: próximos passos, encaminhamentos, frequência de acompanhamento.',
+    });
+  }
+
+  // 7. Dados de terceiros expostos
+  if (/nome\s+da\s+(escola|instituição).*[A-Z][a-z]+/i.test(content) && /endere[çc]o|rua|avenida|bairro/i.test(content)) {
+    findings.push({
+      severity: 'MEDIO',
+      category: 'Dados de Terceiros',
+      message: 'Dados identificáveis de escola/instituição com endereço.',
+      suggestion: 'Use apenas o nome da escola/instituição. Endereços completos de terceiros não devem constar em laudos.',
+    });
+  }
+
+  // Calcular nota de segurança
+  const alto = findings.filter((f) => f.severity === 'ALTO').length;
+  const medio = findings.filter((f) => f.severity === 'MEDIO').length;
+  const baixo = findings.filter((f) => f.severity === 'BAIXO').length;
+  const score = Math.max(0, 100 - alto * 25 - medio * 10 - baixo * 3);
+
+  let riskLevel: string;
+  if (score >= 80) riskLevel = 'BAIXO';
+  else if (score >= 50) riskLevel = 'MEDIO';
+  else riskLevel = 'ALTO';
+
+  res.json({
+    score,
+    riskLevel,
+    summary: alto > 0
+      ? `Documento com risco ALTO. ${alto} problema(s) grave(s) encontrado(s). Revisar antes de enviar.`
+      : medio > 0
+        ? `Documento com risco médio. ${medio} ponto(s) de atenção.`
+        : 'Documento dentro dos parâmetros de segurança.',
+    findings,
+    totalFindings: findings.length,
+    bySeverity: { alto, medio, baixo },
+  });
+});
+
 export default router;

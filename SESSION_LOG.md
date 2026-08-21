@@ -1,6 +1,62 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 20 de Agosto de 2026
+## Última Atualização: 21 de Agosto de 2026
+
+---
+
+## Sessão 24 - 21/08/2026 (Sexta) — Implementação completa das 12 features do iPsy Tools
+
+### O que foi feito
+
+#### 1. Análise do iPsy Tools
+- Fetch da landing page e comparação feature-a-feature
+- 12 features faltantes identificadas
+
+#### 2. Backend: 4 novas rotas
+- `POST /relatorios/audit-lgpd` — auditoria LGPD/risco jurídico
+- `POST /ai/generate-pei` — gerador de PEI com IA
+- `POST /session-planner/generate-cycle` — ciclo de sessões
+- Schema: campos `phase` e `phaseHistory` no InterventionPlan
+
+#### 3. Frontend: 12 novos módulos
+- Blindagem LGPD no laudo-form
+- PEI com trilho 4 fases no plano-ai
+- Session Planner com cronômetro
+- Central de Evidências (5 tabs)
+- Acordos Profissionais (calculadora + 6 contratos)
+- 37 Modelos de Documento
+- 60 Jogos Cognitivos
+- 247 Materiais
+- DRE Financeiro
+- Academia iPsy (8 casos interativos)
+- Kit Docente
+- Comunidade (fórum Q&A)
+
+#### 4. Menu reorganizado
+- Financeiro virou submenu expansível com Financeiro/NFS-e/DRE
+
+#### 5. Validação
+- `ng build` OK (763.95 kB)
+
+### Arquivos criados/modificados
+- `backend/src/routes/relatorios.ts` — endpoint audit-lgpd
+- `backend/src/routes/ai-suggestions.ts` — endpoint generate-pei
+- `backend/src/routes/session-planner.ts` — nova rota
+- `backend/prisma/schema.prisma` — campos phase/phaseHistory
+- `src/app/modules/laudos/pages/laudo-form.component.ts` — botão auditar LGPD
+- `src/app/modules/planos/pages/plano-ai.component.ts` — botão gerar PEI + trilho
+- `src/app/modules/session-planner/` — novo módulo
+- `src/app/modules/evidencias/` — novo módulo
+- `src/app/modules/acordos/` — novo módulo
+- `src/app/modules/modelos/` — novo módulo
+- `src/app/modules/jogos/` — novo módulo
+- `src/app/modules/biblioteca/pages/materiais-expandidos.component.ts`
+- `src/app/modules/financeiro/pages/financeiro-dre.component.ts`
+- `src/app/modules/academia/` — novo módulo
+- `src/app/modules/kit-docente/` — novo módulo
+- `src/app/modules/comunidade/` — novo módulo
+- `src/app/app.routes.ts` — 6 novas rotas lazy
+- `src/app/layout/main-layout/main-layout.component.ts` — 9 novos itens de menu + submenu financeiro
 
 ---
 

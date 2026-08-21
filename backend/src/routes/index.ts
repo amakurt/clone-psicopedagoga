@@ -41,6 +41,7 @@ import billingRoutes from './billing';
 import screeningsRoutes from './screenings';
 import relatoriosRoutes from './relatorios';
 import insightsRoutes from './insights';
+import sessionPlannerRoutes from './session-planner';
 
 const router = Router();
 
@@ -86,5 +87,6 @@ router.use('/billing', billingRoutes);
 router.use('/screenings', screeningsRoutes);
 router.use('/relatorios', relatoriosRoutes);
 router.use('/insights', insightsRoutes);
+router.use('/session-planner', sessionPlannerRoutes);
 
 export default router;

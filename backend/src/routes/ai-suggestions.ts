@@ -107,4 +107,119 @@ router.post('/plan-suggestion', async (req, res) => {
   res.json(plan);
 });
 
+// --- Gerador de PEI com IA ---
+const peiObjectives: Record<string, any[]> = {
+  COMUNICACAO: [
+    { area: 'Linguagem Expressiva', goal: 'Aumentar vocabulário ativo em 30%', indicators: ['Uso de 10 palavras novas por semana', 'Formação de frases de 3+ palavras'], activities: ['Naming com figuras', 'Rotina de manding', 'Brincadeiras com áudio'], deadline: '3 meses' },
+    { area: 'Comunicação Funcional', goal: 'Solicitar necessidades de forma adequada', indicators: ['Manding espontâneo em 80% das oportunidades', 'Redução de comportamentos de escape em 50%'], activities: ['PECS fase II-III', 'Ensino de manding por tangível', 'Generalização em casa/escola'], deadline: '4 meses' },
+  ],
+  COMPORTAMENTO: [
+    { area: 'Autorregulação', goal: 'Reduzir crises de choro/chão em 70%', indicators: ['Uso de carta de escolha', 'Tempo de espera de 2min'], activities: ['Fichas de tokens', 'Visual schedules', 'Sensory diet'], deadline: '2 meses' },
+    { area: 'Tolerância', goal: 'Aceitar transições sem resistência', indicators: ['Aceitação de 80% das transições', 'Uso de aviso prévio'], activities: ['Timer visual', 'Canção de transição', 'First-Then board'], deadline: '3 meses' },
+  ],
+  SOCIALIZACAO: [
+    { area: 'Interação Social', goal: 'Iniciar interação com pares em 50% das oportunidades', indicators: ['Contato visual em 60% das interações', 'Turn-taking em jogos estruturados'], activities: ['Jogos de regras', 'Group activities', 'Role play social'], deadline: '4 meses' },
+  ],
+  AUTORREGULACAO: [
+    { area: 'Sensório-Motor', goal: 'Melhorar tolerância sensorial', indicators: ['Aceitação de texturas variadas', 'Redução de comportamentos de fuga sensorial'], activities: ['Dieta sensorial', 'Brincadeiras táteis', 'Atividades proprioceptivas'], deadline: '3 meses' },
+  ],
+  ACADEMICO: [
+    { area: 'Pré-acadêmico', goal: 'Reconhecer 20 letras e seus sons', indicators: ['Identificação visual de letras', 'Associação letra-som'], activities: ['Jogos de alfabetização', 'SENSORY LETTER TRACING', 'Músicas educativas'], deadline: '4 meses' },
+  ],
+};
+
+function generatePEI(diagnosis: string, age: string, goals: string, level: string, patientName: string) {
+  const goalsList = goals.split(',').map(g => g.trim()).filter(Boolean);
+  const ageRange = getAgeRange(age);
+
+  const objectives: any[] = [];
+  for (const goal of goalsList) {
+    const goalUpper = goal.toUpperCase();
+    let category = 'COMUNICACAO';
+    if (goalUpper.match(/COMPOR|AGIT|AGRES|TANTRUM|CRISE/)) category = 'COMPORTAMENTO';
+    else if (goalUpper.match(/SOCIAL|AMIZADE|GRUPO|INTERAÇ/)) category = 'SOCIALIZACAO';
+    else if (goalUpper.match(/SENTA|CALMA|AUTO|SENSORI/)) category = 'AUTORREGULACAO';
+    else if (goalUpper.match(/LEITURA|ESCRITA|MATEMÁT|ACADÊM|ESTUD/)) category = 'ACADEMICO';
+
+    const pool = peiObjectives[category] || peiObjectives.COMUNICACAO;
+    for (const obj of pool.slice(0, 2)) {
+      objectives.push({ ...obj, category, relatedGoal: goal });
+    }
+  }
+
+  return {
+    pei: {
+      title: `PEI — ${patientName}`,
+      diagnosis,
+      age,
+      level,
+      generatedAt: new Date().toISOString(),
+      summary: `Plano Educacional Individualizado gerado automaticamente para ${patientName}, ${age} anos, com diagnóstico de ${diagnosis}. Nível de suporte ${level}.`,
+      duration: '12 meses',
+      reviewFrequency: 'Mensal (acompanhamento) / Trimestral (revisão formal)',
+    },
+    phases: [
+      {
+        name: 'MONTAR',
+        label: 'Montar o PEI',
+        description: 'Definir objetivos, estratégias e responsáveis',
+        icon: 'edit_note',
+        color: 'blue',
+        status: 'CONCLUIDO',
+        completedAt: new Date().toISOString(),
+      },
+      {
+        name: 'ATIVAR',
+        label: 'Ativar o Plano',
+        description: 'Iniciar a intervenção com as estratégias definidas',
+        icon: 'play_arrow',
+        color: 'emerald',
+        status: 'EM_ANDAMENTO',
+        startedAt: new Date().toISOString(),
+      },
+      {
+        name: 'ACOMPANHAR',
+        label: 'Acompanhar Progresso',
+        description: 'Monitorar indicadores e coletar dados',
+        icon: 'monitoring',
+        color: 'amber',
+        status: 'PENDENTE',
+      },
+      {
+        name: 'RENOVAR',
+        label: 'Renovar/Reavaliar',
+        description: 'Revisar objetivos e ajustar o plano',
+        icon: 'refresh',
+        color: 'purple',
+        status: 'PENDENTE',
+      },
+    ],
+    objectives,
+    checkIns: objectives.map((obj: any) => ({
+      area: obj.area,
+      frequency: 'Quinzenal',
+      method: 'Observação direta + planilha de dados',
+      responsible: 'Terapeuta principal',
+      nextCheckIn: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    })),
+    generalRecommendations: [
+      'Envolver a família em todas as etapas do PEI',
+      'Manter comunicação frequente entre equipe e escola',
+      'Documentar progresso semanalmente',
+      'Revisar objetivos a cada 30 dias',
+      'Ajustar estratégias conforme dados coletados',
+      'Promover generalização em todos os ambientes',
+    ],
+  };
+}
+
+router.post('/generate-pei', async (req, res) => {
+  const { diagnosis, age, goals, level, patientName } = req.body;
+  if (!diagnosis || !age || !goals || !patientName) {
+    return res.status(400).json({ error: 'Campos obrigatórios: diagnosis, age, goals, patientName' });
+  }
+  const pei = generatePEI(diagnosis, age, goals, level || '2', patientName);
+  res.json(pei);
+});
+
 export default router;

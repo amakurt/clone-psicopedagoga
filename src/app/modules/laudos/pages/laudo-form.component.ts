@@ -61,15 +61,75 @@ import { ToastService } from '@shared/components/toast.component';
             <div class="col-span-2 flex flex-col gap-1">
               <div class="flex items-center justify-between">
                 <label class="text-xs font-semibold text-slate-600">Conteúdo *</label>
-                <button type="button"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-semibold hover:bg-violet-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  [disabled]="!form.pacienteId || generating()" (click)="generateDraft()">
-                  <span class="material-icons text-[15px]">{{ generating() ? 'hourglass_empty' : 'auto_awesome' }}</span>
-                  {{ generating() ? 'Gerando rascunho...' : 'Gerar rascunho com IA' }}
-                </button>
+                <div class="flex items-center gap-2">
+                  <button type="button"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    [disabled]="!form.content || auditing()" (click)="auditDocument()">
+                    <span class="material-icons text-[15px]">{{ auditing() ? 'hourglass_empty' : 'shield' }}</span>
+                    {{ auditing() ? 'Auditing...' : 'Auditar LGPD' }}
+                  </button>
+                  <button type="button"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-semibold hover:bg-violet-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    [disabled]="!form.pacienteId || generating()" (click)="generateDraft()">
+                    <span class="material-icons text-[15px]">{{ generating() ? 'hourglass_empty' : 'auto_awesome' }}</span>
+                    {{ generating() ? 'Gerando rascunho...' : 'Gerar rascunho com IA' }}
+                  </button>
+                </div>
               </div>
               <textarea class="px-3 py-2 border border-slate-300 rounded-lg text-sm w-full resize-y" rows="15" [(ngModel)]="form.content"></textarea>
             </div>
+
+            @if (auditResult()) {
+              <div class="col-span-2">
+                <div class="rounded-xl border overflow-hidden"
+                  [ngClass]="{ 'bg-red-50 border-red-200': auditResult().riskLevel === 'ALTO', 'bg-amber-50 border-amber-200': auditResult().riskLevel === 'MEDIO', 'bg-emerald-50 border-emerald-200': auditResult().riskLevel === 'BAIXO' }">
+                  <div class="px-4 py-3 flex items-center justify-between"
+                    [ngClass]="{ 'bg-red-100': auditResult().riskLevel === 'ALTO', 'bg-amber-100': auditResult().riskLevel === 'MEDIO', 'bg-emerald-100': auditResult().riskLevel === 'BAIXO' }">
+                    <div class="flex items-center gap-2">
+                      <span class="material-icons"
+                        [ngClass]="{ 'text-red-600': auditResult().riskLevel === 'ALTO', 'text-amber-600': auditResult().riskLevel === 'MEDIO', 'text-emerald-600': auditResult().riskLevel === 'BAIXO' }">
+                        {{ auditResult().riskLevel === 'ALTO' ? 'error' : auditResult().riskLevel === 'MEDIO' ? 'warning' : 'check_circle' }}
+                      </span>
+                      <span class="text-sm font-bold"
+                        [ngClass]="{ 'text-red-800': auditResult().riskLevel === 'ALTO', 'text-amber-800': auditResult().riskLevel === 'MEDIO', 'text-emerald-800': auditResult().riskLevel === 'BAIXO' }">
+                        Seguranca: {{ auditResult().score }}/100 — Risco {{ auditResult().riskLevel }}
+                      </span>
+                    </div>
+                    <button class="p-1 hover:bg-white/50 rounded-lg" (click)="auditResult.set(null)">
+                      <span class="material-icons text-sm">close</span>
+                    </button>
+                  </div>
+                  <div class="p-4">
+                    <p class="text-sm font-medium mb-3"
+                      [ngClass]="{ 'text-red-700': auditResult().riskLevel === 'ALTO', 'text-amber-700': auditResult().riskLevel === 'MEDIO', 'text-emerald-700': auditResult().riskLevel === 'BAIXO' }">
+                      {{ auditResult().summary }}
+                    </p>
+                    @if (auditResult().findings.length > 0) {
+                      <div class="space-y-2">
+                        @for (f of auditResult().findings; track $index) {
+                          <div class="flex items-start gap-2 text-sm">
+                            <span class="material-icons text-[16px] mt-0.5 shrink-0"
+                              [ngClass]="{ 'text-red-500': f.severity === 'ALTO', 'text-amber-500': f.severity === 'MEDIO', 'text-slate-400': f.severity === 'BAIXO' }">
+                              {{ f.severity === 'ALTO' ? 'error' : f.severity === 'MEDIO' ? 'warning' : 'info' }}
+                            </span>
+                            <div>
+                              <span class="font-semibold text-slate-800">[{{ f.category }}]</span>
+                              <span class="text-slate-700"> {{ f.message }}</span>
+                              <p class="text-xs text-slate-500 mt-0.5 italic">{{ f.suggestion }}</p>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <p class="text-sm text-emerald-600 flex items-center gap-1">
+                        <span class="material-icons text-[16px]">check</span>
+                        Nenhum problema encontrado. Documento seguro.
+                      </p>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
           </div>
 
           @if (isEdit && form.status === 'ASSINADO') {
@@ -183,6 +243,8 @@ export class LaudoFormComponent implements OnInit {
   id = '';
   saving = signal(false);
   generating = signal(false);
+  auditing = signal(false);
+  auditResult = signal<any>(null);
   pacientes = signal<any[]>([]);
   records = signal<any[]>([]);
   editingId = signal('');
@@ -268,6 +330,16 @@ export class LaudoFormComponent implements OnInit {
     this.form.signedAt = new Date().toISOString();
     this.showSignatureModal.set(false);
     this.save();
+  }
+
+  auditDocument() {
+    if (!this.form.content) return this.toast.warning('Escreva o conteúdo antes de auditar');
+    this.auditing.set(true);
+    this.auditResult.set(null);
+    this.api.post('/relatorios/audit-lgpd', { content: this.form.content, pacienteId: this.form.pacienteId }).subscribe({
+      next: (res: any) => { this.auditing.set(false); this.auditResult.set(res); },
+      error: () => { this.auditing.set(false); this.toast.error('Erro ao auditar documento'); }
+    });
   }
 
   save() {

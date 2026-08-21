@@ -2,6 +2,83 @@
 
 ---
 
+## Sessão 21/08/2026 (Sexta) — Implementação das 12 features do iPsy Tools
+
+### 95. Análise do iPsy Tools (ipsybr.com.br)
+- Fetch da landing page do iPsy Tools e comparação feature-a-feature com nosso sistema
+- 12 features identificadas como faltantes: Blindagem LGPD com IA, PEI com IA, Planner de Sessões, Central de Evidências, Acordos Profissionais, 37 modelos de documento, 60 jogos cognitivos, 247 materiais, iPsy Finance DRE, Academia iPsy, Kit Docente, Comunidade
+
+### 96. Blindagem LGPD com IA
+- Backend: `POST /relatorios/audit-lgpd` — auditoria rule-based de documentos clínicos
+  - Verifica: CPF/telefone/email/CEP expostos, diagnóstico fechado, linguagem arriscada, dados de terceiros, consentimento LGPD, estrutura do documento
+  - Retorna: score 0-100, riskLevel (ALTO/MEDIO/BAIXO), findings[] com severity/category/message/suggestion
+- Frontend: botão "Auditar LGPD" no `laudo-form.component.ts` ao lado de "Gerar rascunho com IA"
+  - Painel de resultado com cores por severidade (vermelho/ âmbar/ verde), ícones, sugestões
+  - `[ngClass]` object syntax (não ternário — Angular template parser não suporta ternário aninhado em `[class]`)
+
+### 97. Gerador de PEI com IA
+- Backend: `POST /ai/generate-pei` — gera PEI completo com 4 fases (Montar→Ativar→Acompanhar→Renovar)
+  - Objetivos por categoria (Comunicação, Comportamento, Socialização, Autorregulação, Acadêmico)
+  - Check-ins programados, recomendações gerais
+- Frontend: botão "Gerar PEI" no `plano-ai.component.ts` (novo, ao lado de "Gerar Plano")
+  - Trilho visual de 4 fases com ícones, cores e status
+  - Tabela de objetivos com indicadores e atividades
+  - Tabela de check-ins programados
+- Schema: campo `phase` (MONTAR/ATIVAR/ACOMPANHAR/RENOVAR) + `phaseHistory` no model `InterventionPlan`
+- `prisma db push` OK
+
+### 98. Planner de Sessões com Cronômetro
+- Backend: `POST /session-planner/generate-cycle` — gera ciclo de sessões
+  - 5 fases por sessão: Aquecimento (5min), Avaliação Rápida (10min), Intervenção Principal (25min), Generalização (10min), Encerramento (5min)
+  - Endpoints para iniciar/concluir fases
+- Frontend: `/app/session-planner` — componente completo com:
+  - Formulário de geração (paciente, frequência, total de sessões, objetivos)
+  - Timer digital em tempo real (MM:SS) com controles Iniciar/Pausar/Concluir
+  - Barra de progresso por fase
+  - Lista de sessões do ciclo
+  - Notas por fase
+  - CSS class `bg-primary` (não `bg-primary/90` — incompleto no template)
+
+### 99. Central de Evidências
+- `/app/evidencias` — 5 tabs: Citações, Legislação, Fundamentação Teórica, Protocolos, Glossário
+- ~50 itens hardcoded (autores brasileiros, LDB, Estatuto Criança, LGPD Art. 14, DSM-5, instrumentos)
+- Busca, favoritos (localStorage), exportação PDF
+
+### 100. Acordos Profissionais
+- `/app/acordos` — calculadora de valor-hora, 6 modelos de contrato editáveis, respostas para objeções de preço, gerador de propostas com preview
+
+### 101. 37 Modelos de Documento
+- `/app/modelos` — grid com 37 templates em 7 categorias (Diagnóstico, Avaliação, Intervenção, Escolar, Jurídico, Família, Financeiro)
+- Busca, filtro por categoria, favoritos, modal de preview e editor
+
+### 102. 60 Jogos Cognitivos
+- `/app/jogos` — 60 jogos em 6 categorias (Atenção, Memória, Funções Executivas, Consciência Fonológica, Matemática, Socioemocional)
+- Modal de jogo com Canvas API, timer, pontuação, ranking (localStorage), reflexão clínica pós-jogo
+
+### 103. 247 Materiais Expandidos
+- `/app/materiais` — 247 materiais em 12 subcategorias com busca, filtro por subcategoria/idade, favoritos
+
+### 104. iPsy Finance DRE
+- `/app/financeiro/dre` — Demonstração do Resultado do Exercício, KPIs, Previsto vs Realizado (CSS bar chart), cobranças, 5 relatórios com exportação PDF
+
+### 105. Academia iPsy
+- `/app/academia` — 8 casos clínicos interativos "Escolha sua Aventura" com 4 pontos de decisão, pontuação, explicações, quiz final
+
+### 106. Kit Docente
+- `/app/kit-docente` — gerador de links, devolutiva para professores, matriz de responsabilidades, treino rápido, template de email
+
+### 107. Comunidade
+- `/app/comunidade` — fórum Q&A com 5 categorias, posts, comentários, votos, favoritos (localStorage), 5 posts seed fictícios
+
+### 108. Menu Financeiro reorganizado
+- DRE e NFS-e movidos para submenu expansível do Financeiro (padrão Documentos/Protocolos)
+- 3 itens: Financeiro principal, NFS-e, DRE
+
+### 109. Validação
+- `tsc --noEmit` backend: warnings pré-existentes (whatsapp.ts) · `ng build` frontend: OK (763.95 kB)
+
+---
+
 ## Sessão 20/08/2026 (Quinta) — Validação no navegador + rastreios com busca ampliada e ocultar/mostrar todos
 
 ### 92. Sistema no ar + validação das features da sessão 19/08

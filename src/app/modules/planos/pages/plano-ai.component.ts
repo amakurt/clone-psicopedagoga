@@ -64,7 +64,16 @@ declare var html2pdf: any;
             rows="3" [(ngModel)]="form.goals" placeholder="Ex: Melhorar comunicação, Reduzir comportamentos agressivos, Melhorar interação social"></textarea>
         </div>
 
-        <div class="mt-6 flex justify-end">
+        <div class="mt-6 flex justify-end gap-3">
+          <button (click)="generatePEI()" [disabled]="loading() || !form.diagnosis || !form.age || !form.goals"
+            class="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm shadow-xl transition-all active:scale-95 disabled:opacity-50">
+            @if (loading()) {
+              <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            } @else {
+              <span class="material-icons text-[18px]">school</span>
+            }
+            Gerar PEI
+          </button>
           <button (click)="generatePlan()" [disabled]="loading() || !form.diagnosis || !form.age || !form.goals"
             class="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50">
             @if (loading()) {
@@ -209,6 +218,163 @@ declare var html2pdf: any;
           </div>
         </div>
       }
+
+      <!-- PEI Generated -->
+      @if (pei()) {
+        <div class="space-y-6">
+          <!-- PEI Header -->
+          <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-8 text-white">
+            <h2 class="text-xl font-bold mb-2 flex items-center gap-2">
+              <span class="material-icons">school</span>
+              Plano Educacional Individualizado (PEI)
+            </h2>
+            <p class="text-emerald-100 text-sm">{{ pei().pei.summary }}</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+              <div class="bg-white/10 rounded-xl p-3">
+                <p class="text-[10px] uppercase tracking-wider opacity-80">Duracao</p>
+                <p class="font-bold">{{ pei().pei.duration }}</p>
+              </div>
+              <div class="bg-white/10 rounded-xl p-3">
+                <p class="text-[10px] uppercase tracking-wider opacity-80">Diagnostico</p>
+                <p class="font-bold">{{ pei().pei.diagnosis }}</p>
+              </div>
+              <div class="bg-white/10 rounded-xl p-3">
+                <p class="text-[10px] uppercase tracking-wider opacity-80">Nivel de Suporte</p>
+                <p class="font-bold">{{ pei().pei.level }}</p>
+              </div>
+              <div class="bg-white/10 rounded-xl p-3">
+                <p class="text-[10px] uppercase tracking-wider opacity-80">Revisao</p>
+                <p class="font-bold">{{ pei().pei.reviewFrequency }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4-Phase Trail -->
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 p-6">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+              <span class="material-icons text-primary">route</span>
+              Trilho de Fases do PEI
+            </h3>
+            <div class="flex items-center justify-between relative">
+              <div class="absolute top-5 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-700"></div>
+              @for (phase of pei().phases; track phase.name) {
+                <div class="relative flex flex-col items-center z-10">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg"
+                    [ngClass]="{
+                      'bg-blue-500': phase.color === 'blue' && phase.status === 'CONCLUIDO',
+                      'bg-emerald-500': phase.color === 'emerald' && phase.status === 'EM_ANDAMENTO',
+                      'bg-amber-500': phase.color === 'amber' && phase.status === 'PENDENTE',
+                      'bg-purple-500': phase.color === 'purple' && phase.status === 'PENDENTE',
+                      'bg-slate-300': phase.status === 'PENDENTE' && !phase.startedAt
+                    }">
+                    <span class="material-icons text-lg">{{ phase.status === 'CONCLUIDO' ? 'check' : phase.icon }}</span>
+                  </div>
+                  <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mt-2 text-center">{{ phase.label }}</p>
+                  <p class="text-[10px] text-slate-500 text-center max-w-[120px]">{{ phase.description }}</p>
+                  @if (phase.completedAt) {
+                    <span class="text-[9px] text-emerald-600 font-semibold mt-1">{{ phase.completedAt | date:'dd/MM' }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Objectives -->
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 p-6">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <span class="material-icons text-amber-500">flag</span>
+              Objetivos e Metas
+            </h3>
+            <div class="space-y-4">
+              @for (obj of pei().objectives; track $index) {
+                <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+                  <div class="flex items-start justify-between mb-3">
+                    <div>
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                        [ngClass]="{
+                          'bg-blue-100 text-blue-700': obj.category === 'COMUNICACAO',
+                          'bg-red-100 text-red-700': obj.category === 'COMPORTAMENTO',
+                          'bg-purple-100 text-purple-700': obj.category === 'SOCIALIZACAO',
+                          'bg-amber-100 text-amber-700': obj.category === 'AUTORREGULACAO',
+                          'bg-emerald-100 text-emerald-700': obj.category === 'ACADEMICO'
+                        }">{{ obj.category }}</span>
+                      <h4 class="font-bold text-slate-900 dark:text-white mt-2">{{ obj.area }}</h4>
+                    </div>
+                    <span class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">Prazo: {{ obj.deadline }}</span>
+                  </div>
+                  <p class="text-sm text-slate-700 dark:text-slate-300 mb-3"><strong>Meta:</strong> {{ obj.goal }}</p>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                      <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Indicadores</p>
+                      <ul class="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                        @for (ind of obj.indicators; track $index) {
+                          <li class="flex items-start gap-1"><span class="text-emerald-500">•</span> {{ ind }}</li>
+                        }
+                      </ul>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                      <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Atividades</p>
+                      <ul class="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                        @for (act of obj.activities; track $index) {
+                          <li class="flex items-start gap-1"><span class="text-blue-500">•</span> {{ act }}</li>
+                        }
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Check-ins -->
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 p-6">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <span class="material-icons text-blue-500">event_check</span>
+              Check-ins Programados
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-700">
+                    <th class="text-left py-2 px-3 text-xs font-bold text-slate-500 uppercase">Area</th>
+                    <th class="text-left py-2 px-3 text-xs font-bold text-slate-500 uppercase">Frequencia</th>
+                    <th class="text-left py-2 px-3 text-xs font-bold text-slate-500 uppercase">Metodo</th>
+                    <th class="text-left py-2 px-3 text-xs font-bold text-slate-500 uppercase">Responsavel</th>
+                    <th class="text-left py-2 px-3 text-xs font-bold text-slate-500 uppercase">Proximo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ci of pei().checkIns; track $index) {
+                    <tr class="border-b border-slate-50 dark:border-slate-800">
+                      <td class="py-2 px-3 font-semibold text-slate-900 dark:text-white">{{ ci.area }}</td>
+                      <td class="py-2 px-3 text-slate-600 dark:text-slate-400">{{ ci.frequency }}</td>
+                      <td class="py-2 px-3 text-slate-600 dark:text-slate-400">{{ ci.method }}</td>
+                      <td class="py-2 px-3 text-slate-600 dark:text-slate-400">{{ ci.responsible }}</td>
+                      <td class="py-2 px-3"><span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">{{ ci.nextCheckIn }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- General Recommendations -->
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 p-6">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <span class="material-icons text-amber-500">tips_and_updates</span>
+              Recomendacoes Gerais
+            </h3>
+            <ul class="space-y-2">
+              @for (rec of pei().generalRecommendations; track $index) {
+                <li class="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+                  <span class="material-icons text-emerald-500 text-lg shrink-0">check_circle</span>
+                  {{ rec }}
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [`:host { display: block; }`]
@@ -218,6 +384,8 @@ export class PlanoAiComponent {
   private toast = inject(ToastService);
   loading = signal(false);
   plan = signal<any>(null);
+  pei = signal<any>(null);
+  activeTab = signal<'plano' | 'pei'>('plano');
 
   form: any = { diagnosis: '', age: '', goals: '', level: '2' };
 
@@ -225,8 +393,17 @@ export class PlanoAiComponent {
     if (!this.form.diagnosis || !this.form.age || !this.form.goals) return;
     this.loading.set(true);
     this.api.post('/ai/plan-suggestion', this.form).subscribe({
-      next: (res: any) => { this.plan.set(res); this.loading.set(false); },
+      next: (res: any) => { this.plan.set(res); this.loading.set(false); this.activeTab.set('plano'); },
       error: () => { this.loading.set(false); this.toast.error('Erro ao gerar plano'); }
+    });
+  }
+
+  generatePEI() {
+    if (!this.form.diagnosis || !this.form.age || !this.form.goals) return;
+    this.loading.set(true);
+    this.api.post('/ai/generate-pei', { ...this.form, patientName: 'Paciente' }).subscribe({
+      next: (res: any) => { this.pei.set(res); this.loading.set(false); this.activeTab.set('pei'); },
+      error: () => { this.loading.set(false); this.toast.error('Erro ao gerar PEI'); }
     });
   }
 
