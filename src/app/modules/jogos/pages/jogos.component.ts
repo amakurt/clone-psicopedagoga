@@ -14,66 +14,71 @@ interface Jogo {
 }
 
 const JOGOS_DATA: Jogo[] = [
-  { id: 1, name: 'Caça às Diferenças', category: 'Atenção', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Encontre diferenças entre duas imagens', type: 'attention' },
-  { id: 2, name: 'Sequência de Cores', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Repita a sequência de cores', type: 'sequence' },
-  { id: 3, name: 'Memória Visual', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Lembre-se dos objetos mostrados', type: 'memory' },
-  { id: 4, name: 'Contagem Rápida', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Conte os elementos rapidamente', type: 'attention' },
-  { id: 5, name: 'Puzzle de Letras', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Encontre as letras escondidas', type: 'attention' },
-  { id: 6, name: 'Jogo da Velha Cognitivo', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Jogo da velha com desafios', type: 'attention' },
-  { id: 7, name: 'Memória de Posições', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Lembre-se das posições', type: 'memory' },
-  { id: 8, name: 'Caça Palavras', category: 'Atenção', difficulty: 1, time: '5 min', ageRange: '5-10', description: 'Encontre palavras escondidas', type: 'attention' },
-  { id: 9, name: 'Sequência Numérica', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Complete a sequência', type: 'sequence' },
-  { id: 10, name: 'Atenção Dividida', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Execute duas tarefas ao mesmo tempo', type: 'attention' },
-  { id: 11, name: 'Jogo da Memória', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-8', description: 'Encontre os pares de cartas', type: 'memory' },
-  { id: 12, name: 'Memória de Sequências', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Repita sequências crescentes', type: 'memory' },
-  { id: 13, name: 'Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados?', type: 'memory' },
-  { id: 14, name: 'Memória de Cores', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Lembre-se das cores', type: 'memory' },
-  { id: 15, name: 'Pares de Animais', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de animais', type: 'memory' },
-  { id: 16, name: 'Memória de Números', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Lembre-se dos números', type: 'memory' },
-  { id: 17, name: 'Jogo da Memória Avançado', category: 'Memória', difficulty: 3, time: '7 min', ageRange: '7-12', description: 'Memória com mais cartas', type: 'memory' },
-  { id: 18, name: 'Sequência de Imagens', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Ordene as imagens corretamente', type: 'memory' },
-  { id: 19, name: 'Memória de Formas', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Lembre-se das formas', type: 'memory' },
-  { id: 20, name: 'Super Memória', category: 'Memória', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Desafio máximo de memória', type: 'memory' },
-  { id: 21, name: 'Organize a Fila', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Organize elementos na ordem correta', type: 'sequence' },
-  { id: 22, name: 'Tombe Switch', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Mude de regra rapidamente', type: 'attention' },
-  { id: 23, name: 'Planejamento de Rotas', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Planeje o melhor caminho', type: 'attention' },
-  { id: 24, name: 'Classificação de Objetos', category: 'Funções Executivas', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Separe por categorias', type: 'attention' },
-  { id: 25, name: 'Stroop Simples', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Nomeie a cor, não a palavra', type: 'attention' },
-  { id: 26, name: 'Sequência de Passos', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Ordene os passos de uma atividade', type: 'sequence' },
-  { id: 27, name: 'Inibir Resposta', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Não clique no elemento diferente', type: 'attention' },
-  { id: 28, name: 'Mental Flexibility', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Mude entre regras alternadas', type: 'attention' },
-  { id: 29, name: 'Controle Inibitório', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Responda apenas quando necessário', type: 'attention' },
-  { id: 30, name: 'Memória de Trabalho', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde informações na memória', type: 'memory' },
-  { id: 31, name: 'Rimas Divertidas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Encontre palavras que rimam', type: 'phonology' },
-  { id: 32, name: 'Sílabas Coloridas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Separe as palavras em sílabas', type: 'phonology' },
-  { id: 33, name: 'Sons Iniciais', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-6', description: 'Identifique o som inicial', type: 'phonology' },
-  { id: 34, name: 'Sons Finais', category: 'Consciência Fonológica', difficulty: 2, time: '3 min', ageRange: '5-8', description: 'Identifique o som final', type: 'phonology' },
-  { id: 35, name: 'Contagem de Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Quantas sílabas tem?', type: 'phonology' },
-  { id: 36, name: 'Manipulação de Fonemas', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: 'Troque letras de posição', type: 'phonology' },
-  { id: 37, name: 'Jogo de Rimas', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: 'Complete com a rima correta', type: 'phonology' },
-  { id: 38, name: 'Segmentação Fonêmica', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Separe em sons individuais', type: 'phonology' },
-  { id: 39, name: 'Fusão de Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Junte sílabas para formar palavras', type: 'phonology' },
-  { id: 40, name: 'Consciência Avançada', category: 'Consciência Fonológica', difficulty: 3, time: '5 min', ageRange: '6-10', description: 'Desafio fonológico completo', type: 'phonology' },
-  { id: 41, name: 'Soma Divertida', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Resolva somas simples', type: 'math' },
-  { id: 42, name: 'Subtração Básica', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '5-8', description: 'Resolva subtrações', type: 'math' },
-  { id: 43, name: 'Contagem de Objetos', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Conte os objetos', type: 'math' },
-  { id: 44, name: 'Sequência Numérica', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Complete a sequência', type: 'math' },
-  { id: 45, name: 'Tabuada Divertida', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Pratique a tabuada', type: 'math' },
-  { id: 46, name: 'Problemas de Palavras', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva problemas escritos', type: 'math' },
-  { id: 47, name: 'Comparação de Números', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Maior, menor ou igual', type: 'math' },
-  { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Entenda frações com imagens', type: 'math' },
-  { id: 49, name: 'Geometria Básica', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique formas geométricas', type: 'math' },
-  { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Problemas avançados', type: 'math' },
-  { id: 51, name: 'Identificação de Emoções', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Identifique emoções em rostos', type: 'social' },
-  { id: 52, name: 'Empatia Visual', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '4-8', description: 'Como a pessoa se sente?', type: 'social' },
-  { id: 53, name: 'Situações Sociais', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Escolha a resposta social adequada', type: 'social' },
-  { id: 54, name: 'Regulação Emocional', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Pratique técnicas de calma', type: 'social' },
-  { id: 55, name: 'Expressão de Sentimentos', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Como você se sente?', type: 'social' },
-  { id: 56, name: 'Resolução de Conflitos', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Encontre soluções pacíficas', type: 'social' },
-  { id: 57, name: 'Amizade e Cooperação', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Aprenda sobre amizade', type: 'social' },
-  { id: 58, name: 'Controle de Impulsos', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Espere sua vez com paciência', type: 'social' },
-  { id: 59, name: 'Gratidão e Bem-Estar', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Pratique a gratidão', type: 'social' },
-  { id: 60, name: 'Autoregulação Avançada', category: 'Socioemocional', difficulty: 3, time: '7 min', ageRange: '7-12', description: 'Desafio socioemocional completo', type: 'social' },
+  { id: 1, name: 'Caça à Estrela', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Encontre a estrela azul entre os círculos cinza', type: 'attention' },
+  { id: 2, name: 'Contagem Rápida', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Toque nos frutos aparecendo na tela o mais rápido possível', type: 'tap' },
+  { id: 3, name: 'Stroop Simples', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Diga a cor da tinta, ignore a palavra escrita', type: 'stroop' },
+  { id: 4, name: 'Atenção Dividida', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Toque nos círculos azuis e ignore os vermelhos ao mesmo tempo', type: 'tap' },
+  { id: 5, name: 'Inibir Resposta', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Toque apenas nos quadrados — nunca nos círculos', type: 'tap' },
+  { id: 6, name: 'Rastreamento Visual', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Siga a estrela com o olhar e toque nela quando parar', type: 'tap' },
+  { id: 7, name: 'Memória de Cores', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Lembre-se das cores mostradas e repita a sequência', type: 'sequence' },
+  { id: 8, name: 'Sequência Numérica', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Complete a sequência de números na ordem correta', type: 'sequence' },
+  { id: 9, name: 'Memória de Posições', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Lembre-se de onde cada emoji estava escondido', type: 'memory' },
+  { id: 10, name: 'Caça Palavras', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Encontre as letras que formam a palavra escondida', type: 'attention' },
+
+  { id: 11, name: 'Jogo da Memória', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-8', description: 'Encontre os pares de frutas virando as cartas', type: 'memory', },
+  { id: 12, name: 'Memória de Animais', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de animais escondidos', type: 'memory' },
+  { id: 13, name: 'Memória de Números', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Lembre-se dos números e encontre os pares', type: 'memory' },
+  { id: 14, name: 'Memória de Formas', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Encontre as formas geométricas iguais', type: 'memory' },
+  { id: 15, name: 'Super Memória', category: 'Memória', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Grade 4x4 com 8 pares — desafio máximo', type: 'memory' },
+  { id: 16, name: 'Memória de Sequências', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Repita sequências de cores cada vez maiores', type: 'sequence' },
+  { id: 17, name: 'Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados? Toque nos que lembra', type: 'tap' },
+  { id: 18, name: 'Memória Visual', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Veja a imagem e encontre ela entre as opções', type: 'tap' },
+  { id: 19, name: 'Pares de Emojis', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de emojis iguais', type: 'memory' },
+  { id: 20, name: 'Memória de Trabalho', category: 'Memória', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Guarde 5 números na memória e repita ao contrário', type: 'tap' },
+
+  { id: 21, name: 'Organize a Fila', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Organize os números de 1 a 6 na ordem correta', type: 'sequence' },
+  { id: 22, name: 'Mude de Regra', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Às vezes clique no círculo, às vezes no quadrado — a regra muda!', type: 'tap' },
+  { id: 23, name: 'Stroop Avançado', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Cores aparecem escritas em cores diferentes — responda rápido!', type: 'stroop' },
+  { id: 24, name: 'Classificação', category: 'Funções Executivas', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Toque apenas nos animais — ignore os objetos', type: 'tap' },
+  { id: 25, name: 'Sequência de Passos', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Ordene os passos de escovar os dentes na sequência certa', type: 'sequence' },
+  { id: 26, name: 'Controle de Impulsos', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Toque quando o semáforo ficar verde — espere o sinal!', type: 'tap' },
+  { id: 27, name: 'Flexibilidade Mental', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Alternar entre contar vogais e consoantes sem errar', type: 'tap' },
+  { id: 28, name: 'Tombe Switch', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Mude entre regras: às vezes cor, às vezes forma', type: 'tap' },
+  { id: 29, name: 'Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Encontre o caminho mais curto entre os pontos', type: 'tap' },
+  { id: 30, name: 'Memória Operacional', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde o número e Some +3 — teste de memória de trabalho', type: 'tap' },
+
+  { id: 31, name: 'Rimas Básicas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Qual palavra rima com "SOLA"? Toque na resposta', type: 'phonology' },
+  { id: 32, name: 'Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Separe a palavra em sílabas: CA-SA = 2 sílabas', type: 'phonology' },
+  { id: 33, name: 'Som Inicial', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-6', description: 'Qual letra começa "MAÇÃ"? Toque na letra correta', type: 'phonology' },
+  { id: 34, name: 'Som Final', category: 'Consciência Fonológica', difficulty: 2, time: '3 min', ageRange: '5-8', description: 'Qual letra termina "SOL"? Toque na resposta', type: 'phonology' },
+  { id: 35, name: 'Contagem de Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Quantas sílabas tem "BOR-BO-CHA"? Toque no número', type: 'phonology' },
+  { id: 36, name: 'Troca de Letras', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: 'Troque o M de "MATO" por R — qual palavra fica?', type: 'phonology' },
+  { id: 37, name: 'Complete a Rima', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: '"Peixe ___" — qual palavra completa a rima?', type: 'phonology' },
+  { id: 38, name: 'Fonemas', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Separe "SOL" em sons individuais: S-O-L', type: 'phonology' },
+  { id: 39, name: 'Junte Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'CA + SO = ? Toque na palavra formada', type: 'phonology' },
+  { id: 40, name: 'Fonologia Avançada', category: 'Consciência Fonológica', difficulty: 3, time: '5 min', ageRange: '6-10', description: 'Misto: rimas, sílabas e sons — desafio completo', type: 'phonology' },
+
+  { id: 41, name: 'Soma Simples', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Resolva somas de números de 1 a 20', type: 'math' },
+  { id: 42, name: 'Subtração', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '5-8', description: 'Resolva subtrações simples com resultados positivos', type: 'math' },
+  { id: 43, name: 'Comparação', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Maior, menor ou igual? Toque no símbolo correto', type: 'compare' },
+  { id: 44, name: 'Contagem de Objetos', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Conte quantos frutos aparecem na tela', type: 'tap' },
+  { id: 45, name: 'Tabuada', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Pratique multiplicações de 1 a 10', type: 'math' },
+  { id: 46, name: 'Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva problemas escritos com operações simples', type: 'math' },
+  { id: 47, name: 'Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
+  { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'tap' },
+  { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'tap' },
+  { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Misto: somas, subtrações e multiplicações difíceis', type: 'math' },
+
+  { id: 51, name: 'Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Identifique se a pessoa está feliz, triste ou com raiva', type: 'social' },
+  { id: 52, name: 'Empatia', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '4-8', description: 'Como a pessoa se sente? Escolha a resposta certa', type: 'social' },
+  { id: 53, name: 'Situações Sociais', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'O que fazer quando alguém está triste na escola?', type: 'social' },
+  { id: 54, name: 'Respiração', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Siga o balão: inspire quando crescer, expire quando diminuir', type: 'tap' },
+  { id: 55, name: 'Expressão de Sentimentos', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Como VOCÊ se sente agora? Toque na emoção', type: 'social' },
+  { id: 56, name: 'Resolução de Conflitos', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Dois amigos brigaram pelo brinquedo — qual a solução pacífica?', type: 'social' },
+  { id: 57, name: 'Cooperação', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Aprenda sobre trabalhar junto e ajudar os amigos', type: 'social' },
+  { id: 58, name: 'Paciência', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Espere a vez sem interromper — exercício de paciência', type: 'tap' },
+  { id: 59, name: 'Gratidão', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Pense em 3 coisas pelas quais você é grato hoje', type: 'social' },
+  { id: 60, name: 'Autoconhecimento', category: 'Socioemocional', difficulty: 3, time: '7 min', ageRange: '7-12', description: 'Misto: emoções, conflitos e regulação — desafio completo', type: 'social' },
 ];
 
 @Component({
@@ -412,26 +417,40 @@ export class JogosComponent implements OnDestroy {
     const jogo = this.currentGame();
     if (!jogo || !this.canvasCtx) return;
     switch (jogo.type) {
-      case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH); break;
+      case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'math': this.setupMathGame(canvas, logicalW, logicalH); break;
       case 'sequence': this.setupSequenceGame(canvas, logicalW, logicalH); break;
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
-      case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH); break;
-      case 'social': this.setupSocialGame(canvas, logicalW, logicalH); break;
-      default: this.setupMemoryGame(canvas, logicalW, logicalH);
+      case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'social': this.setupSocialGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'stroop': this.setupStroopGame(canvas, logicalW, logicalH); break;
+      case 'tap': this.setupTapGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'compare': this.setupCompareGame(canvas, logicalW, logicalH); break;
+      default: this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id);
     }
   }
 
-  setupMemoryGame(canvas: HTMLCanvasElement, W: number, H: number) {
+  setupMemoryGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
-    const symbols = ['🍎','🍌','🍇','🍊','🍓','🍋','🥝','🍒'];
-    const pairs = symbols.slice(0, 6);
+    const EMOJI_SETS: Record<number, string[]> = {
+      1: ['🍎','🍌','🍇','🍊','🍓','🍋','🥝','🍒'],
+      11: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼'],
+      12: ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'],
+      13: ['🔴','🔵','🟢','🟡','🟣','🟠','⚫','⚪'],
+      14: ['⬛','⬜','🔴','🔵','🟢','🟡','🟣','🟠'],
+      15: ['🍎','🍌','🍇','🍊','🍓','🍋','🥝','🍒'],
+      19: ['😀','😎','🤩','🥳','😴','🤔','😢','😡'],
+      9: ['⭐','🌙','☀️','🌈','❄️','🔥','💧','🌸'],
+    };
+    const set = EMOJI_SETS[gameId] || EMOJI_SETS[1];
+    const numPairs = gameId === 15 ? 8 : 6;
+    const pairs = set.slice(0, numPairs);
     const cards = [...pairs, ...pairs].sort(() => Math.random() - 0.5);
+    const cols = numPairs <= 6 ? 4 : 4;
+    const rows = numPairs <= 6 ? 3 : 4;
     this.gameData = { ...this.gameData, cards, flipped: [], matched: [], attempts: 0 };
-    const cols = 4, rows = 3;
     const w = W / cols, h = H / rows;
-    const cardSize = Math.min(w, h) - 8;
-    const fontSize = Math.max(16, Math.min(28, cardSize * 0.5));
+    const fontSize = Math.max(16, Math.min(28, Math.min(w, h) * 0.5));
 
     this.gameInstruction.set('Encontre os pares de cartas');
 
@@ -685,9 +704,21 @@ export class JogosComponent implements OnDestroy {
     newRound();
   }
 
-  setupPhonologyGame(canvas: HTMLCanvasElement, W: number, H: number) {
+  setupPhonologyGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
-    const words = [{word: 'GATO', options: ['GATO','GATA','MATO','RATO']},{word: 'BOLA', options: ['BOLA','BOLSA','MOLA','FOLA']},{word: 'PATO', options: ['PATO','PATA','MATO','RATO']}];
+    const WORD_SETS: Record<number, Array<{word: string, options: string[]}>> = {
+      31: [{word:'SOLA',options:['SOLA','MOLA','BOLA','FOLA']},{word:'CARO',options:['CARO','CAVO','CARRO','CASA']},{word:'PATO',options:['PATO','PATA','MATO','RATO']}],
+      32: [{word:'CA-SA',options:['CA-SA','CASA','CA-SA','CAS-A']},{word:'BO-LA',options:['BO-LA','BOLA','BO-LA','BOL-A']},{word:'PA-TO',options:['PA-TO','PATO','PA-TO','PAT-O']}],
+      33: [{word:'MAÇÃ',options:['M','A','Ã','Ç']},{word:'BOLA',options:['B','O','L','A']},{word:'SOL',options:['S','O','L','Z']}],
+      34: [{word:'SOL',options:['L','O','S','Z']},{word:'PÉ',options:['É','P','E','X']},{word:'MAR',options:['R','A','M','L']}],
+      35: [{word:'BOR-BO-CHA',options:['1','2','3','4']},{word:'CA-SA',options:['1','2','3','4']},{word:'A-NA-RA-NA',options:['1','2','3','4']}],
+      36: [{word:'MATO→?',options:['RATO','MATO','BATO','SATO']},{word:'CASA→?',options:['CASA','CANA','CASA','CATA']},{word:'BOLA→?',options:['BOLA','TOLA','BOLA','BONA']}],
+      37: [{word:'Peixe ___',options:['DENTE','AZUL','MOLHO','VERDE']},{word:'Amor ___',options:['TEMPO','DOURADO','COR','ÁGUA']},{word:'Copo ___',options:['D\'ÁGUA','GRANDE','MESA','AZUL']}],
+      38: [{word:'SOL',options:['S-O-L','S-O','SOL','S-L-O']},{word:'CASA',options:['C-A-S-A','C-AS-A','CA-S-A','CASA']},{word:'PATO',options:['P-A-T-O','PA-T-O','PATO','P-A-TO']}],
+      39: [{word:'CA+SO',options:['CASSO','CASO','CAÇO','CASSO']},{word:'BO+LA',options:['BOLHA','BOLA','BOALA','BOLHA']},{word:'PA+TO',options:['PACTO','PATO','PATTO','PACTO']}],
+      40: [{word:'P_J_TO',options:['PAJETO','PIJITO','PAJOTO','PAJETO']},{word:'M__R',options:['MOR','MAR','MUR','MER']},{word:'C_S_',options:['CASA','CISO','CUSA','COSA']}],
+    };
+    const words = WORD_SETS[gameId] || WORD_SETS[31];
     let currentIdx = 0, correct = 0;
 
     const btnW = Math.min(200, (W - 100) / 2);
@@ -744,13 +775,51 @@ export class JogosComponent implements OnDestroy {
     drawQuestion();
   }
 
-  setupSocialGame(canvas: HTMLCanvasElement, W: number, H: number) {
+  setupSocialGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
-    const scenarios = [
-      { situation: 'Um colega está triste. O que você faz?', options: ['Ignorar','Brincar junto','Chamar atenção','Falar baixo'], correct: 3 },
-      { situation: 'Alguém pediu para esperar. O que você faz?', options: ['Esperar','Gritar','Sair','Bater'], correct: 0 },
-      { situation: 'Você quer o brinquedo do amigo. O que você faz?', options: ['Pedir emprestado','Tomar','Chorar','Esconder'], correct: 0 },
-    ];
+    const SCENARIOS: Record<number, Array<{situation: string, options: string[], correct: number}>> = {
+      51: [
+        {situation:'A menina está sorrindo. Ela está...',options:['Feliz','Triste','Com raiva','Com medo'],correct:0},
+        {situation:'O menino está chorando. Ele está...',options:['Feliz','Triste','Com raiva','Animado'],correct:1},
+        {situation:'A pessoa está com a testa franzida. Ela está...',options:['Feliz','Triste','Com raiva','Surpresa'],correct:2},
+      ],
+      52: [
+        {situation:'Seu amigo caiu e se machucou. O que ele sente?',options:['Feliz','Triste','Com raiva','Animado'],correct:1},
+        {situation:'Ganhou um presente. Como se sente?',options:['Triste','Com raiva','Feliz','Com medo'],correct:2},
+        {situation:'Está sozinho no parque. Como se sente?',options:['Feliz','Triste','Animado','Com raiva'],correct:1},
+      ],
+      53: [
+        {situation:'Um colega está chorando no intervalo. O que você faz?',options:['Ignorar','Chamar e perguntar se precisa de ajuda','Rir','Chamar outros para rir'],correct:1},
+        {situation:'Alguém pegou seu brinquedo sem pedir. O que você faz?',options:['Bater','Falar que ficou triste e pedir de volta','Gritar','Esfregar no chão'],correct:1},
+        {situation:'Um colega novo chegou e está sozinho. O que você faz?',options:['Ignorar','Chamar para brincar junto','Falar que ele não pode','Chamar de estranho'],correct:1},
+      ],
+      55: [
+        {situation:'Como você se sente agora?',options:['Feliz','Triste','Com raiva','Cansado'],correct:0},
+        {situation:'O que te faz sentir bem?',options:['Brincar com amigos','Brigar','Ficar sozinho','Não dormir'],correct:0},
+        {situation:'Quando estou triste, eu...',options:['Choro e fico sozinho','Peço ajuda a alguém de confiança','Brigo com todo mundo','Fico com raiva'],correct:1},
+      ],
+      56: [
+        {situation:'Dois amigos brigaram por um brinquedo. Qual a melhor solução?',options:['Brigar também','Conversar e combinar de dividir','Chamar um adulto para punir','Ignorar e ir embora'],correct:1},
+        {situation:'Seu colega falou algo feio. O que você faz?',options:['Falar algo feio de volta','Conversar e dizer que machucou','Bater','Chorar sem fazer nada'],correct:1},
+        {situation:'Você ficou com raiva do amigo. O que fazer?',options:['Bater','Esperar esfriar e conversar','Não falar mais com ele','Quebrar algo dele'],correct:1},
+      ],
+      57: [
+        {situation:'Seu amigo precisa de ajuda com a lição. O que você faz?',options:['Recusar','Ajudar com paciência','Rir dele','Chamar o professor para castigar'],correct:1},
+        {situation:'Vocês estão jogando e alguém perdeu. O que fazer?',options:['Zombar','Incentivar e oferecer para jogar de novo','Ir embora','Não mais jogar com essa pessoa'],correct:1},
+        {situation:'Um colega compartilhou o lanche. O que você faz?',options:['Comer sem agradecer','Agradecer e compartilhar o seu também','Falar que não gosta','Guardar tudo para si'],correct:1},
+      ],
+      59: [
+        {situation:'Pense em algo bom que aconteceu hoje. Qual é?',options:['Acordar cedo','Brincar com amigos','Ir dormir tarde','Comer chocolate'],correct:1},
+        {situation:'O que você agradece na sua família?',options:['Nada','Que eles cuidam de você','Que eles são perfeitos','Que eles dão tudo que você quer'],correct:1},
+        {situation:'Agradecer ajuda a...',options:['Ninguém','As pessoas que te ajudam','Só quem você gosta','Só quem te dá presentes'],correct:1},
+      ],
+      60: [
+        {situation:'Você ficou com raiva. O que fazer primeiro?',options:['Bater','Respirar fundo e contar até 10','Gritar','Sair correndo'],correct:1},
+        {situation:'Está com medo de uma coisa nova. O que fazer?',options:['Não fazer nada','Pedir ajuda e tentar aos poucos','Chorar','Fingir que não existe'],correct:1},
+        {situation:'Perdeu um jogo e ficou triste. O que fazer?',options:['Quebrar o jogo','Aceitar que perdeu e tentar de novo','Culpar os outros','Não jogar mais'],correct:1},
+      ],
+    };
+    const scenarios = SCENARIOS[gameId] || SCENARIOS[51];
     let currentIdx = 0, correct = 0;
 
     const btnW = Math.min(200, (W - 100) / 2);
@@ -815,6 +884,171 @@ export class JogosComponent implements OnDestroy {
     });
 
     drawScenario();
+  }
+
+  setupStroopGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const colors = ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7'];
+    const colorNames = ['VERMELHO','AZUL','VERDE','AMARELO','ROXO'];
+    let correct = 0, total = 0;
+
+    const showQuestion = () => {
+      if (total >= 10) { this.finishGame(); return; }
+      const wordIdx = Math.floor(Math.random() * colorNames.length);
+      let colorIdx = Math.floor(Math.random() * colors.length);
+      while (colorIdx === wordIdx) colorIdx = Math.floor(Math.random() * colors.length);
+      total++;
+      ctx.clearRect(0, 0, W, H);
+      const qFontSize = Math.max(16, Math.min(24, W * 0.048));
+      ctx.font = `bold ${qFontSize}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#64748b';
+      ctx.fillText('Qual é a COR da tinta?', W / 2, H * 0.15);
+      const wordFontSize = Math.max(32, Math.min(52, W * 0.1));
+      ctx.font = `bold ${wordFontSize}px sans-serif`;
+      ctx.fillStyle = colors[colorIdx];
+      ctx.fillText(colorNames[wordIdx], W / 2, H * 0.38);
+      const bw = Math.min(90, (W - 60) / colors.length), bh = 50;
+      const startX = (W - colors.length * (bw + 10)) / 2;
+      const startY = H * 0.55;
+      colors.forEach((c, i) => {
+        const x = startX + i * (bw + 10);
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.roundRect(x, startY, bw, bh, 10);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.max(10, Math.min(13, bw * 0.16))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(colorNames[i].slice(0, 5), x + bw / 2, startY + bh / 2);
+      });
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(`Acertos: ${correct}/${total}`, W / 2, H - 15);
+      this.gameInstruction.set(`Toque na COR da tinta — não na palavra! (${total}/10)`);
+      const answerColor = colors[colorIdx];
+      this.setCanvasHandler(canvas, (mx, my) => {
+        colors.forEach((c, i) => {
+          const x = startX + i * (bw + 10);
+          if (mx >= x && mx <= x + bw && my >= startY && my <= startY + bh) {
+            if (c === answerColor) { correct++; this.gameScore.update(s => s + 10); }
+            setTimeout(showQuestion, 300);
+          }
+        });
+      });
+    };
+    showQuestion();
+  }
+
+  setupTapGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
+    const ctx = this.canvasCtx!;
+    const TAP_CONFIGS: Record<number, {items: string[], count: number, instruction: string, speed: number}> = {
+      2:  {items:['🍎','🍌','🍇','🍊','🍓'], count:15, instruction:'Toque nos frutos que aparecem!', speed:1200},
+      4:  {items:['🔵','🔴'], count:20, instruction:'Toque nos AZUIS, ignore os VERMELHOS!', speed:800},
+      5:  {items:['⬜','🔴','🟢','🔵'], count:15, instruction:'Toque nos QUADRADOS — nunca nos círculos!', speed:1000},
+      6:  {items:['⭐'], count:10, instruction:'Toque na estrela quando ela parar de se mover!', speed:600},
+      17: {items:['📱','🎒','📖','✏️','🎨'], count:10, instruction:'Quais objetos apareceram? Toque nos que lembra!', speed:1500},
+      18: {items:['🐱','🐶','🐰','🦊','🐻'], count:12, instruction:'Encontre o animal que apareceu no centro!', speed:1000},
+      20: {items:['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣'], count:8, instruction:'Guarde os números e repita ao contrário!', speed:1500},
+      22: {items:['🔵','🔴'], count:16, instruction:'Toque no CÍRCULO quando vir ▲, no QUADRADO quando vir ●', speed:900},
+      24: {items:['🐶','🐱','🐰','📦','⚽','📚'], count:15, instruction:'Toque nos ANIMAIS — ignore os objetos!', speed:900},
+      26: {items:['🟢','🟡','🔴'], count:12, instruction:'Toque quando ficar VERDE — espere o sinal!', speed:1200},
+      27: {items:['A','E','I','O','U'], count:14, instruction:'Toque nas VOGAIS — ignore as consoantes!', speed:800},
+      28: {items:['🔴','🔵'], count:16, instruction:'Toque no AZUL quando ver 🔴, no VERMELHO quando ver 🔵', speed:800},
+      29: {items:['⭐','🏁'], count:10, instruction:'Encontre o caminho: toque na estrela, depois na bandeira!', speed:1000},
+      30: {items:['+3'], count:8, instruction:'Guarde o número e some 3!', speed:2000},
+      44: {items:['🍎','🍌','🍇','🍊','🍓','🍋'], count:10, instruction:'Conte quantos frutos aparecem!', speed:1500},
+      48: {items:['🍕','🍰','🧁','🍩'], count:10, instruction:'Toque na fração correta — 1/2 ou 1/4?', speed:1500},
+      49: {items:['⬛','⬜','🔺','🔴'], count:12, instruction:'Identifique a forma: círculo, quadrado ou triângulo!', speed:1200},
+      54: {items:['🫁'], count:8, instruction:'Inspire (toque quando crescer)... Expire (quando diminuir)', speed:2000},
+      58: {items:['⏳'], count:6, instruction:'Espere... espere... toque quando aparecer o sinal!', speed:3000},
+    };
+    const config = TAP_CONFIGS[gameId] || TAP_CONFIGS[2];
+    let spawned = 0, hit = 0;
+    const itemFontSize = Math.max(24, Math.min(40, W * 0.08));
+
+    const spawnItem = () => {
+      if (spawned >= config.count) { this.finishGame(); return; }
+      const symbol = config.items[Math.floor(Math.random() * config.items.length)];
+      const x = Math.random() * (W - 60) + 30;
+      const y = Math.random() * (H - 80) + 30;
+      spawned++;
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = `${itemFontSize}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#1e293b';
+      ctx.fillText(symbol, x, y);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
+      ctx.fillText(`${spawned}/${config.count} · Acertos: ${hit}`, W / 2, H - 15);
+      this.gameInstruction.set(config.instruction);
+      this.setCanvasHandler(canvas, (mx, my) => {
+        const dist = Math.sqrt((mx - x) ** 2 + (my - y) ** 2);
+        if (dist < 40) {
+          hit++;
+          this.gameScore.update(s => s + 10);
+          setTimeout(spawnItem, 200);
+        }
+      });
+    };
+    spawnItem();
+  }
+
+  setupCompareGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    let correct = 0, total = 0;
+    const btnW = Math.min(80, (W - 80) / 3), bh = 55;
+    const symbols = ['<', '=', '>'];
+    const labels = ['<', '=', '>'];
+
+    const showQuestion = () => {
+      if (total >= 8) { this.finishGame(); return; }
+      const a = Math.floor(Math.random() * 20) + 1;
+      let b = Math.floor(Math.random() * 20) + 1;
+      while (b === a) b = Math.floor(Math.random() * 20) + 1;
+      total++;
+      const correctSym = a > b ? '>' : a < b ? '<' : '=';
+      ctx.clearRect(0, 0, W, H);
+      const numFont = Math.max(28, Math.min(44, W * 0.088));
+      ctx.font = `bold ${numFont}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#1e293b';
+      ctx.fillText(`${a}  ?  ${b}`, W / 2, H * 0.3);
+      const startX = (W - 3 * (btnW + 15)) / 2;
+      const startY = H * 0.5;
+      symbols.forEach((sym, i) => {
+        const x = startX + i * (btnW + 15);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath();
+        ctx.roundRect(x, startY, btnW, bh, 12);
+        ctx.fill();
+        ctx.fillStyle = '#1e293b';
+        ctx.font = `bold ${Math.max(24, Math.min(36, btnW * 0.45))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labels[i], x + btnW / 2, startY + bh / 2);
+      });
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Acertos: ${correct}/${total}`, W / 2, H - 15);
+      this.gameInstruction.set(`Qual símbolo completa? (${total}/8)`);
+      this.setCanvasHandler(canvas, (mx, my) => {
+        symbols.forEach((sym, i) => {
+          const x = startX + i * (btnW + 15);
+          if (mx >= x && mx <= x + btnW && my >= startY && my <= startY + bh) {
+            if (sym === correctSym) { correct++; this.gameScore.update(s => s + 10); }
+            setTimeout(showQuestion, 300);
+          }
+        });
+      });
+    };
+    showQuestion();
   }
 
   finishGame() {
