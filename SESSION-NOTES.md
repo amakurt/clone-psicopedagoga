@@ -1095,6 +1095,66 @@ npm start
 
 ---
 
+## Sessão 26 - 21/08/2026 (noite) — Correção dos Jogos Cognitivos para Mobile
+
+### 110. Topview MCP (cancelado)
+- Tentativa de instalar o MCP do Topview (https://mcp.topview.ai/mcp)
+- Servidor remoto HTTP — requer autenticação OAuth via accounts.topview.ai
+- Config no Antigravity: `~/.gemini/config/mcp_config.json` com `"serverUrl"` (não `"url"`)
+- Adiado para outra hora
+
+### 111. Correção dos 60 Jogos Cognitivos — Mobile/Tablet
+- **Problema identificado:** Jogos não funcionavam em celular/tablet
+  1. Canvas fixo 500x300 — não escalava
+  2. Sem touch events — só `onclick`, impossível jogar no celular
+  3. Coordenadas hardcoded — todos os jogos usavam pixels fixos
+  4. Modal não responsivo — botões e textos pequenos
+
+- **Correções aplicadas (commit d342978):**
+  - Canvas responsivo: `width: 100%` + escala DPR para nítidez
+  - Touch events: `touchend` mapeado com `changedTouches[0]`
+  - Coordenadas dinâmicas: todos os 6 tipos de jogo calculam posições baseado no tamanho real do canvas
+  - Modal adaptativo: abre de baixo no mobile, textos e botões com tamanhos adaptativos
+
+### 112. Bug de Canvas em Branco (corrigido)
+- **Bug raiz:** `bindCanvasEvents` acumulava múltiplos event listeners sem remover
+  - `setupAttentionGame` chamava `bindCanvasEvents` dentro de `newRound()` —10 vezes!
+  - `cleanupCanvas` usava `cloneNode` que criava canvas órfão sem handlers
+- **Solução (commit 10757b9):**
+  - `setCanvasHandler` — handler único por canvas, callback trocado
+  - `removeCanvasListeners` — remove os 2 listeners do canvas original
+  - Attention/Phonology/Social: handler registrado1x, variáveis externas acessíveis pelo closure
+
+### 113. Melhoria dos 60 Jogos (commit b40023e)
+- **Problema:** Muitos jogos repetidos — mesma mecânica, mesmos dados
+  - "Sequência Numérica" duplicado (Atenção + Matemática)
+  - "Rimas Divertidas" / "Jogo de Rimas" quase idênticos
+  - Todos os jogos tipo memory usavam as mesmas 6 frutas
+  - Todos os phonology usavam as mesmas 3 palavras (GATO, BOLA, PATO)
+  - Todos os social usavam os mesmos 3 cenários
+
+- **Solução — 9 engines de jogo:**
+  | Engine | Descrição |
+  |--------|-----------|
+  | `memory` | Pares de cartas — 8 sets de emojis diferentes |
+  | `math` | Calculadora com teclado numérico |
+  | `sequence` | Repetir sequência de cores |
+  | `attention` | Encontrar estrela entre círculos |
+  | `phonology` | 10 sets de palavras (rimas, sílabas, fonemas) |
+  | `social` | 8 cenários (emoções, conflitos, gratidão) |
+  | **`stroop`** | **NOVO** — "Qual é a COR da tinta?" |
+  | **`tap`** | **NOVO** — Toque rápido nos alvos (15 configs) |
+  | **`compare`** | **NOVO** — Maior, menor ou igual (< = >) |
+
+- **Cada jogo tem conteúdo próprio:**
+  - Memória: frutas, animais, números, cores, formas, emojis, estrelas
+  - Fonologia: rimas, sílabas, sons iniciais/finais, manipulação, fusão
+  - Social: emoções no rosto, empatia, conflitos, respiração, cooperação, gratidão
+  - Tap: frutos rápidos, azuis vs vermelhos, semáforo, rastreamento visual
+  - Stroop: 10 rodadas com cores aleatórias
+
+---
+
 ## Comandos Úteis
 
 ```bash

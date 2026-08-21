@@ -986,3 +986,58 @@ npm run start
 2. Testar as 10 funcionalidades competitivas no navegador
 3. Deploy em produção
 4. Testes E2E completos
+
+---
+
+## Sessão 26 - 21/08/2026 (noite) — Correção dos Jogos Cognitivos para Mobile
+
+### O que foi feito
+
+#### 1. Topview MCP (cancelado)
+- Tentativa de instalar MCP do Topview (https://mcp.topview.ai/mcp)
+- Servidor remoto HTTP — requer OAuth via accounts.topview.ai
+- Config Antigravity: `~/.gemini/config/mcp_config.json` com `"serverUrl"`
+- Adiado
+
+#### 2. Correção dos 60 Jogos Cognitivos — Mobile/Tablet
+- **Problemas identificados:**
+  - Canvas fixo 500x300 — não escalava
+  - Sem touch events — só `onclick`
+  - Coordenadas hardcoded em pixels
+  - Modal não responsivo
+
+- **Correções (commit d342978):**
+  - Canvas responsivo com DPR scaling
+  - Touch events (`touchend` + `changedTouches`)
+  - Coordenadas dinâmicas por tipo de jogo
+  - Modal adaptativo (abre de baixo no mobile)
+
+#### 3. Bug de Canvas em Branco (corrigido)
+- **Causa:** `bindCanvasEvents` acumulava listeners duplicados
+  - Attention game chamava10x (1 por rodada)
+  - `cleanupCanvas` via `cloneNode` criava canvas órfão
+- **Solução (commit 10757b9):**
+  - `setCanvasHandler` —1 handler único, callback trocado
+  - `removeCanvasListeners` — limpeza adequada
+  - Variáveis de jogo movidas para escopo externo (closure)
+
+#### 4. Melhoria dos 60 Jogos (commit b40023e)
+- **Problema:** Jogos repetidos — mesma mecânica, mesmos dados
+- **Solução — 9 engines:**
+  - `memory` — 8 sets de emojis diferentes por jogo
+  - `math` — calculadora numérica
+  - `sequence` — repetir sequência de cores
+  - `attention` — encontrar estrela
+  - `phonology` — 10 sets de palavras diferentes
+  - `social` — 8 cenários diferentes
+  - **`stroop`** — NOVO: "Qual é a COR da tinta?"
+  - **`tap`** — NOVO: toque rápido nos alvos (15 configs)
+  - **`compare`** — NOVO: maior, menor ou igual
+
+### Commits
+- `d342978` — jogos responsivos para mobile
+- `10757b9` — canvas em branco corrigido (handler único)
+- `b40023e` — 60 jogos realmente distintos com 9 engines
+
+### Arquivos Alterados
+- `src/app/modules/jogos/pages/jogos.component.ts` — reescrito (~1100 linhas)
