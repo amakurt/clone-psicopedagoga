@@ -1,4 +1,4 @@
-import { Component, signal, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, signal, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -251,56 +251,46 @@ export class JogosComponent implements OnDestroy {
   private timerInterval: any;
   private canvasCtx: CanvasRenderingContext2D | null = null;
   private gameData: any = {};
-  private boundHandlers: Array<() => void> = [];
-  private resizeObserver: ResizeObserver | null = null;
+  private canvasClickHandler: ((e: MouseEvent) => void) | null = null;
+  private canvasTouchHandler: ((e: TouchEvent) => void) | null = null;
 
-  ngOnDestroy() { this.clearTimers(); this.cleanupCanvas(); }
+  ngOnDestroy() { this.clearTimers(); this.removeCanvasListeners(); }
 
-  cleanupCanvas() {
+  removeCanvasListeners() {
     const canvas = this.canvasRef?.nativeElement;
-    if (canvas) {
-      canvas.replaceWith(canvas.cloneNode(true));
-    }
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
+    if (canvas && this.canvasClickHandler) {
+      canvas.removeEventListener('click', this.canvasClickHandler);
+      canvas.removeEventListener('touchend', this.canvasTouchHandler!);
+      this.canvasClickHandler = null;
+      this.canvasTouchHandler = null;
     }
   }
 
-  getPointerPos(canvas: HTMLCanvasElement, e: MouseEvent | Touch): { x: number; y: number } {
+  getPointerPos(canvas: HTMLCanvasElement, clientX: number, clientY: number): { x: number; y: number } {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
     };
   }
 
-  bindCanvasEvents(canvas: HTMLCanvasElement, handler: (x: number, y: number) => void) {
-    const clickHandler = (e: MouseEvent) => {
+  setCanvasHandler(canvas: HTMLCanvasElement, handler: (x: number, y: number) => void) {
+    this.removeCanvasListeners();
+    this.canvasClickHandler = (e: MouseEvent) => {
       e.preventDefault();
-      const pos = this.getPointerPos(canvas, e);
+      const pos = this.getPointerPos(canvas, e.clientX, e.clientY);
       handler(pos.x, pos.y);
     };
-    const touchHandler = (e: TouchEvent) => {
+    this.canvasTouchHandler = (e: TouchEvent) => {
       e.preventDefault();
-      if (e.touches.length > 0) {
-        const pos = this.getPointerPos(canvas, e.touches[0]);
+      if (e.changedTouches.length > 0) {
+        const t = e.changedTouches[0];
+        const pos = this.getPointerPos(canvas, t.clientX, t.clientY);
         handler(pos.x, pos.y);
       }
     };
-    canvas.addEventListener('click', clickHandler);
-    canvas.addEventListener('touchend', (e: TouchEvent) => {
-      e.preventDefault();
-      if (e.changedTouches.length > 0) {
-        const pos = this.getPointerPos(canvas, e.changedTouches[0]);
-        handler(pos.x, pos.y);
-      }
-    });
-    this.boundHandlers.push(
-      () => canvas.removeEventListener('click', clickHandler)
-    );
+    canvas.addEventListener('click', this.canvasClickHandler);
+    canvas.addEventListener('touchend', this.canvasTouchHandler);
   }
 
   filterGames() {
@@ -417,7 +407,7 @@ export class JogosComponent implements OnDestroy {
     this.gameData.logicalH = logicalH;
     this.gameData.dpr = dpr;
 
-    this.cleanupCanvas();
+    this.removeCanvasListeners();
 
     const jogo = this.currentGame();
     if (!jogo || !this.canvasCtx) return;
@@ -469,7 +459,7 @@ export class JogosComponent implements OnDestroy {
 
     draw();
 
-    this.bindCanvasEvents(canvas, (mx, my) => {
+    this.setCanvasHandler(canvas, (mx, my) => {
       const col = Math.floor(mx / w);
       const row = Math.floor(my / h);
       const idx = row * cols + col;
@@ -555,7 +545,7 @@ export class JogosComponent implements OnDestroy {
 
     newQuestion();
 
-    this.bindCanvasEvents(canvas, (mx, my) => {
+    this.setCanvasHandler(canvas, (mx, my) => {
       buttons.forEach((btn, i) => {
         const x = startX + (i % 4) * (bw + 15);
         const y = startY + Math.floor(i / 4) * (bh + 10);
@@ -625,7 +615,7 @@ export class JogosComponent implements OnDestroy {
     draw();
     showSequence();
 
-    this.bindCanvasEvents(canvas, (mx) => {
+    this.setCanvasHandler(canvas, (mx) => {
       if (showingSequence) return;
       const col = Math.floor((mx - 10) / cellW);
       if (col < 0 || col >= numColors) return;
@@ -654,13 +644,13 @@ export class JogosComponent implements OnDestroy {
   setupAttentionGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     let clicked = 0, missed = 0, targetIdx = -1;
+    let shapes: Array<{x: number, y: number, isTarget: boolean}> = [];
     const totalTargets = 10;
     const radius = Math.max(16, Math.min(22, W * 0.044));
-    const fontSize = Math.max(11, Math.min(14, W * 0.028));
 
     const newRound = () => {
       if (clicked + missed >= totalTargets) { this.finishGame(); return; }
-      const shapes = Array.from({length: 8}, () => ({x: Math.random() * (W - radius * 4) + radius * 2, y: Math.random() * (H - radius * 4) + radius * 2, isTarget: false}));
+      shapes = Array.from({length: 8}, () => ({x: Math.random() * (W - radius * 4) + radius * 2, y: Math.random() * (H - radius * 4) + radius * 2, isTarget: false}));
       targetIdx = Math.floor(Math.random() * shapes.length);
       shapes[targetIdx].isTarget = true;
       ctx.clearRect(0, 0, W, H);
@@ -678,17 +668,19 @@ export class JogosComponent implements OnDestroy {
         }
       });
       this.gameInstruction.set(`Clique na estrela azul! (${clicked}/${totalTargets})`);
-      this.bindCanvasEvents(canvas, (mx, my) => {
-        shapes.forEach((s) => {
-          const dist = Math.sqrt((mx - s.x) ** 2 + (my - s.y) ** 2);
-          if (dist < radius + 5) {
-            if (s.isTarget) { clicked++; this.gameScore.update(s => s + 10); }
-            else { missed++; }
-            setTimeout(newRound, 300);
-          }
-        });
-      });
     };
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      for (const s of shapes) {
+        const dist = Math.sqrt((mx - s.x) ** 2 + (my - s.y) ** 2);
+        if (dist < radius + 5) {
+          if (s.isTarget) { clicked++; this.gameScore.update(s => s + 10); }
+          else { missed++; }
+          setTimeout(newRound, 300);
+          break;
+        }
+      }
+    });
 
     newRound();
   }
@@ -733,19 +725,21 @@ export class JogosComponent implements OnDestroy {
       });
 
       this.gameInstruction.set(`Pergunta ${currentIdx + 1}/${words.length} · Acertos: ${correct}`);
-
-      this.bindCanvasEvents(canvas, (mx, my) => {
-        q.options.forEach((_, i) => {
-          const x = startX + (i % 2) * (btnW + gap);
-          const y = startY + Math.floor(i / 2) * (btnH + 12);
-          if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
-            if (q.options[i] === q.word) { correct++; this.gameScore.update(s => s + 10); }
-            currentIdx++;
-            setTimeout(drawQuestion, 400);
-          }
-        });
-      });
     };
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      const q = words[currentIdx];
+      if (!q) return;
+      q.options.forEach((_, i) => {
+        const x = startX + (i % 2) * (btnW + gap);
+        const y = startY + Math.floor(i / 2) * (btnH + 12);
+        if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
+          if (q.options[i] === q.word) { correct++; this.gameScore.update(s => s + 10); }
+          currentIdx++;
+          setTimeout(drawQuestion, 400);
+        }
+      });
+    });
 
     drawQuestion();
   }
@@ -804,19 +798,21 @@ export class JogosComponent implements OnDestroy {
       });
 
       this.gameInstruction.set(`Cenário ${currentIdx + 1}/${scenarios.length}`);
-
-      this.bindCanvasEvents(canvas, (mx, my) => {
-        s.options.forEach((_, i) => {
-          const x = startX + (i % 2) * (btnW + gap);
-          const yB = startY + Math.floor(i / 2) * (btnH + 12);
-          if (mx >= x && mx <= x + btnW && my >= yB && my <= yB + btnH) {
-            if (i === s.correct) { correct++; this.gameScore.update(s => s + 10); }
-            currentIdx++;
-            setTimeout(drawScenario, 400);
-          }
-        });
-      });
     };
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      const s = scenarios[currentIdx];
+      if (!s) return;
+      s.options.forEach((_, i) => {
+        const x = startX + (i % 2) * (btnW + gap);
+        const yB = startY + Math.floor(i / 2) * (btnH + 12);
+        if (mx >= x && mx <= x + btnW && my >= yB && my <= yB + btnH) {
+          if (i === s.correct) { correct++; this.gameScore.update(s => s + 10); }
+          currentIdx++;
+          setTimeout(drawScenario, 400);
+        }
+      });
+    });
 
     drawScenario();
   }
@@ -831,6 +827,7 @@ export class JogosComponent implements OnDestroy {
 
   closeGame() {
     this.clearTimers();
+    this.removeCanvasListeners();
     this.showGameModal.set(false);
     this.currentGame.set(null);
     this.gameStarted.set(false);
