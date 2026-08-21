@@ -1,4 +1,4 @@
-import { Component, signal, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, signal, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -81,22 +81,22 @@ const JOGOS_DATA: Jogo[] = [
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-8 animate-in">
-      <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+    <div class="space-y-6 sm:space-y-8 animate-in">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-black text-slate-900 dark:text-white">60 Jogos Cognitivos</h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Atividades interativas para estimulação cognitiva</p>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">60 Jogos Cognitivos</h1>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Atividades interativas para estimulação cognitiva</p>
         </div>
-        <div class="relative flex-1 max-w-md">
+        <div class="relative w-full sm:max-w-md">
           <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
           <input class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all"
             placeholder="Buscar jogo..." [(ngModel)]="searchTerm" (input)="filterGames()">
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-wrap gap-2 sm:gap-3">
         @for (cat of categories; track cat) {
-          <button class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+          <button class="px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all"
             [class]="filterCategory() === cat ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-white dark:bg-slate-900 text-slate-500 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50'"
             (click)="filterCategory.set(cat); filterGames()">
             {{ cat || 'Todos' }}
@@ -104,31 +104,31 @@ const JOGOS_DATA: Jogo[] = [
         }
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         @for (jogo of filteredGames(); track jogo.id) {
           <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden hover:ring-primary/50 hover:-translate-y-1 transition-all">
-            <div class="h-28 flex items-center justify-center" [class]="getCategoryBg(jogo.category)">
-              <span class="material-icons text-4xl opacity-60">{{ getCategoryIcon(jogo.category) }}</span>
+            <div class="h-20 sm:h-28 flex items-center justify-center" [class]="getCategoryBg(jogo.category)">
+              <span class="material-icons text-3xl sm:text-4xl opacity-60">{{ getCategoryIcon(jogo.category) }}</span>
             </div>
-            <div class="p-4">
+            <div class="p-3 sm:p-4">
               <div class="flex items-start justify-between gap-2 mb-2">
-                <h3 class="font-bold text-slate-900 dark:text-white text-sm leading-tight">{{ jogo.name }}</h3>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0" [class]="getCategoryStyle(jogo.category)">
+                <h3 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm leading-tight">{{ jogo.name }}</h3>
+                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold shrink-0" [class]="getCategoryStyle(jogo.category)">
                   {{ jogo.category.split(' ')[0] }}
                 </span>
               </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">{{ jogo.description }}</p>
-              <div class="flex items-center gap-2 mb-3">
+              <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">{{ jogo.description }}</p>
+              <div class="flex items-center gap-1 sm:gap-2 mb-3">
                 @for (star of [1,2,3]; track star) {
-                  <span class="material-icons text-[14px]"
+                  <span class="material-icons text-[12px] sm:text-[14px]"
                     [class]="star <= jogo.difficulty ? 'text-amber-400' : 'text-slate-200 dark:text-slate-700'">star</span>
                 }
-                <span class="text-[10px] text-slate-500 ml-1">{{ jogo.time }}</span>
-                <span class="text-[10px] text-slate-500">· {{ jogo.ageRange }} anos</span>
+                <span class="text-[9px] sm:text-[10px] text-slate-500 ml-1">{{ jogo.time }}</span>
+                <span class="text-[9px] sm:text-[10px] text-slate-500">· {{ jogo.ageRange }} anos</span>
               </div>
-              <button class="w-full py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl text-xs font-bold transition-all active:scale-95"
+              <button class="w-full py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl text-[10px] sm:text-xs font-bold transition-all active:scale-95"
                 (click)="startGame(jogo)">
-                <span class="material-icons text-[14px] align-middle mr-1">play_arrow</span> Jogar
+                <span class="material-icons text-[12px] sm:text-[14px] align-middle mr-1">play_arrow</span> Jogar
               </button>
             </div>
           </div>
@@ -144,81 +144,81 @@ const JOGOS_DATA: Jogo[] = [
     </div>
 
     @if (showGameModal()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" (click)="closeGame()">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl mx-4 ring-1 ring-slate-200 dark:ring-slate-800 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4" (click)="closeGame()">
+        <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-2xl ring-1 ring-slate-200 dark:ring-slate-800 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
           @if (!gameFinished()) {
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 class="text-lg font-black text-slate-900 dark:text-white">{{ currentGame()?.name }}</h3>
-                <p class="text-xs text-slate-500">{{ currentGame()?.category }} · {{ currentGame()?.ageRange }} anos</p>
+            <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div class="min-w-0 flex-1">
+                <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">{{ currentGame()?.name }}</h3>
+                <p class="text-[10px] sm:text-xs text-slate-500">{{ currentGame()?.category }} · {{ currentGame()?.ageRange }} anos</p>
               </div>
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-3 sm:gap-4 shrink-0 ml-3">
                 <div class="text-center">
-                  <p class="text-[10px] font-bold text-slate-500 uppercase">Tempo</p>
-                  <p class="text-lg font-black text-primary">{{ formatTime(gameTimer()) }}</p>
+                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Tempo</p>
+                  <p class="text-base sm:text-lg font-black text-primary">{{ formatTime(gameTimer()) }}</p>
                 </div>
                 <div class="text-center">
-                  <p class="text-[10px] font-bold text-slate-500 uppercase">Pontos</p>
-                  <p class="text-lg font-black text-emerald-600">{{ gameScore() }}</p>
+                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Pontos</p>
+                  <p class="text-base sm:text-lg font-black text-emerald-600">{{ gameScore() }}</p>
                 </div>
                 <button class="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" (click)="closeGame()">
                   <span class="material-icons">close</span>
                 </button>
               </div>
             </div>
-            <div class="p-6">
-              <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6 min-h-[300px] flex flex-col items-center justify-center">
+            <div class="p-4 sm:p-6">
+              <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col items-center justify-center">
                 @if (!gameStarted()) {
-                  <p class="text-slate-600 dark:text-slate-300 text-center mb-6">{{ currentGame()?.description }}</p>
-                  <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+                  <p class="text-slate-600 dark:text-slate-300 text-center mb-4 sm:mb-6 text-sm sm:text-base px-2">{{ currentGame()?.description }}</p>
+                  <button class="px-6 sm:px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm sm:text-base"
                     (click)="initGame()">
                     Iniciar Jogo
                   </button>
                 } @else {
-                  <canvas #gameCanvas width="500" height="300" class="rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700"></canvas>
-                  <p class="text-sm text-slate-500 mt-3">{{ gameInstruction() }}</p>
+                  <canvas #gameCanvas class="rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700 w-full max-w-[500px]" style="touch-action: manipulation;"></canvas>
+                  <p class="text-xs sm:text-sm text-slate-500 mt-3 text-center px-2">{{ gameInstruction() }}</p>
                 }
               </div>
             </div>
           } @else {
-            <div class="p-8 text-center">
-              <div class="size-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="material-icons text-emerald-600 dark:text-emerald-400 text-4xl">emoji_events</span>
+            <div class="p-6 sm:p-8 text-center">
+              <div class="size-16 sm:size-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-icons text-emerald-600 dark:text-emerald-400 text-3xl sm:text-4xl">emoji_events</span>
               </div>
-              <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">Parabéns!</h3>
-              <p class="text-slate-500 dark:text-slate-400 mb-6">{{ currentGame()?.name }}</p>
-              <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                  <p class="text-[10px] font-bold text-slate-500 uppercase">Pontuação</p>
-                  <p class="text-3xl font-black text-emerald-600">{{ gameScore() }}</p>
+              <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-2">Parabéns!</h3>
+              <p class="text-sm sm:text-slate-500 dark:text-slate-400 mb-6">{{ currentGame()?.name }}</p>
+              <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                <div class="p-3 sm:p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Pontuação</p>
+                  <p class="text-2xl sm:text-3xl font-black text-emerald-600">{{ gameScore() }}</p>
                 </div>
-                <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                  <p class="text-[10px] font-bold text-slate-500 uppercase">Tempo</p>
-                  <p class="text-3xl font-black text-primary">{{ formatTime(gameTimer()) }}</p>
+                <div class="p-3 sm:p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Tempo</p>
+                  <p class="text-2xl sm:text-3xl font-black text-primary">{{ formatTime(gameTimer()) }}</p>
                 </div>
               </div>
               @if (getHighScore(currentGame()?.id || 0)) {
                 <p class="text-xs text-slate-500 mb-4">Recorde: {{ getHighScore(currentGame()?.id || 0) }} pontos</p>
               }
-              <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 text-left mb-6">
+              <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 sm:p-6 text-left mb-6">
                 <div class="flex items-center gap-2 mb-4">
                   <span class="material-icons text-blue-600 dark:text-blue-400">psychology</span>
-                  <h4 class="font-bold text-blue-900 dark:text-blue-300">Reflexão Clínica</h4>
+                  <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm">Reflexão Clínica</h4>
                 </div>
                 @for (q of clinicalQuestions(); track $index) {
                   <div class="mb-3">
-                    <p class="text-sm font-bold text-blue-800 dark:text-blue-300 mb-1">{{ $index + 1 }}. {{ q }}</p>
+                    <p class="text-xs sm:text-sm font-bold text-blue-800 dark:text-blue-300 mb-1">{{ $index + 1 }}. {{ q }}</p>
                     <textarea class="w-full px-3 py-2 bg-white dark:bg-slate-900 rounded-xl text-sm ring-1 ring-blue-200 dark:ring-blue-800 focus:ring-2 focus:ring-primary outline-none resize-none"
                       rows="2" placeholder="Observação clínica..."></textarea>
                   </div>
                 }
               </div>
-              <div class="flex gap-3 justify-center">
-                <button class="px-6 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 transition-all"
+              <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button class="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 transition-all"
                   (click)="startGame(currentGame()!)">
                   Jogar Novamente
                 </button>
-                <button class="px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold text-sm transition-all"
+                <button class="w-full sm:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold text-sm transition-all"
                   (click)="closeGame()">
                   Fechar
                 </button>
@@ -251,8 +251,57 @@ export class JogosComponent implements OnDestroy {
   private timerInterval: any;
   private canvasCtx: CanvasRenderingContext2D | null = null;
   private gameData: any = {};
+  private boundHandlers: Array<() => void> = [];
+  private resizeObserver: ResizeObserver | null = null;
 
-  ngOnDestroy() { this.clearTimers(); }
+  ngOnDestroy() { this.clearTimers(); this.cleanupCanvas(); }
+
+  cleanupCanvas() {
+    const canvas = this.canvasRef?.nativeElement;
+    if (canvas) {
+      canvas.replaceWith(canvas.cloneNode(true));
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+  }
+
+  getPointerPos(canvas: HTMLCanvasElement, e: MouseEvent | Touch): { x: number; y: number } {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  }
+
+  bindCanvasEvents(canvas: HTMLCanvasElement, handler: (x: number, y: number) => void) {
+    const clickHandler = (e: MouseEvent) => {
+      e.preventDefault();
+      const pos = this.getPointerPos(canvas, e);
+      handler(pos.x, pos.y);
+    };
+    const touchHandler = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length > 0) {
+        const pos = this.getPointerPos(canvas, e.touches[0]);
+        handler(pos.x, pos.y);
+      }
+    };
+    canvas.addEventListener('click', clickHandler);
+    canvas.addEventListener('touchend', (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.changedTouches.length > 0) {
+        const pos = this.getPointerPos(canvas, e.changedTouches[0]);
+        handler(pos.x, pos.y);
+      }
+    });
+    this.boundHandlers.push(
+      () => canvas.removeEventListener('click', clickHandler)
+    );
+  }
 
   filterGames() {
     const term = this.searchTerm.toLowerCase();
@@ -330,7 +379,7 @@ export class JogosComponent implements OnDestroy {
   initGame() {
     this.gameStarted.set(true);
     this.startTimer();
-    setTimeout(() => this.setupCanvas(), 100);
+    setTimeout(() => this.setupCanvas(), 150);
   }
 
   startTimer() {
@@ -347,33 +396,57 @@ export class JogosComponent implements OnDestroy {
   setupCanvas() {
     const canvas = this.canvasRef?.nativeElement;
     if (!canvas) return;
+
+    const container = canvas.parentElement;
+    const containerWidth = container ? container.clientWidth - 32 : 468;
+    const logicalW = Math.min(500, containerWidth);
+    const logicalH = Math.round(logicalW * 0.6);
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = logicalW * dpr;
+    canvas.height = logicalH * dpr;
+    canvas.style.width = logicalW + 'px';
+    canvas.style.height = logicalH + 'px';
+
     this.canvasCtx = canvas.getContext('2d');
+    if (this.canvasCtx) {
+      this.canvasCtx.scale(dpr, dpr);
+    }
+
+    this.gameData.logicalW = logicalW;
+    this.gameData.logicalH = logicalH;
+    this.gameData.dpr = dpr;
+
+    this.cleanupCanvas();
+
     const jogo = this.currentGame();
     if (!jogo || !this.canvasCtx) return;
     switch (jogo.type) {
-      case 'memory': this.setupMemoryGame(canvas); break;
-      case 'math': this.setupMathGame(canvas); break;
-      case 'sequence': this.setupSequenceGame(canvas); break;
-      case 'attention': this.setupAttentionGame(canvas); break;
-      case 'phonology': this.setupPhonologyGame(canvas); break;
-      case 'social': this.setupSocialGame(canvas); break;
-      default: this.setupMemoryGame(canvas);
+      case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH); break;
+      case 'math': this.setupMathGame(canvas, logicalW, logicalH); break;
+      case 'sequence': this.setupSequenceGame(canvas, logicalW, logicalH); break;
+      case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
+      case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH); break;
+      case 'social': this.setupSocialGame(canvas, logicalW, logicalH); break;
+      default: this.setupMemoryGame(canvas, logicalW, logicalH);
     }
   }
 
-  setupMemoryGame(canvas: HTMLCanvasElement) {
+  setupMemoryGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     const symbols = ['🍎','🍌','🍇','🍊','🍓','🍋','🥝','🍒'];
     const pairs = symbols.slice(0, 6);
     const cards = [...pairs, ...pairs].sort(() => Math.random() - 0.5);
-    this.gameData = { cards, flipped: [], matched: [], attempts: 0 };
+    this.gameData = { ...this.gameData, cards, flipped: [], matched: [], attempts: 0 };
     const cols = 4, rows = 3;
-    const w = canvas.width / cols, h = canvas.height / rows;
+    const w = W / cols, h = H / rows;
+    const cardSize = Math.min(w, h) - 8;
+    const fontSize = Math.max(16, Math.min(28, cardSize * 0.5));
 
     this.gameInstruction.set('Encontre os pares de cartas');
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, W, H);
       cards.forEach((sym: string, i: number) => {
         const x = (i % cols) * w, y = Math.floor(i / cols) * h;
         const isFlipped = this.gameData.flipped.includes(i) || this.gameData.matched.includes(i);
@@ -385,7 +458,7 @@ export class JogosComponent implements OnDestroy {
         ctx.fill();
         ctx.stroke();
         if (isFlipped) {
-          ctx.font = '28px serif';
+          ctx.font = `${fontSize}px serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillStyle = '#1e293b';
@@ -396,10 +469,9 @@ export class JogosComponent implements OnDestroy {
 
     draw();
 
-    canvas.onclick = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const col = Math.floor((e.clientX - rect.left) / (canvas.width / cols));
-      const row = Math.floor((e.clientY - rect.top) / (canvas.height / rows));
+    this.bindCanvasEvents(canvas, (mx, my) => {
+      const col = Math.floor(mx / w);
+      const row = Math.floor(my / h);
       const idx = row * cols + col;
       if (idx < 0 || idx >= cards.length || this.gameData.flipped.includes(idx) || this.gameData.matched.includes(idx)) return;
       if (this.gameData.flipped.length >= 2) return;
@@ -423,10 +495,10 @@ export class JogosComponent implements OnDestroy {
           setTimeout(() => { this.gameData.flipped = []; draw(); }, 800);
         }
       }
-    };
+    });
   }
 
-  setupMathGame(canvas: HTMLCanvasElement) {
+  setupMathGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     let correct = 0, total = 0, a = 0, b = 0, op = '+', answer = 0;
     const buttons = ['0','1','2','3','4','5','6','7','8','9','⌫','OK'];
@@ -444,17 +516,23 @@ export class JogosComponent implements OnDestroy {
       draw();
     };
 
+    const bw = Math.min(70, (W - 120) / 4), bh = Math.min(50, bw * 0.7);
+    const startX = (W - (bw * 4 + 15 * 3)) / 2;
+    const startY = H * 0.55;
+    const questionFontSize = Math.max(24, Math.min(36, W * 0.07));
+    const inputFontSize = Math.max(28, Math.min(40, W * 0.08));
+    const btnFontSize = Math.max(14, Math.min(18, bw * 0.26));
+
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = 'bold 36px sans-serif';
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = `bold ${questionFontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#1e293b';
-      ctx.fillText(`${a} ${op} ${b} = ?`, 250, 60);
+      ctx.fillText(`${a} ${op} ${b} = ?`, W / 2, H * 0.18);
 
-      ctx.font = 'bold 40px sans-serif';
-      ctx.fillText(input || '_', 250, 130);
+      ctx.font = `bold ${inputFontSize}px sans-serif`;
+      ctx.fillText(input || '_', W / 2, H * 0.38);
 
-      const bw = 70, bh = 50, startX = 60, startY = 170;
       buttons.forEach((btn, i) => {
         const x = startX + (i % 4) * (bw + 15);
         const y = startY + Math.floor(i / 4) * (bh + 10);
@@ -463,24 +541,21 @@ export class JogosComponent implements OnDestroy {
         ctx.roundRect(x, y, bw, bh, 8);
         ctx.fill();
         ctx.fillStyle = btn === 'OK' ? '#fff' : '#1e293b';
-        ctx.font = 'bold 18px sans-serif';
+        ctx.font = `bold ${btnFontSize}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(btn, x + bw / 2, y + bh / 2);
       });
 
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '14px sans-serif';
-      ctx.fillText(`Acertos: ${correct}/${total}`, 250, 290);
+      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Acertos: ${correct}/${total}`, W / 2, H - 15);
     };
 
     newQuestion();
 
-    canvas.onclick = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-      const bw = 70, bh = 50, startX = 60, startY = 170;
+    this.bindCanvasEvents(canvas, (mx, my) => {
       buttons.forEach((btn, i) => {
         const x = startX + (i % 4) * (bw + 15);
         const y = startY + Math.floor(i / 4) * (bh + 10);
@@ -492,18 +567,25 @@ export class JogosComponent implements OnDestroy {
           } else { input += btn; draw(); }
         }
       });
-    };
+    });
   }
 
-  setupSequenceGame(canvas: HTMLCanvasElement) {
+  setupSequenceGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     const colors = ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7'];
-    const sequence = Array.from({length: 5}, () => Math.floor(Math.random() * colors.length));
+    const numColors = 5;
+    const sequence = Array.from({length: 5}, () => Math.floor(Math.random() * numColors));
     let userSequence: number[] = [];
     let showingSequence = true;
     let round = 1;
 
     this.gameInstruction.set('Memorize e repita a sequência de cores');
+
+    const cellW = (W - 20) / numColors;
+    const cellH = Math.min(cellW, H * 0.4);
+    const cellY = (H - cellH) / 2;
+    const cellR = Math.min(12, cellW * 0.15);
+    const fontSize = Math.max(11, Math.min(14, W * 0.028));
 
     const showSequence = () => {
       showingSequence = true;
@@ -517,43 +599,41 @@ export class JogosComponent implements OnDestroy {
           return;
         }
         draw();
-        const x = (i % 5) * 100;
+        const x = 10 + i * cellW;
         ctx.fillStyle = colors[sequence[i]];
         ctx.beginPath();
-        ctx.roundRect(x + 10, 120, 80, 80, 12);
+        ctx.roundRect(x + 4, cellY, cellW - 8, cellH, cellR);
         ctx.fill();
         i++;
       }, 600);
     };
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let i = 0; i < 5; i++) {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < numColors; i++) {
         ctx.fillStyle = '#e2e8f0';
         ctx.beginPath();
-        ctx.roundRect(i * 100 + 10, 120, 80, 80, 12);
+        ctx.roundRect(10 + i * cellW + 4, cellY, cellW - 8, cellH, cellR);
         ctx.fill();
       }
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '14px sans-serif';
+      ctx.font = `${fontSize}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(`Rodada ${round} · Acertos: ${userSequence.filter((v,i) => v === sequence[i]).length}/5`, 250, 260);
+      ctx.fillText(`Rodada ${round} · Acertos: ${userSequence.filter((v,i) => v === sequence[i]).length}/5`, W / 2, H - 15);
     };
 
     draw();
     showSequence();
 
-    canvas.onclick = (e: MouseEvent) => {
+    this.bindCanvasEvents(canvas, (mx) => {
       if (showingSequence) return;
-      const rect = canvas.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const col = Math.floor(mx / 100);
-      if (col < 0 || col >= 5) return;
+      const col = Math.floor((mx - 10) / cellW);
+      if (col < 0 || col >= numColors) return;
       userSequence.push(col);
 
       ctx.fillStyle = colors[col];
       ctx.beginPath();
-      ctx.roundRect(col * 100 + 10, 120, 80, 80, 12);
+      ctx.roundRect(10 + col * cellW + 4, cellY, cellW - 8, cellH, cellR);
       ctx.fill();
 
       if (userSequence.length === sequence.length) {
@@ -561,110 +641,116 @@ export class JogosComponent implements OnDestroy {
         this.gameScore.update(s => s + correct * 5);
         if (correct === 5 && round < 3) {
           round++;
-          sequence.push(Math.floor(Math.random() * colors.length));
+          sequence.push(Math.floor(Math.random() * numColors));
           userSequence = [];
           setTimeout(() => showSequence(), 500);
         } else {
           this.finishGame();
         }
       }
-    };
+    });
   }
 
-  setupAttentionGame(canvas: HTMLCanvasElement) {
+  setupAttentionGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     let clicked = 0, missed = 0, targetIdx = -1;
     const totalTargets = 10;
+    const radius = Math.max(16, Math.min(22, W * 0.044));
+    const fontSize = Math.max(11, Math.min(14, W * 0.028));
 
     const newRound = () => {
       if (clicked + missed >= totalTargets) { this.finishGame(); return; }
-      const shapes = Array.from({length: 8}, (_, i) => ({x: Math.random() * 440 + 30, y: Math.random() * 220 + 30, isTarget: false}));
+      const shapes = Array.from({length: 8}, () => ({x: Math.random() * (W - radius * 4) + radius * 2, y: Math.random() * (H - radius * 4) + radius * 2, isTarget: false}));
       targetIdx = Math.floor(Math.random() * shapes.length);
       shapes[targetIdx].isTarget = true;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      shapes.forEach((s, i) => {
+      ctx.clearRect(0, 0, W, H);
+      shapes.forEach((s) => {
         ctx.fillStyle = s.isTarget ? '#3b82f6' : '#e2e8f0';
         ctx.beginPath();
-        ctx.arc(s.x, s.y, 22, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
         ctx.fill();
         if (s.isTarget) {
           ctx.fillStyle = '#fff';
-          ctx.font = 'bold 16px sans-serif';
+          ctx.font = `bold ${Math.max(12, radius * 0.7)}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('★', s.x, s.y);
         }
       });
-      this.gameInstruction.set(`Clique na estrela azul! (${clicked + clicked}/${totalTargets})`);
-      canvas.onclick = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-        shapes.forEach((s, i) => {
+      this.gameInstruction.set(`Clique na estrela azul! (${clicked}/${totalTargets})`);
+      this.bindCanvasEvents(canvas, (mx, my) => {
+        shapes.forEach((s) => {
           const dist = Math.sqrt((mx - s.x) ** 2 + (my - s.y) ** 2);
-          if (dist < 25) {
+          if (dist < radius + 5) {
             if (s.isTarget) { clicked++; this.gameScore.update(s => s + 10); }
             else { missed++; }
-            canvas.onclick = null;
             setTimeout(newRound, 300);
           }
         });
-      };
+      });
     };
 
     newRound();
   }
 
-  setupPhonologyGame(canvas: HTMLCanvasElement) {
+  setupPhonologyGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     const words = [{word: 'GATO', options: ['GATO','GATA','MATO','RATO']},{word: 'BOLA', options: ['BOLA','BOLSA','MOLA','FOLA']},{word: 'PATO', options: ['PATO','PATA','MATO','RATO']}];
     let currentIdx = 0, correct = 0;
 
+    const btnW = Math.min(200, (W - 100) / 2);
+    const btnH = Math.min(50, btnW * 0.25);
+    const gap = 16;
+    const totalGridW = btnW * 2 + gap;
+    const startX = (W - totalGridW) / 2;
+    const startY = H * 0.3;
+    const questionFontSize = Math.max(18, Math.min(28, W * 0.056));
+    const wordFontSize = Math.max(24, Math.min(36, W * 0.072));
+    const optFontSize = Math.max(13, Math.min(18, btnW * 0.09));
+
     const drawQuestion = () => {
       if (currentIdx >= words.length) { this.finishGame(); return; }
       const q = words[currentIdx];
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = 'bold 28px sans-serif';
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = `bold ${questionFontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#1e293b';
-      ctx.fillText('Qual é a palavra correta?', 250, 50);
-      ctx.font = 'bold 36px sans-serif';
-      ctx.fillText(`_${'_'.repeat(q.word.length - 2)}_`, 250, 100);
+      ctx.fillText('Qual é a palavra correta?', W / 2, H * 0.14);
+      ctx.font = `bold ${wordFontSize}px sans-serif`;
+      ctx.fillText(`_${'_'.repeat(q.word.length - 2)}_`, W / 2, H * 0.24);
 
       q.options.forEach((opt, i) => {
-        const x = 40 + (i % 2) * 230, y = 140 + Math.floor(i / 2) * 70;
+        const x = startX + (i % 2) * (btnW + gap);
+        const y = startY + Math.floor(i / 2) * (btnH + 12);
         ctx.fillStyle = '#e2e8f0';
         ctx.beginPath();
-        ctx.roundRect(x, y, 200, 50, 10);
+        ctx.roundRect(x, y, btnW, btnH, 10);
         ctx.fill();
         ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 18px sans-serif';
+        ctx.font = `bold ${optFontSize}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(opt, x + 100, y + 30);
+        ctx.fillText(opt, x + btnW / 2, y + btnH / 2 + 2);
       });
 
       this.gameInstruction.set(`Pergunta ${currentIdx + 1}/${words.length} · Acertos: ${correct}`);
 
-      canvas.onclick = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+      this.bindCanvasEvents(canvas, (mx, my) => {
         q.options.forEach((_, i) => {
-          const x = 40 + (i % 2) * 230, y = 140 + Math.floor(i / 2) * 70;
-          if (mx >= x && mx <= x + 200 && my >= y && my <= y + 50) {
+          const x = startX + (i % 2) * (btnW + gap);
+          const y = startY + Math.floor(i / 2) * (btnH + 12);
+          if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
             if (q.options[i] === q.word) { correct++; this.gameScore.update(s => s + 10); }
-            canvas.onclick = null;
             currentIdx++;
             setTimeout(drawQuestion, 400);
           }
         });
-      };
+      });
     };
 
     drawQuestion();
   }
 
-  setupSocialGame(canvas: HTMLCanvasElement) {
+  setupSocialGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     const scenarios = [
       { situation: 'Um colega está triste. O que você faz?', options: ['Ignorar','Brincar junto','Chamar atenção','Falar baixo'], correct: 3 },
@@ -673,43 +759,63 @@ export class JogosComponent implements OnDestroy {
     ];
     let currentIdx = 0, correct = 0;
 
+    const btnW = Math.min(200, (W - 100) / 2);
+    const btnH = Math.min(55, btnW * 0.275);
+    const gap = 14;
+    const totalGridW = btnW * 2 + gap;
+    const startX = (W - totalGridW) / 2;
+    const startY = H * 0.32;
+    const sitFontSize = Math.max(14, Math.min(20, W * 0.04));
+    const optFontSize = Math.max(12, Math.min(15, btnW * 0.075));
+
     const drawScenario = () => {
       if (currentIdx >= scenarios.length) { this.finishGame(); return; }
       const s = scenarios[currentIdx];
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = 'bold 20px sans-serif';
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = `bold ${sitFontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#1e293b';
-      ctx.fillText(s.situation, 250, 50);
+      const words = s.situation.split(' ');
+      let line = '';
+      let y = H * 0.12;
+      words.forEach(w => {
+        const test = line + w + ' ';
+        if (ctx.measureText(test).width > W - 40) {
+          ctx.fillText(line.trim(), W / 2, y);
+          line = w + ' ';
+          y += sitFontSize + 6;
+        } else {
+          line = test;
+        }
+      });
+      ctx.fillText(line.trim(), W / 2, y);
 
       s.options.forEach((opt, i) => {
-        const x = 40 + (i % 2) * 230, y = 100 + Math.floor(i / 2) * 80;
+        const x = startX + (i % 2) * (btnW + gap);
+        const yB = startY + Math.floor(i / 2) * (btnH + 12);
         ctx.fillStyle = '#e2e8f0';
         ctx.beginPath();
-        ctx.roundRect(x, y, 200, 60, 10);
+        ctx.roundRect(x, yB, btnW, btnH, 10);
         ctx.fill();
         ctx.fillStyle = '#1e293b';
-        ctx.font = '15px sans-serif';
+        ctx.font = `${optFontSize}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(opt, x + 100, y + 35);
+        ctx.fillText(opt, x + btnW / 2, yB + btnH / 2 + 2);
       });
 
       this.gameInstruction.set(`Cenário ${currentIdx + 1}/${scenarios.length}`);
 
-      canvas.onclick = (e: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+      this.bindCanvasEvents(canvas, (mx, my) => {
         s.options.forEach((_, i) => {
-          const x = 40 + (i % 2) * 230, y = 100 + Math.floor(i / 2) * 80;
-          if (mx >= x && mx <= x + 200 && my >= y && my <= y + 60) {
+          const x = startX + (i % 2) * (btnW + gap);
+          const yB = startY + Math.floor(i / 2) * (btnH + 12);
+          if (mx >= x && mx <= x + btnW && my >= yB && my <= yB + btnH) {
             if (i === s.correct) { correct++; this.gameScore.update(s => s + 10); }
-            canvas.onclick = null;
             currentIdx++;
             setTimeout(drawScenario, 400);
           }
         });
-      };
+      });
     };
 
     drawScenario();
