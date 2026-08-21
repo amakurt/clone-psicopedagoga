@@ -70,7 +70,7 @@ const STATUS = STATUS_CONFIG;
                     <span class="text-xs font-bold text-emerald-600">{{ s.submittedAt | date:'dd/MM HH:mm' }}</span>
                   }
                   <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border" [class]="badgeCls(s.status)">
-                    {{ STATUS[s.status]?.label || s.status }}
+                    {{ getStatusLabel(s.status) }}
                   </span>
                 </div>
               </div>
@@ -96,6 +96,10 @@ export class SolicitacoesListComponent implements OnInit {
   ];
 
   ngOnInit() { this.load(); }
+
+  getStatusLabel(status: string) {
+    return STATUS[status]?.label || status;
+  }
 
   badgeCls(status: string) {
     return STATUS[status]?.cls || STATUS['PENDENTE'].cls;

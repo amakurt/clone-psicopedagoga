@@ -35,7 +35,7 @@ const STATUS = STATUS_CONFIG;
         @if (doc()) {
           <span class="px-3 py-1.5 rounded-full text-xs font-bold border shrink-0"
             [class]="badgeCls(doc().status)">
-            {{ STATUS[doc().status]?.label || doc().status }}
+            {{ getStatusLabel(doc().status) }}
           </span>
         }
       </div>
@@ -154,6 +154,10 @@ export class SolicitacaoDetailComponent implements OnInit {
       next: (res: any) => this.doc.set({ ...res, template: res.template || [], answers: res.answers || {} }),
       error: () => this.error.set('Não foi possível carregar a solicitação'),
     });
+  }
+
+  getStatusLabel(status: string) {
+    return STATUS[status]?.label || status;
   }
 
   badgeCls(status: string) {

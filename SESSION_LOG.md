@@ -4,6 +4,27 @@
 
 ---
 
+## Sessão 25 - 21/08/2026 — Auditoria, Diagnóstico Sistemático e Correção de Falhas
+
+### O que foi feito
+
+#### 1. Ativação de Skills e Agentes Especialistas
+- Aplicação das skills `systematic-debugging`, `lint-and-validate`, `vulnerability-scanner` e `seo-fundamentals` sob o agente `debugger`.
+- Execução do checklist mestre automatizado de integridade (`checklist.py`).
+
+#### 2. Correções de Scripts e Build
+- **Checklist & Verification Runners**: Atualizada a chamada de interpretador nos scripts `.agent/scripts/checklist.py` e `.agent/scripts/verify_all.py` para usar `sys.executable`, garantindo portabilidade em ambientes macOS/Linux.
+- **Configuração TypeScript (Root `tsconfig.json`)**: Adicionado `"exclude": ["backend", "node_modules", "dist"]` para isolar a compilação do frontend Angular das diretivas do backend Node.js, corrigindo erros de index signature no linter/typecheck.
+- **SEO & Meta Tags**: Atualizado `src/index.html` com meta description e tags Open Graph (`og:title`, `og:description`, `og:type`), regularizando o score de SEO.
+- **Templates Angular**: Corrigidas expressões de status badge nos componentes `SolicitacaoDetailComponent` e `SolicitacoesListComponent`, adicionando o helper `getStatusLabel()` e eliminando avisos do compilador Angular (`NG8107`).
+
+#### 3. Validação e Testes
+- **Checklist Mestre**: 100% dos testes concluídos com sucesso (Security Scan ✅, Lint Check ✅, Schema Validation ✅, Test Runner ✅, UX Audit ✅, SEO Check ✅).
+- **Testes de Isolamento Multi-tenant**: `npm run test:isolation` no backend 100% aprovado.
+- **Angular Build**: Compilação de produção (`ng build`) concluída com sucesso e zero erros.
+
+---
+
 ## Sessão 24 - 21/08/2026 (Sexta) — Implementação completa das 12 features do iPsy Tools
 
 ### O que foi feito
