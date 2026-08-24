@@ -27,6 +27,48 @@ async function getTenantStaff(tenantId: string) {
     .filter((u: any) => u.active && ['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'].includes(u.role));
 }
 
+// Central helper: localiza e auto-vincula o registro Responsible do usuário logado
+async function getGuardianResponsible(db: any, user: any) {
+  if (!user) return null;
+  const userId = user.id;
+  const email = user.email;
+
+  // 1. Busca direta por userId
+  let responsible = await db.responsible.findFirst({
+    where: { userId }
+  });
+  if (responsible) return responsible;
+
+  // 2. Busca por e-mail e auto-vincula userId
+  if (email) {
+    responsible = await db.responsible.findFirst({
+      where: { email: { equals: email } }
+    });
+    if (responsible) {
+      await db.responsible.update({
+        where: { id: responsible.id },
+        data: { userId }
+      });
+      return responsible;
+    }
+  }
+
+  // 3. Se usuário tem role RESPONSAVEL, cria ou vincula automaticamente
+  if (user.role === 'RESPONSAVEL') {
+    responsible = await db.responsible.create({
+      data: {
+        name: user.name || 'Responsável',
+        email: user.email || '',
+        relationship: 'Responsável',
+        userId: user.id
+      }
+    });
+    return responsible;
+  }
+
+  return null;
+}
+
 // Link responsible to patient by access code
 router.post('/link', linkLimiter, async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
@@ -46,9 +88,7 @@ router.post('/link', linkLimiter, async (req, res) => {
   }
 
   // Find or create responsible for this user
-  let responsible = await db.responsible.findFirst({
-    where: { userId }
-  });
+  let responsible = await getGuardianResponsible(db, req.user);
 
   if (!responsible) {
     responsible = await db.responsible.create({
@@ -76,11 +116,7 @@ router.post('/link', linkLimiter, async (req, res) => {
 // Get guardian's linked patients
 router.get('/patients', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const userId = req.user?.id;
-
-  const responsible = await db.responsible.findFirst({
-    where: { userId }
-  });
+  const responsible = await getGuardianResponsible(db, req.user);
 
   if (!responsible) {
     return res.json({ data: [], total: 0 });
@@ -98,10 +134,8 @@ router.get('/patients', async (req, res) => {
 router.get('/evolutions/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { patientId } = req.params;
-  const userId = req.user?.id;
 
-  // Verify guardian has access to this patient
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -125,9 +159,7 @@ router.get('/evolutions/:patientId', async (req, res) => {
 // Cobranças (FinanceiroSessao com PIX) dos pacientes vinculados ao responsável
 router.get('/charges', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const userId = req.user?.id;
-
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.json({ data: [], total: 0 });
   }
@@ -166,10 +198,9 @@ router.get('/charges', async (req, res) => {
 // Responsável avisa que pagou → notifica a equipe
 router.post('/charges/:id/pay', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const userId = req.user?.id;
   const { id } = req.params;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -217,9 +248,8 @@ router.post('/charges/:id/pay', async (req, res) => {
 router.get('/financial/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { patientId } = req.params;
-  const userId = req.user?.id;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -244,9 +274,8 @@ router.get('/financial/:patientId', async (req, res) => {
 router.get('/documents/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { patientId } = req.params;
-  const userId = req.user?.id;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -273,7 +302,7 @@ router.post('/documents', async (req, res) => {
   const userId = req.user?.id;
   const { pacienteId, name, category, fileUrl, size } = req.body;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -300,10 +329,12 @@ router.post('/documents', async (req, res) => {
     const responsibleName = responsible?.name || 'Responsável';
     await db.notification.createMany({
       data: staff.map(u => ({
+        tenantId: req.user?.tenantId,
         userId: u.id,
         title: 'Novo documento enviado pela família',
         message: `${responsibleName} enviou "${name}" para ${patientName}`,
-        type: 'document'
+        type: 'document',
+        read: false
       }))
     });
   }
@@ -317,7 +348,7 @@ router.post('/appointments', async (req, res) => {
   const userId = req.user?.id;
   const { pacienteId, date, startTime, endTime, notes } = req.body;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -335,8 +366,8 @@ router.post('/appointments', async (req, res) => {
       pacienteId,
       patientName: patient.name,
       date,
-      startTime,
-      endTime,
+      startTime: startTime || '09:00',
+      endTime: endTime || '09:50',
       notes: `Solicitado pelo responsável: ${notes || ''}`,
       status: 'PENDENTE',
       autorId: userId
@@ -354,10 +385,12 @@ router.post('/appointments', async (req, res) => {
   if (professionalId) {
     await db.notification.create({
       data: {
+        tenantId: req.user?.tenantId,
         userId: professionalId,
         title: 'Nova solicitação de agendamento',
         message: `${responsible.name} solicitou agendamento para ${patient.name}`,
-        type: 'appointment'
+        type: 'appointment',
+        read: false
       }
     });
   }
@@ -365,26 +398,23 @@ router.post('/appointments', async (req, res) => {
   res.status(201).json(appointment);
 });
 
-// Get all upcoming appointments for guardian's patients
+// Get all appointments for guardian's patients
 router.get('/appointments', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const userId = req.user?.id;
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) return res.json({ data: [], total: 0 });
 
   const patients = await db.paciente.findMany({
     where: { responsibleId: responsible.id, active: true }
   });
   const patientIds = patients.map((p: any) => p.id);
+  if (patientIds.length === 0) return res.json({ data: [], total: 0 });
 
-  const today = new Date().toISOString().split('T')[0];
   const appointments = await db.appointment.findMany({
     where: {
-      pacienteId: { in: patientIds },
-      date: { gte: today },
-      status: { in: ['CONFIRMADO', 'PENDENTE'] }
+      pacienteId: { in: patientIds }
     },
-    orderBy: { date: 'asc' },
+    orderBy: { date: 'desc' },
     include: { paciente: true }
   });
 
@@ -392,9 +422,9 @@ router.get('/appointments', async (req, res) => {
 });
 
 // Helper: busca um agendamento que pertence aos pacientes do responsável
-async function findGuardianAppointment(userId: string, appointmentId: string, tenantId?: string) {
+async function findGuardianAppointment(userId: string, appointmentId: string, tenantId?: string, user?: any) {
   const db = scoped(prisma, tenantId);
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, user || { id: userId });
   if (!responsible) return null;
 
   const patients = await db.paciente.findMany({
@@ -414,7 +444,7 @@ async function notifyStaffOnGuardianAction(tenantId: string, title: string, mess
   const staff = await getTenantStaff(tenantId);
 
   await db.notification.createMany({
-    data: staff.map(u => ({ userId: u.id, title, message, type: 'appointment' }))
+    data: staff.map(u => ({ tenantId, userId: u.id, title, message, type: 'appointment', read: false }))
   });
 
   const { sendWhatsAppMessage } = await import('./whatsapp');
@@ -433,7 +463,7 @@ async function notifyStaffOnGuardianAction(tenantId: string, title: string, mess
 router.put('/appointments/:id/cancel', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const userId = req.user?.id;
-  const appointment = await findGuardianAppointment(userId!, req.params.id, req.user?.tenantId);
+  const appointment = await findGuardianAppointment(userId!, req.params.id, req.user?.tenantId, req.user);
   if (!appointment) return res.status(404).json({ error: 'Agendamento não encontrado' });
 
   if (!['PENDENTE', 'CONFIRMADO'].includes(appointment.status)) {
@@ -454,14 +484,14 @@ router.put('/appointments/:id/cancel', async (req, res) => {
   res.json(updated);
 });
 
-// Responsável modifica (reagenda) um agendamento — volta para PENDENTE para a equipe re-confirmar
+// Responsável modifica (reagenda) um agendamento
 router.put('/appointments/:id/reschedule', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const userId = req.user?.id;
   const { date, startTime, notes } = req.body;
   if (!date) return res.status(400).json({ error: 'Nova data é obrigatória' });
 
-  const appointment = await findGuardianAppointment(userId!, req.params.id, req.user?.tenantId);
+  const appointment = await findGuardianAppointment(userId!, req.params.id, req.user?.tenantId, req.user);
   if (!appointment) return res.status(404).json({ error: 'Agendamento não encontrado' });
 
   if (!['PENDENTE', 'CONFIRMADO'].includes(appointment.status)) {
@@ -495,9 +525,8 @@ router.put('/appointments/:id/reschedule', async (req, res) => {
 router.get('/appointments/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { patientId } = req.params;
-  const userId = req.user?.id;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -521,10 +550,9 @@ router.get('/appointments/:patientId', async (req, res) => {
 // Guardian profile - update name
 router.put('/profile', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const userId = req.user?.id;
   const { name } = req.body;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(404).json({ error: 'Perfil não encontrado' });
   }
@@ -537,12 +565,10 @@ router.put('/profile', async (req, res) => {
   res.json(updated);
 });
 
-// Chat: unread count for the guardian side (messages from staff not yet read)
+// Chat: unread count for the guardian side
 router.get('/chat/unread-count', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const userId = req.user?.id;
-
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.json({ count: 0 });
   }
@@ -567,9 +593,8 @@ router.get('/chat/unread-count', async (req, res) => {
 router.get('/chat/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { patientId } = req.params;
-  const userId = req.user?.id;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -602,7 +627,7 @@ router.post('/chat', async (req, res) => {
   const userId = req.user?.id;
   const { pacienteId, message } = req.body;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -635,7 +660,7 @@ async function notifyStaffOnGuardianMessage(tenantId: string, responsibleName: s
   const body = `${responsibleName} (${patientName}): ${message}`;
 
   await db.notification.createMany({
-    data: staff.map(u => ({ userId: u.id, title, message: body, type: 'message' }))
+    data: staff.map(u => ({ tenantId, userId: u.id, title, message: body, type: 'message', read: false }))
   });
 
   const { sendWhatsAppMessage } = await import('./whatsapp');
@@ -660,7 +685,7 @@ async function notifyStaffOnAppointmentRequest(tenantId: string, responsibleName
   const message = `${responsibleName} solicitou agendamento para ${patientName} (${appointment.date} ${appointment.startTime})`;
 
   await db.notification.createMany({
-    data: staff.map(u => ({ userId: u.id, title, message, type: 'appointment' }))
+    data: staff.map(u => ({ tenantId, userId: u.id, title, message, type: 'appointment', read: false }))
   });
 
   const { sendWhatsAppMessage } = await import('./whatsapp');
@@ -682,7 +707,7 @@ router.post('/appointments/request', async (req, res) => {
   const userId = req.user?.id;
   const { pacienteId, date, startTime, notes } = req.body;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) return res.status(403).json({ error: 'Acesso negado' });
 
   const patient = await db.paciente.findFirst({
@@ -712,9 +737,8 @@ router.post('/appointments/request', async (req, res) => {
 router.get('/sessions/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { patientId } = req.params;
-  const userId = req.user?.id;
 
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) return res.status(403).json({ error: 'Acesso negado' });
 
   const patient = await db.paciente.findFirst({
@@ -734,9 +758,7 @@ router.get('/sessions/:patientId', async (req, res) => {
 // Guardian dashboard stats
 router.get('/dashboard', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const userId = req.user?.id;
-
-  const responsible = await db.responsible.findFirst({ where: { userId } });
+  const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.json({ patients: [], pendingAnamnese: 0, upcomingAppointments: 0 });
   }
@@ -757,11 +779,9 @@ router.get('/dashboard', async (req, res) => {
   });
 
   // Count upcoming appointments
-  const today = new Date().toISOString().split('T')[0];
   const upcomingAppointments = await db.appointment.count({
     where: {
       pacienteId: { in: patientIds },
-      date: { gte: today },
       status: { in: ['CONFIRMADO', 'PENDENTE'] }
     }
   });

@@ -55,6 +55,52 @@ router.post('/', validate(appointmentSchema), async (req, res) => {
   if (!data.autorId && req.user?.id) data.autorId = req.user.id;
 
   const appointment = await db.appointment.create({ data });
+
+  // 🔔 Notificar o Responsável (App Notification + WhatsApp)
+  try {
+    const patient = await db.paciente.findUnique({
+      where: { id: data.pacienteId },
+      include: { responsible: true }
+    });
+
+    if (patient?.responsible) {
+      let respUserId = patient.responsible.userId;
+      if (!respUserId && patient.responsible.email) {
+        const u = await prisma.user.findUnique({ where: { email: patient.responsible.email } });
+        if (u) {
+          respUserId = u.id;
+          await db.responsible.update({ where: { id: patient.responsible.id }, data: { userId: u.id } });
+        }
+      }
+
+      if (respUserId) {
+        const title = data.status === 'CONFIRMADO' ? 'Consulta agendada' : 'Novo agendamento pendente';
+        const message = `Consulta marcada para ${patient.name} em ${data.date} às ${data.startTime} (${data.type}).`;
+        await db.notification.create({
+          data: {
+            tenantId: req.user?.tenantId,
+            userId: respUserId,
+            title,
+            message,
+            type: 'appointment',
+            read: false
+          }
+        });
+      }
+
+      if (patient.responsible.phones) {
+        const { sendWhatsAppMessage } = await import('./whatsapp');
+        await sendWhatsAppMessage(
+          patient.responsible.phones,
+          `🗓️ *EduPsych Pro - Agendamento*\nOlá, ${patient.responsible.name}!\nUma consulta foi agendada para *${patient.name}* no dia *${data.date}* às *${data.startTime}*.\nTipo: ${data.type}`,
+          req.user?.tenantId
+        ).catch(() => {});
+      }
+    }
+  } catch (err: any) {
+    console.warn('[APPOINTMENTS] Erro ao notificar responsável:', err.message);
+  }
+
   res.status(201).json(appointment);
 });
 
@@ -104,7 +150,16 @@ router.put('/:id/status', async (req, res) => {
 
   // Notifica o responsável (app + WhatsApp best-effort)
   const responsible = appointment.paciente?.responsible;
-  if (responsible?.userId) {
+  let respUserId = responsible?.userId;
+  if (!respUserId && responsible?.email) {
+    const u = await prisma.user.findUnique({ where: { email: responsible.email } });
+    if (u) {
+      respUserId = u.id;
+      await db.responsible.update({ where: { id: responsible.id }, data: { userId: u.id } });
+    }
+  }
+
+  if (respUserId) {
     const labels: Record<string, string> = {
       CONFIRMADO: 'Agendamento confirmado',
       CANCELADO: 'Agendamento cancelado',
@@ -115,19 +170,21 @@ router.put('/:id/status', async (req, res) => {
 
     await db.notification.create({
       data: {
-        userId: responsible.userId,
+        tenantId: req.user?.tenantId,
+        userId: respUserId,
         title,
         message,
         type: 'appointment',
+        read: false
       },
     });
 
     const { sendWhatsAppMessage } = await import('./whatsapp');
     try {
-      await sendWhatsAppMessage(responsible.phone || '', `🗓️ ${title}: ${appointment.patientName} (${appointment.date} ${appointment.startTime})`, req.user?.tenantId);
-      console.log(`[WHATSAPP] Notificação de status enviada para ${responsible.name}`);
+      await sendWhatsAppMessage(responsible?.phones || '', `🗓️ ${title}: ${appointment.patientName} (${appointment.date} ${appointment.startTime})`, req.user?.tenantId);
+      console.log(`[WHATSAPP] Notificação de status enviada para ${responsible?.name}`);
     } catch (error: any) {
-      console.warn(`[WHATSAPP] Falha ao notificar status para ${responsible.name}: ${error.message}`);
+      console.warn(`[WHATSAPP] Falha ao notificar status para ${responsible?.name}: ${error.message}`);
     }
   }
 

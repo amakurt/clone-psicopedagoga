@@ -1122,5 +1122,24 @@ npm run start
 - Seletores visuais de Tipo de Atendimento (Sessão, Avaliação, Devolutiva, Anamnese, Visita Escolar) e Status (Confirmado, Pendente, Concluído, Cancelado).
 - Tratamento de erro detalhado com feedback visual via Toast.
 
+---
+
+## Sessão 30 - 24/08/2026 — Sincronização e Notificações do Portal do Responsável
+
+### O que foi feito
+
+#### 1. Auto-Vinculação e Sincronização do Responsável (`backend/src/routes/guardian.ts`)
+- **Problema:** Usuários responsáveis cadastrados por e-mail ou que acessavam o portal sem vínculo explícito de `userId` não visualizavam os agendamentos de seus filhos. Além disso, o filtro anterior de agendamentos ocultava sessões por regras de data/status rígidas.
+- **Solução:**
+  - Criado helper central `getGuardianResponsible` que auto-vincula o registro `Responsible` ao `User` correspondente por `userId` ou `email`.
+  - Atualizadas todas as rotas do portal do responsável (`/patients`, `/appointments`, `/dashboard`, `/evolutions`, `/charges`, `/financial`, `/documents`, `/sessions`, `/chat`) para utilizar a resolução automática.
+  - A rota `GET /guardian/appointments` agora lista todos os agendamentos dos pacientes vinculados ao responsável, ordenados por data decrescente.
+
+#### 2. Notificações Automáticas em Tempo Real (`backend/src/routes/appointments.ts`)
+- Ao cadastrar (`POST /appointments`) ou alterar status (`PUT /appointments/:id/status`) de uma consulta na clínica, o sistema agora gera automaticamente uma notificação interna para o usuário responsável vinculado ao paciente.
+- Disparo de aviso formatado via WhatsApp (best-effort) caso o responsável possua telefone cadastrado.
+- Contas de usuários responsáveis criadas e sincronizadas para todas as famílias cadastradas (senha padrão `123456`).
+
+
 
 
