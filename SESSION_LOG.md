@@ -1084,3 +1084,22 @@ npm run start
 - Sincronização executada com `npx prisma db push`.
 - Build do frontend validado com sucesso (`ng build`).
 
+---
+
+## Sessão 28 - 24/08/2026 — Integração Completa de Planos com IA, Contexto do Paciente e Materiais
+
+### O que foi feito
+
+#### 1. Backend de IA & Suporte a LLMs (`backend/src/routes/ai-suggestions.ts`)
+- Suporte a modelos generativos externos (**Google Gemini 1.5 Flash**) via `GEMINI_API_KEY`, com fallback automático transparente para o motor de regras clínicas ABA/TEA.
+- Adicionado endpoint `GET /api/ai-suggestions/patient-context/:patientId`: calcula a idade exata do paciente a partir da data de nascimento, resgata diagnósticos, queixas e objetivos da última anamnese e sessões recentes.
+- Adicionado endpoint `POST /api/ai-suggestions/save-to-record`: grava o plano de intervenção ou PEI gerado diretamente na tabela `InterventionPlan` do Prisma vinculado ao paciente, definindo status ATIVO e fase ATIVAR.
+
+#### 2. Frontend de Planos com IA (`src/app/modules/planos/pages/plano-ai.component.ts`)
+- **Seletor de Paciente com Auto-Preenchimento:** carregar paciente com 1 clique preenche nome, idade, queixas e objetivos da anamnese.
+- **Sugestão de Materiais Terapêuticos do Catálogo Real:** o motor de IA conecta-se ao `MateriaisService` para sugerir e exibir materiais reais com download de PDF direto.
+- **Botão "Salvar no Prontuário":** salva o plano gerado no banco de dados com feedback por Toast.
+- Exportação em PDF aprimorada para Plano Geral e PEI estruturado em 4 fases.
+- Build do frontend validado com sucesso (`ng build`).
+
+

@@ -81,6 +81,7 @@ router.use('/permissions', permissionsRoutes);
 router.use('/nfse', nfseRoutes);
 router.use('/waiting-room', waitingRoomRoutes);
 router.use('/ai', aiSuggestionsRoutes);
+router.use('/ai-suggestions', aiSuggestionsRoutes);
 router.use('/document-requests', documentRequestsRoutes);
 router.use('/availability', availabilityRoutes);
 router.use('/billing', billingRoutes);
