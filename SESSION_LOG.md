@@ -1140,6 +1140,12 @@ npm run start
 - Disparo de aviso formatado via WhatsApp (best-effort) caso o responsável possua telefone cadastrado.
 - Contas de usuários responsáveis criadas e sincronizadas para todas as famílias cadastradas (senha padrão `123456`).
 
+#### 3. Materiais Terapêuticos Reais e Impressão em PDF (`src/app/modules/biblioteca/services/materiais.service.ts`)
+- Biblioteca clínica real com 12 subcategorias científicas (Linguagem, Leitura/Escrita, Matemática/Discalculia, Funções Executivas, Atenção/TDAH, Socioemocional, ABA, Anamneses, Guias para Família/Professor, Protocolos e Pacotes).
+- Geração e download sob demanda de folhas clínicas em formato PDF A4 de alta resolução (`html2pdf.js` dinâmico com fallback nativo de impressão).
+- Inclui cabeçalho clínico oficial, dados de identificação, habilidades-alvo em badges, guia do aplicador passo a passo, folhas de exercícios e pauta de observação clínica na sessão.
+- Integração transversal com Planos IA (Gemini), Registro de Sessões, Diário Clínico e Planejador de Sessão.
+
 
 
 
