@@ -97,7 +97,7 @@ export class MateriaisService {
     return scored.filter(s => s.score > 0).slice(0, 4).map(s => s.material);
   }
 
-  generateMaterialPdf(material: MaterialTerapeutico, patientName?: string, clinicName: string = 'EduPsych Pro - Clínica Psicopedagógica') {
+  async generateMaterialPdf(material: MaterialTerapeutico, patientName?: string, clinicName: string = 'EduPsych Pro - Clínica Psicopedagógica') {
     const container = document.createElement('div');
     container.style.padding = '30px';
     container.style.fontFamily = 'Arial, sans-serif';
@@ -171,20 +171,33 @@ export class MateriaisService {
     const opt = {
       margin: 10,
       filename: `${material.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
     };
 
-    if (typeof html2pdf !== 'undefined') {
-      html2pdf().set(opt).from(container).save();
-    } else {
+    try {
+      if (typeof html2pdf !== 'undefined') {
+        html2pdf().set(opt).from(container).save();
+      } else {
+        const html2pdfModule = await import('html2pdf.js');
+        const generator = html2pdfModule.default || html2pdfModule;
+        generator().set(opt).from(container).save();
+      }
+    } catch {
       // Fallback printable window
       const printWin = window.open('', '_blank');
       if (printWin) {
         printWin.document.write(`
           <html>
-            <head><title>${material.name}</title></head>
+            <head>
+              <title>${material.name}</title>
+              <style>
+                @media print {
+                  body { margin: 0; padding: 15mm; }
+                }
+              </style>
+            </head>
             <body style="margin: 0; padding: 20px;">${container.innerHTML}</body>
           </html>
         `);
