@@ -1,25 +1,28 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { MaterialPickerModalComponent } from '@shared/components/material-picker-modal.component';
+import { MateriaisService } from '../../biblioteca/services/materiais.service';
+import { MaterialTerapeutico } from '@core/data/materiais-reais.data';
 
 @Component({
   selector: 'app-diario-sessao',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MaterialPickerModalComponent],
   template: `
     <div class="space-y-6 animate-in">
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <a routerLink="/app/documentos" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/documentos" class="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
             <span class="material-icons text-slate-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
             <h1 class="text-2xl font-black text-slate-900 dark:text-white">Diário de Sessões</h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Registro detalhado de cada sessão de acompanhamento</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Registro detalhado de cada sessão de acompanhamento clínico</p>
           </div>
         </div>
         <div class="flex gap-3">
@@ -31,7 +34,7 @@ import { ToastService } from '@shared/components/toast.component';
           <button (click)="save()" [disabled]="saving() || !form.pacienteId || !form.date"
             class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm disabled:opacity-50 transition-all flex items-center gap-2 shadow-xl shadow-primary/20 active:scale-95">
             <span class="material-icons text-[18px]">save</span>
-            {{ saving() ? 'Salvando...' : 'Salvar' }}
+            {{ saving() ? 'Salvando...' : 'Salvar Diário' }}
           </button>
         </div>
       </div>
@@ -91,8 +94,8 @@ import { ToastService } from '@shared/components/toast.component';
                 <span class="material-icons text-violet-500 text-xl">edit_note</span>
               </div>
               <div>
-                <h3 class="font-bold text-slate-900 dark:text-white">Conteúdo da Sessão</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Registre os detalhes do atendimento</p>
+                <h3 class="font-bold text-slate-900 dark:text-white">Conteúdo e Intervenção</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Registre os detalhes do atendimento e materiais aplicados</p>
               </div>
             </div>
             <div class="p-6 space-y-5">
@@ -101,45 +104,76 @@ import { ToastService } from '@shared/components/toast.component';
                   <span class="material-icons text-[14px]">flag</span>
                   Objetivo
                 </label>
-                <textarea [(ngModel)]="form.objective" rows="3"
-                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[80px]"
+                <textarea [(ngModel)]="form.objective" rows="2"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[60px]"
                   placeholder="Qual o objetivo desta sessão?"></textarea>
               </div>
+
+              <!-- Instrumentos e Materiais da Biblioteca -->
               <div>
-                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                  <span class="material-icons text-[14px]">build</span>
-                  Instrumentos Utilizados
-                </label>
-                <textarea [(ngModel)]="form.instruments" rows="3"
-                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[80px]"
-                  placeholder="Materiais e instrumentos utilizados"></textarea>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <span class="material-icons text-[14px]">build</span>
+                    Instrumentos e Recursos Terapêuticos
+                  </label>
+                  <button type="button" (click)="showPicker.set(true)"
+                    class="px-3 py-1 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1">
+                    <span class="material-icons text-[14px]">folder_special</span>
+                    Inserir Materiais da Biblioteca
+                  </button>
+                </div>
+
+                <!-- Chips dos Materiais Inseridos -->
+                @if (selectedMaterials().length > 0) {
+                  <div class="flex flex-wrap gap-2 mb-3 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    @for (mat of selectedMaterials(); track mat.id) {
+                      <div class="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-700 rounded-xl shadow-sm text-xs border border-slate-100 dark:border-slate-600">
+                        <span class="material-icons text-primary text-sm">description</span>
+                        <span class="font-bold text-slate-800 dark:text-slate-200">{{ mat.name }}</span>
+                        <button type="button" (click)="materiaisService.generateMaterialPdf(mat)" class="text-emerald-500 hover:text-emerald-600 ml-1" title="Baixar PDF">
+                          <span class="material-icons text-xs">download</span>
+                        </button>
+                        <button type="button" (click)="removeMaterial(mat.id)" class="text-red-400 hover:text-red-600 ml-0.5" title="Remover">
+                          <span class="material-icons text-xs">close</span>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <textarea [(ngModel)]="form.instruments" rows="2"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[60px]"
+                  placeholder="Materiais e instrumentos utilizados na sessão"></textarea>
               </div>
+
               <div>
                 <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">psychology</span>
-                  Comportamento do Aluno
+                  Comportamento e Resposta do Paciente
                 </label>
-                <textarea [(ngModel)]="form.studentBehavior" rows="4"
-                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[100px]"
-                  placeholder="Como o aluno se comportou durante a sessão?"></textarea>
+                <textarea [(ngModel)]="form.studentBehavior" rows="3"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[80px]"
+                  placeholder="Como o aluno se comportou, foco atencional, tolerância à frustração..."></textarea>
               </div>
+
               <div>
                 <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">assignment</span>
-                  Atividades Realizadas
+                  Atividades Realizadas e Mediações
                 </label>
-                <textarea [(ngModel)]="form.activities" rows="4"
-                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[100px]"
-                  placeholder="Descreva as atividades realizadas na sessão"></textarea>
+                <textarea [(ngModel)]="form.activities" rows="3"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[80px]"
+                  placeholder="Descreva as atividades executadas e estratégias de intervenção"></textarea>
               </div>
+
               <div>
                 <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
                   <span class="material-icons text-[14px]">sticky_note_2</span>
-                  Observações
+                  Observações e Próximos Passos
                 </label>
-                <textarea [(ngModel)]="form.observations" rows="3"
-                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[80px]"
-                  placeholder="Observações adicionais"></textarea>
+                <textarea [(ngModel)]="form.observations" rows="2"
+                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[60px]"
+                  placeholder="Orientações aos pais, tarefas ou planejamento para a próxima sessão"></textarea>
               </div>
             </div>
           </div>
@@ -159,49 +193,53 @@ import { ToastService } from '@shared/components/toast.component';
             </div>
             <div class="p-6">
               <div id="pdf-preview" class="aspect-[3/4] bg-slate-50 dark:bg-slate-800 rounded-2xl p-5 overflow-auto text-xs text-slate-700 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-700">
-                <div class="text-center mb-5">
-                  <div class="size-12 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <span class="material-icons text-white text-xl">menu_book</span>
+                <div class="text-center mb-4">
+                  <div class="size-10 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-2 text-white">
+                    <span class="material-icons text-lg">menu_book</span>
                   </div>
-                  <h4 class="font-black text-sm text-slate-900 dark:text-white">DIÁRIO DE SESSÕES</h4>
-                  <p class="text-[10px] text-slate-500 mt-1">Neuropsicopedagogia Clínica</p>
+                  <h4 class="font-black text-xs text-slate-900 dark:text-white uppercase tracking-wider">DIÁRIO DE SESSÃO CLÍNICA</h4>
+                  <p class="text-[9px] text-slate-500">EduPsych Pro · Neuropsicopedagogia Integrada</p>
                 </div>
-                <div class="space-y-2.5 mb-5 p-3 bg-white dark:bg-slate-700 rounded-xl">
-                  <p class="flex items-center gap-2"><span class="material-icons text-[12px] text-primary">person</span> <strong>Aluno:</strong> {{ getPatientName() }}</p>
-                  <p class="flex items-center gap-2"><span class="material-icons text-[12px] text-primary">tag</span> <strong>Nº Sessão:</strong> {{ form.sessionNumber || '-' }}</p>
-                  <p class="flex items-center gap-2"><span class="material-icons text-[12px] text-primary">calendar_today</span> <strong>Data:</strong> {{ form.date || '-' }}</p>
-                  <p class="flex items-center gap-2"><span class="material-icons text-[12px] text-primary">badge</span> <strong>Profissional:</strong> {{ form.professionalName || '-' }}</p>
+                
+                <div class="space-y-1.5 mb-4 p-2.5 bg-white dark:bg-slate-700 rounded-xl text-[11px]">
+                  <p><strong>Paciente:</strong> {{ getPatientName() }}</p>
+                  <p><strong>Nº Sessão:</strong> {{ form.sessionNumber || '-' }} &nbsp;|&nbsp; <strong>Data:</strong> {{ form.date || '-' }}</p>
+                  <p><strong>Profissional:</strong> {{ form.professionalName || '-' }}</p>
                 </div>
-                <div class="space-y-3">
-                  <div class="p-3 bg-white dark:bg-slate-700 rounded-xl">
-                    <p class="font-bold text-[10px] uppercase tracking-wider text-primary mb-1 flex items-center gap-1">
-                      <span class="material-icons text-[10px]">flag</span> Objetivo
-                    </p>
-                    <p class="text-[11px] min-h-[18px] text-slate-600 dark:text-slate-300">{{ form.objective || '—' }}</p>
+
+                <div class="space-y-2.5">
+                  <div class="p-2.5 bg-white dark:bg-slate-700 rounded-xl">
+                    <p class="font-bold text-[10px] uppercase text-primary mb-0.5">🎯 Objetivo</p>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300">{{ form.objective || '—' }}</p>
                   </div>
-                  <div class="p-3 bg-white dark:bg-slate-700 rounded-xl">
-                    <p class="font-bold text-[10px] uppercase tracking-wider text-violet-500 mb-1 flex items-center gap-1">
-                      <span class="material-icons text-[10px]">build</span> Instrumentos
-                    </p>
-                    <p class="text-[11px] min-h-[18px] text-slate-600 dark:text-slate-300">{{ form.instruments || '—' }}</p>
+
+                  <div class="p-2.5 bg-white dark:bg-slate-700 rounded-xl">
+                    <p class="font-bold text-[10px] uppercase text-violet-500 mb-0.5">🛠️ Instrumentos & Recursos</p>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300">{{ form.instruments || '—' }}</p>
+                    @if (selectedMaterials().length > 0) {
+                      <div class="mt-1 flex flex-wrap gap-1">
+                        @for (m of selectedMaterials(); track m.id) {
+                          <span class="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-semibold">
+                            ✓ {{ m.name }}
+                          </span>
+                        }
+                      </div>
+                    }
                   </div>
-                  <div class="p-3 bg-white dark:bg-slate-700 rounded-xl">
-                    <p class="font-bold text-[10px] uppercase tracking-wider text-amber-500 mb-1 flex items-center gap-1">
-                      <span class="material-icons text-[10px]">psychology</span> Comportamento
-                    </p>
-                    <p class="text-[11px] min-h-[18px] text-slate-600 dark:text-slate-300">{{ form.studentBehavior || '—' }}</p>
+
+                  <div class="p-2.5 bg-white dark:bg-slate-700 rounded-xl">
+                    <p class="font-bold text-[10px] uppercase text-amber-500 mb-0.5">🧠 Comportamento</p>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300">{{ form.studentBehavior || '—' }}</p>
                   </div>
-                  <div class="p-3 bg-white dark:bg-slate-700 rounded-xl">
-                    <p class="font-bold text-[10px] uppercase tracking-wider text-emerald-500 mb-1 flex items-center gap-1">
-                      <span class="material-icons text-[10px]">assignment</span> Atividades
-                    </p>
-                    <p class="text-[11px] min-h-[18px] text-slate-600 dark:text-slate-300">{{ form.activities || '—' }}</p>
+
+                  <div class="p-2.5 bg-white dark:bg-slate-700 rounded-xl">
+                    <p class="font-bold text-[10px] uppercase text-emerald-500 mb-0.5">📋 Atividades</p>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300">{{ form.activities || '—' }}</p>
                   </div>
-                  <div class="p-3 bg-white dark:bg-slate-700 rounded-xl">
-                    <p class="font-bold text-[10px] uppercase tracking-wider text-rose-500 mb-1 flex items-center gap-1">
-                      <span class="material-icons text-[10px]">sticky_note_2</span> Observações
-                    </p>
-                    <p class="text-[11px] min-h-[18px] text-slate-600 dark:text-slate-300">{{ form.observations || '—' }}</p>
+
+                  <div class="p-2.5 bg-white dark:bg-slate-700 rounded-xl">
+                    <p class="font-bold text-[10px] uppercase text-rose-500 mb-0.5">📝 Observações</p>
+                    <p class="text-[11px] text-slate-600 dark:text-slate-300">{{ form.observations || '—' }}</p>
                   </div>
                 </div>
               </div>
@@ -218,45 +256,38 @@ import { ToastService } from '@shared/components/toast.component';
               <span class="material-icons text-indigo-500 text-xl">history</span>
             </div>
             <div>
-              <h3 class="font-bold text-slate-900 dark:text-white">Registros Anteriores</h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400">{{ records().length }} registro(s) de {{ getPatientName() }}</p>
+              <h3 class="font-bold text-slate-900 dark:text-white">Histórico de Diários</h3>
+              <p class="text-xs text-slate-500">{{ records().length }} registro(s) arquivado(s)</p>
             </div>
           </div>
           @if (editingId()) {
-            <button (click)="resetForm()" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-semibold text-xs transition-all">
-              <span class="material-icons text-[16px]">add</span>
-              Novo registro
+            <button class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-xl" (click)="resetForm()">
+              + Novo Diário
             </button>
           }
         </div>
+
         @if (records().length === 0) {
-          <div class="p-10 text-center">
-            <span class="material-icons text-4xl text-slate-300 dark:text-slate-600">event_note</span>
-            <p class="mt-3 text-sm font-semibold text-slate-500 dark:text-slate-400">Nenhum registro para este paciente</p>
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Selecione um paciente para listar os diários salvos</p>
+          <div class="p-8 text-center text-slate-400 text-xs">
+            Nenhum diário registrado para o paciente selecionado.
           </div>
         } @else {
-          <div class="divide-y divide-slate-100 dark:divide-slate-800">
+          <div class="p-6 divide-y divide-slate-100 dark:divide-slate-800">
             @for (r of records(); track r.id) {
-              <div class="px-6 py-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                  <span class="material-icons text-indigo-500 text-lg">edit_note</span>
-                </div>
-                <div class="flex-1 min-w-0">
+              <div class="py-3 flex items-center justify-between gap-4">
+                <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-2">
-                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ r.objective || 'Sem objetivo' }}</p>
-                    <span class="text-xs font-black px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 shrink-0">Sessão {{ r.sessionNumber }}</span>
+                    <span class="font-bold text-sm text-slate-900 dark:text-white">Sessão {{ r.sessionNumber || '—' }}</span>
+                    <span class="text-xs text-slate-400">{{ r.date }}</span>
                   </div>
-                  <p class="text-xs text-slate-500 mt-0.5 truncate">
-                    {{ r.date }} · {{ r.professionalName || '—' }} · {{ r.activities || '' }}
-                  </p>
+                  <p class="text-xs text-slate-500 truncate mt-0.5">{{ r.objective || r.instruments || 'Sem descrição' }}</p>
                 </div>
-                <div class="flex items-center gap-1 shrink-0">
-                  <button (click)="editRecord(r)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all" title="Editar">
-                    <span class="material-icons text-[18px] text-slate-500 dark:text-slate-400">edit</span>
+                <div class="flex items-center gap-1">
+                  <button (click)="editRecord(r)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl" title="Editar">
+                    <span class="material-icons text-base text-slate-500">edit</span>
                   </button>
-                  <button (click)="deleteRecord(r)" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Excluir">
-                    <span class="material-icons text-[18px] text-red-500">delete</span>
+                  <button (click)="deleteRecord(r)" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl" title="Excluir">
+                    <span class="material-icons text-base text-red-500">delete</span>
                   </button>
                 </div>
               </div>
@@ -264,19 +295,31 @@ import { ToastService } from '@shared/components/toast.component';
           </div>
         }
       </div>
+
+      <!-- Material Picker Modal -->
+      @if (showPicker()) {
+        <app-material-picker-modal
+          [initialSelectedIds]="getSelectedMaterialIds()"
+          (confirmed)="onMaterialsConfirmed($event)"
+          (closed)="showPicker.set(false)">
+        </app-material-picker-modal>
+      }
     </div>
   `,
   styles: [`:host { display: block; }`]
 })
 export class DiarioSessaoComponent implements OnInit {
   private api = inject(ApiService);
-  private router = inject(Router);
   private toast = inject(ToastService);
+  private route = inject(ActivatedRoute);
+  materiaisService = inject(MateriaisService);
 
   saving = signal(false);
   patients = signal<any[]>([]);
   records = signal<any[]>([]);
   editingId = signal('');
+  showPicker = signal(false);
+  selectedMaterials = signal<MaterialTerapeutico[]>([]);
 
   form: any = {
     pacienteId: '',
@@ -287,11 +330,23 @@ export class DiarioSessaoComponent implements OnInit {
     instruments: '',
     studentBehavior: '',
     activities: '',
-    observations: ''
+    observations: '',
+    materials: ''
   };
 
   ngOnInit() {
-    this.api.get('/pacientes').subscribe((res: any) => this.patients.set(res.data || []));
+    this.api.get('/pacientes').subscribe((res: any) => {
+      const list = res.data || res || [];
+      this.patients.set(list);
+
+      const qp = this.route.snapshot.queryParams['pacienteId'];
+      const qd = this.route.snapshot.queryParams['date'];
+      if (qp) {
+        this.form.pacienteId = qp;
+        if (qd) this.form.date = qd;
+        this.loadRecords();
+      }
+    });
   }
 
   loadRecords() {
@@ -300,27 +355,66 @@ export class DiarioSessaoComponent implements OnInit {
       return;
     }
     this.api.get('/session-diaries', { pacienteId: this.form.pacienteId }).subscribe((res: any) => {
-      this.records.set((res.data || []).sort((a: any, b: any) => (b.date || '').localeCompare(a.date || '')));
+      const list = res.data || res || [];
+      this.records.set(list.sort((a: any, b: any) => (b.date || '').localeCompare(a.date || '')));
+      if (list.length > 0) {
+        this.form.sessionNumber = list.length + 1;
+      }
     });
+  }
+
+  getSelectedMaterialIds(): number[] {
+    return this.selectedMaterials().map(m => m.id);
+  }
+
+  onMaterialsConfirmed(mats: MaterialTerapeutico[]) {
+    this.selectedMaterials.set(mats);
+    this.showPicker.set(false);
+
+    // Auto-enrich instruments field if empty or append
+    const names = mats.map(m => m.name).join('; ');
+    if (!this.form.instruments) {
+      this.form.instruments = names;
+    } else if (!this.form.instruments.includes(names)) {
+      this.form.instruments += ` | ${names}`;
+    }
+    this.toast.success(`${mats.length} material(is) inserido(s) no diário!`);
+  }
+
+  removeMaterial(id: number) {
+    this.selectedMaterials.set(this.selectedMaterials().filter(m => m.id !== id));
   }
 
   editRecord(r: any) {
     this.editingId.set(r.id);
     this.form = { ...r };
+    if (r.materials) {
+      try {
+        const parsed = JSON.parse(r.materials);
+        if (Array.isArray(parsed)) {
+          const full = parsed.map(p => this.materiaisService.getById(p.id) || p);
+          this.selectedMaterials.set(full);
+        }
+      } catch {
+        this.selectedMaterials.set([]);
+      }
+    }
   }
 
   resetForm() {
     this.editingId.set('');
+    this.selectedMaterials.set([]);
     this.form = {
       pacienteId: this.form.pacienteId,
-      sessionNumber: 1,
+      sessionNumber: this.records().length + 1,
       date: new Date().toISOString().split('T')[0],
       professionalName: '',
       objective: '',
       instruments: '',
       studentBehavior: '',
       activities: '',
-      observations: ''
+      observations: '',
+      materials: ''
     };
   }
 
@@ -343,13 +437,21 @@ export class DiarioSessaoComponent implements OnInit {
   save() {
     if (!this.form.pacienteId || !this.form.date) return;
     this.saving.set(true);
+
+    this.form.materials = JSON.stringify(this.selectedMaterials().map(m => ({
+      id: m.id,
+      name: m.name,
+      subcategory: m.subcategory
+    })));
+
     const req = this.editingId()
       ? this.api.put(`/session-diaries/${this.editingId()}`, this.form)
       : this.api.post('/session-diaries', this.form);
+
     req.subscribe({
       next: () => {
         this.saving.set(false);
-        this.toast.success('Diário salvo com sucesso!');
+        this.toast.success('Diário de sessão salvo com sucesso!');
         this.resetForm();
         this.loadRecords();
       },

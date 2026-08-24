@@ -1041,3 +1041,46 @@ npm run start
 
 ### Arquivos Alterados
 - `src/app/modules/jogos/pages/jogos.component.ts` — reescrito (~1100 linhas)
+
+---
+
+## Sessão 27 - 24/08/2026 — Materiais Terapêuticos Reais & Integração Completa nas Sessões
+
+### O que foi feito
+
+#### 1. Substituição de Dados Fictícios por Catálogo Real Curado
+- Criado `src/app/core/data/materiais-reais.data.ts` com base de dados rica e fundamentada em evidências científicas e normativas (ABPp, Neuropsicologia, Fonoaudiologia, ABA e BNCC):
+  - **Linguagem & Consciência Fonológica:** Trilha Fonêmica (Rimas/Aliterações), Baralho de Consciência Silábica, Painel RAN de Nomeação Rápida, Pares Mínimos, Estruturação Frasal.
+  - **Leitura, Escrita & Alfabetização:** Caderno de Leitura Graduada Fônica, Discriminação de Letras Espelhadas (b/d/p/q), Treino de Fluência PPM, Pranchas de Produção Textual Guiada, Laboratório de Ortografia.
+  - **Matemática & Discalculia:** Guia do Material Dourado e Trocas Decimais, Linha Numérica Terapêutica (0-20 e 0-100), Fatos Básicos da Multiplicação sem Decoreba, Problemas Ilustrados com Suporte Semântico.
+  - **Funções Executivas:** Baralho Stroop Lúdico (Controle Inibitório e Flexibilidade), Treino de Memória Operacional (N-Back/Corsi), Planner de Metas em 4 Passos.
+  - **Socioemocional:** Termômetro das Emoções & Cartas de Acalmia, Baralho de Habilidades Sociais e Teoria da Mente.
+  - **Atenção:** Fichas de Rastreamento e Cancelamento Visual, Labirintos Progressivos.
+  - **Protocolos:** Escala SNAP-IV (TDAH), Protocolo M-CHAT-R/F (TEA).
+  - **Anamneses:** Anamnese Neuropsicopedagógica Global, Roteiro de Entrevista com Professores/Escola.
+  - **Guias:** Manual da Rotina Visual Doméstica, Guia de Adaptação Curricular PEI/Provas Acessíveis.
+  - **ABA:** Folha de Registro DTT e Ensino Incidental, Prancha de Economia de Fichas (Token Economy).
+  - **Pacotes de Sessão:** Kit 1ª Sessão de Avaliação Lúdica e Rapport, Kit Intervenção Intensiva em Dislexia.
+
+#### 2. Serviço Central e Gerador de PDF (`MateriaisService`)
+- Criado `src/app/modules/biblioteca/services/materiais.service.ts`:
+  - Busca inteligente, filtros por subcategoria e faixa etária.
+  - Sistema de favoritos com persistência local.
+  - Sugestão automática de materiais conforme objetivos clínicos.
+  - Gerador de PDF sob demanda formatado com layout profissional de consultório.
+
+#### 3. Modal Seletor Reutilizável (`MaterialPickerModalComponent`)
+- Criado `src/app/shared/components/material-picker-modal.component.ts` com busca instantânea, abas por subcategoria, filtro por idade, visualização de habilidades, prévia com guia de aplicação e seleção múltipla por chips.
+
+#### 4. Integração no Ecossistema de Atendimento
+- **Catálogo (`/app/materiais`):** Atualizado `materiais-expandidos.component.ts` com tags reais de habilidades, modal de guia clínico, download direto de PDF e ação "Vincular à Sessão" (com seletor de paciente e sessão).
+- **Formulário de Sessões (`/app/sessoes/nova` e `:id/editar`):** Adicionada seção "Materiais Terapêuticos Vinculados", seletor modal, cards compactos com download/remoção e suporte a queryParams.
+- **Detalhes da Sessão (`/app/sessoes/:id`):** Bloco de visualização dos materiais vinculados com acesso rápido ao Guia de Aplicação e PDF da atividade.
+- **Planner de Sessões (`/app/session-planner`):** Sugestão automática de materiais no gerador de ciclo e painel de materiais durante a sessão ativa com cronômetro.
+- **Diário de Sessão (`/app/documentos-clinicos/diario`):** Botão "Inserir Materiais da Biblioteca", auto-preenchimento dos instrumentos e inclusão no preview/PDF exportado.
+
+#### 5. Backend & Prisma
+- Adicionado campo `materials String?` aos modelos `Sessao` e `SessionRecord` em `backend/prisma/schema.prisma`.
+- Sincronização executada com `npx prisma db push`.
+- Build do frontend validado com sucesso (`ng build`).
+

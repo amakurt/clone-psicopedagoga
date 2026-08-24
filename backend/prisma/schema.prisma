@@ -428,6 +428,7 @@ model Sessao {
   summary         String?
   activities      String?
   instruments     String?
+  materials       String?
   sharedWithGuardian Boolean @default(false)
   startTime       String?
   endTime         String?
@@ -643,6 +644,7 @@ model SessionRecord {
   summary            String
   activities         String
   instruments        String?
+  materials          String?
   observations       String
   sharedWithGuardian Boolean  @default(false)
   startTime          String?
