@@ -8,11 +8,11 @@ const router = Router();
 router.use(authenticate);
 
 const appointmentSchema = z.object({
-  pacienteId: z.string().min(1),
-  patientName: z.string().min(1),
-  date: z.string().min(1),
-  startTime: z.string().min(1),
-  endTime: z.string().min(1),
+  pacienteId: z.string().min(1, 'Selecione um paciente'),
+  patientName: z.string().optional(),
+  date: z.string().min(1, 'Data é obrigatória'),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
   type: z.string().optional(),
   status: z.string().optional(),
   notes: z.string().optional(),
@@ -41,13 +41,31 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', validate(appointmentSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const appointment = await db.appointment.create({ data: req.body });
+  const data = { ...req.body };
+
+  if (!data.patientName && data.pacienteId) {
+    const p = await db.paciente.findUnique({ where: { id: data.pacienteId } });
+    data.patientName = p?.name || 'Paciente';
+  }
+
+  if (!data.startTime) data.startTime = '09:00';
+  if (!data.endTime) data.endTime = '09:50';
+  if (!data.type) data.type = 'Sessão Psicopedagógica';
+  if (!data.status) data.status = 'PENDENTE';
+  if (!data.autorId && req.user?.id) data.autorId = req.user.id;
+
+  const appointment = await db.appointment.create({ data });
   res.status(201).json(appointment);
 });
 
 router.put('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const appointment = await db.appointment.update({ where: { id: req.params.id }, data: req.body });
+  const data = { ...req.body };
+  if (!data.patientName && data.pacienteId) {
+    const p = await db.paciente.findUnique({ where: { id: data.pacienteId } });
+    if (p) data.patientName = p.name;
+  }
+  const appointment = await db.appointment.update({ where: { id: req.params.id }, data });
   res.json(appointment);
 });
 

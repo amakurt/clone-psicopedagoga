@@ -1102,4 +1102,25 @@ npm run start
 - Exportação em PDF aprimorada para Plano Geral e PEI estruturado em 4 fases.
 - Build do frontend validado com sucesso (`ng build`).
 
+---
+
+## Sessão 29 - 24/08/2026 — Correção e Aprimoramento do Agendamento de Consultas na Agenda
+
+### O que foi feito
+
+#### 1. Correção no Backend de Agendamentos (`backend/src/routes/appointments.ts`)
+- **Problema:** O schema de validação Zod exigia campos estritos (`patientName`, `startTime`, `endTime`) que podiam vir ausentes do frontend, gerando erro 400 Bad Request ao salvar uma nova consulta.
+- **Solução:**
+  - Ajustado o `appointmentSchema` para tornar `patientName`, `startTime`, `endTime`, `type` e `status` opcionais.
+  - Implementada resolução automática no backend: caso `patientName` não seja fornecido, o servidor busca automaticamente o nome do paciente no banco através do `pacienteId`.
+  - Definidos horários e tipos padrão inteligentes (`startTime: '09:00'`, `endTime: '09:50'`, `type: 'Sessão Psicopedagógica'`, `status: 'PENDENTE'`).
+
+#### 2. Modernização do Formulário da Agenda (`src/app/modules/agenda/pages/agenda-form.component.ts`)
+- Design atualizado para o padrão moderno do EduPsych Pro (Tailwind tokens, inputs estruturados, cards limpos).
+- Auto-preenchimento do nome do paciente na seleção.
+- Botões de duração rápida (45 min, 50 min, 60 min) que calculam automaticamente o horário de término.
+- Seletores visuais de Tipo de Atendimento (Sessão, Avaliação, Devolutiva, Anamnese, Visita Escolar) e Status (Confirmado, Pendente, Concluído, Cancelado).
+- Tratamento de erro detalhado com feedback visual via Toast.
+
+
 

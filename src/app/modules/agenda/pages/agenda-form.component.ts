@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AgendaService } from '../services/agenda.service';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
@@ -11,94 +11,347 @@ import { ToastService } from '@shared/components/toast.component';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="page">
-      <div class="header"><div><h1>{{ isEdit ? 'Editar' : 'Nova' }} Consulta</h1></div><a routerLink="/app/agenda" class="btn btn-outline"><span class="material-icons">arrow_back</span></a></div>
-      <div class="card"><div class="card-body">
-        <div class="form-grid">
-          <div class="form-group"><label>Paciente *</label><select class="form-control" [(ngModel)]="form.pacienteId" (change)="loadRecords()"><option value="">Selecione</option>@for (p of pacientes(); track p.id) { <option [value]="p.id">{{ p.name }}</option> }</select></div>
-          <div class="form-group"><label>Data *</label><input class="form-control" type="date" [(ngModel)]="form.date"></div>
-          <div class="form-group"><label>Hora Início</label><input class="form-control" type="time" [(ngModel)]="form.startTime"></div>
-          <div class="form-group"><label>Hora Fim</label><input class="form-control" type="time" [(ngModel)]="form.endTime"></div>
-          <div class="form-group"><label>Tipo</label><input class="form-control" [(ngModel)]="form.type"></div>
-          <div class="form-group full"><label>Observações</label><textarea class="form-control" rows="3" [(ngModel)]="form.notes"></textarea></div>
-        </div>
-        <div class="form-actions"><a routerLink="/app/agenda" class="btn btn-outline">Cancelar</a><button class="btn btn-primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar' }}</button></div>
-      </div></div>
-      <div class="card" style="margin-top:20px"><div class="card-body">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="space-y-6 animate-in max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <a routerLink="/app/agenda" class="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
+            <span class="material-icons text-slate-600 dark:text-slate-400">arrow_back</span>
+          </a>
           <div>
-            <h3 style="margin:0;font-size:16px">Registros Anteriores</h3>
-            <p style="margin:2px 0 0;font-size:12px;color:var(--gray-500)">{{ records().length }} consulta(s) de {{ getPatientName() }}</p>
+            <h1 class="text-2xl font-black text-slate-900 dark:text-white">{{ isEdit ? 'Editar' : 'Novo' }} Agendamento</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Marque ou atualize uma consulta ou sessão na agenda</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a routerLink="/app/agenda" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-sm transition-all">
+            Cancelar
+          </a>
+          <button (click)="save()" [disabled]="saving() || !form.pacienteId || !form.date"
+            class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+            <span class="material-icons text-[18px]">event</span>
+            {{ saving() ? 'Salvando...' : 'Salvar Agendamento' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Form Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 p-8 space-y-6">
+        <div class="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div class="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+            <span class="material-icons text-xl">event_available</span>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">Informações da Consulta</h2>
+            <p class="text-xs text-slate-500">Defina o paciente, horário e tipo do atendimento</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- Paciente Selector -->
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Paciente *</label>
+            <select [(ngModel)]="form.pacienteId" (change)="onPatientChange()"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
+              <option value="">Selecione um paciente cadastrado...</option>
+              @for (p of pacientes(); track p.id) {
+                <option [value]="p.id">{{ p.name }} ({{ p.diagnosis || 'Sem diagnóstico' }})</option>
+              }
+            </select>
+          </div>
+
+          <!-- Data -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Data da Consulta *</label>
+            <input type="date" [(ngModel)]="form.date"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
+          </div>
+
+          <!-- Tipo de Atendimento -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tipo de Atendimento</label>
+            <select [(ngModel)]="form.type"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
+              <option value="Sessão Psicopedagógica">Sessão Psicopedagógica</option>
+              <option value="Avaliação / Testagem">Avaliação / Testagem</option>
+              <option value="Devolutiva com Família">Devolutiva com Família</option>
+              <option value="Anamnese Inicial">Anamnese Inicial</option>
+              <option value="Visita Escolar / AEE">Visita Escolar / AEE</option>
+              <option value="Supervisão Clínica">Supervisão Clínica</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+
+          <!-- Horário Início e Fim -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Hora de Início *</label>
+            <input type="time" [(ngModel)]="form.startTime" (change)="onStartTimeChange()"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Hora de Término</label>
+            <input type="time" [(ngModel)]="form.endTime"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
+          </div>
+
+          <!-- Status -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status Inicial</label>
+            <select [(ngModel)]="form.status"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white">
+              <option value="CONFIRMADO">Confirmado</option>
+              <option value="PENDENTE">Pendente</option>
+              <option value="CONCLUIDO">Concluído</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </div>
+
+          <!-- Duração Rápida -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Duração Rápida</label>
+            <div class="flex gap-2">
+              <button type="button" (click)="setDuration(45)" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary rounded-xl text-xs font-bold transition-all">45 min</button>
+              <button type="button" (click)="setDuration(50)" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary rounded-xl text-xs font-bold transition-all">50 min</button>
+              <button type="button" (click)="setDuration(60)" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary rounded-xl text-xs font-bold transition-all">60 min</button>
+            </div>
+          </div>
+
+          <!-- Observações -->
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Observações e Recomendações</label>
+            <textarea [(ngModel)]="form.notes" rows="3"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all text-slate-900 dark:text-white resize-y min-h-[80px]"
+              placeholder="Ex: Trazer caderno escolar, orientar sobre o uso de óculos..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registros e Histórico -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div>
+            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Consultas Marcadas do Paciente</h3>
+            <p class="text-xs text-slate-500">{{ records().length }} registro(s) encontrado(s)</p>
           </div>
           @if (editingId()) {
-            <button class="btn btn-outline" (click)="resetForm()"><span class="material-icons" style="font-size:16px">add</span> Nova consulta</button>
+            <button class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-xs font-bold rounded-xl" (click)="resetForm()">
+              + Novo Agendamento
+            </button>
           }
         </div>
+
         @if (records().length === 0) {
-          <div style="text-align:center;padding:24px;color:var(--gray-400)"><span class="material-icons" style="font-size:40px">history</span><p style="margin:8px 0 0">Nenhuma consulta para este paciente</p></div>
+          <div class="p-8 text-center text-slate-400 text-xs">
+            Nenhuma consulta registrada para o paciente selecionado.
+          </div>
         } @else {
-          <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="divide-y divide-slate-100 dark:divide-slate-800">
             @for (r of records(); track r.id) {
-              <div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--gray-200);border-radius:var(--radius)">
-                <div style="flex:1;min-width:0">
-                  <div style="display:flex;gap:8px;align-items:center">
-                    <strong style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.date }} · {{ r.startTime }}–{{ r.endTime }}</strong>
-                    <span style="padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;{{ statusColor(r.status) }}">{{ r.status }}</span>
+              <div class="py-3 flex items-center justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm text-slate-900 dark:text-white">{{ r.date }}</span>
+                    <span class="text-xs text-slate-500 font-bold">· {{ r.startTime }} - {{ r.endTime }}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase" [ngClass]="statusBadgeClass(r.status)">
+                      {{ r.status }}
+                    </span>
                   </div>
-                  <p style="margin:4px 0 0;font-size:12px;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.type }} · {{ r.notes || '—' }}</p>
+                  <p class="text-xs text-slate-500 truncate mt-0.5">{{ r.type }} · {{ r.notes || 'Sem observações' }}</p>
                 </div>
-                <button class="btn btn-outline" style="padding:6px 10px" title="Editar" (click)="editRecord(r)"><span class="material-icons" style="font-size:16px">edit</span></button>
-                <button class="btn btn-outline" style="padding:6px 10px;color:#DC2626;border-color:#FECACA" title="Excluir" (click)="deleteRecord(r)"><span class="material-icons" style="font-size:16px">delete</span></button>
+                <div class="flex items-center gap-1">
+                  <button (click)="editRecord(r)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all" title="Editar">
+                    <span class="material-icons text-base text-slate-500">edit</span>
+                  </button>
+                  <button (click)="deleteRecord(r)" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" title="Excluir">
+                    <span class="material-icons text-base text-red-500">delete</span>
+                  </button>
+                </div>
               </div>
             }
           </div>
         }
-      </div></div>
+      </div>
     </div>
   `,
-  styles: [`.page { max-width: 900px; } .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; } .header h1 { margin: 0; font-size: 24px; } .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); } .card-body { padding: 24px; } .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; } .form-group { display: flex; flex-direction: column; gap: 4px; } .form-group label { font-size: 13px; font-weight: 500; color: var(--gray-700); } .full { grid-column: 1 / -1; } .form-control { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; width: 100%; box-sizing: border-box; } textarea.form-control { resize: vertical; } .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gray-200); } .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; } .btn-primary { background: var(--primary); color: white; } .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); } select.form-control { appearance: auto; }`]
+  styles: [`:host { display: block; }`]
 })
 export class AgendaFormComponent implements OnInit {
-  private service = inject(AgendaService); private api = inject(ApiService); private route = inject(ActivatedRoute); private toast = inject(ToastService);
-  isEdit = false; id = ''; saving = signal(false); pacientes = signal<any[]>([]); records = signal<any[]>([]); editingId = signal('');
-  form: any = { pacienteId: '', date: '', startTime: '', endTime: '', type: '', notes: '' };
+  private service = inject(AgendaService);
+  private api = inject(ApiService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private toast = inject(ToastService);
+
+  isEdit = false;
+  id = '';
+  saving = signal(false);
+  pacientes = signal<any[]>([]);
+  records = signal<any[]>([]);
+  editingId = signal('');
+
+  form: any = {
+    pacienteId: '',
+    patientName: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '09:00',
+    endTime: '09:50',
+    type: 'Sessão Psicopedagógica',
+    status: 'CONFIRMADO',
+    notes: ''
+  };
+
   ngOnInit() {
-    this.id = this.route.snapshot.params['id'] || ''; this.isEdit = !!this.id;
-    this.api.get('/pacientes').subscribe((res: any) => this.pacientes.set(res.data));
-    if (this.isEdit) this.service.get(this.id).subscribe((res: any) => this.form = res);
+    this.id = this.route.snapshot.params['id'] || '';
+    this.isEdit = !!this.id;
+
+    this.api.get('/pacientes').subscribe({
+      next: (res: any) => {
+        const list = res.data || res || [];
+        this.pacientes.set(list);
+
+        const qp = this.route.snapshot.queryParams['pacienteId'];
+        const qd = this.route.snapshot.queryParams['date'];
+        if (qp) {
+          this.form.pacienteId = qp;
+          if (qd) this.form.date = qd;
+          this.onPatientChange();
+        }
+      },
+      error: () => {}
+    });
+
+    if (this.isEdit) {
+      this.service.get(this.id).subscribe({
+        next: (res: any) => {
+          this.form = { ...res };
+          this.loadRecords();
+        },
+        error: () => this.toast.error('Erro ao carregar agendamento')
+      });
+    }
   }
-  getPatientName(): string { const p = this.pacientes().find(p => p.id === this.form.pacienteId); return p?.name || '-'; }
-  statusColor(status: string): string {
-    const map: any = { PENDENTE: 'background:#FEF3C7;color:#92400E', CONFIRMADO: 'background:#DBEAFE;color:#1E40AF', CONCLUIDO: 'background:#D1FAE5;color:#065F46', CANCELADO: 'background:#FEE2E2;color:#991B1B' };
-    return map[status] || 'background:#F1F5F9;color:#475569';
+
+  onPatientChange() {
+    const p = this.pacientes().find(p => p.id === this.form.pacienteId);
+    if (p) {
+      this.form.patientName = p.name;
+    }
+    this.loadRecords();
   }
+
+  onStartTimeChange() {
+    if (this.form.startTime && !this.form.endTime) {
+      this.setDuration(50);
+    }
+  }
+
+  setDuration(minutes: number) {
+    if (!this.form.startTime) return;
+    const [h, m] = this.form.startTime.split(':').map(Number);
+    const date = new Date();
+    date.setHours(h, m + minutes);
+    const endH = String(date.getHours()).padStart(2, '0');
+    const endM = String(date.getMinutes()).padStart(2, '0');
+    this.form.endTime = `${endH}:${endM}`;
+  }
+
+  getPatientName(): string {
+    const p = this.pacientes().find(p => p.id === this.form.pacienteId);
+    return p?.name || '-';
+  }
+
+  statusBadgeClass(status: string): string {
+    const map: Record<string, string> = {
+      CONFIRMADO: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+      PENDENTE: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+      CONCLUIDO: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      CANCELADO: 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'
+    };
+    return map[status] || 'bg-slate-100 text-slate-700';
+  }
+
   loadRecords() {
-    if (!this.form.pacienteId) { this.records.set([]); return; }
-    this.api.get('/appointments', { pacienteId: this.form.pacienteId }).subscribe((res: any) => this.records.set((res.data || []).sort((a: any, b: any) => (b.date + ' ' + b.startTime).localeCompare(a.date + ' ' + a.startTime))));
+    if (!this.form.pacienteId) {
+      this.records.set([]);
+      return;
+    }
+    this.api.get('/appointments', { pacienteId: this.form.pacienteId }).subscribe({
+      next: (res: any) => {
+        const list = res.data || res || [];
+        this.records.set(list.sort((a: any, b: any) => (b.date + ' ' + b.startTime).localeCompare(a.date + ' ' + a.startTime)));
+      },
+      error: () => {}
+    });
   }
+
   editRecord(r: any) {
     this.editingId.set(r.id);
-    this.form = { pacienteId: r.pacienteId || '', date: r.date || '', startTime: r.startTime || '', endTime: r.endTime || '', type: r.type || '', notes: r.notes || '' };
+    this.form = { ...r };
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
   resetForm() {
     this.editingId.set('');
-    this.form = { pacienteId: this.form.pacienteId, date: '', startTime: '', endTime: '', type: '', notes: '' };
+    this.form = {
+      pacienteId: this.form.pacienteId,
+      patientName: this.form.patientName,
+      date: new Date().toISOString().split('T')[0],
+      startTime: '09:00',
+      endTime: '09:50',
+      type: 'Sessão Psicopedagógica',
+      status: 'CONFIRMADO',
+      notes: ''
+    };
   }
+
   deleteRecord(r: any) {
     if (!confirm(`Excluir a consulta de ${r.date} (${r.startTime})?`)) return;
     this.api.delete(`/appointments/${r.id}`).subscribe({
-      next: () => { this.toast.success('Consulta excluída'); this.loadRecords(); },
+      next: () => {
+        this.toast.success('Consulta excluída');
+        this.loadRecords();
+      },
       error: () => this.toast.error('Erro ao excluir consulta')
     });
   }
+
   save() {
     if (!this.form.pacienteId) return this.toast.warning('Selecione um paciente');
+    if (!this.form.date) return this.toast.warning('Selecione a data da consulta');
+
+    if (!this.form.patientName) {
+      const p = this.pacientes().find(p => p.id === this.form.pacienteId);
+      this.form.patientName = p?.name || 'Paciente';
+    }
+
+    if (!this.form.startTime) this.form.startTime = '09:00';
+    if (!this.form.endTime) this.form.endTime = '09:50';
+
     this.saving.set(true);
-    const obs = this.editingId() ? this.service.update(this.editingId(), this.form) : this.isEdit ? this.service.update(this.id, this.form) : this.service.create(this.form);
+    const obs = this.editingId()
+      ? this.service.update(this.editingId(), this.form)
+      : this.isEdit
+        ? this.service.update(this.id, this.form)
+        : this.service.create(this.form);
+
     obs.subscribe({
-      next: () => { this.saving.set(false); this.toast.success('Consulta salva'); this.resetForm(); this.loadRecords(); },
-      error: () => { this.saving.set(false); this.toast.error('Erro ao salvar'); }
+      next: () => {
+        this.saving.set(false);
+        this.toast.success('Consulta agendada com sucesso!');
+        if (this.isEdit) {
+          this.router.navigate(['/app/agenda']);
+        } else {
+          this.resetForm();
+          this.loadRecords();
+        }
+      },
+      error: (err: any) => {
+        this.saving.set(false);
+        const msg = err.error?.error || err.error?.message || 'Erro ao salvar agendamento';
+        this.toast.error(msg);
+      }
     });
   }
 }
