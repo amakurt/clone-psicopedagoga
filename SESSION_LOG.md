@@ -1175,6 +1175,10 @@ npm run start
 - **Materiais Terapêuticos:** Catálogo com 31 recursos baseado em evidências, abertura do modal de Guia Clínico detalhado e download de PDF.
 - **Agenda & Agendamentos:** Visualização de calendário e formulário de novo agendamento com botões de duração rápida (45/50/60 min) e seletores visuais.
 
+#### 5. Melhoria de Layout & UI/UX (`src/app/layout/main-layout/main-layout.component.ts`)
+- **Problema:** O cabeçalho superior fixo exibia um `<h2>` grande com o nome da página (ex: "Agenda"), gerando uma duplicação visual com o `<h1>` principal da própria página logo abaixo.
+- **Solução:** Refatorado o header superior para uma altura mais compacta e elegante (`h-16`) com **breadcrumbs dinâmicos e sutis** (`EduPsych / [Nome da Página]`), eliminando a redundância e ampliando a área útil de visualização.
+
 
 
 

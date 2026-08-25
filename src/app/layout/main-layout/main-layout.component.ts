@@ -135,9 +135,14 @@ type NavItem = {
       </aside>
 
       <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#eff2f6] dark:bg-[#19212e] transition-colors duration-200">
-        <header class="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 shrink-0">
-          <div>
-            <h2 class="text-xl font-black text-slate-900 dark:text-white">{{ currentPageTitle() }}</h2>
+        <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 shrink-0">
+          <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span class="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-medium">
+              <span class="material-icons text-[15px]">home</span>
+              <span>EduPsych</span>
+            </span>
+            <span class="text-slate-300 dark:text-slate-700">/</span>
+            <span class="text-slate-700 dark:text-slate-200 font-bold tracking-wide">{{ currentPageTitle() }}</span>
           </div>
           <div class="flex items-center gap-3">
             @if (auth.tenants().length > 1) {
