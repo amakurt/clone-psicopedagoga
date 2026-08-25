@@ -106,7 +106,31 @@ router.post('/', validate(appointmentSchema), async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const data = { ...req.body };
+  const {
+    pacienteId,
+    patientName,
+    date,
+    startTime,
+    endTime,
+    type,
+    status,
+    notes,
+    color,
+    autorId
+  } = req.body;
+
+  const data: any = {};
+  if (pacienteId !== undefined) data.pacienteId = pacienteId;
+  if (patientName !== undefined) data.patientName = patientName;
+  if (date !== undefined) data.date = date;
+  if (startTime !== undefined) data.startTime = startTime;
+  if (endTime !== undefined) data.endTime = endTime;
+  if (type !== undefined) data.type = type;
+  if (status !== undefined) data.status = status;
+  if (notes !== undefined) data.notes = notes;
+  if (color !== undefined) data.color = color;
+  if (autorId !== undefined) data.autorId = autorId;
+
   if (!data.patientName && data.pacienteId) {
     const p = await db.paciente.findUnique({ where: { id: data.pacienteId } });
     if (p) data.patientName = p.name;

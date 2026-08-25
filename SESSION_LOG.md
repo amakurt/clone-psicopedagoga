@@ -1179,6 +1179,13 @@ npm run start
 - **Problema:** O cabeçalho superior fixo exibia um `<h2>` grande com o nome da página (ex: "Agenda"), gerando uma duplicação visual com o `<h1>` principal da própria página logo abaixo.
 - **Solução:** Refatorado o header superior para uma altura mais compacta e elegante (`h-16`) com **breadcrumbs dinâmicos e sutis** (`EduPsych / [Nome da Página]`), eliminando a redundância e ampliando a área útil de visualização.
 
+#### 6. Correção na Edição de Agendamentos na Agenda (`backend/src/routes/appointments.ts` & `agenda-form.component.ts`)
+- **Problema:** Ao editar um agendamento existente e salvar, o Prisma disparava erro de `Unknown argument tenantId` / campos de relação aninhados (`paciente`, `autor`, `tenantId`, `createdAt`, `updatedAt`).
+- **Solução:** 
+  - Backend: Sanitização estrita do payload no endpoint `PUT /api/appointments/:id`, extraindo apenas os campos escalares editáveis (`pacienteId`, `patientName`, `date`, `startTime`, `endTime`, `type`, `status`, `notes`, `color`, `autorId`).
+  - Frontend: Sanitização do formulário no carregamento (`ngOnInit`), na seleção de registros anteriores (`editRecord`) e no payload de envio (`save`).
+- **Validação:** Fluxo de edição e alteração de horário testado no navegador com sucesso sem nenhum erro.
+
 
 
 

@@ -225,7 +225,17 @@ export class AgendaFormComponent implements OnInit {
     if (this.isEdit) {
       this.service.get(this.id).subscribe({
         next: (res: any) => {
-          this.form = { ...res };
+          this.form = {
+            pacienteId: res.pacienteId || '',
+            patientName: res.patientName || '',
+            date: res.date || '',
+            startTime: res.startTime || '09:00',
+            endTime: res.endTime || '09:50',
+            type: res.type || 'Sessão Psicopedagógica',
+            status: res.status || 'CONFIRMADO',
+            notes: res.notes || '',
+            color: res.color || ''
+          };
           this.loadRecords();
         },
         error: () => this.toast.error('Erro ao carregar agendamento')
@@ -288,7 +298,17 @@ export class AgendaFormComponent implements OnInit {
 
   editRecord(r: any) {
     this.editingId.set(r.id);
-    this.form = { ...r };
+    this.form = {
+      pacienteId: r.pacienteId || '',
+      patientName: r.patientName || '',
+      date: r.date || '',
+      startTime: r.startTime || '09:00',
+      endTime: r.endTime || '09:50',
+      type: r.type || 'Sessão Psicopedagógica',
+      status: r.status || 'CONFIRMADO',
+      notes: r.notes || '',
+      color: r.color || ''
+    };
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -329,12 +349,24 @@ export class AgendaFormComponent implements OnInit {
     if (!this.form.startTime) this.form.startTime = '09:00';
     if (!this.form.endTime) this.form.endTime = '09:50';
 
+    const payload = {
+      pacienteId: this.form.pacienteId,
+      patientName: this.form.patientName,
+      date: this.form.date,
+      startTime: this.form.startTime,
+      endTime: this.form.endTime,
+      type: this.form.type || 'Sessão Psicopedagógica',
+      status: this.form.status || 'CONFIRMADO',
+      notes: this.form.notes || '',
+      color: this.form.color || ''
+    };
+
     this.saving.set(true);
     const obs = this.editingId()
-      ? this.service.update(this.editingId(), this.form)
+      ? this.service.update(this.editingId(), payload)
       : this.isEdit
-        ? this.service.update(this.id, this.form)
-        : this.service.create(this.form);
+        ? this.service.update(this.id, payload)
+        : this.service.create(payload);
 
     obs.subscribe({
       next: () => {
