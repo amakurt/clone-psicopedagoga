@@ -1,6 +1,6 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 21 de Agosto de 2026
+## Última Atualização: 25 de Agosto de 2026
 
 ---
 
@@ -1145,6 +1145,35 @@ npm run start
 - Geração e download sob demanda de folhas clínicas em formato PDF A4 de alta resolução (`html2pdf.js` dinâmico com fallback nativo de impressão).
 - Inclui cabeçalho clínico oficial, dados de identificação, habilidades-alvo em badges, guia do aplicador passo a passo, folhas de exercícios e pauta de observação clínica na sessão.
 - Integração transversal com Planos IA (Gemini), Registro de Sessões, Diário Clínico e Planejador de Sessão.
+
+---
+
+## Sessão 31 - 25/08/2026 — Auditoria Pré-Deploy, Correções de Tipagem e Testes E2E Completos
+
+### O que foi feito
+
+#### 1. Verificação e Inicialização de Serviços Locais
+- Executado `./start-all.sh` com subida orquestrada:
+  - **Docker / Colima & Evolution API (v2.3.7)** na porta 8080.
+  - **Backend Node.js/Express + Prisma** na porta 3000.
+  - **Frontend Angular 17** na porta 4200.
+- Endpoints validados via HTTP 200 / 401 autenticado.
+
+#### 2. Correção de Tipagem TypeScript (`backend/src/routes/ai-suggestions.ts`)
+- **Problema:** Acesso a propriedades no retorno de `response.json()` gerava erro TS18046 (`'data' is of type 'unknown'`) durante o `tsc --noEmit`.
+- **Solução:** Adicionado cast explícito `(await response.json()) as any`, garantindo build com 0 erros.
+
+#### 3. Testes Automatizados e Auditoria de Segurança
+- **Checklist Mestre Automatizado (`checklist.py`):** 6/6 testes aprovados com sucesso (Security Scan ✅, Lint Check ✅, Schema Validation ✅, Test Runner ✅, UX Audit ✅, SEO Check ✅).
+- **Testes de Isolamento Multi-tenant (`npm run test:isolation`):** 100% dos cenários de segurança e isolamento de banco entre clínicas aprovados.
+- **Compilação de Produção (`ng build --configuration production`):** Gerada com sucesso gerando bundles otimizados em `dist/`.
+
+#### 4. Testes E2E no Navegador com Subagente
+- **Login e Dashboard:** Autenticação validada com sucesso (`sarah@edupsych.com` / `123456`), carregamento de métricas, cards clínicos e sidebar.
+- **Perfil do Paciente:** Navegação para detalhes do Theo Mendes Rocha e Lucas Silva Santos, validação do card de Insights Clínicos e histórico.
+- **Planos com IA:** Seleção automática de paciente (idade, diagnóstico e nível de suporte), geração de plano terapêutico estruturado em 24 semanas com sugestão de materiais clínicos e persistência no prontuário (`/app/planos`).
+- **Materiais Terapêuticos:** Catálogo com 31 recursos baseado em evidências, abertura do modal de Guia Clínico detalhado e download de PDF.
+- **Agenda & Agendamentos:** Visualização de calendário e formulário de novo agendamento com botões de duração rápida (45/50/60 min) e seletores visuais.
 
 
 

@@ -127,7 +127,7 @@ async function callGemini(prompt: string, apiKey: string): Promise<any> {
         continue;
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawText) throw new Error('Resposta vazia da API do Gemini');
       
