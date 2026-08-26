@@ -52,10 +52,11 @@ Implementado padrão híbrido moderno em todas as listagens de dados do sistema:
   - `anamnese-list.component.ts`: Cards com data, paciente e profissional responsável.
   - `planos-list.component.ts`: Cards com frequência, total de sessões, valor total e exportação PDF.
 
-#### 5. Jogos Cognitivos: Modo Paisagem Obrigatório em Smartphones e Tablets
+#### 5. Jogos Cognitivos: Modo Paisagem Obrigatório & Correção do Touch Mobile
 - **Obrigatoriedade e Detecção de Orientação**: Implementado monitoramento de rotação de tela via `@HostListener('window:resize')` e `@HostListener('window:orientationchange')` com signal `isPortraitMobile`.
 - **Overlay de Bloqueio em Retrato**: Quando o usuário abre qualquer um dos 60 jogos cognitivos em dispositivo móvel na vertical, um overlay com blur e ícone animado de rotação instrui o usuário a virar o aparelho para o modo paisagem (horizontal).
-- **API de Orientação com Fallback**: Chamada de `screen.orientation.lock('landscape')` com captura resiliente para navegadores móveis (Safari iOS e Chrome Android).
+- **Correção Crítica do Touch em Telas de Alta Resolução (Retina/iPhone)**: Corrigido o cálculo de coordenadas em `getPointerPos` (onde `dpr = 3` no iPhone 12 Pro multiplicava a posição x/y por 3 e deslocava o toque para fora da área dos botões/cartas). Agora calcula com precisão a proporção entre os pixels CSS do bounding box e a largura/altura lógica do canvas.
+- **Suporte a Pointer Events e Touchscreen**: Adicionado `pointerdown` moderno, `touchstart` nativo e `style="touch-action: none"` no canvas, eliminando atrasos e prevenindo comportamentos indesejados de rolagem ao tocar no jogo.
 - **Ajuste Dinâmico do Canvas no Landscape**: Dimensões do canvas de jogo (`setupCanvas`) recalculadas automaticamente para a proporção horizontal com limites de altura responsivos, garantindo que o jogo caiba com perfeição em telas como iPhone 12 Pro em modo horizontal sem cortes de botões ou placar.
 
 #### 6. Validação

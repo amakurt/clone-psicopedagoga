@@ -27,9 +27,11 @@
 - Viewport iOS `viewport-fit=cover` e meta tags de app móvel em `src/index.html`.
 - Validação: `npx ng build --configuration=development` com 0 erros.
 
-### 114. Jogos Cognitivos com Modo Paisagem Obrigatório
+### 114. Jogos Cognitivos com Modo Paisagem Obrigatório & Correção do Touch
 - Bloqueio e instrução de rotação para modo horizontal (`isPortraitMobile` signal + overlay modal com animação de tela girando).
 - Detecção e lock dinâmico com `screen.orientation.lock('landscape')` e fallbacks cross-device (iOS Safari / Android Chrome).
+- Correção de cálculo de coordenadas de toque (`getPointerPos`): normalização por `logicalW / rect.width` que corrigiu o bug de deslocamento 3x em telas Retina (iPhone 12 Pro).
+- Suporte a `pointerdown`, `touchstart` e `style="touch-action: none"` para resposta instantânea ao toque sem delay ou scroll.
 - Redimensionamento inteligente do canvas e interface nos 60 jogos ao girar para landscape.
 - Validação: `npx ng build --configuration=development` 100% OK.
 

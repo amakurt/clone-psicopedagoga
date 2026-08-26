@@ -196,7 +196,7 @@ const JOGOS_DATA: Jogo[] = [
                     Iniciar Jogo
                   </button>
                 } @else {
-                  <canvas #gameCanvas class="rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700 max-w-[500px]" style="touch-action: manipulation;"></canvas>
+                  <canvas #gameCanvas class="rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700 max-w-[500px] cursor-pointer" style="touch-action: none; -webkit-user-select: none; user-select: none;"></canvas>
                   <p class="text-xs sm:text-sm text-slate-500 mt-2 sm:mt-3 text-center px-2">{{ gameInstruction() }}</p>
                 }
               </div>
@@ -273,8 +273,9 @@ export class JogosComponent implements OnDestroy {
   private timerInterval: any;
   private canvasCtx: CanvasRenderingContext2D | null = null;
   private gameData: any = {};
-  private canvasClickHandler: ((e: MouseEvent) => void) | null = null;
+  private canvasPointerHandler: ((e: PointerEvent) => void) | null = null;
   private canvasTouchHandler: ((e: TouchEvent) => void) | null = null;
+  private canvasClickHandler: ((e: MouseEvent) => void) | null = null;
 
   @HostListener('window:resize')
   @HostListener('window:orientationchange')
@@ -322,39 +323,69 @@ export class JogosComponent implements OnDestroy {
 
   removeCanvasListeners() {
     const canvas = this.canvasRef?.nativeElement;
-    if (canvas && this.canvasClickHandler) {
-      canvas.removeEventListener('click', this.canvasClickHandler);
-      canvas.removeEventListener('touchend', this.canvasTouchHandler!);
-      this.canvasClickHandler = null;
-      this.canvasTouchHandler = null;
+    if (canvas) {
+      if (this.canvasPointerHandler) {
+        canvas.removeEventListener('pointerdown', this.canvasPointerHandler);
+        this.canvasPointerHandler = null;
+      }
+      if (this.canvasTouchHandler) {
+        canvas.removeEventListener('touchstart', this.canvasTouchHandler);
+        this.canvasTouchHandler = null;
+      }
+      if (this.canvasClickHandler) {
+        canvas.removeEventListener('click', this.canvasClickHandler);
+        this.canvasClickHandler = null;
+      }
     }
   }
 
   getPointerPos(canvas: HTMLCanvasElement, clientX: number, clientY: number): { x: number; y: number } {
     const rect = canvas.getBoundingClientRect();
+    const logicalW = this.gameData.logicalW || 500;
+    const logicalH = this.gameData.logicalH || 300;
+    const scaleX = rect.width > 0 ? logicalW / rect.width : 1;
+    const scaleY = rect.height > 0 ? logicalH / rect.height : 1;
     return {
-      x: (clientX - rect.left) * (canvas.width / rect.width),
-      y: (clientY - rect.top) * (canvas.height / rect.height)
+      x: Math.max(0, Math.min(logicalW, (clientX - rect.left) * scaleX)),
+      y: Math.max(0, Math.min(logicalH, (clientY - rect.top) * scaleY))
     };
   }
 
   setCanvasHandler(canvas: HTMLCanvasElement, handler: (x: number, y: number) => void) {
     this.removeCanvasListeners();
-    this.canvasClickHandler = (e: MouseEvent) => {
-      e.preventDefault();
-      const pos = this.getPointerPos(canvas, e.clientX, e.clientY);
+    let lastHandledTime = 0;
+
+    const processPointer = (clientX: number, clientY: number, e: Event) => {
+      const now = Date.now();
+      if (now - lastHandledTime < 50) return;
+      lastHandledTime = now;
+
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+      const pos = this.getPointerPos(canvas, clientX, clientY);
       handler(pos.x, pos.y);
     };
-    this.canvasTouchHandler = (e: TouchEvent) => {
-      e.preventDefault();
-      if (e.changedTouches.length > 0) {
-        const t = e.changedTouches[0];
-        const pos = this.getPointerPos(canvas, t.clientX, t.clientY);
-        handler(pos.x, pos.y);
-      }
-    };
-    canvas.addEventListener('click', this.canvasClickHandler);
-    canvas.addEventListener('touchend', this.canvasTouchHandler);
+
+    if (window.PointerEvent) {
+      this.canvasPointerHandler = (e: PointerEvent) => {
+        processPointer(e.clientX, e.clientY, e);
+      };
+      canvas.addEventListener('pointerdown', this.canvasPointerHandler, { passive: false });
+    } else {
+      this.canvasTouchHandler = (e: TouchEvent) => {
+        if (e.touches && e.touches.length > 0) {
+          processPointer(e.touches[0].clientX, e.touches[0].clientY, e);
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+          processPointer(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e);
+        }
+      };
+      this.canvasClickHandler = (e: MouseEvent) => {
+        processPointer(e.clientX, e.clientY, e);
+      };
+      canvas.addEventListener('touchstart', this.canvasTouchHandler, { passive: false });
+      canvas.addEventListener('click', this.canvasClickHandler, { passive: false });
+    }
   }
 
   filterGames() {
