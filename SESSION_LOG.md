@@ -52,7 +52,13 @@ Implementado padrão híbrido moderno em todas as listagens de dados do sistema:
   - `anamnese-list.component.ts`: Cards com data, paciente e profissional responsável.
   - `planos-list.component.ts`: Cards com frequência, total de sessões, valor total e exportação PDF.
 
-#### 5. Validação
+#### 5. Jogos Cognitivos: Modo Paisagem Obrigatório em Smartphones e Tablets
+- **Obrigatoriedade e Detecção de Orientação**: Implementado monitoramento de rotação de tela via `@HostListener('window:resize')` e `@HostListener('window:orientationchange')` com signal `isPortraitMobile`.
+- **Overlay de Bloqueio em Retrato**: Quando o usuário abre qualquer um dos 60 jogos cognitivos em dispositivo móvel na vertical, um overlay com blur e ícone animado de rotação instrui o usuário a virar o aparelho para o modo paisagem (horizontal).
+- **API de Orientação com Fallback**: Chamada de `screen.orientation.lock('landscape')` com captura resiliente para navegadores móveis (Safari iOS e Chrome Android).
+- **Ajuste Dinâmico do Canvas no Landscape**: Dimensões do canvas de jogo (`setupCanvas`) recalculadas automaticamente para a proporção horizontal com limites de altura responsivos, garantindo que o jogo caiba com perfeição em telas como iPhone 12 Pro em modo horizontal sem cortes de botões ou placar.
+
+#### 6. Validação
 - **Angular Build**: Compilação de desenvolvimento (`npx ng build --configuration=development`) concluída com 100% de sucesso (código de saída 0).
 
 ---

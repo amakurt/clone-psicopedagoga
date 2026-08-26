@@ -1,4 +1,4 @@
-import { Component, signal, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, signal, OnDestroy, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -149,30 +149,46 @@ const JOGOS_DATA: Jogo[] = [
     </div>
 
     @if (showGameModal()) {
-      <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4" (click)="closeGame()">
-        <div class="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-2xl ring-1 ring-slate-200 dark:ring-slate-800 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <!-- Overlay de bloqueio para modo retrato em dispositivos móveis -->
+      @if (isPortraitMobile()) {
+        <div class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white select-none animate-in">
+          <div class="size-20 rounded-3xl bg-primary/20 text-primary border border-primary/30 flex items-center justify-center mb-6 animate-bounce shadow-lg shadow-primary/20">
+            <span class="material-icons text-5xl">screen_rotation</span>
+          </div>
+          <h3 class="text-2xl font-black mb-2 text-white">Gire seu aparelho</h3>
+          <p class="text-slate-300 text-sm max-w-xs mb-8 leading-relaxed">
+            Para garantir a precisão e a usabilidade dos testes e jogos cognitivos, por favor <strong class="text-white">vire o celular na horizontal (modo paisagem)</strong>.
+          </p>
+          <button (click)="closeGame()" class="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-all active:scale-95">
+            Cancelar e Fechar
+          </button>
+        </div>
+      }
+
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4" (click)="closeGame()">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full sm:max-w-2xl ring-1 ring-slate-200 dark:ring-slate-800 max-h-[96vh] overflow-y-auto" (click)="$event.stopPropagation()">
           @if (!gameFinished()) {
-            <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="p-3 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div class="min-w-0 flex-1">
-                <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">{{ currentGame()?.name }}</h3>
+                <h3 class="text-sm sm:text-lg font-black text-slate-900 dark:text-white truncate">{{ currentGame()?.name }}</h3>
                 <p class="text-[10px] sm:text-xs text-slate-500">{{ currentGame()?.category }} · {{ currentGame()?.ageRange }} anos</p>
               </div>
               <div class="flex items-center gap-3 sm:gap-4 shrink-0 ml-3">
                 <div class="text-center">
                   <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Tempo</p>
-                  <p class="text-base sm:text-lg font-black text-primary">{{ formatTime(gameTimer()) }}</p>
+                  <p class="text-sm sm:text-lg font-black text-primary">{{ formatTime(gameTimer()) }}</p>
                 </div>
                 <div class="text-center">
                   <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Pontos</p>
-                  <p class="text-base sm:text-lg font-black text-emerald-600">{{ gameScore() }}</p>
+                  <p class="text-sm sm:text-lg font-black text-emerald-600">{{ gameScore() }}</p>
                 </div>
                 <button class="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" (click)="closeGame()">
                   <span class="material-icons">close</span>
                 </button>
               </div>
             </div>
-            <div class="p-4 sm:p-6">
-              <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] flex flex-col items-center justify-center">
+            <div class="p-3 sm:p-6">
+              <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 sm:p-6 min-h-[220px] sm:min-h-[300px] flex flex-col items-center justify-center">
                 @if (!gameStarted()) {
                   <p class="text-slate-600 dark:text-slate-300 text-center mb-4 sm:mb-6 text-sm sm:text-base px-2">{{ currentGame()?.description }}</p>
                   <button class="px-6 sm:px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm sm:text-base"
@@ -180,8 +196,8 @@ const JOGOS_DATA: Jogo[] = [
                     Iniciar Jogo
                   </button>
                 } @else {
-                  <canvas #gameCanvas class="rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700 w-full max-w-[500px]" style="touch-action: manipulation;"></canvas>
-                  <p class="text-xs sm:text-sm text-slate-500 mt-3 text-center px-2">{{ gameInstruction() }}</p>
+                  <canvas #gameCanvas class="rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700 max-w-[500px]" style="touch-action: manipulation;"></canvas>
+                  <p class="text-xs sm:text-sm text-slate-500 mt-2 sm:mt-3 text-center px-2">{{ gameInstruction() }}</p>
                 }
               </div>
             </div>
@@ -245,6 +261,7 @@ export class JogosComponent implements OnDestroy {
   allGames = JOGOS_DATA;
   filteredGames = signal<Jogo[]>(JOGOS_DATA);
   showGameModal = signal(false);
+  isPortraitMobile = signal(false);
   currentGame = signal<Jogo | null>(null);
   gameStarted = signal(false);
   gameFinished = signal(false);
@@ -259,7 +276,49 @@ export class JogosComponent implements OnDestroy {
   private canvasClickHandler: ((e: MouseEvent) => void) | null = null;
   private canvasTouchHandler: ((e: TouchEvent) => void) | null = null;
 
-  ngOnDestroy() { this.clearTimers(); this.removeCanvasListeners(); }
+  @HostListener('window:resize')
+  @HostListener('window:orientationchange')
+  onWindowResize() {
+    this.checkOrientation();
+    if (this.showGameModal() && this.gameStarted() && !this.isPortraitMobile()) {
+      setTimeout(() => this.setupCanvas(), 100);
+    }
+  }
+
+  ngOnDestroy() { 
+    this.clearTimers(); 
+    this.removeCanvasListeners(); 
+    this.unlockOrientation();
+  }
+
+  async lockOrientation() {
+    try {
+      if (screen.orientation && 'lock' in screen.orientation) {
+        await (screen.orientation as any).lock('landscape');
+      }
+    } catch {
+      // Ignora silenciosamente em navegadores como iOS Safari onde orientation.lock() é restrito
+    }
+  }
+
+  unlockOrientation() {
+    try {
+      if (screen.orientation && 'unlock' in screen.orientation) {
+        screen.orientation.unlock();
+      }
+    } catch {}
+  }
+
+  checkOrientation() {
+    if (!this.showGameModal()) {
+      this.isPortraitMobile.set(false);
+      return;
+    }
+    // Considera tela móvel e checa se a altura é maior que a largura (modo retrato)
+    const isMobile = window.innerWidth <= 900 || window.innerHeight <= 600 || ('ontouchstart' in window);
+    const isPortrait = window.innerHeight > window.innerWidth;
+    this.isPortraitMobile.set(isMobile && isPortrait);
+  }
 
   removeCanvasListeners() {
     const canvas = this.canvasRef?.nativeElement;
@@ -368,6 +427,8 @@ export class JogosComponent implements OnDestroy {
       this.gameFinished.set(false);
       this.showGameModal.set(true);
       this.clinicalQuestions.set(this.getClinicalQuestions(jogo.category));
+      this.lockOrientation();
+      this.checkOrientation();
     }, 50);
   }
 
@@ -393,9 +454,14 @@ export class JogosComponent implements OnDestroy {
     if (!canvas) return;
 
     const container = canvas.parentElement;
-    const containerWidth = container ? container.clientWidth - 32 : 468;
-    const logicalW = Math.min(500, containerWidth);
-    const logicalH = Math.round(logicalW * 0.6);
+    const containerWidth = container ? container.clientWidth - 24 : 468;
+    const maxAvailableH = window.innerHeight ? Math.max(180, window.innerHeight - 220) : 300;
+    let logicalW = Math.min(500, containerWidth);
+    let logicalH = Math.round(logicalW * 0.6);
+    if (logicalH > maxAvailableH) {
+      logicalH = maxAvailableH;
+      logicalW = Math.round(logicalH / 0.6);
+    }
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = logicalW * dpr;
@@ -1062,7 +1128,9 @@ export class JogosComponent implements OnDestroy {
   closeGame() {
     this.clearTimers();
     this.removeCanvasListeners();
+    this.unlockOrientation();
     this.showGameModal.set(false);
+    this.isPortraitMobile.set(false);
     this.currentGame.set(null);
     this.gameStarted.set(false);
     this.gameFinished.set(false);

@@ -27,6 +27,12 @@
 - Viewport iOS `viewport-fit=cover` e meta tags de app móvel em `src/index.html`.
 - Validação: `npx ng build --configuration=development` com 0 erros.
 
+### 114. Jogos Cognitivos com Modo Paisagem Obrigatório
+- Bloqueio e instrução de rotação para modo horizontal (`isPortraitMobile` signal + overlay modal com animação de tela girando).
+- Detecção e lock dinâmico com `screen.orientation.lock('landscape')` e fallbacks cross-device (iOS Safari / Android Chrome).
+- Redimensionamento inteligente do canvas e interface nos 60 jogos ao girar para landscape.
+- Validação: `npx ng build --configuration=development` 100% OK.
+
 ---
 
 ## Sessão 21/08/2026 (Sexta) — Implementação das 12 features do iPsy Tools
