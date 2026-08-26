@@ -45,7 +45,8 @@ import { EncaminhamentoService } from '../services/encaminhamento.service';
             <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhum encaminhamento encontrado</p>
           </div>
         } @else {
-          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+          <!-- Desktop Table (md and up) -->
+          <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
             <table class="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
@@ -87,6 +88,41 @@ import { EncaminhamentoService } from '../services/encaminhamento.service';
                 }
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Cards (under md / Smartphones) -->
+          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            @for (e of filteredItems(); track e.id) {
+              <div class="p-4 space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ e.paciente?.name || 'Sem paciente' }}</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ e.createdAt | date:'dd/MM/yyyy' }}</p>
+                  </div>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0"
+                    [class]="getStatusClass(e.status)">
+                    {{ e.status }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl">
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase block">De</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ e.deUser?.name || 'Dra. Sarah Miller' }}</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Para</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ e.paraUser?.name || '—' }}</span>
+                  </div>
+                </div>
+
+                @if (e.motivo) {
+                  <p class="text-xs text-slate-600 dark:text-slate-300">
+                    <strong class="text-slate-700 dark:text-slate-200">Motivo:</strong> {{ e.motivo }}
+                  </p>
+                }
+              </div>
+            }
           </div>
         }
       </div>

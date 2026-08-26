@@ -103,7 +103,8 @@ declare var html2pdf: any;
               <p class="text-slate-500 mt-3">Nenhuma transação encontrada</p>
             </div>
           } @else {
-            <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <!-- Desktop Table (md and up) -->
+            <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
               <table class="w-full text-left border-collapse min-w-[650px]">
                 <thead>
                   <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
@@ -120,11 +121,11 @@ declare var html2pdf: any;
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                          <div class="size-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm"
+                          <div class="size-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm shrink-0"
                             [style.background]="getAvatarColor(item.paciente?.name || '')">
                             {{ getInitials(item.paciente?.name || '') }}
                           </div>
-                          <span class="text-sm font-bold text-slate-900 dark:text-white">{{ item.paciente?.name || '—' }}</span>
+                          <span class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ item.paciente?.name || '—' }}</span>
                         </div>
                       </td>
                       <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ item.date | date:'dd/MM/yyyy' }}</td>
@@ -170,6 +171,67 @@ declare var html2pdf: any;
                   }
                 </tbody>
               </table>
+            </div>
+
+            <!-- Mobile Cards (under md / Smartphones) -->
+            <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+              @for (item of items(); track item.id) {
+                <div class="p-4 space-y-3">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <div class="size-10 rounded-full flex items-center justify-center text-xs font-black text-white shadow-sm shrink-0"
+                        [style.background]="getAvatarColor(item.paciente?.name || '')">
+                        {{ getInitials(item.paciente?.name || '') }}
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ item.paciente?.name || 'Sem paciente' }}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ item.date | date:'dd/MM/yyyy' }}</p>
+                      </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <p class="text-base font-black" [class]="item.type === 'receita' ? 'text-emerald-700' : 'text-red-600'">
+                        {{ item.type === 'receita' ? '+' : '-' }}{{ item.value | currency:'BRL' }}
+                      </p>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider mt-0.5"
+                        [class]="item.status === 'pago' ? 'bg-emerald-100 text-emerald-700' : item.status === 'pendente' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'">
+                        {{ item.status | titlecase }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                    @if (item.status === 'pendente' && item.type === 'receita') {
+                      <button (click)="openPixModal(item)"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-primary text-on-primary rounded-xl text-xs font-bold shadow-md shadow-primary/10 transition-all active:scale-95">
+                        <span class="material-icons text-[16px]">qr_code</span>
+                        PIX
+                      </button>
+                    }
+                    @if (item.status === 'pendente') {
+                      <button (click)="openConfirmPaymentModal(item)"
+                        class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all active:scale-95">
+                        <span class="material-icons text-[16px]">check_circle</span>
+                        Confirmar
+                      </button>
+                    }
+                    <button (click)="generateReceipt(item)"
+                      class="flex items-center justify-center size-9 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all shrink-0"
+                      title="Recibo">
+                      <span class="material-icons text-[16px]">receipt</span>
+                    </button>
+                    <a [routerLink]="['/app/financeiro', item.id, 'editar']"
+                      class="flex items-center justify-center size-9 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all shrink-0"
+                      title="Editar">
+                      <span class="material-icons text-[16px]">edit</span>
+                    </a>
+                    <button (click)="confirmDelete(item)"
+                      class="flex items-center justify-center size-9 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 transition-all shrink-0"
+                      title="Excluir">
+                      <span class="material-icons text-[16px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
           }
         </div>

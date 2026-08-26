@@ -19,6 +19,14 @@
   - Responsáveis (`min-w-[700px]`), Painel TV Sala de Espera, Sessões Clínicas (`min-w-[750px]`), Agenda Mês/Semana (`min-w-[650px]/[700px]`), Financeiro/NFS-e/DRE (`min-w-[500px] a [750px]`), Laudos (`min-w-[700px]`), Evoluções & Anamnese (`min-w-[650px]`), Encaminhamentos (`min-w-[700px]`), Protocolos TEA/ABA, Rastreios & Planos de Intervenção, Documentos & Solicitações, Usuários & Permissões, LGPD, WhatsApp, Kit Docente e Portal Guardian.
 - Validação: `ng build` 100% OK.
 
+### 113. Adaptação Completa por Dispositivo (Mobile Cards + Desktop Tables)
+- Criação de visualização adaptativa inteligente nos 12 módulos principais:
+  - Smartphones (`< 768px / block md:hidden`): Cards verticais touch-friendly com avatares, dados destacados e botões `>= 44px`.
+  - Desktop (`>= 768px / hidden md:block`): Tabelas ricas de alta densidade.
+  - Módulos adaptados: Pacientes, Responsáveis, Financeiro, Sessões Clínicas, Laudos, Evoluções, Protocolos TEA, Documentos, Usuários, Encaminhamentos, Anamneses e Planos.
+- Viewport iOS `viewport-fit=cover` e meta tags de app móvel em `src/index.html`.
+- Validação: `npx ng build --configuration=development` com 0 erros.
+
 ---
 
 ## Sessão 21/08/2026 (Sexta) — Implementação das 12 features do iPsy Tools

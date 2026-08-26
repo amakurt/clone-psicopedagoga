@@ -45,7 +45,8 @@ import { SessaoService } from '../services/sessao.service';
             <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhuma sessão encontrada</p>
           </div>
         } @else {
-          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+          <!-- Desktop Table (md and up) -->
+          <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
             <table class="w-full text-left border-collapse min-w-[750px]">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
@@ -102,6 +103,55 @@ import { SessaoService } from '../services/sessao.service';
                 }
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Cards (under md / Smartphones) -->
+          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            @for (s of filteredItems(); track s.id) {
+              <div class="p-4 space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ s.paciente?.name || 'Sessão sem paciente' }}</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
+                      <span class="material-icons text-[14px]">event</span>
+                      {{ s.date | date:'dd/MM/yyyy HH:mm' }}
+                    </p>
+                  </div>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0"
+                    [class]="getStatusClass(s.status)">
+                    {{ s.status }}
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 text-xs bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl">
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Tipo</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ s.tipo || 'Sessão' }}</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Duração</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 block">{{ s.duration ? s.duration + ' min' : '—' }}</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Valor</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 block">{{ s.valor ? (s.valor | currency:'BRL') : '—' }}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                  <a [routerLink]="['/app/sessoes', s.id]"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all">
+                    <span class="material-icons text-[16px]">visibility</span>
+                    Ver Detalhes
+                  </a>
+                  <a [routerLink]="['/app/sessoes', s.id, 'editar']"
+                    class="flex items-center justify-center size-9 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all"
+                    title="Editar">
+                    <span class="material-icons text-[16px]">edit</span>
+                  </a>
+                </div>
+              </div>
+            }
           </div>
         }
       </div>

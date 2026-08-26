@@ -34,8 +34,26 @@ Implementação do padrão `overflow-x-auto custom-scrollbar` com `-webkit-overf
 - **Usuários, Permissões e LGPD**: `users-list.component.ts` (`min-w-[700px]`), `user-permissions.component.ts` (`min-w-[500px]`), `consent-log.component.ts` (`min-w-[600px]`) e `whatsapp-config.component.ts` (`min-w-[600px]`).
 - **Portal da Família / Kit Docente**: `guardian-financial.component.ts` (`min-w-[600px]`) e `kit-docente.component.ts` (`min-w-[650px]` e `min-w-[600px]`).
 
-#### 4. Validação
-- **Angular Build**: Compilação `ng build` concluída com sucesso (código de saída 0).
+#### 4. Adaptação Completa por Dispositivo (Mobile Cards + Desktop Tables)
+Implementado padrão híbrido moderno em todas as listagens de dados do sistema:
+- **No Smartphone / Celular (`< 768px / block md:hidden`)**: A interface exibe cards verticais com avatares, informações cruciais em destaque, badges de status legíveis e botões de toque confortáveis (`>= 44px`), eliminando a necessidade de rolagem horizontal.
+- **No Desktop (`>= 768px / hidden md:block`)**: As tabelas tradicionais densas e completas continuam preservadas.
+- **Módulos adaptados**:
+  - `pacientes-list.component.ts`: Cards com idade, instituição, cód. portal com cópia rápida e botões de ação touch.
+  - `responsaveis-list.component.ts`: Cards com parentesco, telefone/WhatsApp e endereço.
+  - `financeiro-list.component.ts`: Cards com valor em destaque colorido, botão de cobrança PIX, confirmação de pagamento e recibo.
+  - `sessoes-list.component.ts`: Cards com tipo, duração, valor e status da sessão.
+  - `laudos-list.component.ts`: Cards com documento, paciente, data e badge de assinatura.
+  - `evolucoes-list.component.ts`: Cards com estrelas de métricas, resumo, exportação para PDF e compartilhamento.
+  - `protocolos-list.component.ts`: Cards com barra de progresso de pontuação média, classificação e exportação PDF.
+  - `documentos-list.component.ts`: Cards com formato de arquivo, status de aprovação de pais, assinatura e download.
+  - `users-list.component.ts`: Cards com cargo/perfil, status ativo/inativo e atalho para permissões.
+  - `encaminhamentos-list.component.ts`: Cards com origem, destino e motivo do encaminhamento.
+  - `anamnese-list.component.ts`: Cards com data, paciente e profissional responsável.
+  - `planos-list.component.ts`: Cards com frequência, total de sessões, valor total e exportação PDF.
+
+#### 5. Validação
+- **Angular Build**: Compilação de desenvolvimento (`npx ng build --configuration=development`) concluída com 100% de sucesso (código de saída 0).
 
 ---
 

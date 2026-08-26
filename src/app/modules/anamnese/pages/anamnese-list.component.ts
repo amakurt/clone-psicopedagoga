@@ -45,7 +45,8 @@ import { AnamneseService } from '../services/anamnese.service';
             <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhuma anamnese encontrada</p>
           </div>
         } @else {
-          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+          <!-- Desktop Table (md and up) -->
+          <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
             <table class="w-full text-left border-collapse min-w-[650px]">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
@@ -87,6 +88,34 @@ import { AnamneseService } from '../services/anamnese.service';
                 }
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Cards (under md / Smartphones) -->
+          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            @for (a of filteredItems(); track a.id) {
+              <div class="p-4 space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ a.paciente?.name || 'Sem paciente' }}</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ a.autor?.name || 'Dra. Sarah Miller' }}</p>
+                  </div>
+                  <span class="text-xs text-slate-500 font-medium shrink-0">{{ a.createdAt | date:'dd/MM/yyyy' }}</span>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                  <a [routerLink]="['/app/anamnese', a.id]"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all">
+                    <span class="material-icons text-[16px]">visibility</span>
+                    Visualizar
+                  </a>
+                  <a [routerLink]="['/app/anamnese', a.id, 'editar']"
+                    class="flex items-center justify-center size-9 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all shrink-0"
+                    title="Editar">
+                    <span class="material-icons text-[16px]">edit</span>
+                  </a>
+                </div>
+              </div>
+            }
           </div>
         }
       </div>

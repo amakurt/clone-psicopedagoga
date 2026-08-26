@@ -45,7 +45,8 @@ import { LaudoService } from '../services/laudo.service';
             <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhum laudo encontrado</p>
           </div>
         } @else {
-          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+          <!-- Desktop Table (md and up) -->
+          <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
             <table class="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
@@ -105,6 +106,49 @@ import { LaudoService } from '../services/laudo.service';
                 }
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Cards (under md / Smartphones) -->
+          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            @for (l of filteredItems(); track l.id) {
+              <div class="p-4 space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">{{ l.titulo || 'Laudo Psicopedagógico' }}</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ l.paciente?.name || 'Sem paciente' }}</p>
+                  </div>
+                  @if (l.status === 'ASSINADO') {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 shrink-0">
+                      <span class="material-icons text-[12px]">verified</span>
+                      Assinado
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0"
+                      [class]="l.status === 'RASCUNHO' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
+                      {{ l.status || 'Rascunho' }}
+                    </span>
+                  }
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl">
+                  <span>Data: <strong class="text-slate-700 dark:text-slate-300">{{ l.createdAt | date:'dd/MM/yyyy' }}</strong></span>
+                  <span>Tipo: <strong class="text-slate-700 dark:text-slate-300">{{ l.type || 'Laudo' }}</strong></span>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                  <a [routerLink]="['/app/laudos', l.id]"
+                    class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all">
+                    <span class="material-icons text-[16px]">visibility</span>
+                    Visualizar
+                  </a>
+                  <a [routerLink]="['/app/laudos', l.id, 'editar']"
+                    class="flex items-center justify-center size-9 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all"
+                    title="Editar">
+                    <span class="material-icons text-[16px]">edit</span>
+                  </a>
+                </div>
+              </div>
+            }
           </div>
         }
       </div>
