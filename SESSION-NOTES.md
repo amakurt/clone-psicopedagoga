@@ -2,6 +2,25 @@
 
 ---
 
+## Sessão 26/08/2026 (Quarta) — Auditoria e Responsividade Mobile Completa (iPhone 12 Pro & Telas Pequenas)
+
+### 110. Acesso pela Rede Local (LAN / Wi-Fi)
+- `environment.ts`: `apiUrl` computada dinamicamente a partir do `window.location.hostname` permitindo acesso sem reconfigurações manuais de IP.
+- `backend/src/index.ts`: regex de CORS para aceitar origens de IP privado local (`192.168.x.x`, `10.x.x.x`, `172.16-31.x.x`).
+- `start-all.sh`: detecção automática do IP da máquina e inicialização do Angular com flag `--host 0.0.0.0`.
+
+### 111. Layout Responsivo & Drawer Móvel
+- `main-layout.component.ts`: Sidebar convertida para Drawer retrátil com backdrop móvel (`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] -translate-x-full lg:translate-x-0 lg:static`), fechamento automático em transições de rota e clique de links.
+- Botão hamburger adicionado ao header em telas móveis (`lg:hidden`).
+- Espaçamento responsivo `p-4 sm:p-6 lg:p-8`.
+
+### 112. Auditoria e Rolagem Horizontal em Todas as Tabelas
+- Implementação de padrão `overflow-x-auto custom-scrollbar` e `-webkit-overflow-scrolling: touch` com largura mínima apropriada em todas as páginas:
+  - Responsáveis (`min-w-[700px]`), Painel TV Sala de Espera, Sessões Clínicas (`min-w-[750px]`), Agenda Mês/Semana (`min-w-[650px]/[700px]`), Financeiro/NFS-e/DRE (`min-w-[500px] a [750px]`), Laudos (`min-w-[700px]`), Evoluções & Anamnese (`min-w-[650px]`), Encaminhamentos (`min-w-[700px]`), Protocolos TEA/ABA, Rastreios & Planos de Intervenção, Documentos & Solicitações, Usuários & Permissões, LGPD, WhatsApp, Kit Docente e Portal Guardian.
+- Validação: `ng build` 100% OK.
+
+---
+
 ## Sessão 21/08/2026 (Sexta) — Implementação das 12 features do iPsy Tools
 
 ### 95. Análise do iPsy Tools (ipsybr.com.br)
