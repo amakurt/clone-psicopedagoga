@@ -80,7 +80,7 @@ const TRAINING_EXERCISES: TrainingExercise[] = [
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">Kit Docente</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Ferramentas para colaboracao clinica-escola</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           @for (tab of tabs; track tab.id) {
             <button class="px-4 py-2 rounded-xl text-xs font-bold transition-all"
               [class]="activeTab() === tab.id ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-white dark:bg-slate-900 text-slate-500 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50'"
@@ -101,8 +101,8 @@ const TRAINING_EXERCISES: TrainingExercise[] = [
               <span class="material-icons text-[14px] align-middle mr-1">add</span> Novo Link
             </button>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-sm min-w-[650px]">
               <thead>
                 <tr class="border-b border-slate-200 dark:border-slate-700">
                   <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-500 uppercase">Aluno(a)</th>
@@ -198,8 +198,8 @@ const TRAINING_EXERCISES: TrainingExercise[] = [
             <span class="material-icons text-primary text-sm">balance</span>
             Matriz de Responsabilidades - Escola x Clinica
           </h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-sm min-w-[600px]">
               <thead>
                 <tr class="border-b border-slate-200 dark:border-slate-700">
                   <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-500 uppercase">Area</th>

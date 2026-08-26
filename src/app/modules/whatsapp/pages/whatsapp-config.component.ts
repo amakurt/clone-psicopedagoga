@@ -96,8 +96,8 @@ import { WhatsAppService, WhatsAppLog } from '../services/whatsapp.service';
             <p class="text-sm">Nenhuma mensagem enviada ainda</p>
           </div>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-sm min-w-[600px]">
               <thead>
                 <tr class="text-left text-slate-500 border-b border-slate-200 dark:border-slate-700">
                   <th class="pb-2 font-semibold">Paciente</th>

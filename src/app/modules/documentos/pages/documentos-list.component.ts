@@ -71,8 +71,8 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
               <p class="text-slate-500 mt-3">Nenhum documento encontrado</p>
             </div>
           } @else {
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+              <table class="w-full text-left border-collapse min-w-[700px]">
                 <thead>
                   <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                     <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Documento</th>

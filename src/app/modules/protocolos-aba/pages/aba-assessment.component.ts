@@ -186,19 +186,21 @@ type ProtocolType = 'ABLLS-R' | 'VB-MAPP' | 'DENVER';
               <div class="divide-y divide-slate-100 dark:divide-slate-800">
                 @for (item of getDomainItems(); track item.id; let i = $index) {
                   @if (!searchTerm || item.name.toLowerCase().includes(searchTerm.toLowerCase()) || item.description.toLowerCase().includes(searchTerm.toLowerCase())) {
-                    <div class="px-4 py-3 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <span class="text-xs font-bold text-slate-500 w-8 text-center">{{ i + 1 }}</span>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-slate-900 dark:text-white">{{ item.name }}</p>
-                        <p class="text-xs text-slate-500 truncate">{{ item.description }}</p>
+                    <div class="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <div class="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                        <span class="text-xs font-bold text-slate-500 w-6 text-center shrink-0 pt-0.5 sm:pt-0">{{ i + 1 }}</span>
+                        <div class="min-w-0 flex-1">
+                          <p class="text-sm font-bold text-slate-900 dark:text-white">{{ item.name }}</p>
+                          <p class="text-xs text-slate-500 line-clamp-2 sm:truncate">{{ item.description }}</p>
+                        </div>
                       </div>
-                      <div class="flex gap-1 shrink-0">
+                      <div class="flex gap-1.5 shrink-0 self-end sm:self-center">
                         @for (score of getScoreRange(); track score) {
                           <button (click)="setScore(item.id, score)"
-                            class="w-10 h-10 rounded-lg font-bold text-xs transition-all"
+                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl font-bold text-xs transition-all active:scale-95 shadow-sm"
                             [class]="getScore(item.id) === score
                               ? getScoreButtonClass(score)
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200'">
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'">
                             {{ score }}
                           </button>
                         }

@@ -30,14 +30,14 @@ Chart.register(...registerables);
       </div>
 
       <!-- Filters -->
-      <div class="flex gap-3 items-center">
-        <select [(ngModel)]="filterPatientId" (ngModelChange)="loadPrograms()" class="px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
+      <div class="flex flex-wrap gap-3 items-center">
+        <select [(ngModel)]="filterPatientId" (ngModelChange)="loadPrograms()" class="w-full sm:w-auto px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
           <option value="">Todos os pacientes</option>
           @for (p of patients(); track p.id) {
             <option [value]="p.id">{{ p.name }}</option>
           }
         </select>
-        <select [(ngModel)]="filterStatus" (ngModelChange)="loadPrograms()" class="px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
+        <select [(ngModel)]="filterStatus" (ngModelChange)="loadPrograms()" class="w-full sm:w-auto px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm font-medium">
           <option value="">Todos os status</option>
           <option value="ATIVO">Ativo</option>
           <option value="PAUSADO">Pausado</option>

@@ -14,9 +14,9 @@ declare var html2pdf: any;
   template: `
     <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
-          <a routerLink="/app/planos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+          <a routerLink="/app/planos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all shrink-0">
             <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
@@ -24,7 +24,7 @@ declare var html2pdf: any;
             <p class="text-sm text-gray-500 dark:text-slate-400">Proposta de tratamento e orçamento</p>
           </div>
         </div>
-        <div class="flex gap-3">
+        <div class="flex gap-3 self-end sm:self-auto">
           <button (click)="exportPdf()" [disabled]="!selectedPatientId"
             class="px-4 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 rounded-xl font-semibold flex items-center gap-2 transition-all">
             <span class="material-icons">picture_as_pdf</span>
@@ -66,7 +66,7 @@ declare var html2pdf: any;
 
       <!-- Steps Navigation -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-        <div class="flex border-b border-gray-200 dark:border-slate-700">
+        <div class="flex border-b border-gray-200 dark:border-slate-700 overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
           @for (step of steps; track step.num) {
             <button (click)="currentStep.set(step.num)"
               class="flex-1 py-4 text-sm font-semibold transition-all relative"

@@ -1,25 +1,122 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AnamneseService } from '../services/anamnese.service';
 
 @Component({
   selector: 'app-anamnese-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="page">
-      <div class="header"><div><h1>Anamnese</h1><p class="subtitle">Histórico clínico</p></div><a routerLink="/app/anamnese/novo" class="btn btn-primary"><span class="material-icons">add</span> Nova</a></div>
-      @if (loading()) { <p>Carregando...</p> }
-      @else if (items().length === 0) { <div class="empty"><span class="material-icons" style="font-size:48px;color:var(--gray-400)">description</span><p>Nenhuma anamnese</p></div> }
-      @else { <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Data</th><th>Paciente</th><th>Autor</th><th>Ações</th></tr></thead><tbody>
-        @for (a of items(); track a.id) { <tr><td>{{ a.createdAt | date:'dd/MM/yyyy' }}</td><td><strong>{{ a.paciente?.name }}</strong></td><td>{{ a.autor?.name }}</td><td class="actions"><a [routerLink]="['/app/anamnese', a.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/app/anamnese', a.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
-      </tbody></table></div></div> }
+    <div class="space-y-6 sm:space-y-8 animate-in">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Anamneses Clínicas</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Histórico completo de desenvolvimento e queixas</p>
+        </div>
+        <a routerLink="/app/anamnese/novo" 
+          class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-5 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 self-start sm:self-auto">
+          <span class="material-icons text-[18px]">add</span>
+          <span>Nova Anamnese</span>
+        </a>
+      </div>
+
+      <!-- Barra de Busca -->
+      <div class="w-full max-w-md">
+        <div class="relative group">
+          <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
+          <input type="text" class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm transition-all outline-none"
+            placeholder="Buscar por paciente ou profissional..."
+            [(ngModel)]="searchTerm">
+        </div>
+      </div>
+
+      <!-- Card da Tabela -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+        @if (loading()) {
+          <div class="flex items-center justify-center p-12 text-slate-500">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        } @else if (filteredItems().length === 0) {
+          <div class="text-center py-16 px-4">
+            <span class="material-icons text-6xl text-slate-300 dark:text-slate-700">description</span>
+            <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhuma anamnese encontrada</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-left border-collapse min-w-[650px]">
+              <thead>
+                <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Data</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Profissional / Autor</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (a of filteredItems(); track a.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 font-medium whitespace-nowrap">
+                      {{ a.createdAt | date:'dd/MM/yyyy' }}
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="font-bold text-slate-900 dark:text-white text-sm">
+                        {{ a.paciente?.name || '—' }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                      {{ a.autor?.name || 'Dra. Sarah Miller' }}
+                    </td>
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                      <div class="flex items-center justify-end gap-1">
+                        <a [routerLink]="['/app/anamnese', a.id]" 
+                          class="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                          title="Visualizar">
+                          <span class="material-icons text-lg">visibility</span>
+                        </a>
+                        <a [routerLink]="['/app/anamnese', a.id, 'editar']" 
+                          class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" 
+                          title="Editar">
+                          <span class="material-icons text-lg">edit</span>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
     </div>
   `,
-  styles: [`.page { max-width: 1200px; } .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; } .header h1 { margin: 0; font-size: 24px; } .subtitle { color: var(--gray-500); font-size: 14px; margin: 4px 0 0; } .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); } .card-body { padding: 16px; } .table { width: 100%; border-collapse: collapse; } .table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--gray-200); font-size: 14px; } .table th { color: var(--gray-500); font-size: 12px; text-transform: uppercase; } .actions { display: flex; gap: 4px; } .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; } .btn-primary { background: var(--primary); color: white; } .btn-sm { padding: 4px 8px; font-size: 12px; } .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); } .btn-sm .material-icons { font-size: 16px; } .empty { text-align: center; padding: 40px; color: var(--gray-500); }`]
+  styles: [`:host { display: block; }`]
 })
 export class AnamneseListComponent implements OnInit {
-  private service = inject(AnamneseService); items = signal<any[]>([]); loading = signal(true);
-  ngOnInit() { this.service.list().subscribe({ next: (res: any) => { this.items.set(res.data); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  private service = inject(AnamneseService);
+  items = signal<any[]>([]);
+  loading = signal(true);
+  searchTerm = '';
+
+  ngOnInit() {
+    this.service.list().subscribe({
+      next: (res: any) => {
+        this.items.set(res.data || res || []);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  filteredItems() {
+    const term = this.searchTerm.toLowerCase().trim();
+    if (!term) return this.items();
+    return this.items().filter(a => {
+      const patient = (a.paciente?.name || '').toLowerCase();
+      const autor = (a.autor?.name || '').toLowerCase();
+      return patient.includes(term) || autor.includes(term);
+    });
+  }
 }

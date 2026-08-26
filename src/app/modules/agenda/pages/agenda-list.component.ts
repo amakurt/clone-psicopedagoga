@@ -55,37 +55,41 @@ import { AgendaService } from '../services/agenda.service';
         <!-- Month View -->
         @if (currentView() === 'month') {
           <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
-            <div class="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800">
-              @for (day of weekDays; track day) {
-                <div class="p-3 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ day }}</div>
-              }
-            </div>
-            <div class="grid grid-cols-7">
-              @for (day of calendarDays(); track $index) {
-                <div class="min-h-[100px] p-2 border-b border-r border-slate-100 dark:border-slate-800 transition-colors"
-                  [class]="day.isCurrentMonth ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800/50'"
-                  [class.ring-2]="day.isToday"
-                  [class.ring-primary]="day.isToday">
-                  <p class="text-xs font-bold mb-1"
-                    [class]="day.isCurrentMonth ? 'text-slate-900 dark:text-white' : 'text-slate-500'"
-                    [class.text-primary]="day.isToday"
-                    [class.font-black]="day.isToday">
-                    {{ day.date }}
-                  </p>
-                  <div class="space-y-1">
-                    @for (apt of day.appointments.slice(0, 3); track apt.id) {
-                      <div class="px-2 py-1 rounded-lg text-[10px] font-bold truncate cursor-pointer transition-all hover:opacity-80"
-                        [class]="getStatusClass(apt.status)"
-                        (click)="viewAppointment(apt)">
-                        {{ apt.startTime }} {{ apt.paciente?.name || 'Paciente' }}
-                      </div>
-                    }
-                    @if (day.appointments.length > 3) {
-                      <p class="text-[10px] text-slate-500 font-bold">+{{ day.appointments.length - 3 }} mais</p>
-                    }
-                  </div>
+            <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+              <div class="min-w-[650px]">
+                <div class="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800">
+                  @for (day of weekDays; track day) {
+                    <div class="p-3 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ day }}</div>
+                  }
                 </div>
-              }
+                <div class="grid grid-cols-7">
+                  @for (day of calendarDays(); track $index) {
+                    <div class="min-h-[100px] p-2 border-b border-r border-slate-100 dark:border-slate-800 transition-colors"
+                      [class]="day.isCurrentMonth ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-800/50'"
+                      [class.ring-2]="day.isToday"
+                      [class.ring-primary]="day.isToday">
+                      <p class="text-xs font-bold mb-1"
+                        [class]="day.isCurrentMonth ? 'text-slate-900 dark:text-white' : 'text-slate-500'"
+                        [class.text-primary]="day.isToday"
+                        [class.font-black]="day.isToday">
+                        {{ day.date }}
+                      </p>
+                      <div class="space-y-1">
+                        @for (apt of day.appointments.slice(0, 3); track apt.id) {
+                          <div class="px-2 py-1 rounded-lg text-[10px] font-bold truncate cursor-pointer transition-all hover:opacity-80"
+                            [class]="getStatusClass(apt.status)"
+                            (click)="viewAppointment(apt)">
+                            {{ apt.startTime }} {{ apt.paciente?.name || 'Paciente' }}
+                          </div>
+                        }
+                        @if (day.appointments.length > 3) {
+                          <p class="text-[10px] text-slate-500 font-bold">+{{ day.appointments.length - 3 }} mais</p>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
           </div>
         }
@@ -93,42 +97,46 @@ import { AgendaService } from '../services/agenda.service';
         <!-- Week View -->
         @if (currentView() === 'week') {
           <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
-            <div class="grid grid-cols-8 border-b border-slate-200 dark:border-slate-800">
-              <div class="p-3"></div>
-              @for (day of weekDaysFull(); track day.date) {
-                <div class="p-3 text-center"
-                  [class]="day.isToday ? 'bg-primary/5' : ''">
-                  <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ day.dayName }}</p>
-                  <p class="text-lg font-black mt-1"
-                    [class]="day.isToday ? 'text-primary' : 'text-slate-900 dark:text-white'">
-                    {{ day.date }}
-                  </p>
+            <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+              <div class="min-w-[700px]">
+                <div class="grid grid-cols-8 border-b border-slate-200 dark:border-slate-800">
+                  <div class="p-3"></div>
+                  @for (day of weekDaysFull(); track day.date) {
+                    <div class="p-3 text-center"
+                      [class]="day.isToday ? 'bg-primary/5' : ''">
+                      <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{ day.dayName }}</p>
+                      <p class="text-lg font-black mt-1"
+                        [class]="day.isToday ? 'text-primary' : 'text-slate-900 dark:text-white'">
+                        {{ day.date }}
+                      </p>
+                    </div>
+                  }
                 </div>
-              }
-            </div>
-            <div class="grid grid-cols-8">
-              <div class="border-r border-slate-200 dark:border-slate-800">
-                @for (hour of hours; track hour) {
-                  <div class="h-16 p-2 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-500">
-                    {{ hour }}
+                <div class="grid grid-cols-8">
+                  <div class="border-r border-slate-200 dark:border-slate-800">
+                    @for (hour of hours; track hour) {
+                      <div class="h-16 p-2 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-500">
+                        {{ hour }}
+                      </div>
+                    }
                   </div>
-                }
-              </div>
-              @for (day of weekDaysFull(); track day.date; let i = $index) {
-                <div class="border-r border-slate-100 dark:border-slate-800 last:border-r-0">
-                  @for (hour of hours; track hour) {
-                    <div class="h-16 border-b border-slate-100 dark:border-slate-800 p-1 relative">
-                      @for (apt of getAppointmentsForDayAndHour(day.fullDate, hour); track apt.id) {
-                        <div class="absolute inset-x-1 rounded-lg px-2 py-1 text-[10px] font-bold truncate cursor-pointer transition-all hover:opacity-80"
-                          [class]="getStatusClass(apt.status)"
-                          (click)="viewAppointment(apt)">
-                          {{ apt.paciente?.name || 'Paciente' }}
+                  @for (day of weekDaysFull(); track day.date; let i = $index) {
+                    <div class="border-r border-slate-100 dark:border-slate-800 last:border-r-0">
+                      @for (hour of hours; track hour) {
+                        <div class="h-16 border-b border-slate-100 dark:border-slate-800 p-1 relative">
+                          @for (apt of getAppointmentsForDayAndHour(day.fullDate, hour); track apt.id) {
+                            <div class="absolute inset-x-1 rounded-lg px-2 py-1 text-[10px] font-bold truncate cursor-pointer transition-all hover:opacity-80"
+                              [class]="getStatusClass(apt.status)"
+                              (click)="viewAppointment(apt)">
+                              {{ apt.paciente?.name || 'Paciente' }}
+                            </div>
+                          }
                         </div>
                       }
                     </div>
                   }
                 </div>
-              }
+              </div>
             </div>
           </div>
         }

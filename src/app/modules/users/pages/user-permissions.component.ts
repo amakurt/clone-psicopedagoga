@@ -42,8 +42,8 @@ import { ApiService } from '../../../core/services/api.service';
 
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 p-6">
         <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Matriz de Permissões</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+        <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+          <table class="w-full text-left border-collapse min-w-[500px]">
             <thead>
               <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                 <th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Módulo</th>

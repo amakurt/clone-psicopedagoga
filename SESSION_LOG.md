@@ -1,6 +1,41 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 25 de Agosto de 2026
+## Última Atualização: 26 de Agosto de 2026
+
+---
+
+## Sessão 32 - 26/08/2026 — Auditoria e Adaptação Completa de Responsividade Mobile (iOS / Android / Telas Pequenas)
+
+### O que foi feito
+
+#### 1. Acesso pela Rede Local (LAN / Wi-Fi)
+- **Detecção e Binding Dinâmico**: `src/environments/environment.ts` atualizado para computar automaticamente `apiUrl` com base no `window.location.hostname` (suporta localhost, IP local `192.168.x.x` ou domínio).
+- **CORS flexível**: `backend/src/index.ts` atualizado com regex para autorizar requisições vindas de dispositivos na rede local.
+- **Script de inicialização**: `start-all.sh` atualizado para detectar o IP da LAN e expor o Angular com `--host 0.0.0.0`.
+
+#### 2. Layout Principal Responsivo (Drawer / Hamburger / Touch UX)
+- **Menu Lateral Móvel**: `MainLayoutComponent` atualizado com drawer retrátil (`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] -translate-x-full lg:translate-x-0 lg:static`), backdrop escuro com blur, fechamento automático ao clicar em links ou mudar de rota.
+- **Botão Hamburger**: Botão de alternância no header para telas pequenas (`lg:hidden`).
+- **Espaçamento responsivo**: Padding flexível (`p-4 sm:p-6 lg:p-8`) evitando perda de espaço útil em smartphones como iPhone 12 Pro (~390px).
+
+#### 3. Auditoria e Padronização de Rolagem e Tabelas em Todos os Módulos
+Implementação do padrão `overflow-x-auto custom-scrollbar` com `-webkit-overflow-scrolling: touch` e larguras mínimas adequadas em todas as tabelas e listas:
+- **Responsáveis**: `responsaveis-list.component.ts` com tabela `min-w-[700px]`, avatares e busca instantânea.
+- **Painel TV / Sala de Espera**: `tv-sala-espera.component.ts` com grid fluido `grid-cols-1 lg:grid-cols-12` e tipografia responsiva.
+- **Sessões Clínicas**: `sessoes-list.component.ts` com tabela `min-w-[750px]` e busca reativa.
+- **Agenda**: `agenda-list.component.ts` com visualizações de Mês (`min-w-[650px]`) e Semana (`min-w-[700px]`) com rolagem suave no touch.
+- **Financeiro / NFS-e / DRE**: `financeiro-list.component.ts` (`min-w-[650px]`), `nfse.component.ts` (`min-w-[750px]`), `financeiro-dre.component.ts` (`min-w-[500px]`) e `financeiro.component.ts` (`min-w-[500px]`).
+- **Laudos e Pareceres**: `laudos-list.component.ts` com tabela `min-w-[700px]`.
+- **Evoluções e Anamnese**: `evolucoes-list.component.ts` (`min-w-[650px]`) e `anamnese-list.component.ts` (`min-w-[650px]`).
+- **Encaminhamentos**: `encaminhamentos-list.component.ts` com tabela `min-w-[700px]`.
+- **Protocolos TEA & ABA**: `protocolos-list.component.ts` (`min-w-[650px]`), `aba-assessment.component.ts` (itens flexíveis no mobile) e `aba-programs.component.ts` (filtros responsivos).
+- **Rastreios & Planos de Intervenção**: `rastreios-list.component.ts`, `planos-list.component.ts` (`min-w-[650px]`) e `plano-form.component.ts`.
+- **Documentos & Solicitações**: `documentos-list.component.ts` (`min-w-[700px]`) e `solicitacao-detail.component.ts`.
+- **Usuários, Permissões e LGPD**: `users-list.component.ts` (`min-w-[700px]`), `user-permissions.component.ts` (`min-w-[500px]`), `consent-log.component.ts` (`min-w-[600px]`) e `whatsapp-config.component.ts` (`min-w-[600px]`).
+- **Portal da Família / Kit Docente**: `guardian-financial.component.ts` (`min-w-[600px]`) e `kit-docente.component.ts` (`min-w-[650px]` e `min-w-[600px]`).
+
+#### 4. Validação
+- **Angular Build**: Compilação `ng build` concluída com sucesso (código de saída 0).
 
 ---
 

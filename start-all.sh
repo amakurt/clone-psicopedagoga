@@ -17,6 +17,11 @@ for arg in "$@"; do
   esac
 done
 
+# Auto-detect LAN IP if not provided
+if [ -z "$LAN_IP" ]; then
+  LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo "")"
+fi
+
 # --- Colima/Docker (Evolution API) ---
 if ! docker info >/dev/null 2>&1; then
   echo "==> Iniciando Colima (Docker)..."
@@ -66,9 +71,8 @@ else
 fi
 
 # --- Frontend ---
-FRONT_OPTS=""
+FRONT_OPTS="--host 0.0.0.0"
 if [ -n "$LAN_IP" ]; then
-  FRONT_OPTS="--host 0.0.0.0"
   echo "==> Expondo frontend na rede: http://$LAN_IP:4200"
 fi
 

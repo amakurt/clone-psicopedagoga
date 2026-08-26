@@ -10,60 +10,108 @@ import { ToastService } from '@shared/components/toast.component';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="page">
-      <div class="header">
-        <div><h1>Rastreios</h1><p class="subtitle">Triagens padronizadas com correção automática (TEA, TDAH, habilidades sociais)</p></div>
-        <a routerLink="/app/rastreios/novo" class="btn btn-primary"><span class="material-icons">add</span> Novo rastreio</a>
+    <div class="space-y-6 sm:space-y-8 animate-in">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Rastreios e Triagens</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Triagens padronizadas com correção automática (TEA, TDAH, habilidades sociais)</p>
+        </div>
+        <a routerLink="/app/rastreios/novo" 
+          class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-5 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 self-start sm:self-auto">
+          <span class="material-icons text-[18px]">add</span>
+          <span>Novo Rastreio</span>
+        </a>
       </div>
 
-      <div class="filters">
-        <input class="form-control" placeholder="Buscar por paciente, instrumento, informante ou resumo..." [(ngModel)]="search" (ngModelChange)="applyFilters()" />
-        <select class="form-control" [(ngModel)]="filterInstrument" (ngModelChange)="applyFilters()">
+      <!-- Filtros Responsivos -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="relative group sm:col-span-2 lg:col-span-1">
+          <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
+          <input type="text" class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm transition-all outline-none"
+            placeholder="Buscar por paciente..."
+            [(ngModel)]="search" (ngModelChange)="applyFilters()">
+        </div>
+
+        <select class="px-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm outline-none"
+          [(ngModel)]="filterInstrument" (ngModelChange)="applyFilters()">
           <option value="">Todos os instrumentos</option>
-          @for (i of instruments(); track i.code) { <option [value]="i.code">{{ i.name }}</option> }
+          @for (i of instruments(); track i.code) { 
+            <option [value]="i.code">{{ i.name }}</option> 
+          }
         </select>
-        <select class="form-control" [(ngModel)]="filterRisk" (ngModelChange)="applyFilters()">
+
+        <select class="px-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm outline-none"
+          [(ngModel)]="filterRisk" (ngModelChange)="applyFilters()">
           <option value="">Todos os riscos</option>
           <option value="ELEVADO">Risco elevado</option>
           <option value="ALTO">Risco alto</option>
           <option value="MODERADO">Risco moderado</option>
           <option value="BAIXO">Risco baixo</option>
         </select>
-        <button class="btn btn-outline" style="padding:8px 12px" (click)="toggleAll()">
-          <span class="material-icons" style="font-size:16px">{{ allHidden() ? 'visibility' : 'visibility_off' }}</span>
-          {{ allHidden() ? 'Mostrar todos' : 'Ocultar todos' }}
+
+        <button class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 text-slate-700 dark:text-slate-200 transition-all"
+          (click)="toggleAll()">
+          <span class="material-icons text-base">{{ allHidden() ? 'visibility' : 'visibility_off' }}</span>
+          <span>{{ allHidden() ? 'Mostrar todos' : 'Ocultar todos' }}</span>
         </button>
       </div>
 
       @if (hiddenCount() > 0 && !allHidden()) {
-        <p style="font-size:12px;color:var(--gray-500);margin:0 0 10px">
+        <p class="text-xs text-slate-500 dark:text-slate-400">
           {{ hiddenCount() }} rastreio(s) oculto(s) — use "Mostrar todos" para exibi-los novamente.
         </p>
       }
 
+      <!-- Lista de Itens -->
       @if (loading()) {
-        <div style="text-align:center;padding:40px;color:var(--gray-400)"><span class="material-icons" style="font-size:40px">hourglass_empty</span><p>Carregando...</p></div>
+        <div class="flex items-center justify-center p-12 text-slate-500">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
       } @else if (filtered().length === 0) {
-        <div style="text-align:center;padding:40px;color:var(--gray-400)"><span class="material-icons" style="font-size:40px">fact_check</span><p>Nenhum rastreio encontrado</p></div>
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center ring-1 ring-slate-200 dark:ring-slate-800">
+          <span class="material-icons text-6xl text-slate-300 dark:text-slate-700">fact_check</span>
+          <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhum rastreio encontrado</p>
+        </div>
       } @else {
-        <div class="list">
+        <div class="space-y-3">
           @for (r of filtered(); track r.id) {
-            <div class="item">
-              <div class="avatar" [style.background]="riskColor(r.riskLevel).bg">
-                <span class="material-icons" style="color:white;font-size:20px">fact_check</span>
-              </div>
-              <div style="flex:1;min-width:0">
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                  <strong style="font-size:14px">{{ r.paciente?.name || '—' }}</strong>
-                  <span class="chip" [style]="riskColor(r.riskLevel).style">{{ r.riskLevel }}</span>
-                  @if (r.respondent) { <span style="font-size:11px;color:var(--gray-500)">{{ respondentLabel(r.respondent) }}</span> }
+            <div class="p-4 sm:p-5 bg-white dark:bg-slate-900 rounded-2xl ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:ring-primary/30 transition-all">
+              <div class="flex items-start gap-3.5 min-w-0">
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm" [style.background]="riskColor(r.riskLevel).bg">
+                  <span class="material-icons text-white text-xl">fact_check</span>
                 </div>
-                <p style="margin:4px 0 0;font-size:12px;color:var(--gray-500)">{{ instrumentName(r.instrument) }} · {{ r.assessedAt | date:'dd/MM/yyyy' }} · {{ r.profissional?.name || '—' }}</p>
-                <p style="margin:4px 0 0;font-size:12px;color:var(--gray-600)" title="{{ r.summary }}">{{ (r.summary || '').slice(0, 110) }}{{ (r.summary || '').length > 110 ? '…' : '' }}</p>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-bold text-slate-900 dark:text-white text-sm">{{ r.paciente?.name || '—' }}</h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold" [style]="riskColor(r.riskLevel).style">
+                      {{ r.riskLevel }}
+                    </span>
+                    @if (r.respondent) { 
+                      <span class="text-xs text-slate-500 dark:text-slate-400">· {{ respondentLabel(r.respondent) }}</span> 
+                    }
+                  </div>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {{ instrumentName(r.instrument) }} · {{ r.assessedAt | date:'dd/MM/yyyy' }} · {{ r.profissional?.name || '—' }}
+                  </p>
+                  @if (r.summary) {
+                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2" title="{{ r.summary }}">
+                      {{ r.summary }}
+                    </p>
+                  }
+                </div>
               </div>
-              <div style="display:flex;gap:6px">
-                <button class="btn btn-outline" style="padding:6px 10px" title="Editar" routerLink="/app/rastreios/novo" (click)="edit(r)"><span class="material-icons" style="font-size:16px">edit</span></button>
-                <button class="btn btn-outline" style="padding:6px 10px;color:#DC2626;border-color:#FECACA" title="Excluir" (click)="remove(r)"><span class="material-icons" style="font-size:16px">delete</span></button>
+
+              <!-- Ações -->
+              <div class="flex items-center gap-2 self-end sm:self-center shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+                <button class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" 
+                  title="Editar" routerLink="/app/rastreios/novo" (click)="edit(r)">
+                  <span class="material-icons text-lg">edit</span>
+                </button>
+                <button class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" 
+                  title="Excluir" (click)="remove(r)">
+                  <span class="material-icons text-lg">delete</span>
+                </button>
               </div>
             </div>
           }
@@ -71,23 +119,7 @@ import { ToastService } from '@shared/components/toast.component';
       }
     </div>
   `,
-  styles: [`
-    .page { max-width: 900px; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .subtitle { color: var(--gray-500); font-size: 14px; margin: 4px 0 0; }
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); }
-    .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .form-control { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; }
-    .filters .form-control:first-child { flex: 1; min-width: 200px; }
-    .list { display: flex; flex-direction: column; gap: 10px; }
-    .item { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--card-bg); border: 1px solid var(--gray-200); border-radius: var(--radius); }
-    .avatar { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .chip { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-    select.form-control { appearance: auto; }
-  `]
+  styles: [`:host { display: block; }`]
 })
 export class RastreiosListComponent implements OnInit {
   private service = inject(RastreioService);

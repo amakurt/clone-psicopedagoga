@@ -11,8 +11,8 @@ import { ApiService } from '@core/services/api.service';
       <div class="header"><h1>Financeiro</h1><p class="subtitle">Controle de pagamentos</p></div>
       @if (items().length === 0) { <div class="empty"><span class="material-icons" style="font-size:48px;color:var(--gray-400)">payments</span><p>Nenhum registro</p></div> }
       @else {
-        <div class="card"><div class="card-body">
-          <table class="table">
+        <div class="card"><div class="card-body overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+          <table class="table min-w-[500px]">
             <thead><tr><th>Data</th><th>Paciente</th><th>Valor</th><th>Status</th></tr></thead>
             <tbody>
               @for (f of items(); track f.id) {

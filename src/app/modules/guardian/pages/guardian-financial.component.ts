@@ -39,7 +39,8 @@ import { ToastService } from '@shared/components/toast.component';
         </div>
       } @else {
         <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-          <table class="w-full">
+          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full min-w-[600px]">
             <thead class="bg-gray-50 dark:bg-slate-700">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Data</th>
@@ -74,7 +75,8 @@ import { ToastService } from '@shared/components/toast.component';
                 </tr>
               }
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       }
     </div>

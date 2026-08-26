@@ -1,25 +1,154 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { SessaoService } from '../services/sessao.service';
 
 @Component({
   selector: 'app-sessoes-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="page">
-      <div class="header"><div><h1>Sessões</h1><p class="subtitle">Agendamento e acompanhamento</p></div><a routerLink="/app/sessoes/nova" class="btn btn-primary"><span class="material-icons">add</span> Nova Sessão</a></div>
-      @if (loading()) { <p>Carregando...</p> }
-      @else if (items().length === 0) { <div class="empty"><span class="material-icons" style="font-size:48px;color:var(--gray-400)">event</span><p>Nenhuma sessão</p></div> }
-      @else { <div class="card"><div class="card-body"><table class="table"><thead><tr><th>Data</th><th>Paciente</th><th>Tipo</th><th>Duração</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead><tbody>
-        @for (s of items(); track s.id) { <tr><td>{{ s.date | date:'dd/MM/yyyy HH:mm' }}</td><td><strong>{{ s.paciente?.name }}</strong></td><td>{{ s.tipo || '—' }}</td><td>{{ s.duration ? s.duration + ' min' : '—' }}</td><td><span class="badge" [class]="'badge-' + s.status.toLowerCase()">{{ s.status }}</span></td><td>{{ s.valor ? (s.valor | currency:'BRL') : '—' }}</td><td class="actions"><a [routerLink]="['/app/sessoes', s.id]" class="btn-sm btn-outline"><span class="material-icons">visibility</span></a><a [routerLink]="['/app/sessoes', s.id, 'editar']" class="btn-sm btn-outline"><span class="material-icons">edit</span></a></td></tr> }
-      </tbody></table></div></div> }
+    <div class="space-y-6 sm:space-y-8 animate-in">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Sessões Clínicas</h1>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Histórico de atendimentos e sessões realizadas</p>
+        </div>
+        <a routerLink="/app/sessoes/nova"
+          class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-5 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 self-start sm:self-auto">
+          <span class="material-icons text-[18px]">add</span>
+          <span>Nova Sessão</span>
+        </a>
+      </div>
+
+      <!-- Barra de Busca -->
+      <div class="w-full max-w-md">
+        <div class="relative group">
+          <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
+          <input type="text" class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm transition-all outline-none"
+            placeholder="Buscar por paciente, tipo ou status..."
+            [(ngModel)]="searchTerm">
+        </div>
+      </div>
+
+      <!-- Card da Tabela -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+        @if (loading()) {
+          <div class="flex items-center justify-center p-12 text-slate-500">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        } @else if (filteredItems().length === 0) {
+          <div class="text-center py-16 px-4">
+            <span class="material-icons text-6xl text-slate-300 dark:text-slate-700">event</span>
+            <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhuma sessão encontrada</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-left border-collapse min-w-[750px]">
+              <thead>
+                <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Data / Hora</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Tipo</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Duração</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Valor</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                @for (s of filteredItems(); track s.id) {
+                  <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                    <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                      {{ s.date | date:'dd/MM/yyyy HH:mm' }}
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="font-bold text-slate-900 dark:text-white text-sm">
+                        {{ s.paciente?.name || '—' }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                      {{ s.tipo || 'Sessão' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                      {{ s.duration ? s.duration + ' min' : '—' }}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold"
+                        [class]="getStatusClass(s.status)">
+                        {{ s.status }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                      {{ s.valor ? (s.valor | currency:'BRL') : '—' }}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <a [routerLink]="['/app/sessoes', s.id]" 
+                          class="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                          title="Ver detalhes">
+                          <span class="material-icons text-lg">visibility</span>
+                        </a>
+                        <a [routerLink]="['/app/sessoes', s.id, 'editar']" 
+                          class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" 
+                          title="Editar">
+                          <span class="material-icons text-lg">edit</span>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
     </div>
   `,
-  styles: [`.page { max-width: 1200px; } .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; } .header h1 { margin: 0; font-size: 24px; } .subtitle { color: var(--gray-500); font-size: 14px; margin: 4px 0 0; } .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); } .card-body { padding: 16px; } .table { width: 100%; border-collapse: collapse; } .table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--gray-200); font-size: 14px; } .table th { color: var(--gray-500); font-size: 12px; text-transform: uppercase; } .actions { display: flex; gap: 4px; } .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; } .btn-primary { background: var(--primary); color: white; } .btn-sm { padding: 4px 8px; font-size: 12px; } .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); } .btn-sm .material-icons { font-size: 16px; } .badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; } .badge-agendada { background: #DBEAFE; color: #1E40AF; } .badge-concluida { background: #D1FAE5; color: #065F46; } .badge-cancelada { background: #FEE2E2; color: #991B1B; } .badge-em_andamento { background: #FEF3C7; color: #92400E; } .empty { text-align: center; padding: 40px; color: var(--gray-500); }`]
+  styles: [`
+    :host { display: block; }
+  `]
 })
 export class SessoesListComponent implements OnInit {
-  private service = inject(SessaoService); items = signal<any[]>([]); loading = signal(true);
-  ngOnInit() { this.service.list().subscribe({ next: (res: any) => { this.items.set(res.data); this.loading.set(false); }, error: () => this.loading.set(false) }); }
+  private service = inject(SessaoService);
+  items = signal<any[]>([]);
+  loading = signal(true);
+  searchTerm = '';
+
+  ngOnInit() {
+    this.service.list().subscribe({
+      next: (res: any) => {
+        this.items.set(res.data || res || []);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
+  }
+
+  filteredItems() {
+    const term = this.searchTerm.toLowerCase().trim();
+    if (!term) return this.items();
+    return this.items().filter(s => {
+      const patient = (s.paciente?.name || '').toLowerCase();
+      const tipo = (s.tipo || '').toLowerCase();
+      const status = (s.status || '').toLowerCase();
+      return patient.includes(term) || tipo.includes(term) || status.includes(term);
+    });
+  }
+
+  getStatusClass(status: string): string {
+    const s = (status || '').toUpperCase();
+    if (s === 'CONCLUIDA' || s === 'CONCLUÍDA' || s === 'REALIZADA') {
+      return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400';
+    }
+    if (s === 'CANCELADA') {
+      return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+    }
+    if (s === 'EM_ANDAMENTO') {
+      return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
+    }
+    return 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400';
+  }
 }

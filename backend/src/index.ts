@@ -38,7 +38,23 @@ configurePassport();
 
 // CORS configuration
 app.use(cors({
-  origin: (process.env.FRONTEND_URL || 'http://localhost:4200').split(',').map((u: string) => u.trim()),
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:4200')
+      .split(',')
+      .map((u: string) => u.trim());
+    if (
+      allowedOrigins.includes(origin) ||
+      /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
+      /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
+      /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
+      /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?$/.test(origin)
+    ) {
+      return callback(null, true);
+    }
+    callback(new Error(`Bloqueado por CORS: ${origin}`));
+  },
   credentials: true
 }));
 

@@ -25,53 +25,78 @@ type NavItem = {
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ToastComponent, NotificationDropdownComponent, ChatFloatingComponent],
   template: `
     <div class="flex h-screen overflow-hidden" [class.dark]="isDarkMode()">
-      <aside class="shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300 ease-in-out relative"
-        [class.w-64]="sidebarOpen()"
-        [class.w-20]="!sidebarOpen()">
+      
+      <!-- Backdrop móvel para tela pequena (< lg) -->
+      @if (mobileSidebarOpen()) {
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          (click)="mobileSidebarOpen.set(false)"></div>
+      }
 
-        <button class="absolute -right-3 top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-1 text-slate-500 hover:text-primary transition-colors shadow-sm z-50"
-          (click)="toggleSidebar()">
+      <!-- Sidebar / Drawer Lateral -->
+      <aside 
+        class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] lg:static lg:z-auto shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col transition-all duration-300 ease-in-out shadow-2xl lg:shadow-none"
+        [class.-translate-x-full]="!mobileSidebarOpen()"
+        [class.translate-x-0]="mobileSidebarOpen()"
+        [class.lg:translate-x-0]="true"
+        [class.lg:w-64]="sidebarOpen()"
+        [class.lg:w-20]="!sidebarOpen()">
+
+        <!-- Botão Desktop de Recolher / Expandir Sidebar -->
+        <button class="hidden lg:flex absolute -right-3 top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-1 text-slate-500 hover:text-primary transition-colors shadow-sm z-50 items-center justify-center"
+          (click)="toggleSidebar()" title="Recolher / Expandir menu">
           <span class="material-icons text-[14px]">{{ sidebarOpen() ? 'chevron_left' : 'chevron_right' }}</span>
         </button>
 
-        <div class="p-6 flex items-center gap-3" [class.justify-center]="!sidebarOpen()" [class.px-4]="!sidebarOpen()">
-          <div class="size-10 bg-primary rounded-xl flex items-center justify-center text-on-primary shadow-lg shadow-primary/20 shrink-0">
-            <span class="material-icons text-[24px]">dashboard</span>
+        <!-- Topo da Sidebar (Logo + Botão Fechar no Mobile) -->
+        <div class="p-4 sm:p-6 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 lg:border-b-0"
+          [class.lg:justify-center]="!sidebarOpen()" [class.lg:px-4]="!sidebarOpen()">
+          <div class="flex items-center gap-3">
+            <div class="size-10 bg-primary rounded-xl flex items-center justify-center text-on-primary shadow-lg shadow-primary/20 shrink-0">
+              <span class="material-icons text-[24px]">dashboard</span>
+            </div>
+            <div class="overflow-hidden transition-all duration-300" 
+              [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()" 
+              [class.lg:w-auto]="sidebarOpen()" [class.lg:opacity-100]="sidebarOpen()">
+              <h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight whitespace-nowrap">EduPsych Pro</h1>
+              <p class="text-primary text-xs font-semibold tracking-wide uppercase whitespace-nowrap">Gestão Clínica</p>
+            </div>
           </div>
-          <div class="overflow-hidden transition-all duration-300" [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()" [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
-            <h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight whitespace-nowrap">EduPsych Pro</h1>
-            <p class="text-primary text-xs font-semibold tracking-wide uppercase whitespace-nowrap">Gestão</p>
-          </div>
+
+          <!-- Botão Fechar (apenas mobile) -->
+          <button (click)="mobileSidebarOpen.set(false)" 
+            class="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="Fechar menu">
+            <span class="material-icons text-xl">close</span>
+          </button>
         </div>
 
-        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+        <!-- Links de Navegação -->
+        <nav class="flex-1 px-3 sm:px-4 py-3 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
           @for (item of navItems; track item.id) {
             @if (item.children?.length) {
               <div>
                 <button (click)="toggleMenu(item.id)"
-                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative"
-                  [class.justify-center]="!sidebarOpen()"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative"
+                  [class.lg:justify-center]="!sidebarOpen()"
                   [class.text-primary]="isGroupActive(item.id)"
                   [class.text-slate-600]="!isGroupActive(item.id)"
                   [class.dark:text-slate-400]="!isGroupActive(item.id)"
                   [title]="item.label">
                   <span class="material-icons text-[20px] shrink-0">{{ item.icon }}</span>
-                  <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold text-left"
-                    [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
-                    [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()"
-                    [class.flex-1]="sidebarOpen()">
+                  <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold text-left flex-1"
+                    [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()"
+                    [class.lg:w-auto]="sidebarOpen()" [class.lg:opacity-100]="sidebarOpen()">
                     {{ item.label }}
                   </span>
-                  @if (sidebarOpen()) {
-                    <span class="material-icons text-[18px] transition-transform duration-300 shrink-0"
-                      [class.rotate-180]="isExpanded(item.id)">expand_more</span>
-                  }
+                  <span class="material-icons text-[18px] transition-transform duration-300 shrink-0"
+                    [class.lg:hidden]="!sidebarOpen()"
+                    [class.rotate-180]="isExpanded(item.id)">expand_more</span>
                 </button>
-                @if (sidebarOpen() && isExpanded(item.id)) {
+                @if (isExpanded(item.id) && (mobileSidebarOpen() || sidebarOpen())) {
                   <div class="ml-3 mt-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-3">
                     @for (child of item.children; track child.id) {
                       @if (child.profile) {
-                        <div class="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                        <div class="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl mb-1">
                           <div class="size-9 rounded-full bg-cover bg-center border-2 border-white dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                             @if (auth.user()?.avatarUrl) {
                               <img [src]="auth.user()?.avatarUrl" class="size-full object-cover">
@@ -93,11 +118,10 @@ type NavItem = {
                         </button>
                       } @else {
                         <a [routerLink]="child.route"
-                           routerLinkActive="bg-primary/10 text-primary"
+                           (click)="onLinkClick()"
+                           routerLinkActive="bg-primary/10 text-primary font-bold"
                            [routerLinkActiveOptions]="{ exact: true }"
-                           class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group"
-                           [class.text-slate-500]="true"
-                           [class.dark:text-slate-400]="true"
+                           class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                            [title]="child.label">
                           <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
                           <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
@@ -109,23 +133,22 @@ type NavItem = {
               </div>
             } @else {
               <a [routerLink]="item.route"
-                 routerLinkActive="bg-primary/10 text-primary"
-                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative"
-                 [class.justify-center]="!sidebarOpen()"
-                 [class.text-slate-600]="true"
-                 [class.dark:text-slate-400]="true"
+                 (click)="onLinkClick()"
+                 routerLinkActive="bg-primary/10 text-primary font-bold"
+                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                 [class.lg:justify-center]="!sidebarOpen()"
                  [title]="item.label">
                 <span class="material-icons text-[20px] shrink-0">{{ item.icon }}</span>
                 <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold"
-                  [class.w-0]="!sidebarOpen()" [class.opacity-0]="!sidebarOpen()"
-                  [class.w-auto]="sidebarOpen()" [class.opacity-100]="sidebarOpen()">
+                  [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()"
+                  [class.lg:w-auto]="sidebarOpen()" [class.lg:opacity-100]="sidebarOpen()">
                   {{ item.label }}
                 </span>
                 @if (item.count && item.count() > 0) {
-                  <span class="absolute flex items-center justify-center bg-red-600 text-white text-[8px] font-black rounded-full transition-all"
-                    [class.right-3]="sidebarOpen()" [class.min-w-[14px]]="sidebarOpen()" [class.h-[14px]]="sidebarOpen()" [class.px-1]="sidebarOpen()"
-                    [class.top-1.5]="!sidebarOpen()" [class.right-1.5]="!sidebarOpen()" [class.size-2]="!sidebarOpen()">
-                    {{ sidebarOpen() ? item.count() : '' }}
+                  <span class="absolute flex items-center justify-center bg-red-600 text-white text-[9px] font-black rounded-full transition-all right-3 min-w-[16px] h-[16px] px-1"
+                    [class.lg:right-3]="sidebarOpen()" [class.lg:min-w-[16px]]="sidebarOpen()" [class.lg:h-[16px]]="sidebarOpen()"
+                    [class.lg:top-1.5]="!sidebarOpen()" [class.lg:right-1.5]="!sidebarOpen()" [class.lg:size-2.5]="!sidebarOpen()" [class.lg:p-0]="!sidebarOpen()">
+                    <span [class.lg:hidden]="!sidebarOpen()">{{ item.count() }}</span>
                   </span>
                 }
               </a>
@@ -134,30 +157,46 @@ type NavItem = {
         </nav>
       </aside>
 
+      <!-- Conteúdo Principal -->
       <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#eff2f6] dark:bg-[#19212e] transition-colors duration-200">
-        <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 shrink-0">
-          <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span class="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 font-medium">
-              <span class="material-icons text-[15px]">home</span>
-              <span>EduPsych</span>
-            </span>
-            <span class="text-slate-300 dark:text-slate-700">/</span>
-            <span class="text-slate-700 dark:text-slate-200 font-bold tracking-wide">{{ currentPageTitle() }}</span>
+        
+        <!-- Header Superior -->
+        <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 lg:px-8 shrink-0 z-30">
+          
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <!-- Botão Hamburger no Mobile -->
+            <button (click)="mobileSidebarOpen.set(true)"
+              class="lg:hidden p-2 -ml-1 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
+              title="Abrir menu">
+              <span class="material-icons text-2xl">menu</span>
+            </button>
+
+            <!-- Breadcrumb dinâmico -->
+            <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 truncate">
+              <span class="hidden sm:flex items-center gap-1 text-slate-400 dark:text-slate-500 font-medium">
+                <span class="material-icons text-[15px]">home</span>
+                <span>EduPsych</span>
+                <span class="text-slate-300 dark:text-slate-700 ml-1">/</span>
+              </span>
+              <span class="text-slate-800 dark:text-slate-200 font-bold tracking-wide truncate">{{ currentPageTitle() }}</span>
+            </div>
           </div>
-          <div class="flex items-center gap-3">
+
+          <!-- Ações do Header -->
+          <div class="flex items-center gap-2 sm:gap-3 shrink-0">
             @if (auth.tenants().length > 1) {
               <div class="relative">
-                <button class="flex items-center gap-2 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300 transition-all max-w-[220px]"
+                <button class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300 transition-all max-w-[130px] sm:max-w-[200px]"
                   (click)="tenantOpen.set(!tenantOpen())" title="Trocar de clínica">
-                  <div class="size-6 rounded-md bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                  <div class="size-5 sm:size-6 rounded-md bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                     @if (auth.tenant()?.logoUrl) {
                       <img [src]="auth.tenant()?.logoUrl" class="size-full object-cover">
                     } @else {
-                      <span class="material-icons text-[14px] text-primary">domain</span>
+                      <span class="material-icons text-[13px] sm:text-[14px] text-primary">domain</span>
                     }
                   </div>
                   <span class="text-xs font-bold truncate">{{ auth.tenant()?.name || 'Clínica' }}</span>
-                  <span class="material-icons text-[16px]">arrow_drop_down</span>
+                  <span class="material-icons text-[16px] shrink-0">arrow_drop_down</span>
                 </button>
                 @if (tenantOpen()) {
                   <div class="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-2">
@@ -191,13 +230,15 @@ type NavItem = {
                 }
               </div>
             }
+
+            <!-- Notificações -->
             <div class="relative">
-              <button class="p-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-500 hover:text-primary transition-all relative"
-                (click)="toggleNotifications()">
+              <button class="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-500 hover:text-primary transition-all relative flex items-center justify-center"
+                (click)="toggleNotifications()" title="Notificações">
                 <span class="material-icons text-xl">notifications</span>
                 @if (notifCount() > 0) {
                   <span class="absolute -top-1 -right-1 size-5 bg-red-600 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">
-                    {{ notifCount() }}
+                    {{ notifCount() > 99 ? '99+' : notifCount() }}
                   </span>
                 }
               </button>
@@ -209,8 +250,9 @@ type NavItem = {
           </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <div class="max-w-[1400px] mx-auto">
+        <!-- Área de Conteúdo com padding adaptativo -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+          <div class="max-w-[1400px] mx-auto w-full">
             <router-outlet />
           </div>
         </div>
@@ -233,6 +275,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   sidebarOpen = signal(true);
+  mobileSidebarOpen = signal(false);
   isDarkMode = signal(false);
   notifCount = signal(0);
   notifOpen = signal(false);
@@ -321,6 +364,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
       });
   }
 
+  onLinkClick() {
+    this.mobileSidebarOpen.set(false);
+  }
+
   ngOnInit() {
     const savedTheme = localStorage.getItem('theme');
     this.isDarkMode.set(savedTheme === 'dark');
@@ -331,10 +378,13 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     const savedColor = localStorage.getItem('accentColor');
     if (savedColor) applyAccentColor(savedColor);
 
-    localStorage.setItem('sidebar_open', 'true');
-    this.sidebarOpen.set(true);
+    const savedSidebar = localStorage.getItem('sidebar_open');
+    if (savedSidebar !== null) {
+      this.sidebarOpen.set(savedSidebar === 'true');
+    }
 
     this.router.events.subscribe(() => {
+      this.mobileSidebarOpen.set(false);
       this.updatePageTitle();
     });
     this.updatePageTitle();

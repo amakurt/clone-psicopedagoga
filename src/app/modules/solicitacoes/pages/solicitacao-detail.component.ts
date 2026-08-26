@@ -18,22 +18,24 @@ const STATUS = STATUS_CONFIG;
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="p-6 max-w-4xl mx-auto">
-      <div class="flex items-center gap-3 mb-6">
-        <button (click)="router.navigate(['/app/solicitacoes'])"
-          class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-          <span class="material-icons">arrow_back</span>
-        </button>
-        <div class="flex-1 min-w-0">
-          @if (doc()) {
-            <h1 class="text-2xl font-black text-slate-900 dark:text-white truncate">{{ doc().title }}</h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
-              {{ doc().responsible?.name }} · Criado em {{ doc().createdAt | date:'dd/MM/yyyy HH:mm' }}
-            </p>
-          }
+    <div class="p-4 sm:p-6 max-w-4xl mx-auto animate-in">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3 min-w-0">
+          <button (click)="router.navigate(['/app/solicitacoes'])"
+            class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0">
+            <span class="material-icons">arrow_back</span>
+          </button>
+          <div class="flex-1 min-w-0">
+            @if (doc()) {
+              <h1 class="text-2xl font-black text-slate-900 dark:text-white truncate">{{ doc().title }}</h1>
+              <p class="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                {{ doc().responsible?.name }} · Criado em {{ doc().createdAt | date:'dd/MM/yyyy HH:mm' }}
+              </p>
+            }
+          </div>
         </div>
         @if (doc()) {
-          <span class="px-3 py-1.5 rounded-full text-xs font-bold border shrink-0"
+          <span class="px-3 py-1.5 rounded-full text-xs font-bold border self-start sm:self-center shrink-0"
             [class]="badgeCls(doc().status)">
             {{ getStatusLabel(doc().status) }}
           </span>

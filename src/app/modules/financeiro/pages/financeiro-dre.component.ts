@@ -67,8 +67,8 @@ declare var html2pdf: any;
         <div class="p-6 border-b border-slate-100 dark:border-slate-800">
           <h3 class="text-lg font-black text-slate-900 dark:text-white">DRE - {{ getMonthName() }}/{{ selectedYear() }}</h3>
         </div>
-        <div class="p-6">
-          <table class="w-full text-left">
+        <div class="p-6 overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+          <table class="w-full text-left min-w-[500px]">
             <tbody>
               <tr class="border-b border-slate-100 dark:border-slate-800">
                 <td class="py-3 text-sm font-bold text-slate-900 dark:text-white">(+) Receita Bruta</td>
@@ -148,8 +148,8 @@ declare var html2pdf: any;
           @if (loading()) {
             <div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
           } @else {
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+            <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+              <table class="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                   <tr class="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                     <th class="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>

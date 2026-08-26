@@ -264,6 +264,12 @@ select.form-control { appearance: auto; cursor: pointer; }
 .table tbody tr:hover { background: var(--gray-50); }
 .dark .table tbody tr:hover { background: rgba(var(--primary-rgb), 0.05); }
 
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Cards */
 .card {
   background: var(--card-bg);
