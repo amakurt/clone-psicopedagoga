@@ -9,65 +9,81 @@ import { AuthService } from '@core/services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6 max-w-2xl">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Configurações</h2>
-        <p class="text-gray-500 dark:text-slate-400 mt-1">Gerenciar seu perfil</p>
+    <div class="space-y-5 sm:space-y-6 max-w-2xl">
+      <!-- Header -->
+      <div class="flex items-center gap-3">
+        <div class="size-11 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+          <span class="material-icons text-primary text-2xl">settings</span>
+        </div>
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Configurações da Conta</h2>
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Gerencie seus dados e segurança</p>
+        </div>
       </div>
 
       <!-- Profile -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Perfil</h3>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-slate-700 shadow-sm">
+        <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <span class="material-icons text-primary">person</span> Dados Pessoais
+        </h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nome</label>
-            <input [(ngModel)]="name" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Seu Nome Completo</label>
+            <input [(ngModel)]="name" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
-            <input [value]="email()" disabled class="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">E-mail Cadastrado</label>
+            <input [value]="email()" disabled class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-gray-50 dark:bg-slate-900/50 text-gray-400 dark:text-slate-500 text-sm cursor-not-allowed">
           </div>
-          <button (click)="updateProfile()" [disabled]="saving()" 
-            class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all">
-            {{ saving() ? 'Salvando...' : 'Salvar' }}
+          <button (click)="updateProfile()" [disabled]="saving() || !name.trim()" 
+            class="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-md shadow-primary/20 disabled:opacity-50 transition-all active:scale-95">
+            {{ saving() ? 'Salvando...' : 'Salvar Alterações' }}
           </button>
           @if (saveSuccess()) {
-            <p class="text-green-600 text-sm">{{ saveSuccess() }}</p>
+            <p class="text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1">
+              <span class="material-icons text-[16px]">check_circle</span> {{ saveSuccess() }}
+            </p>
           }
         </div>
       </div>
 
       <!-- Change Password -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Alterar Senha</h3>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-slate-700 shadow-sm">
+        <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <span class="material-icons text-primary">lock</span> Alterar Senha
+        </h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Senha Atual</label>
-            <input [(ngModel)]="currentPassword" type="password" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Senha Atual</label>
+            <input [(ngModel)]="currentPassword" type="password" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nova Senha</label>
-            <input [(ngModel)]="newPassword" type="password" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Confirmar Nova Senha</label>
-            <input [(ngModel)]="confirmPassword" type="password" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Nova Senha</label>
+              <input [(ngModel)]="newPassword" type="password" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Confirmar Nova Senha</label>
+              <input [(ngModel)]="confirmPassword" type="password" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+            </div>
           </div>
           @if (passwordError()) {
-            <p class="text-red-500 text-sm">{{ passwordError() }}</p>
+            <p class="text-red-500 text-xs font-semibold">{{ passwordError() }}</p>
           }
           <button (click)="changePassword()" [disabled]="changingPassword()" 
-            class="px-6 py-3 bg-gray-800 dark:bg-slate-600 hover:bg-gray-900 dark:hover:bg-slate-500 text-white rounded-xl font-semibold disabled:opacity-50 transition-all">
-            {{ changingPassword() ? 'Alterando...' : 'Alterar Senha' }}
+            class="w-full sm:w-auto px-6 py-3 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-2xl font-bold text-sm disabled:opacity-50 transition-all active:scale-95">
+            {{ changingPassword() ? 'Alterando senha...' : 'Atualizar Senha' }}
           </button>
         </div>
       </div>
 
       <!-- About -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Sobre</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">EduPsych Pro - Portal da Família</p>
-        <p class="text-sm text-gray-500 dark:text-slate-400">Versão 1.0.0</p>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+        <div>
+          <h4 class="text-sm font-bold text-gray-900 dark:text-white">EduPsych Pro — Portal da Família</h4>
+          <p class="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Ambiente seguro com criptografia e isolamento de dados.</p>
+        </div>
+        <span class="px-2.5 py-1 bg-primary/10 text-primary text-xs font-black rounded-full">v1.0.0</span>
       </div>
     </div>
   `

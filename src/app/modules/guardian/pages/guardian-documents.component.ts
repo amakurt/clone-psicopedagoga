@@ -12,52 +12,62 @@ import { resolveFileUrl } from '@core/utils/file-url';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Documentos</h2>
-          <p class="text-gray-500 dark:text-slate-400 mt-1">Documentos compartilhados e envio de novos</p>
+    <div class="space-y-5 sm:space-y-6">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="size-11 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <span class="material-icons text-primary text-2xl">description</span>
+          </div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Documentos</h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Arquivos compartilhados e envio de novos documentos</p>
+          </div>
         </div>
         <button (click)="showUpload.set(!showUpload())" 
-          class="px-4 py-2 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold flex items-center gap-2 transition-all">
-          <span class="material-icons">upload</span>
-          Enviar Documento
+          class="w-full sm:w-auto px-5 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/20 transition-all active:scale-95">
+          <span class="material-icons text-[18px]">upload_file</span>
+          {{ showUpload() ? 'Fechar Envio' : 'Enviar Documento' }}
         </button>
       </div>
 
       <!-- Upload Form -->
       @if (showUpload()) {
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Novo Documento</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-slate-700 shadow-sm animate-in fade-in">
+          <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span class="material-icons text-primary">cloud_upload</span> Novo Documento
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nome</label>
-              <input [(ngModel)]="newDoc.name" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white" placeholder="Nome do documento">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Nome do Arquivo *</label>
+              <input [(ngModel)]="newDoc.name" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Ex: Avaliação Escolar 2026">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Categoria</label>
-              <select [(ngModel)]="newDoc.category" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+              <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Categoria</label>
+              <select [(ngModel)]="newDoc.category" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
                 <option value="ESCOLA">Escola</option>
-                <option value="GERAL">Geral</option>
-                <option value="RELATORIO">Relatório</option>
+                <option value="GERAL">Geral / Família</option>
+                <option value="RELATORIO">Relatório Médico / Externo</option>
               </select>
             </div>
           </div>
           <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Arquivo</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Selecionar Arquivo (PDF, Imagem, Word, etc.)</label>
             <input #fileInput type="file" (change)="onFileSelected($event)" 
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.csv"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary file:text-on-primary file:font-semibold file:cursor-pointer">
+              class="w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
             @if (selectedFile()) {
-              <p class="text-sm text-gray-500 dark:text-slate-400 mt-2">{{ selectedFile()!.name }} ({{ formatSize(selectedFile()!.size) }})</p>
+              <p class="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-2 flex items-center gap-1">
+                <span class="material-icons text-[16px]">check</span> {{ selectedFile()!.name }} ({{ formatSize(selectedFile()!.size) }})
+              </p>
             }
           </div>
-          <div class="mt-4 flex gap-3">
+          <div class="mt-5 flex flex-col sm:flex-row gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
             <button (click)="uploadDocument()" [disabled]="!newDoc.name || !selectedFile() || uploading()"
-              class="px-6 py-2 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all">
-              {{ uploading() ? 'Enviando...' : 'Enviar' }}
+              class="flex-1 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-md shadow-primary/20 disabled:opacity-50 transition-all active:scale-95">
+              {{ uploading() ? 'Enviando documento...' : 'Confirmar Envio' }}
             </button>
-            <button (click)="cancelUpload()" class="px-6 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold">
+            <button (click)="cancelUpload()" class="py-3 px-6 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-slate-600 transition-all">
               Cancelar
             </button>
           </div>
@@ -65,41 +75,48 @@ import { resolveFileUrl } from '@core/utils/file-url';
       }
 
       @if (documents().length === 0) {
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-12 border border-gray-200 dark:border-slate-700 text-center">
-          <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">description</span>
-          <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Nenhum documento</h3>
-          <p class="mt-2 text-gray-500 dark:text-slate-400">Documentos compartilhados aparecerão aqui</p>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-gray-200 dark:border-slate-700 text-center shadow-sm">
+          <div class="size-16 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto text-gray-400 dark:text-slate-500">
+            <span class="material-icons text-3xl">description</span>
+          </div>
+          <h3 class="mt-4 text-base sm:text-lg font-bold text-gray-900 dark:text-white">Nenhum documento disponível</h3>
+          <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-slate-400">Documentos compartilhados com a família ou enviados por você aparecerão aqui.</p>
         </div>
       } @else {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
           @for (doc of documents(); track doc.id) {
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-200 dark:border-slate-700 hover:shadow-lg transition-all">
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <span class="material-icons text-primary">description</span>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div>
+                <div class="flex items-start gap-3">
+                  <div class="size-10 sm:size-11 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <span class="material-icons text-xl">description</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white truncate">{{ doc.name }}</h4>
+                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{{ doc.category }}</p>
+                    <p class="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">{{ doc.createdAt }}</p>
+                  </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <h4 class="font-semibold text-gray-900 dark:text-white truncate">{{ doc.name }}</h4>
-                  <p class="text-sm text-gray-500 dark:text-slate-400">{{ doc.category }}</p>
-                  <p class="text-xs text-gray-400 dark:text-slate-500 mt-1">{{ doc.createdAt }}</p>
+
+                <div class="mt-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                    [class]="statusClass(doc.status)">
+                    {{ statusLabel(doc.status) }}
+                  </span>
                 </div>
+
+                @if (doc.status === 'RECUSADO' && doc.approvalFeedback) {
+                  <div class="mt-3 p-2.5 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-xs text-red-700 dark:text-red-300">
+                    <p class="font-bold mb-0.5">Motivo da recusa:</p>
+                    <p>{{ doc.approvalFeedback }}</p>
+                  </div>
+                }
               </div>
-              <div class="mt-3 flex items-center gap-2">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
-                  [class]="statusClass(doc.status)">
-                  {{ statusLabel(doc.status) }}
-                </span>
-              </div>
-              @if (doc.status === 'RECUSADO' && doc.approvalFeedback) {
-                <div class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
-                  <p class="font-semibold text-xs mb-1">Motivo da recusa:</p>
-                  <p>{{ doc.approvalFeedback }}</p>
-                </div>
-              }
-              <div class="mt-4 flex gap-2">
+
+              <div class="mt-4 pt-3 border-t border-gray-100 dark:border-slate-700">
                 @if (doc.fileUrl) {
-                  <a [href]="resolveFileUrl(doc.fileUrl)" target="_blank" class="flex-1 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 text-center transition-all">
-                    Abrir
+                  <a [href]="resolveFileUrl(doc.fileUrl)" target="_blank" class="w-full py-2.5 px-4 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-xs font-bold text-gray-700 dark:text-slate-300 text-center transition-all flex items-center justify-center gap-1.5 active:scale-95">
+                    <span class="material-icons text-[16px] text-primary">visibility</span> Visualizar / Baixar
                   </a>
                 }
               </div>

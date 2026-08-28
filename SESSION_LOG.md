@@ -1,6 +1,45 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 26 de Agosto de 2026
+## Última Atualização: 28 de Agosto de 2026
+
+---
+
+## Sessão 33 - 28/08/2026 — Responsividade Mobile Completa do Portal da Família / Responsável (iOS / Android / PWA UX)
+
+### O que foi feito
+
+#### 1. Layout Principal do Portal da Família (`GuardianLayoutComponent`)
+- **Drawer Retrátil Móvel**: Implementado menu lateral deslizante (`w-72 max-w-[85vw] -translate-x-full lg:translate-x-0`) com backdrop escuro e blur (`bg-slate-900/60 backdrop-blur-sm`), auto-fechamento ao navegar ou redimensionar.
+- **Barra de Navegação Inferior Fixa (*Bottom Navigation Bar*)**: Adicionada barra fixa no rodapé para telas móveis (`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur`) com atalhos para Início, Agenda, Cobranças, Chat e botão "Mais" (abre o Drawer com todas as opções e troca de clínica).
+- **Header Adaptativo e Compacto**: Otimizado para telas pequenas (`h-14 sm:h-16`) com botão hamburger, ícones dimensionados, notificações e botão de saída sem sobreposição.
+- **Pills de Seleção de Filho com Rolagem Touch**: Barra de filhos com rolagem suave (`-webkit-overflow-scrolling: touch`) e feedback de estado ativo.
+
+#### 2. Dashboard do Responsável (`GuardianDashboardComponent`)
+- **Grids Fluidos**: Estatísticas e médias de desempenho adaptadas de 4 colunas fixas para 2 colunas no mobile (`grid-cols-2 lg:grid-cols-4`) e 4 no desktop.
+- **Vinculação de Filho**: Formulário de código de acesso convertido para `flex-col sm:flex-row` com campo mono uppercase e botão de toque confortável.
+- **Cards de Filhos & Ações Rápidas**: Botões de toque `>= 44px` para acessar evoluções e documentos.
+
+#### 3. Agendamentos da Família (`GuardianAppointmentsComponent`)
+- **Cards Touch-Friendly**: Redesenhados para exibir o status, horário e botões de ação ("Modificar" e "Cancelar") em layout vertical/empilhado no mobile, eliminando esmagamento de texto.
+- **Modais Responsivos**: Modal de solicitação e reagendamento com cantos arredondados (`rounded-3xl`), botões de ação em largura total e inputs confortáveis.
+
+#### 4. Cobranças & PIX (`GuardianFinancialComponent`)
+- **Padrão Híbrido Mobile Cards + Desktop Table**:
+  - No celular (`block md:hidden`): Cards verticais com valor em destaque, badge de status ("Pago", "Pendente", "Paguei") e botão direto para "Pagar PIX".
+  - No desktop (`hidden md:block`): Tabela detalhada preservada.
+- **Modal de Pagamento PIX Otimizado**: QR Code responsivo com bordas suaves, input com código copia-e-cola e botão de aviso de pagamento touch.
+
+#### 5. Evoluções Compartilhadas (`GuardianEvolutionsComponent`)
+- **Modo Comparação Responsivo**: Grid adaptativo (`grid-cols-1 md:grid-cols-2`) para telas pequenas.
+- **Filtros e Grids de Métricas**: Layout responsivo para seleção de datas e cards de métricas (Foco, Engajamento, Progresso, Comportamento) em 2 colunas.
+
+#### 6. Documentos, Mensagens e Configurações
+- **Documentos (`GuardianDocumentsComponent`)**: Upload responsivo com preview do arquivo e cards em grid adaptativo (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`).
+- **Chat (`GuardianChatComponent`)**: Altura dinâmica responsiva (`h-[calc(100vh-240px)] min-h-[420px]`), balões de conversa com `max-w-[85%] sm:max-w-md` e botão touch de envio.
+- **Configurações (`GuardianSettingsComponent`)**: Formulário de perfil e troca de senha otimizado para toque no smartphone.
+
+#### 7. Validação
+- **Angular Build**: Compilação (`npx ng build --configuration=development`) concluída com 100% de sucesso (código de saída 0).
 
 ---
 

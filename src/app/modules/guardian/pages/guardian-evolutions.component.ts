@@ -13,89 +13,93 @@ declare var html2pdf: any;
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Evoluções Compartilhadas</h2>
-          <p class="text-gray-500 dark:text-slate-400 mt-1">Registros de sessão compartilhados pelo profissional</p>
+    <div class="space-y-5 sm:space-y-6">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="size-11 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <span class="material-icons text-primary text-2xl">trending_up</span>
+          </div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Evoluções Compartilhadas</h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Registros e desempenho das sessões do seu filho</p>
+          </div>
         </div>
-        <div class="flex gap-2">
-          <button (click)="exportToPdf()"
-            class="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-            <span class="material-icons text-lg">picture_as_pdf</span> Exportar PDF
-          </button>
-        </div>
+        <button (click)="exportToPdf()"
+          class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-2xl text-xs sm:text-sm font-bold text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 shadow-sm transition-all active:scale-95">
+          <span class="material-icons text-lg text-primary">picture_as_pdf</span> Exportar PDF
+        </button>
       </div>
 
       <!-- Filters -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-200 dark:border-slate-700 flex flex-wrap gap-4 items-center">
-        <div>
-          <label class="block text-xs font-bold text-gray-500 mb-1">Data Início</label>
+      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+        <div class="flex-1">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Data Início</label>
           <input type="date" [(ngModel)]="dateFrom" (change)="applyFilters()"
-            class="px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+            class="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
         </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 mb-1">Data Fim</label>
+        <div class="flex-1">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Data Fim</label>
           <input type="date" [(ngModel)]="dateTo" (change)="applyFilters()"
-            class="px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
+            class="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
         </div>
-        @if (filteredRecords().length > 0 && filteredRecords().length % 2 === 0 && filteredRecords().length >= 2) {
+        @if (filteredRecords().length > 0 && filteredRecords().length >= 2) {
           <button (click)="toggleComparison()"
-            class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
-            [class]="comparisonMode() ? 'bg-primary text-on-primary' : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300'">
-            <span class="material-icons text-lg">compare</span> Comparar
+            class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 shrink-0"
+            [class]="comparisonMode() ? 'bg-primary text-on-primary shadow-sm' : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600'">
+            <span class="material-icons text-lg">compare</span> {{ comparisonMode() ? 'Ver Lista Normal' : 'Modo Comparar' }}
           </button>
         }
       </div>
 
       @if (records().length === 0) {
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-12 border border-gray-200 dark:border-slate-700 text-center">
-          <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">trending_up</span>
-          <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Nenhuma evolução compartilhada</h3>
-          <p class="mt-2 text-gray-500 dark:text-slate-400">As evoluções compartilhadas pelo profissional aparecerão aqui</p>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-gray-200 dark:border-slate-700 text-center shadow-sm">
+          <div class="size-16 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto text-gray-400 dark:text-slate-500">
+            <span class="material-icons text-3xl">trending_up</span>
+          </div>
+          <h3 class="mt-4 text-base sm:text-lg font-bold text-gray-900 dark:text-white">Nenhuma evolução compartilhada</h3>
+          <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-slate-400">Os registros de sessão compartilhados pelo profissional aparecerão aqui.</p>
         </div>
       } @else {
         <!-- Comparison View -->
         @if (comparisonMode() && filteredRecords().length >= 2) {
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @for (record of filteredRecords().slice(0, 2); track record.id; let i = $index) {
-              <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border-2"
+              <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 border-2 shadow-sm"
                 [class.border-primary]="i === 0"
-                [class.border-green-500]="i === 1"
-                [class.border-gray-200]="false"
-                [class.dark:border-slate-700]="false">
-                <div class="flex items-center gap-2 mb-3">
-                  <span class="px-2 py-0.5 rounded-full text-xs font-bold"
-                    [class]="i === 0 ? 'bg-primary/10 text-primary' : 'bg-green-100 text-green-700'">
-                    {{ i === 0 ? 'ANTES' : 'DEPOIS' }}
+                [class.border-green-500]="i === 1">
+                <div class="flex items-center justify-between gap-2 mb-3">
+                  <span class="px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider"
+                    [class]="i === 0 ? 'bg-primary/10 text-primary' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">
+                    {{ i === 0 ? 'PRIMEIRA (ANTES)' : 'ÚLTIMA (DEPOIS)' }}
                   </span>
-                  <span class="text-sm text-gray-500">{{ record.date }}</span>
+                  <span class="text-xs text-gray-500 dark:text-slate-400 font-medium">{{ record.date }}</span>
                 </div>
-                <h4 class="font-bold text-gray-900 dark:text-white">{{ record.summary }}</h4>
+                <h4 class="font-bold text-base text-gray-900 dark:text-white">{{ record.summary }}</h4>
                 @if (record.focus || record.engagement || record.skillProgress || record.behavior) {
-                  <div class="grid grid-cols-2 gap-2 mt-3">
+                  <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-slate-700">
                     @if (record.focus) {
-                      <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2 text-center">
-                        <p class="text-lg font-bold text-primary">{{ record.focus }}%</p>
-                        <p class="text-[10px] text-gray-500">Foco</p>
+                      <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-2.5 text-center">
+                        <p class="text-lg font-black text-primary">{{ record.focus }}%</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Foco</p>
                       </div>
                     }
                     @if (record.engagement) {
-                      <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2 text-center">
-                        <p class="text-lg font-bold text-primary">{{ record.engagement }}%</p>
-                        <p class="text-[10px] text-gray-500">Engajamento</p>
+                      <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-2.5 text-center">
+                        <p class="text-lg font-black text-green-600">{{ record.engagement }}%</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Engajamento</p>
                       </div>
                     }
                     @if (record.skillProgress) {
-                      <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2 text-center">
-                        <p class="text-lg font-bold text-primary">{{ record.skillProgress }}%</p>
-                        <p class="text-[10px] text-gray-500">Progresso</p>
+                      <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-2.5 text-center">
+                        <p class="text-lg font-black text-blue-600">{{ record.skillProgress }}%</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Progresso</p>
                       </div>
                     }
                     @if (record.behavior) {
-                      <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-2 text-center">
-                        <p class="text-lg font-bold text-primary">{{ record.behavior }}%</p>
-                        <p class="text-[10px] text-gray-500">Comportamento</p>
+                      <div class="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-2.5 text-center">
+                        <p class="text-lg font-black text-amber-600">{{ record.behavior }}%</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Comportamento</p>
                       </div>
                     }
                   </div>
@@ -108,64 +112,63 @@ declare var html2pdf: any;
         <!-- Normal List -->
         <div class="space-y-4" [class.hidden]="comparisonMode()">
           @for (record of filteredRecords(); track record.id) {
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
-              <div class="flex items-start justify-between">
-                <div>
-                  <div class="flex items-center gap-3">
-                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-                      Sessão {{ record.sessionNumber || '-' }}
-                    </span>
-                    <span class="text-sm text-gray-500 dark:text-slate-400">{{ record.date }}</span>
-                  </div>
-                  <h3 class="mt-3 text-lg font-semibold text-gray-900 dark:text-white">{{ record.summary }}</h3>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-slate-700 shadow-sm space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="px-3 py-1 rounded-full text-xs font-black bg-primary/10 text-primary">
+                    Sessão {{ record.sessionNumber || '-' }}
+                  </span>
+                  <span class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">{{ record.date }}</span>
                 </div>
               </div>
 
+              <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-snug">{{ record.summary }}</h3>
+
               @if (record.objective) {
-                <div class="mt-4">
-                  <p class="text-sm font-medium text-gray-500 dark:text-slate-400">Objetivo</p>
-                  <p class="text-gray-700 dark:text-slate-300">{{ record.objective }}</p>
+                <div class="p-3 bg-gray-50 dark:bg-slate-700/30 rounded-2xl border border-gray-100 dark:border-slate-700/60">
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">Objetivo da Sessão</p>
+                  <p class="text-xs sm:text-sm text-gray-700 dark:text-slate-300 mt-0.5">{{ record.objective }}</p>
                 </div>
               }
 
               @if (record.activities) {
-                <div class="mt-4">
-                  <p class="text-sm font-medium text-gray-500 dark:text-slate-400">Atividades</p>
-                  <p class="text-gray-700 dark:text-slate-300">{{ record.activities }}</p>
+                <div class="p-3 bg-gray-50 dark:bg-slate-700/30 rounded-2xl border border-gray-100 dark:border-slate-700/60">
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">Atividades Realizadas</p>
+                  <p class="text-xs sm:text-sm text-gray-700 dark:text-slate-300 mt-0.5">{{ record.activities }}</p>
                 </div>
               }
 
               @if (record.observations) {
-                <div class="mt-4">
-                  <p class="text-sm font-medium text-gray-500 dark:text-slate-400">Observações</p>
-                  <p class="text-gray-700 dark:text-slate-300">{{ record.observations }}</p>
+                <div class="p-3 bg-gray-50 dark:bg-slate-700/30 rounded-2xl border border-gray-100 dark:border-slate-700/60">
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">Observações Clínicas</p>
+                  <p class="text-xs sm:text-sm text-gray-700 dark:text-slate-300 mt-0.5">{{ record.observations }}</p>
                 </div>
               }
 
               @if (record.focus || record.engagement || record.skillProgress || record.behavior) {
-                <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-2">
                   @if (record.focus) {
-                    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
-                      <p class="text-lg font-bold text-primary">{{ record.focus }}%</p>
-                      <p class="text-xs text-gray-500">Foco</p>
+                    <div class="bg-gray-50 dark:bg-slate-700/40 rounded-2xl p-2.5 text-center border border-gray-100 dark:border-slate-700">
+                      <p class="text-lg sm:text-xl font-black text-primary">{{ record.focus }}%</p>
+                      <p class="text-[10px] uppercase font-bold text-gray-500">Foco</p>
                     </div>
                   }
                   @if (record.engagement) {
-                    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
-                      <p class="text-lg font-bold text-primary">{{ record.engagement }}%</p>
-                      <p class="text-xs text-gray-500">Engajamento</p>
+                    <div class="bg-gray-50 dark:bg-slate-700/40 rounded-2xl p-2.5 text-center border border-gray-100 dark:border-slate-700">
+                      <p class="text-lg sm:text-xl font-black text-green-600">{{ record.engagement }}%</p>
+                      <p class="text-[10px] uppercase font-bold text-gray-500">Engajamento</p>
                     </div>
                   }
                   @if (record.skillProgress) {
-                    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
-                      <p class="text-lg font-bold text-primary">{{ record.skillProgress }}%</p>
-                      <p class="text-xs text-gray-500">Progresso</p>
+                    <div class="bg-gray-50 dark:bg-slate-700/40 rounded-2xl p-2.5 text-center border border-gray-100 dark:border-slate-700">
+                      <p class="text-lg sm:text-xl font-black text-blue-600">{{ record.skillProgress }}%</p>
+                      <p class="text-[10px] uppercase font-bold text-gray-500">Progresso</p>
                     </div>
                   }
                   @if (record.behavior) {
-                    <div class="bg-gray-50 dark:bg-slate-700 rounded-xl p-3 text-center">
-                      <p class="text-lg font-bold text-primary">{{ record.behavior }}%</p>
-                      <p class="text-xs text-gray-500">Comportamento</p>
+                    <div class="bg-gray-50 dark:bg-slate-700/40 rounded-2xl p-2.5 text-center border border-gray-100 dark:border-slate-700">
+                      <p class="text-lg sm:text-xl font-black text-amber-600">{{ record.behavior }}%</p>
+                      <p class="text-[10px] uppercase font-bold text-gray-500">Comportamento</p>
                     </div>
                   }
                 </div>

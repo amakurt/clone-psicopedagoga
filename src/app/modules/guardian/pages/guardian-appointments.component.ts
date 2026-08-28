@@ -10,67 +10,79 @@ import { Paciente, Appointment } from '@core/models';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6">
-      <div class="flex items-center justify-between">
+    <div class="space-y-5 sm:space-y-6">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="size-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <div class="size-11 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
             <span class="material-icons text-primary text-2xl">calendar_month</span>
           </div>
           <div>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Agendamentos</h2>
-            <p class="text-gray-500 dark:text-slate-400 mt-1">Solicite, modifique ou cancele seus agendamentos</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Agendamentos</h2>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Solicite, acompanhe ou modifique consultas</p>
           </div>
         </div>
         <button (click)="showRequestForm.set(true)"
-          class="flex items-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-semibold text-sm shadow-lg transition-all">
+          class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-md shadow-primary/20 transition-all active:scale-95">
           <span class="material-icons text-[18px]">add</span> Solicitar Agendamento
         </button>
       </div>
 
-      <!-- Upcoming Appointments -->
+      <!-- Appointments List -->
       @if (appointments().length === 0) {
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-12 border border-gray-200 dark:border-slate-700 text-center">
-          <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">event_busy</span>
-          <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Nenhum agendamento</h3>
-          <p class="mt-2 text-gray-500 dark:text-slate-400">Solicite um novo agendamento ao profissional</p>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-gray-200 dark:border-slate-700 text-center shadow-sm">
+          <div class="size-16 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto text-gray-400 dark:text-slate-500">
+            <span class="material-icons text-3xl">event_busy</span>
+          </div>
+          <h3 class="mt-4 text-base sm:text-lg font-bold text-gray-900 dark:text-white">Nenhum agendamento</h3>
+          <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-slate-400">Você ainda não possui sessões agendadas. Clique no botão acima para solicitar.</p>
         </div>
       } @else {
         <div class="space-y-3">
           @for (apt of appointments(); track apt.id) {
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-200 dark:border-slate-700 flex items-center gap-4">
-              <div class="size-12 rounded-xl flex items-center justify-center shrink-0"
-                [class]="apt.status === 'CONFIRMADO' ? 'bg-green-100 dark:bg-green-900/30' : apt.status === 'PENDENTE' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-slate-700'">
-                <span class="material-icons text-xl"
-                  [class]="apt.status === 'CONFIRMADO' ? 'text-green-600' : apt.status === 'PENDENTE' ? 'text-amber-600' : 'text-gray-400'">
-                  {{ apt.status === 'CONFIRMADO' ? 'event_available' : apt.status === 'PENDENTE' ? 'schedule' : 'event_busy' }}
-                </span>
-              </div>
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <h3 class="font-bold text-gray-900 dark:text-white">{{ apt.patientName }}</h3>
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                    [class]="apt.status === 'CONFIRMADO' ? 'bg-green-100 text-green-700' : apt.status === 'PENDENTE' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'">
-                    {{ apt.status }}
+            <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-all">
+              <div class="flex items-start gap-3 sm:gap-4 min-w-0">
+                <div class="size-11 sm:size-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
+                  [class]="apt.status === 'CONFIRMADO' ? 'bg-green-100 dark:bg-green-900/30' : apt.status === 'PENDENTE' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-slate-700'">
+                  <span class="material-icons text-xl"
+                    [class]="apt.status === 'CONFIRMADO' ? 'text-green-600' : apt.status === 'PENDENTE' ? 'text-amber-600' : 'text-gray-400'">
+                    {{ apt.status === 'CONFIRMADO' ? 'event_available' : apt.status === 'PENDENTE' ? 'schedule' : 'event_busy' }}
                   </span>
                 </div>
-                <p class="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{{ apt.date }} às {{ apt.startTime }}</p>
-                @if (apt.notes) {
-                  <p class="text-xs text-gray-400 mt-1 italic">{{ apt.notes }}</p>
-                }
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white truncate">{{ apt.patientName }}</h3>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"
+                      [class]="apt.status === 'CONFIRMADO' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : apt.status === 'PENDENTE' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'">
+                      {{ apt.status }}
+                    </span>
+                  </div>
+                  <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                    <span class="material-icons text-[14px]">schedule</span>
+                    {{ apt.date }} às {{ apt.startTime }}
+                  </p>
+                  @if (apt.notes) {
+                    <p class="text-xs text-gray-400 dark:text-slate-500 mt-1.5 italic bg-gray-50 dark:bg-slate-700/50 p-2 rounded-xl border border-gray-100 dark:border-slate-700">
+                      "{{ apt.notes }}"
+                    </p>
+                  }
+                </div>
               </div>
+
+              <!-- Action Buttons -->
               @if (canManage(apt)) {
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100 dark:border-slate-700 shrink-0">
                   <button (click)="openReschedule(apt)" title="Modificar agendamento"
-                    class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all">
+                    class="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all active:scale-95">
                     <span class="material-icons text-sm">edit_calendar</span> Modificar
                   </button>
                   <button (click)="toggleCancelArmed(apt.id)" title="Cancelar agendamento"
                     [class]="cancelArmedId() === apt.id
                       ? 'bg-red-600 text-white hover:bg-red-700'
                       : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40'"
-                    class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all">
+                    class="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95">
                     <span class="material-icons text-sm">{{ cancelArmedId() === apt.id ? 'warning' : 'event_busy' }}</span>
-                    {{ cancelArmedId() === apt.id ? 'Confirmar cancelamento?' : 'Cancelar' }}
+                    {{ cancelArmedId() === apt.id ? 'Confirmar?' : 'Cancelar' }}
                   </button>
                 </div>
               }
@@ -81,42 +93,54 @@ import { Paciente, Appointment } from '@core/models';
 
       <!-- Request Form Modal -->
       @if (showRequestForm()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" (click)="showRequestForm.set(false)">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200 dark:border-slate-700" (click)="$event.stopPropagation()">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Solicitar Agendamento</h3>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" (click)="showRequestForm.set(false)">
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-7 border border-gray-100 dark:border-slate-800" (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-5">
+              <div class="flex items-center gap-3">
+                <div class="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                  <span class="material-icons text-xl">add_circle</span>
+                </div>
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Solicitar Agendamento</h3>
+              </div>
+              <button (click)="showRequestForm.set(false)" class="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl">
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
 
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Paciente *</label>
-                <select class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Filho / Paciente *</label>
+                <select class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                   [(ngModel)]="requestForm.pacienteId">
-                  <option value="">Selecione</option>
+                  <option value="">Selecione o filho</option>
                   @for (p of patients(); track p.id) {
                     <option [value]="p.id">{{ p.name }}</option>
                   }
                 </select>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Data Preferida *</label>
-                <input type="date" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  [(ngModel)]="requestForm.date">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Data Preferida *</label>
+                  <input type="date" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    [(ngModel)]="requestForm.date">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Horário</label>
+                  <input type="time" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    [(ngModel)]="requestForm.startTime">
+                </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Horário Preferido</label>
-                <input type="time" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  [(ngModel)]="requestForm.startTime">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Observações</label>
-                <textarea class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none"
-                  rows="2" [(ngModel)]="requestForm.notes" placeholder="Motivo da consulta..."></textarea>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Observações ou Motivo</label>
+                <textarea class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  rows="2" [(ngModel)]="requestForm.notes" placeholder="Informe se há algum motivo específico..."></textarea>
               </div>
             </div>
 
-            <div class="flex justify-end gap-3 mt-6">
-              <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all" (click)="showRequestForm.set(false)">Cancelar</button>
-              <button (click)="requestAppointment()" [disabled]="saving()"
-                class="px-5 py-2 text-sm font-medium text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50">
+            <div class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-slate-800">
+              <button class="flex-1 py-3 text-sm font-bold text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all" (click)="showRequestForm.set(false)">Cancelar</button>
+              <button (click)="requestAppointment()" [disabled]="saving() || !requestForm.pacienteId || !requestForm.date"
+                class="flex-1 py-3 text-sm font-bold text-on-primary bg-primary rounded-2xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-50 active:scale-95">
                 {{ saving() ? 'Enviando...' : 'Solicitar' }}
               </button>
             </div>
@@ -126,34 +150,52 @@ import { Paciente, Appointment } from '@core/models';
 
       <!-- Reschedule Modal -->
       @if (rescheduleApt() && showRescheduleForm()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" (click)="closeReschedule()">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-gray-200 dark:border-slate-700" (click)="$event.stopPropagation()">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Modificar Agendamento</h3>
-            <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">{{ rescheduleApt()?.patientName }} — após a alteração, o agendamento volta para <b>Pendente</b> até a equipe confirmar.</p>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" (click)="closeReschedule()">
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-7 border border-gray-100 dark:border-slate-800" (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-4">
+              <div class="flex items-center gap-3">
+                <div class="size-10 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                  <span class="material-icons text-xl">edit_calendar</span>
+                </div>
+                <div>
+                  <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Modificar Agendamento</h3>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">{{ rescheduleApt()?.patientName }}</p>
+                </div>
+              </div>
+              <button (click)="closeReschedule()" class="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl">
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
+
+            <p class="text-xs text-amber-600 dark:text-amber-400 mb-4 bg-amber-50 dark:bg-amber-900/20 p-2.5 rounded-xl border border-amber-100 dark:border-amber-800/50">
+              Após alterar a data/horário, o agendamento retornará para o status <b>Pendente</b> até que a clínica confirme.
+            </p>
 
             <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nova Data *</label>
-                <input type="date" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  [(ngModel)]="rescheduleForm.date">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Nova Data *</label>
+                  <input type="date" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    [(ngModel)]="rescheduleForm.date">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Novo Horário</label>
+                  <input type="time" class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    [(ngModel)]="rescheduleForm.startTime">
+                </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Novo Horário</label>
-                <input type="time" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-                  [(ngModel)]="rescheduleForm.startTime">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Observações</label>
-                <textarea class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white resize-none"
-                  rows="2" [(ngModel)]="rescheduleForm.notes" placeholder="Motivo da alteração..."></textarea>
+                <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Motivo da Alteração</label>
+                <textarea class="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  rows="2" [(ngModel)]="rescheduleForm.notes" placeholder="Informe o motivo da mudança..."></textarea>
               </div>
             </div>
 
-            <div class="flex justify-end gap-3 mt-6">
-              <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-all" (click)="closeReschedule()">Voltar</button>
-              <button (click)="submitReschedule()" [disabled]="saving()"
-                class="px-5 py-2 text-sm font-medium text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50">
-                {{ saving() ? 'Enviando...' : 'Salvar Alteração' }}
+            <div class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-slate-800">
+              <button class="flex-1 py-3 text-sm font-bold text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all" (click)="closeReschedule()">Voltar</button>
+              <button (click)="submitReschedule()" [disabled]="saving() || !rescheduleForm.date"
+                class="flex-1 py-3 text-sm font-bold text-on-primary bg-primary rounded-2xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 disabled:opacity-50 active:scale-95">
+                {{ saving() ? 'Salvando...' : 'Salvar Alteração' }}
               </button>
             </div>
           </div>

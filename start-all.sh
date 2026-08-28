@@ -22,11 +22,11 @@ if [ -z "$LAN_IP" ]; then
   LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo "")"
 fi
 
-# --- Colima/Docker (Evolution API) ---
+# --- Colima/Docker (Evolution API - Opcional) ---
 if ! docker info >/dev/null 2>&1; then
-  echo "==> Iniciando Colima (Docker)..."
-  colima start >/dev/null 2>&1 || { echo "Falha ao iniciar Colima"; exit 1; }
-  sleep 3
+  echo "==> Tentando iniciar Colima (Docker)..."
+  colima start >/dev/null 2>&1 || echo "    (Colima/Docker não iniciado - Evolution API ficará offline)"
+  sleep 2
 fi
 
 EVO_UP=0

@@ -11,47 +11,58 @@ import { AuthService } from '@core/services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-6">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Mensagens</h2>
-        <p class="text-gray-500 dark:text-slate-400 mt-1">Chat com o profissional</p>
+    <div class="space-y-4 sm:space-y-6 flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center gap-3">
+        <div class="size-11 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+          <span class="material-icons text-primary text-2xl">chat</span>
+        </div>
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Mensagens com a Clínica</h2>
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Canal direto de comunicação com o terapeuta</p>
+        </div>
       </div>
 
-      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col" style="height: 500px;">
-        <!-- Messages -->
-        <div #chatContainer class="flex-1 overflow-y-auto p-4 space-y-4">
+      <!-- Chat Box -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col shadow-sm h-[calc(100vh-240px)] sm:h-[calc(100vh-260px)] min-h-[420px]">
+        <!-- Messages Container -->
+        <div #chatContainer class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3 custom-scrollbar">
           @if (messages().length === 0) {
-            <div class="flex items-center justify-center h-full text-gray-400">
-              <p>Nenhuma mensagem ainda</p>
+            <div class="flex flex-col items-center justify-center h-full text-center p-6 text-gray-400 dark:text-slate-500">
+              <div class="size-14 rounded-3xl bg-gray-100 dark:bg-slate-700/50 flex items-center justify-center mb-3">
+                <span class="material-icons text-2xl">forum</span>
+              </div>
+              <p class="text-sm font-bold text-gray-700 dark:text-slate-300">Nenhuma mensagem ainda</p>
+              <p class="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-xs">Envie uma mensagem abaixo para falar com o profissional responsável.</p>
             </div>
           }
           @for (msg of messages(); track msg.id) {
             <div class="flex" [class.justify-end]="msg.senderId === currentUserId()">
-              <div class="max-w-xs lg:max-w-md px-4 py-3 rounded-2xl"
+              <div class="max-w-[85%] sm:max-w-md px-4 py-3 rounded-2xl sm:rounded-3xl shadow-sm"
                 [class]="msg.senderId === currentUserId() 
-                  ? 'bg-primary text-on-primary rounded-br-md' 
-                  : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-bl-md'">
-                <p class="text-sm font-medium" *ngIf="msg.senderId !== currentUserId()">{{ msg.senderName }}</p>
-                <p class="text-sm">{{ msg.message }}</p>
-                <p class="text-xs mt-1 opacity-70">{{ msg.createdAt }}</p>
+                  ? 'bg-primary text-on-primary rounded-br-sm' 
+                  : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-bl-sm'">
+                <p class="text-[11px] font-bold opacity-80 mb-0.5" *ngIf="msg.senderId !== currentUserId()">{{ msg.senderName }}</p>
+                <p class="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words">{{ msg.message }}</p>
+                <p class="text-[10px] mt-1 opacity-70 text-right">{{ msg.createdAt }}</p>
               </div>
             </div>
           }
         </div>
 
-        <!-- Input -->
-        <div class="border-t border-gray-200 dark:border-slate-700 p-4">
-          <div class="flex gap-3">
+        <!-- Input Box -->
+        <div class="border-t border-gray-100 dark:border-slate-700 p-3 sm:p-4 bg-gray-50/50 dark:bg-slate-800/80">
+          <div class="flex items-center gap-2 sm:gap-3">
             <input 
               [(ngModel)]="newMessage" 
               (keyup.enter)="sendMessage()"
-              class="flex-1 px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent"
+              class="flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 text-xs sm:text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Digite sua mensagem...">
             <button 
               (click)="sendMessage()" 
               [disabled]="!newMessage.trim()"
-              class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all">
-              <span class="material-icons">send</span>
+              class="size-11 sm:size-12 rounded-2xl bg-primary hover:bg-primary/90 text-on-primary font-bold disabled:opacity-50 transition-all active:scale-95 shadow-md shadow-primary/20 flex items-center justify-center shrink-0">
+              <span class="material-icons text-xl">send</span>
             </button>
           </div>
         </div>

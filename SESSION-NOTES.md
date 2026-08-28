@@ -2,6 +2,21 @@
 
 ---
 
+## Sessão 28/08/2026 (Sexta) — Responsividade Mobile Completa do Portal da Família / Responsável
+
+### 115. Portal da Família Mobile-First & Drawer Retrátil
+- `GuardianLayoutComponent`: Implementado menu Drawer retrátil para smartphone com backdrop escuro e blur (`bg-slate-900/60 backdrop-blur-sm`), botão hamburger no header, auto-fechamento em rotas.
+- **Bottom Navigation Bar**: Barra de navegação inferior fixa para smartphones (`lg:hidden fixed bottom-0 left-0 right-0 z-40`) com navegação para Início, Agenda, Cobranças, Chat e menu "Mais".
+- **Cards Responsivos em Todos os Módulos da Família**:
+  - Dashboard: Grids adaptativos de estatísticas e métricas (`grid-cols-2 lg:grid-cols-4`).
+  - Agendamentos: Cards reestruturados para empilhar botões "Modificar" e "Cancelar" confortavelmente em touch sem quebrar o layout.
+  - Cobranças & PIX: Padrão híbrido com cards verticais (`block md:hidden`) com botão touch "Pagar PIX" e tabela desktop (`hidden md:block`).
+  - Evoluções: Modo comparar adaptado para 1 coluna no mobile e grids de métricas fluidos.
+  - Documentos, Mensagens e Configurações: Upload touch-friendly, altura dinâmica no chat e inputs confortáveis.
+- Validação: `npx ng build --configuration=development` 100% OK.
+
+---
+
 ## Sessão 26/08/2026 (Quarta) — Auditoria e Responsividade Mobile Completa (iPhone 12 Pro & Telas Pequenas)
 
 ### 110. Acesso pela Rede Local (LAN / Wi-Fi)

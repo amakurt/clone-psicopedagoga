@@ -9,21 +9,35 @@ import { ToastService } from '@shared/components/toast.component';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="space-y-6">
-      <div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Cobranças</h2>
-        <p class="text-gray-500 dark:text-slate-400 mt-1">Pagamentos das sessões pelo PIX da clínica</p>
+    <div class="space-y-5 sm:space-y-6">
+      <!-- Header -->
+      <div class="flex items-center gap-3">
+        <div class="size-11 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+          <span class="material-icons text-primary text-2xl">payments</span>
+        </div>
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Cobranças & PIX</h2>
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Acompanhe e realize o pagamento das sessões</p>
+        </div>
       </div>
 
-      <!-- Summary -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-          <p class="text-sm text-gray-500 dark:text-slate-400">Pendente</p>
-          <p class="text-2xl font-bold text-amber-600">R$ {{ pendingValue() }}</p>
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-2 gap-3 sm:gap-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Pendente</span>
+            <span class="material-icons text-amber-500 text-lg">pending</span>
+          </div>
+          <p class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">R$ {{ pendingValue() }}</p>
+          <p class="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">Aguardando pagamento</p>
         </div>
-        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-gray-200 dark:border-slate-700">
-          <p class="text-sm text-gray-500 dark:text-slate-400">Total cobrado</p>
-          <p class="text-2xl font-bold text-gray-900 dark:text-white">R$ {{ totalValue() }}</p>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Total</span>
+            <span class="material-icons text-primary text-lg">account_balance_wallet</span>
+          </div>
+          <p class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mt-1">R$ {{ totalValue() }}</p>
+          <p class="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">Histórico geral</p>
         </div>
       </div>
 
@@ -32,95 +46,143 @@ import { ToastService } from '@shared/components/toast.component';
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       } @else if (charges().length === 0) {
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-12 border border-gray-200 dark:border-slate-700 text-center">
-          <span class="material-icons text-6xl text-gray-300 dark:text-slate-600">qr_code_2</span>
-          <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Nenhuma cobrança</h3>
-          <p class="mt-2 text-gray-500 dark:text-slate-400">As cobranças enviadas pela clínica aparecerão aqui</p>
+        <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-gray-200 dark:border-slate-700 text-center shadow-sm">
+          <div class="size-16 rounded-3xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mx-auto text-gray-400 dark:text-slate-500">
+            <span class="material-icons text-3xl">qr_code_2</span>
+          </div>
+          <h3 class="mt-4 text-base sm:text-lg font-bold text-gray-900 dark:text-white">Nenhuma cobrança registrada</h3>
+          <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-slate-400">As cobranças enviadas pela clínica aparecerão aqui.</p>
         </div>
       } @else {
-        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <!-- Mobile Cards View (< 768px) -->
+        <div class="block md:hidden space-y-3">
+          @for (c of charges(); track c.id) {
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-200 dark:border-slate-700 shadow-sm space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="text-xs text-gray-400 dark:text-slate-500">{{ c.date | date:'dd/MM/yyyy' }}</p>
+                  <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate mt-0.5">
+                    {{ c.description || c.paciente || 'Sessão Clínica' }}
+                  </h4>
+                  @if (c.paciente && c.description) {
+                    <p class="text-xs text-primary font-medium truncate">{{ c.paciente }}</p>
+                  }
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0" [class]="getStatusClass(c)">
+                  {{ c.payConfirmedByGuardian ? 'Paguei' : (c.status === 'PAGO' ? 'Pago' : 'Pendente') }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-slate-700/60">
+                <div>
+                  <span class="text-[10px] uppercase font-bold text-gray-400">Valor</span>
+                  <p class="text-lg font-black text-gray-900 dark:text-white">R$ {{ c.value.toFixed(2) }}</p>
+                </div>
+
+                @if (c.status !== 'PAGO') {
+                  <button class="px-5 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl text-xs font-bold shadow-md shadow-primary/20 transition-all active:scale-95 flex items-center gap-1.5"
+                    (click)="openPayModal(c)">
+                    <span class="material-icons text-sm">qr_code_2</span> Pagar PIX
+                  </button>
+                } @else {
+                  <span class="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <span class="material-icons text-sm">check_circle</span> Confirmado
+                  </span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Desktop Table View (>= 768px) -->
+        <div class="hidden md:block bg-white dark:bg-slate-800 rounded-3xl border border-gray-200 dark:border-slate-700 overflow-hidden shadow-sm">
           <div class="overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-            <table class="w-full min-w-[600px]">
-            <thead class="bg-gray-50 dark:bg-slate-700">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Data</th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Descrição</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Valor</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Status</th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-              @for (c of charges(); track c.id) {
-                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
-                  <td class="px-6 py-4 text-sm text-gray-700 dark:text-slate-300">{{ c.date | date:'dd/MM/yyyy' }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">
-                    {{ c.description || c.paciente }}
-                    @if (c.paciente) { <span class="text-gray-400">· {{ c.paciente }}</span> }
-                  </td>
-                  <td class="px-6 py-4 text-sm text-right font-semibold text-gray-900 dark:text-white">R$ {{ c.value.toFixed(2) }}</td>
-                  <td class="px-6 py-4 text-center">
-                    <span class="px-3 py-1 rounded-full text-xs font-semibold" [class]="getStatusClass(c)">
-                      {{ c.payConfirmedByGuardian ? 'Paguei (aguardando confirmação)' : (c.status === 'PAGO' ? 'Pago' : 'Pendente') }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 text-right">
-                    @if (c.status !== 'PAGO') {
-                      <button class="px-4 py-2 bg-primary text-on-primary rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
-                        (click)="openPayModal(c)">
-                        Pagar
-                      </button>
-                    }
-                  </td>
+            <table class="w-full min-w-[650px]">
+              <thead class="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
+                <tr>
+                  <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Data</th>
+                  <th class="px-6 py-3.5 text-left text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Descrição / Paciente</th>
+                  <th class="px-6 py-3.5 text-right text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Valor</th>
+                  <th class="px-6 py-3.5 text-center text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3.5 text-right text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Ações</th>
                 </tr>
-              }
-            </tbody>
+              </thead>
+              <tbody class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                @for (c of charges(); track c.id) {
+                  <tr class="hover:bg-gray-50/80 dark:hover:bg-slate-700/30 transition-colors">
+                    <td class="px-6 py-4 text-xs font-medium text-gray-600 dark:text-slate-300 whitespace-nowrap">{{ c.date | date:'dd/MM/yyyy' }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-white font-bold">
+                      {{ c.description || c.paciente }}
+                      @if (c.paciente && c.description) { <span class="text-xs font-normal text-gray-400">· {{ c.paciente }}</span> }
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-black text-gray-900 dark:text-white whitespace-nowrap">R$ {{ c.value.toFixed(2) }}</td>
+                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                      <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider" [class]="getStatusClass(c)">
+                        {{ c.payConfirmedByGuardian ? 'Paguei (aguardando confirmação)' : (c.status === 'PAGO' ? 'Pago' : 'Pendente') }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                      @if (c.status !== 'PAGO') {
+                        <button class="px-4 py-2 bg-primary hover:bg-primary/90 text-on-primary rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95 flex items-center gap-1.5 ml-auto"
+                          (click)="openPayModal(c)">
+                          <span class="material-icons text-sm">qr_code_2</span> Pagar
+                        </button>
+                      } @else {
+                        <span class="text-xs text-gray-400 font-medium">Concluído</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
             </table>
           </div>
         </div>
       }
     </div>
 
-    <!-- Modal pagamento -->
+    <!-- Modal Pagamento PIX -->
     @if (payModalOpen()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" (click)="payModalOpen.set(false)">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md mx-4 p-8 ring-1 ring-slate-200 dark:ring-slate-800" (click)="$event.stopPropagation()">
-          <div class="flex items-center justify-between mb-6">
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" (click)="payModalOpen.set(false)">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-7 border border-gray-100 dark:border-slate-800" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-5">
             <div class="flex items-center gap-3">
-              <div class="size-11 bg-primary/10 rounded-2xl flex items-center justify-center">
-                <span class="material-icons text-primary text-2xl">qr_code_2</span>
+              <div class="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <span class="material-icons text-xl">qr_code_2</span>
               </div>
               <div>
-                <h3 class="text-lg font-black text-gray-900 dark:text-white">Pagar com PIX</h3>
-                <p class="text-xs text-gray-500 dark:text-slate-400">{{ selected()?.paciente || '' }} · R$ {{ selected()?.value?.toFixed(2) }}</p>
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Pagar com PIX</h3>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{{ selected()?.paciente || 'Sessão' }} · R$ {{ selected()?.value?.toFixed(2) }}</p>
               </div>
             </div>
-            <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" (click)="payModalOpen.set(false)">
-              <span class="material-icons">close</span>
+            <button class="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl" (click)="payModalOpen.set(false)">
+              <span class="material-icons text-lg">close</span>
             </button>
           </div>
 
           @if (payConfirmed()) {
-            <div class="flex flex-col items-center py-8 text-center">
-              <span class="material-icons text-emerald-500 text-6xl">check_circle</span>
-              <h4 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">Pagamento comunicado!</h4>
-              <p class="mt-2 text-sm text-gray-500 dark:text-slate-400">A clínica foi notificada e vai confirmar o recebimento.</p>
-              <button class="mt-6 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-xl text-sm font-bold"
-                (click)="payModalOpen.set(false)">Fechar</button>
+            <div class="flex flex-col items-center py-6 text-center">
+              <div class="size-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+                <span class="material-icons text-3xl">check_circle</span>
+              </div>
+              <h4 class="mt-4 text-base sm:text-lg font-bold text-gray-900 dark:text-white">Pagamento comunicado!</h4>
+              <p class="mt-1 text-xs sm:text-sm text-gray-500 dark:text-slate-400">A clínica foi notificada e confirmará o recebimento em instantes.</p>
+              <button class="mt-6 w-full py-3 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 rounded-2xl text-sm font-bold transition-all"
+                (click)="payModalOpen.set(false)">Concluir</button>
             </div>
           } @else {
-            <div class="flex justify-center mb-5">
-              <img [src]="qrImage()" alt="QR Code PIX" class="w-52 h-52 rounded-2xl ring-1 ring-gray-200 dark:ring-slate-700 bg-white p-3">
+            <div class="flex justify-center mb-4">
+              <img [src]="qrImage()" alt="QR Code PIX" class="w-48 h-48 sm:w-52 sm:h-52 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white p-3 shadow-inner">
             </div>
-            <div class="flex items-center gap-2 mb-5">
+            <div class="flex items-center gap-2 mb-4">
               <input [value]="selected()?.pixCopiaECola" readonly
-                class="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-600 dark:text-gray-300 font-mono">
-              <button class="px-4 py-3 bg-slate-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 rounded-xl text-sm font-bold shrink-0" (click)="copyCode()">Copiar</button>
+                class="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs text-gray-600 dark:text-gray-300 font-mono select-all">
+              <button class="px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold shrink-0 transition-all" (click)="copyCode()">Copiar</button>
             </div>
-            <p class="text-xs text-gray-400 mb-5 text-center">Abra o app do seu banco, escaneie o QR Code ou cole o código acima.</p>
-            <button class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-bold transition-all"
+            <p class="text-[11px] text-gray-400 text-center mb-5">Abra o app do seu banco, escolha "PIX Copia e Cola" ou escaneie o código.</p>
+            <button class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
               [disabled]="saving()" (click)="confirmPay()">
-              {{ saving() ? 'Enviando…' : 'Já paguei — avisar a clínica' }}
+              <span class="material-icons text-[18px]">done_all</span>
+              {{ saving() ? 'Avisando clínica...' : 'Já paguei — avisar a clínica' }}
             </button>
           }
         </div>
