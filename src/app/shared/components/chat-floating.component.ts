@@ -10,6 +10,8 @@ import { ChatMessage } from '@core/models';
 interface ChatConversation {
   pacienteId: string;
   patientName: string;
+  responsibleName?: string;
+  responsibleRelationship?: string;
   patientInitials: string;
   patientColor: string;
   unreadCount: number;
@@ -86,12 +88,17 @@ interface ChatConversation {
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between">
-                      <p class="font-bold text-sm text-slate-900 dark:text-white truncate">{{ conversation.patientName }}</p>
+                      <p class="font-bold text-sm text-slate-900 dark:text-white truncate">
+                        {{ conversation.responsibleName || 'Responsável' }}
+                      </p>
                       @if (conversation.lastAt) {
                         <span class="text-[10px] text-slate-500 ml-2 shrink-0">{{ formatTime(conversation.lastAt) }}</span>
                       }
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    <p class="text-[11px] text-primary dark:text-primary-light font-medium truncate flex items-center gap-1 mt-0.5">
+                      <span class="material-icons text-[12px]">face</span> Paciente: {{ conversation.patientName }} ({{ conversation.responsibleRelationship || 'Resp.' }})
+                    </p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                       @if (conversation.lastMessage) {
                         <span class="font-medium">{{ conversation.lastSenderName }}:</span> {{ conversation.lastMessage }}
                       }
@@ -114,14 +121,21 @@ interface ChatConversation {
               <div class="flex items-center justify-between gap-2 px-3.5 py-2.5 bg-primary/10 border-b border-slate-100 dark:border-slate-800 shrink-0">
                 <div class="flex items-center gap-2 min-w-0">
                   @if (!isGuardian()) {
-                    <button (click)="backToList()" class="size-8 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300" title="Voltar">
+                    <button (click)="backToList()" class="size-8 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0" title="Voltar">
                       <span class="material-icons text-lg">arrow_back</span>
                     </button>
                     <div class="size-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
                       [style.background]="selectedConversation()?.patientColor || '#007F80'">
-                      {{ selectedConversation()?.patientInitials || 'P' }}
+                      {{ selectedConversation()?.patientInitials || 'R' }}
                     </div>
-                    <p class="font-bold text-sm text-slate-900 dark:text-white truncate">{{ selectedConversation()?.patientName }}</p>
+                    <div class="min-w-0">
+                      <p class="font-bold text-sm text-slate-900 dark:text-white truncate">
+                        {{ selectedConversation()?.responsibleName || 'Responsável' }}
+                      </p>
+                      <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                        <span class="material-icons text-[11px] text-primary">face</span> Paciente: {{ selectedConversation()?.patientName }} ({{ selectedConversation()?.responsibleRelationship || 'Resp.' }})
+                      </p>
+                    </div>
                   } @else {
                     <div class="size-8 rounded-2xl bg-primary text-on-primary flex items-center justify-center text-xs font-bold shrink-0">
                       <span class="material-icons text-sm">support_agent</span>
@@ -163,7 +177,9 @@ interface ChatConversation {
                       [class]="isMine(msg)
                         ? 'bg-primary text-on-primary rounded-br-md'
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md'">
-                      <p class="text-[11px] font-semibold mb-1" *ngIf="!isMine(msg)">{{ msg.senderName }}</p>
+                      <p class="text-[11px] font-semibold mb-1 opacity-90" *ngIf="!isMine(msg)">
+                        {{ isGuardian() ? msg.senderName : (selectedConversation()?.responsibleName ? selectedConversation()!.responsibleName + ' (' + (selectedConversation()!.responsibleRelationship || 'Responsável') + ')' : (msg.senderName || 'Responsável')) }}
+                      </p>
                       <p class="whitespace-pre-wrap break-words">{{ msg.message }}</p>
                       <p class="text-[9px] sm:text-[10px] mt-1 opacity-70 text-right">{{ formatTime(msg.createdAt) }}</p>
                     </div>

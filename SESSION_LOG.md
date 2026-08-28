@@ -4,6 +4,29 @@
 
 ---
 
+## Sessão 36 - 28/08/2026 — Ajuste no Chat da Equipe: Identificação Correta do Responsável e Vínculo com o Paciente
+
+### O que foi feito
+
+#### 1. Identificação do Responsável no Chat da Clínica (`backend/src/routes/chat.ts`)
+- **Associação com o Responsável**: O endpoint `GET /chat/conversations` da equipe agora realiza include de `paciente.responsible`, extraindo o nome do responsável (`responsibleName`) e o grau de parentesco (`responsibleRelationship`, ex: Mãe, Pai, Responsável Legal).
+- **Iniciais e Cores**: As iniciais e avatar exibidos na lista agora representam o responsável que está conversando com a clínica.
+
+#### 2. Visualização no Chat Flutuante da Equipe (`ChatFloatingComponent`)
+- **Lista de Conversas da Equipe**:
+  - Destaque principal para o **Nome do Responsável**.
+  - Subtítulo indicando claramente o paciente atendido (ex: `face Paciente: Theo Mendes Rocha (Pai)`).
+- **Cabeçalho do Thread de Mensagens**:
+  - Exibe o nome do responsável com o subtítulo do paciente vinculado, eliminando a impressão de que a conversa está ocorrendo diretamente com a criança.
+- **Balões de Mensagem**:
+  - Mensagens enviadas pela família são rotuladas explicitamente com o nome do responsável e o badge `(Responsável)`.
+
+#### 3. Validação
+- **Backend Build (`tsc`)**: 100% OK (código 0).
+- **Angular Build**: 100% OK (código 0).
+
+---
+
 ## Sessão 35 - 28/08/2026 — Abertura Direta do Chat para o Responsável (Eliminação da Seleção Obrigatória de Filho)
 
 ### O que foi feito

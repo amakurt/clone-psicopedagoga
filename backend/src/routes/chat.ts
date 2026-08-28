@@ -15,12 +15,12 @@ const chatMessageSchema = z.object({
   senderRole: z.enum(['RESPONSAVEL', 'STAFF']).optional(),
 });
 
-// Conversation list for the staff side: one thread per patient, with unread badge
+// Conversation list for the staff side: one thread per patient, with unread badge and responsible info
 router.get('/conversations', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const messages = await db.chatMessage.findMany({
     orderBy: { createdAt: 'asc' },
-    include: { paciente: true },
+    include: { paciente: { include: { responsible: true } } },
   });
 
   const grouped = new Map<string, any>();
@@ -28,11 +28,17 @@ router.get('/conversations', async (req, res) => {
     const p = m.paciente;
     if (!p) continue;
     const key = p.id;
+    const resp = p.responsible;
+    const respName = resp?.name || m.senderName || 'Responsável';
+    const respRelation = resp?.relationship || 'Responsável';
+
     if (!grouped.has(key)) {
       grouped.set(key, {
         pacienteId: p.id,
         patientName: p.name,
-        patientInitials: p.initials || p.name.slice(0, 2).toUpperCase(),
+        responsibleName: respName,
+        responsibleRelationship: respRelation,
+        patientInitials: respName.slice(0, 2).toUpperCase(),
         patientColor: p.color || '#007F80',
         unreadCount: 0,
         lastMessage: m.message,
