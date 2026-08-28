@@ -4,6 +4,32 @@
 
 ---
 
+## Sessão 35 - 28/08/2026 — Abertura Direta do Chat para o Responsável (Eliminação da Seleção Obrigatória de Filho)
+
+### O que foi feito
+
+#### 1. Abertura Imediata da Conversa com a Clínica
+- **Fluxo Direto**: Eliminada a tela intermediária de "escolha de filho" para os responsáveis. O canal de mensagens do responsável agora abre imediatamente na conversa direta com a equipe da clínica.
+- **Auto-resolução de Paciente Vinculado**:
+  - No frontend (`GuardianChatComponent` e `ChatFloatingComponent`): Se o responsável tem apenas um filho ou não selecionou nenhum previamente, o sistema seleciona automaticamente o paciente ativo ou carrega o chat geral com a clínica sem interrupção.
+  - No backend (`routes/guardian.ts`):
+    - Criada rota `GET /guardian/chat` que busca automaticamente todas as mensagens vinculadas aos filhos do responsável.
+    - Atualizada rota `POST /guardian/chat` para auto-resolver o `pacienteId` caso não seja enviado explicitamente pelo cliente.
+- **Seletor Opcional Compacto**: Se o responsável tiver mais de um filho cadastrado na clínica, é exibido um seletor discreto em forma de pílulas no cabeçalho para alternar o contexto se desejar, sem nunca travar a tela ou exigir clique prévio para ver ou enviar mensagens.
+
+#### 2. Chat Flutuante Adaptado para o Responsável (`ChatFloatingComponent`)
+- Quando o usuário com papel `RESPONSAVEL` abre o chat flutuante, ele é levado diretamente para o thread de mensagens com a clínica, sem exibir lista intermediária de conversas (exclusiva para a equipe/staff).
+- Atualizado o título para "Mensagens Diretas - Equipe da Clínica" e adicionado suporte a sincronização contínua.
+
+#### 3. Polling em Tempo Real e Resiliência
+- Implementado auto-polling de 6s em `GuardianChatComponent` (`setInterval` com limpeza no `ngOnDestroy`) para que novas respostas da equipe apareçam instantaneamente na tela sem necessidade de refresh manual.
+
+#### 4. Validação
+- **Backend Build (`tsc`)**: Compilado com 100% de sucesso (código 0).
+- **Angular Build**: Compilado com 100% de sucesso (código 0).
+
+---
+
 ## Sessão 34 - 28/08/2026 — Correção de Layout Mobile no Chat do Responsável (Teclado Virtual / Viewport / Auto-Zoom iOS)
 
 ### O que foi feito

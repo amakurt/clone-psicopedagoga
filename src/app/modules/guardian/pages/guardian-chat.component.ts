@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -13,14 +13,32 @@ import { AuthService } from '@core/services/auth.service';
   template: `
     <div class="flex flex-col h-[calc(100dvh-165px)] sm:h-[calc(100vh-220px)] lg:h-[calc(100vh-240px)]">
       <!-- Header (Compact on mobile) -->
-      <div class="flex items-center gap-2.5 sm:gap-3 pb-2.5 sm:pb-3 shrink-0">
-        <div class="size-9 sm:size-11 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-          <span class="material-icons text-primary text-xl sm:text-2xl">chat</span>
+      <div class="flex items-center justify-between gap-2.5 sm:gap-3 pb-2.5 sm:pb-3 shrink-0">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div class="size-9 sm:size-11 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <span class="material-icons text-primary text-xl sm:text-2xl">chat</span>
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-base sm:text-xl font-bold text-gray-900 dark:text-white truncate">Mensagens com a Clínica</h2>
+            <p class="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 truncate">Canal direto de comunicação com a equipe</p>
+          </div>
         </div>
-        <div class="min-w-0">
-          <h2 class="text-base sm:text-xl font-bold text-gray-900 dark:text-white truncate">Mensagens com a Clínica</h2>
-          <p class="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 truncate">Canal direto de comunicação com o terapeuta</p>
-        </div>
+
+        <!-- Optional Patient Indicator/Selector if multiple children -->
+        @if (patients().length > 1) {
+          <div class="flex items-center gap-1.5 shrink-0 bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl">
+            @for (p of patients(); track p.id) {
+              <button 
+                (click)="switchPatient(p.id)"
+                class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all truncate max-w-[100px] sm:max-w-[140px]"
+                [class]="patientId === p.id 
+                  ? 'bg-primary text-on-primary shadow-sm' 
+                  : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'">
+                {{ p.name }}
+              </button>
+            }
+          </div>
+        }
       </div>
 
       <!-- Chat Box (Fills remaining height) -->
@@ -72,7 +90,7 @@ import { AuthService } from '@core/services/auth.service';
     </div>
   `
 })
-export class GuardianChatComponent implements OnInit {
+export class GuardianChatComponent implements OnInit, OnDestroy {
   @ViewChild('chatContainer') chatContainer!: ElementRef;
 
   private guardianService = inject(GuardianService);
@@ -80,9 +98,11 @@ export class GuardianChatComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   messages = signal<ChatMessage[]>([]);
+  patients = signal<any[]>([]);
   newMessage = '';
   currentUserId = signal('');
   patientId = '';
+  private pollTimer: any;
 
   ngOnInit() {
     const user = this.auth.user();
@@ -90,17 +110,44 @@ export class GuardianChatComponent implements OnInit {
 
     this.route.queryParams.subscribe(params => {
       this.patientId = params['patientId'] || localStorage.getItem('guardian_patient_id') || '';
-      if (this.patientId) {
-        this.loadMessages();
+      this.loadMessages();
+    });
+
+    this.loadPatients();
+    this.pollTimer = setInterval(() => this.loadMessages(false), 6000);
+  }
+
+  ngOnDestroy() {
+    if (this.pollTimer) clearInterval(this.pollTimer);
+  }
+
+  loadPatients() {
+    this.guardianService.getPatients().subscribe({
+      next: (res: any) => {
+        const list = res.data || res || [];
+        this.patients.set(list);
+        if (!this.patientId && list.length > 0) {
+          this.patientId = list[0].id;
+          localStorage.setItem('guardian_patient_id', this.patientId);
+          this.loadMessages();
+        }
       }
     });
   }
 
-  loadMessages() {
-    this.guardianService.getChatMessages(this.patientId).subscribe({
+  switchPatient(id: string) {
+    this.patientId = id;
+    localStorage.setItem('guardian_patient_id', id);
+    this.loadMessages();
+  }
+
+  loadMessages(autoScroll = true) {
+    this.guardianService.getChatMessages(this.patientId || undefined).subscribe({
       next: (res: any) => {
         this.messages.set(res.data || []);
-        setTimeout(() => this.scrollToBottom(), 100);
+        if (autoScroll) {
+          setTimeout(() => this.scrollToBottom(), 100);
+        }
       }
     });
   }
@@ -110,9 +157,9 @@ export class GuardianChatComponent implements OnInit {
   }
 
   sendMessage() {
-    if (!this.newMessage.trim() || !this.patientId) return;
+    if (!this.newMessage.trim()) return;
 
-    this.guardianService.sendChatMessage(this.patientId, this.newMessage).subscribe({
+    this.guardianService.sendChatMessage(this.patientId || undefined, this.newMessage).subscribe({
       next: (msg: any) => {
         this.messages.update(msgs => [...msgs, msg]);
         this.newMessage = '';
@@ -128,4 +175,5 @@ export class GuardianChatComponent implements OnInit {
     }
   }
 }
+
 

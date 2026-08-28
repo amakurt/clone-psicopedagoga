@@ -75,11 +75,12 @@ export class GuardianService {
     return this.api.post('/auth/change-password', { currentPassword, newPassword });
   }
 
-  getChatMessages(patientId: string) {
-    return this.api.get<{ data: ChatMessage[]; total: number }>(`${this.base}/chat/${patientId}`);
+  getChatMessages(patientId?: string) {
+    const url = patientId ? `${this.base}/chat/${patientId}` : `${this.base}/chat`;
+    return this.api.get<{ data: ChatMessage[]; total: number }>(url);
   }
 
-  sendChatMessage(pacienteId: string, message: string) {
+  sendChatMessage(pacienteId: string | undefined, message: string) {
     return this.api.post<ChatMessage>(`${this.base}/chat`, { pacienteId, message });
   }
 

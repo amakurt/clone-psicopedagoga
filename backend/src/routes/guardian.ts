@@ -589,6 +589,38 @@ router.get('/chat/unread-count', async (req, res) => {
   res.json({ count });
 });
 
+// Chat: get all messages for guardian (or by patient)
+router.get('/chat', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const responsible = await getGuardianResponsible(db, req.user);
+  if (!responsible) {
+    return res.status(403).json({ error: 'Acesso negado' });
+  }
+
+  const patients = await db.paciente.findMany({
+    where: { responsibleId: responsible.id, active: true },
+    select: { id: true }
+  });
+
+  const patientIds = patients.map((p: any) => p.id);
+  if (patientIds.length === 0) {
+    return res.json({ data: [], total: 0 });
+  }
+
+  // Marca como lidas pelo responsável as mensagens enviadas pela equipe
+  await db.chatMessage.updateMany({
+    where: { pacienteId: { in: patientIds }, senderRole: 'STAFF', readByGuardian: false },
+    data: { readByGuardian: true },
+  });
+
+  const messages = await db.chatMessage.findMany({
+    where: { pacienteId: { in: patientIds } },
+    orderBy: { createdAt: 'asc' }
+  });
+
+  res.json({ data: messages, total: messages.length });
+});
+
 // Chat: get messages for patient
 router.get('/chat/:patientId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
@@ -625,11 +657,24 @@ router.get('/chat/:patientId', async (req, res) => {
 router.post('/chat', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const userId = req.user?.id;
-  const { pacienteId, message } = req.body;
+  let { pacienteId, message } = req.body;
 
   const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
+  }
+
+  if (!pacienteId) {
+    const defaultPatient = await db.paciente.findFirst({
+      where: { responsibleId: responsible.id, active: true },
+    });
+    if (defaultPatient) {
+      pacienteId = defaultPatient.id;
+    }
+  }
+
+  if (!pacienteId) {
+    return res.status(400).json({ error: 'Nenhum paciente vinculado ao responsável' });
   }
 
   const chatMessage = await db.chatMessage.create({

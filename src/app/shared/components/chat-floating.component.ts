@@ -63,8 +63,8 @@ interface ChatConversation {
             </div>
           </div>
 
-          <!-- Conversation list -->
-          @if (selectedConversation() === null) {
+          <!-- Conversation list (Only shown for Staff) -->
+          @if (!isGuardian() && selectedConversation() === null) {
             <div class="flex-1 overflow-y-auto custom-scrollbar">
               @if (loading()) {
                 <div class="h-full flex items-center justify-center text-slate-500">
@@ -74,9 +74,7 @@ interface ChatConversation {
                 <div class="h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 gap-2">
                   <span class="material-icons text-5xl">forum</span>
                   <p class="text-sm">Nenhuma conversa ainda</p>
-                  @if (!isGuardian()) {
-                    <p class="text-xs text-center px-6">As mensagens dos responsáveis aparecerão aqui quando eles escreverem no portal.</p>
-                  }
+                  <p class="text-xs text-center px-6">As mensagens dos responsáveis aparecerão aqui quando eles escreverem no portal.</p>
                 </div>
               }
               @for (conversation of conversations(); track conversation.pacienteId) {
@@ -109,19 +107,47 @@ interface ChatConversation {
             </div>
           }
 
-          <!-- Thread -->
-          @if (isOpen() && selectedConversation() !== null) {
+          <!-- Thread (Always shown for Guardian, or for Staff when a conversation is selected) -->
+          @if (isOpen() && (isGuardian() || selectedConversation() !== null)) {
             <div class="flex-1 flex flex-col overflow-hidden">
               <!-- Thread header -->
-              <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                <button (click)="backToList()" class="size-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-500" title="Voltar">
-                  <span class="material-icons text-lg">arrow_back</span>
-                </button>
-                <div class="size-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
-                  [style.background]="selectedConversation()!.patientColor">
-                  {{ selectedConversation()!.patientInitials }}
+              <div class="flex items-center justify-between gap-2 px-3.5 py-2.5 bg-primary/10 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                  @if (!isGuardian()) {
+                    <button (click)="backToList()" class="size-8 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300" title="Voltar">
+                      <span class="material-icons text-lg">arrow_back</span>
+                    </button>
+                    <div class="size-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
+                      [style.background]="selectedConversation()?.patientColor || '#007F80'">
+                      {{ selectedConversation()?.patientInitials || 'P' }}
+                    </div>
+                    <p class="font-bold text-sm text-slate-900 dark:text-white truncate">{{ selectedConversation()?.patientName }}</p>
+                  } @else {
+                    <div class="size-8 rounded-2xl bg-primary text-on-primary flex items-center justify-center text-xs font-bold shrink-0">
+                      <span class="material-icons text-sm">support_agent</span>
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">Mensagens Diretas</p>
+                      <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Equipe da Clínica</p>
+                    </div>
+                  }
                 </div>
-                <p class="font-bold text-sm text-slate-900 dark:text-white truncate">{{ selectedConversation()!.patientName }}</p>
+
+                <!-- Child selector in header if guardian has > 1 child -->
+                @if (isGuardian() && conversations().length > 1) {
+                  <div class="flex items-center gap-1 shrink-0">
+                    @for (conv of conversations(); track conv.pacienteId) {
+                      <button 
+                        (click)="openConversation(conv)"
+                        class="px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all truncate max-w-[80px]"
+                        [class]="selectedConversation()?.pacienteId === conv.pacienteId 
+                          ? 'bg-primary text-on-primary' 
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
+                        {{ conv.patientName }}
+                      </button>
+                    }
+                  </div>
+                }
               </div>
 
               <!-- Messages -->
@@ -161,15 +187,6 @@ interface ChatConversation {
                   </button>
                 </div>
               </div>
-            </div>
-          }
-
-          <!-- Footer -->
-          @if (isGuardian() && conversations().length > 0 && selectedConversation() === null) {
-            <div class="p-2.5 sm:p-3 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
-              <a [routerLink]="'/guardian/chat'" (click)="close()" class="text-xs text-primary font-semibold hover:underline">
-                Abrir página de mensagens
-              </a>
             </div>
           }
         </div>
@@ -271,42 +288,54 @@ export class ChatFloatingComponent implements OnInit, OnDestroy {
           lastAt: '',
         }));
         this.conversations.set(list);
-        if (this.selectedConversation() && this.isOpenSignal()) {
-          this.reloadThread();
+
+        // Se for responsável, abre direto na conversa com a clínica
+        if (this.isGuardian()) {
+          if (!this.selectedConversation()) {
+            const savedId = localStorage.getItem('guardian_patient_id');
+            const target = list.find(c => c.pacienteId === savedId) || list[0] || {
+              pacienteId: '',
+              patientName: 'Clínica',
+              patientInitials: 'C',
+              patientColor: '#007F80',
+              unreadCount: 0,
+              lastMessage: '',
+              lastSenderName: '',
+              lastAt: ''
+            };
+            this.openConversation(target);
+          } else if (this.isOpenSignal()) {
+            this.reloadThread();
+          }
         }
       },
-      error: () => {}
+      error: () => {
+        if (this.isGuardian() && !this.selectedConversation()) {
+          this.reloadThread();
+        }
+      }
     });
   }
 
   openConversation(conversation: ChatConversation) {
     this.selectedConversation.set(conversation);
-    if (this.isGuardian()) {
-      this.reloadThread();
-    } else {
-      // Marca a conversa como lida e carrega as mensagens
+    this.reloadThread();
+    if (!this.isGuardian()) {
       this.api.post(`/chat/conversations/${conversation.pacienteId}/read`, {}).subscribe({});
-      this.api.get('/chat', { pacienteId: conversation.pacienteId }).subscribe({
-        next: (res: any) => {
-          this.messages.set(res.data || []);
-          this.refresh();
-          setTimeout(() => this.scrollToBottom(), 50);
-        }
-      });
     }
   }
 
   reloadThread() {
     const c = this.selectedConversation();
-    if (!c) return;
     if (this.isGuardian()) {
-      this.guardianService.getChatMessages(c.pacienteId).subscribe({
+      const pId = c?.pacienteId || undefined;
+      this.guardianService.getChatMessages(pId).subscribe({
         next: (res: any) => {
           this.messages.set(res.data || []);
           setTimeout(() => this.scrollToBottom(), 50);
         }
       });
-    } else {
+    } else if (c) {
       this.api.post(`/chat/conversations/${c.pacienteId}/read`, {}).subscribe({});
       this.api.get('/chat', { pacienteId: c.pacienteId }).subscribe({
         next: (res: any) => {
