@@ -387,3 +387,19 @@ select.form-control { appearance: auto; cursor: pointer; }
   height: 8px;
   background: #19212E;
 }
+
+/* Evitar auto-zoom e quebra de layout no iOS Safari / Mobile ao focar inputs */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+

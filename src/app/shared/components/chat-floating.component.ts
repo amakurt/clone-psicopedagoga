@@ -23,12 +23,12 @@ interface ChatConversation {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
-    <div class="fixed bottom-6 right-6 z-[60]">
+    <div class="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[60]">
       <!-- Floating button -->
       @if (!isOpen()) {
         <button (click)="toggleOpen()"
-          class="relative size-14 rounded-full bg-primary hover:bg-primary-dark text-on-primary shadow-xl shadow-primary/30 flex items-center justify-center transition-all hover:scale-105">
-          <span class="material-icons text-2xl">chat</span>
+          class="relative size-12 sm:size-14 rounded-full bg-primary hover:bg-primary-dark text-on-primary shadow-xl shadow-primary/30 flex items-center justify-center transition-all hover:scale-105 active:scale-95">
+          <span class="material-icons text-xl sm:text-2xl">chat</span>
           @if (totalUnread() > 0) {
             <span class="absolute -top-1 -right-1 size-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
               {{ totalUnread() > 99 ? '99+' : totalUnread() }}
@@ -39,19 +39,20 @@ interface ChatConversation {
 
       <!-- Window -->
       @if (isOpen()) {
-        <div class="absolute bottom-0 right-0 w-[380px] h-[520px] max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden flex flex-col chat-rise">
+        <div class="fixed inset-x-3 bottom-20 top-20 sm:top-auto sm:inset-x-auto sm:absolute sm:bottom-0 sm:right-0 sm:w-[380px] sm:h-[520px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100dvh-120px)] sm:max-h-none bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden flex flex-col chat-rise z-[60]">
           <!-- Header -->
-          <div class="p-4 bg-primary text-on-primary flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-3">
-              <span class="material-icons">chat</span>
+          <div class="p-3.5 sm:p-4 bg-primary text-on-primary flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2.5 sm:gap-3">
+              <span class="material-icons text-xl sm:text-2xl">chat</span>
               <div>
-                <p class="font-bold text-sm leading-tight">{{ isGuardian() ? 'Chat com a Equipe' : 'Chat com a Família' }}</p>
+                <p class="font-bold text-xs sm:text-sm leading-tight">{{ isGuardian() ? 'Chat com a Equipe' : 'Chat com a Família' }}</p>
                 <p class="text-[10px] opacity-80">{{ isGuardian() ? 'Fale com a equipe da clínica' : 'Responda aos responsáveis' }}</p>
               </div>
             </div>
             <div class="flex items-center gap-1">
               @if (isGuardian()) {
                 <a [routerLink]="'/guardian/chat'"
+                  (click)="close()"
                   class="p-1.5 rounded-lg hover:bg-white/20 transition-colors" title="Abrir página completa">
                   <span class="material-icons text-lg">open_in_new</span>
                 </a>
@@ -124,7 +125,7 @@ interface ChatConversation {
               </div>
 
               <!-- Messages -->
-              <div #scrollContainer class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              <div #scrollContainer class="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
                 @if (messages().length === 0) {
                   <div class="h-full flex items-center justify-center text-slate-500 text-sm">
                     <p>Sem mensagens ainda — digite abaixo para começar.</p>
@@ -132,28 +133,30 @@ interface ChatConversation {
                 }
                 @for (msg of messages(); track msg.id) {
                   <div class="flex" [class.justify-end]="isMine(msg)">
-                    <div class="max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-snug"
+                    <div class="max-w-[85%] sm:max-w-[80%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-snug"
                       [class]="isMine(msg)
                         ? 'bg-primary text-on-primary rounded-br-md'
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md'">
-                      <p class="text-xs font-semibold mb-1" *ngIf="!isMine(msg)">{{ msg.senderName }}</p>
+                      <p class="text-[11px] font-semibold mb-1" *ngIf="!isMine(msg)">{{ msg.senderName }}</p>
                       <p class="whitespace-pre-wrap break-words">{{ msg.message }}</p>
-                      <p class="text-[10px] mt-1 opacity-70">{{ formatTime(msg.createdAt) }}</p>
+                      <p class="text-[9px] sm:text-[10px] mt-1 opacity-70 text-right">{{ formatTime(msg.createdAt) }}</p>
                     </div>
                   </div>
                 }
               </div>
 
               <!-- Input -->
-              <div class="p-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+              <div class="p-2.5 sm:p-3 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-800/50">
                 <div class="flex gap-2">
                   <input
                     [(ngModel)]="newMessage"
+                    (focus)="onInputFocus()"
                     (keyup.enter)="send()"
-                    class="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                    class="flex-1 px-3.5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary focus:border-transparent text-base sm:text-sm"
                     placeholder="Digite sua mensagem...">
                   <button (click)="send()" [disabled]="!newMessage.trim()"
-                    class="size-11 bg-primary hover:bg-primary-dark text-on-primary rounded-xl flex items-center justify-center disabled:opacity-40 transition-all shrink-0">
+                    class="size-11 bg-primary hover:bg-primary-dark text-on-primary rounded-xl flex items-center justify-center disabled:opacity-40 transition-all shrink-0 active:scale-95"
+                    title="Enviar">
                     <span class="material-icons text-lg">send</span>
                   </button>
                 </div>
@@ -163,8 +166,8 @@ interface ChatConversation {
 
           <!-- Footer -->
           @if (isGuardian() && conversations().length > 0 && selectedConversation() === null) {
-            <div class="p-3 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
-              <a [routerLink]="'/guardian/chat'" class="text-xs text-primary font-semibold hover:underline">
+            <div class="p-2.5 sm:p-3 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
+              <a [routerLink]="'/guardian/chat'" (click)="close()" class="text-xs text-primary font-semibold hover:underline">
                 Abrir página de mensagens
               </a>
             </div>
@@ -347,6 +350,10 @@ export class ChatFloatingComponent implements OnInit, OnDestroy {
       },
       error: () => { this.sending.set(false); }
     });
+  }
+
+  onInputFocus() {
+    setTimeout(() => this.scrollToBottom(), 300);
   }
 
   scrollToBottom() {

@@ -11,58 +11,60 @@ import { AuthService } from '@core/services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="space-y-4 sm:space-y-6 flex flex-col">
-      <!-- Header -->
-      <div class="flex items-center gap-3">
-        <div class="size-11 sm:size-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-          <span class="material-icons text-primary text-2xl">chat</span>
+    <div class="flex flex-col h-[calc(100dvh-165px)] sm:h-[calc(100vh-220px)] lg:h-[calc(100vh-240px)]">
+      <!-- Header (Compact on mobile) -->
+      <div class="flex items-center gap-2.5 sm:gap-3 pb-2.5 sm:pb-3 shrink-0">
+        <div class="size-9 sm:size-11 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+          <span class="material-icons text-primary text-xl sm:text-2xl">chat</span>
         </div>
-        <div>
-          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Mensagens com a Clínica</h2>
-          <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Canal direto de comunicação com o terapeuta</p>
+        <div class="min-w-0">
+          <h2 class="text-base sm:text-xl font-bold text-gray-900 dark:text-white truncate">Mensagens com a Clínica</h2>
+          <p class="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 truncate">Canal direto de comunicação com o terapeuta</p>
         </div>
       </div>
 
-      <!-- Chat Box -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col shadow-sm h-[calc(100vh-240px)] sm:h-[calc(100vh-260px)] min-h-[420px]">
+      <!-- Chat Box (Fills remaining height) -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
         <!-- Messages Container -->
-        <div #chatContainer class="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3 custom-scrollbar">
+        <div #chatContainer class="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 space-y-3 custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
           @if (messages().length === 0) {
-            <div class="flex flex-col items-center justify-center h-full text-center p-6 text-gray-400 dark:text-slate-500">
-              <div class="size-14 rounded-3xl bg-gray-100 dark:bg-slate-700/50 flex items-center justify-center mb-3">
+            <div class="flex flex-col items-center justify-center h-full text-center p-4 sm:p-6 text-gray-400 dark:text-slate-500">
+              <div class="size-12 sm:size-14 rounded-3xl bg-gray-100 dark:bg-slate-700/50 flex items-center justify-center mb-2 sm:mb-3">
                 <span class="material-icons text-2xl">forum</span>
               </div>
-              <p class="text-sm font-bold text-gray-700 dark:text-slate-300">Nenhuma mensagem ainda</p>
-              <p class="text-xs text-gray-500 dark:text-slate-400 mt-1 max-w-xs">Envie uma mensagem abaixo para falar com o profissional responsável.</p>
+              <p class="text-xs sm:text-sm font-bold text-gray-700 dark:text-slate-300">Nenhuma mensagem ainda</p>
+              <p class="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 mt-0.5 max-w-xs">Envie uma mensagem abaixo para falar com o profissional responsável.</p>
             </div>
           }
           @for (msg of messages(); track msg.id) {
             <div class="flex" [class.justify-end]="msg.senderId === currentUserId()">
-              <div class="max-w-[85%] sm:max-w-md px-4 py-3 rounded-2xl sm:rounded-3xl shadow-sm"
+              <div class="max-w-[88%] sm:max-w-md px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl sm:rounded-3xl shadow-sm"
                 [class]="msg.senderId === currentUserId() 
                   ? 'bg-primary text-on-primary rounded-br-sm' 
                   : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-bl-sm'">
-                <p class="text-[11px] font-bold opacity-80 mb-0.5" *ngIf="msg.senderId !== currentUserId()">{{ msg.senderName }}</p>
+                <p class="text-[10px] sm:text-[11px] font-bold opacity-80 mb-0.5" *ngIf="msg.senderId !== currentUserId()">{{ msg.senderName }}</p>
                 <p class="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words">{{ msg.message }}</p>
-                <p class="text-[10px] mt-1 opacity-70 text-right">{{ msg.createdAt }}</p>
+                <p class="text-[9px] sm:text-[10px] mt-1 opacity-70 text-right">{{ msg.createdAt }}</p>
               </div>
             </div>
           }
         </div>
 
         <!-- Input Box -->
-        <div class="border-t border-gray-100 dark:border-slate-700 p-3 sm:p-4 bg-gray-50/50 dark:bg-slate-800/80">
+        <div class="border-t border-gray-100 dark:border-slate-700 p-2.5 sm:p-4 bg-gray-50/50 dark:bg-slate-800/80 shrink-0">
           <div class="flex items-center gap-2 sm:gap-3">
             <input 
               [(ngModel)]="newMessage" 
+              (focus)="onInputFocus()"
               (keyup.enter)="sendMessage()"
-              class="flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 text-xs sm:text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+              class="flex-1 px-3.5 py-2.5 sm:px-4 sm:py-3 border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 text-base sm:text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Digite sua mensagem...">
             <button 
               (click)="sendMessage()" 
               [disabled]="!newMessage.trim()"
-              class="size-11 sm:size-12 rounded-2xl bg-primary hover:bg-primary/90 text-on-primary font-bold disabled:opacity-50 transition-all active:scale-95 shadow-md shadow-primary/20 flex items-center justify-center shrink-0">
-              <span class="material-icons text-xl">send</span>
+              class="size-10 sm:size-12 rounded-2xl bg-primary hover:bg-primary/90 text-on-primary font-bold disabled:opacity-50 transition-all active:scale-95 shadow-md shadow-primary/20 flex items-center justify-center shrink-0"
+              title="Enviar mensagem">
+              <span class="material-icons text-lg sm:text-xl">send</span>
             </button>
           </div>
         </div>
@@ -103,6 +105,10 @@ export class GuardianChatComponent implements OnInit {
     });
   }
 
+  onInputFocus() {
+    setTimeout(() => this.scrollToBottom(), 300);
+  }
+
   sendMessage() {
     if (!this.newMessage.trim() || !this.patientId) return;
 
@@ -122,3 +128,4 @@ export class GuardianChatComponent implements OnInit {
     }
   }
 }
+

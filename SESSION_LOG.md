@@ -4,6 +4,29 @@
 
 ---
 
+## Sessão 34 - 28/08/2026 — Correção de Layout Mobile no Chat do Responsável (Teclado Virtual / Viewport / Auto-Zoom iOS)
+
+### O que foi feito
+
+#### 1. Prevenção Global de Auto-Zoom no iOS Safari (`styles.scss`)
+- **Regra de Fonte Mínima (16px)**: Adicionada regra CSS `@media screen and (max-width: 768px)` fixando `font-size: 16px !important` em todos os campos de texto (`input`, `textarea`, `select`). Isso impede que o iOS Safari aplique o zoom automático forçado ao tocar para digitar, que deslocava a tela para fora da área visível.
+
+#### 2. Página de Mensagens do Responsável (`GuardianChatComponent`)
+- **Altura Dinâmica com Viewport Mobile (`100dvh`)**: Substituída a altura rígida com `min-h-[420px]` por container flexível `h-[calc(100dvh-165px)] min-h-0`, adaptando o chat instantaneamente quando o teclado virtual abre na tela do celular.
+- **Scroll Automático ao Focar**: Adicionado handler `(focus)="onInputFocus()"` para rolar suavemente as mensagens até a mais recente quando o teclado abre.
+- **Header Compacto no Mobile**: Reduzido o cabeçalho no smartphone para preservar espaço útil de leitura e digitação.
+- **Input e Botão Touch Otimizados**: Campo de mensagem com `text-base sm:text-sm` e botão de envio responsivo com feedback tátil.
+
+#### 3. Layout e Ocultação do Chat Flutuante (`GuardianLayoutComponent` & `ChatFloatingComponent`)
+- **Ocultação Inteligente na Rota de Chat**: O botão flutuante `<app-chat-floating>` agora é ocultado automaticamente quando o usuário já está na página `/guardian/chat`, eliminando sobreposição com o botão de envio.
+- **Posicionamento Acima da Bottom Bar**: Nos demais módulos do Portal da Família no celular, o botão flutuante foi ajustado para `bottom-20 right-4` para não colidir com a barra inferior fixa.
+- **Janela Flutuante Adaptativa**: Modal do chat flutuante agora se adapta com `max-h-[calc(100dvh-120px)]` e inputs com fonte de 16px.
+
+#### 4. Validação
+- **Angular Build**: Compilado com sucesso (`npx ng build --configuration=development`) com código de saída 0 e sem avisos de template.
+
+---
+
 ## Sessão 33 - 28/08/2026 — Responsividade Mobile Completa do Portal da Família / Responsável (iOS / Android / PWA UX)
 
 ### O que foi feito

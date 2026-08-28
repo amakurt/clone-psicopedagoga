@@ -233,7 +233,7 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
       </nav>
 
       <!-- Main Content Area with padding adjusted for mobile bottom bar -->
-      <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+      <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-20 sm:pb-24 lg:pb-8">
         <router-outlet></router-outlet>
       </main>
 
@@ -279,7 +279,9 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
         </div>
       </nav>
     </div>
-    <app-chat-floating [guardian]="true" />
+    @if (!isChatRoute()) {
+      <app-chat-floating [guardian]="true" />
+    }
   `
 })
 export class GuardianLayoutComponent implements OnInit, OnDestroy {
@@ -296,6 +298,7 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   tenantOpen = signal(false);
   switching = signal(false);
   mobileMenuOpen = signal(false);
+  isChatRoute = signal(false);
   private notifTimer: any;
 
   navItems = [
@@ -326,15 +329,18 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
       this.selectedPatientId.set(savedPatientId);
     }
 
+    this.isChatRoute.set(this.router.url.includes('/guardian/chat'));
+
     this.loadPatients();
     this.loadCounts();
     this.notifTimer = setInterval(() => this.loadCounts(), 15000);
 
-    // Auto-close mobile drawer on route change
+    // Auto-close mobile drawer on route change & track chat route
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
+    ).subscribe((event: any) => {
       this.mobileMenuOpen.set(false);
+      this.isChatRoute.set(event.urlAfterRedirects?.includes('/guardian/chat') || this.router.url.includes('/guardian/chat'));
     });
   }
 
