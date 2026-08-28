@@ -41,7 +41,10 @@ interface ChatConversation {
 
       <!-- Window -->
       @if (isOpen()) {
-        <div class="fixed inset-x-3 bottom-20 top-20 sm:top-auto sm:inset-x-auto sm:absolute sm:bottom-0 sm:right-0 sm:w-[380px] sm:h-[520px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100dvh-120px)] sm:max-h-none bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden flex flex-col chat-rise z-[60]">
+        <!-- Mobile backdrop to isolate touch and scroll events -->
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[55] sm:hidden" (click)="close()" style="touch-action: none;"></div>
+
+        <div class="fixed inset-x-3 bottom-20 top-20 sm:top-auto sm:inset-x-auto sm:absolute sm:bottom-0 sm:right-0 sm:w-[380px] sm:h-[520px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100dvh-120px)] sm:max-h-none bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden flex flex-col chat-rise z-[60]" style="overscroll-behavior: contain;">
           <!-- Header -->
           <div class="p-3.5 sm:p-4 bg-primary text-on-primary flex items-center justify-between shrink-0">
             <div class="flex items-center gap-2.5 sm:gap-3">
@@ -67,7 +70,7 @@ interface ChatConversation {
 
           <!-- Conversation list (Only shown for Staff) -->
           @if (!isGuardian() && selectedConversation() === null) {
-            <div class="flex-1 overflow-y-auto custom-scrollbar">
+            <div class="flex-1 overflow-y-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y;">
               @if (loading()) {
                 <div class="h-full flex items-center justify-center text-slate-500">
                   <span class="material-icons animate-spin">autorenew</span>
@@ -165,7 +168,7 @@ interface ChatConversation {
               </div>
 
               <!-- Messages -->
-              <div #scrollContainer class="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+              <div #scrollContainer class="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 custom-scrollbar" style="-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y;">
                 @if (messages().length === 0) {
                   <div class="h-full flex items-center justify-center text-slate-500 text-sm">
                     <p>Sem mensagens ainda — digite abaixo para começar.</p>

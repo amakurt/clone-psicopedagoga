@@ -4,6 +4,30 @@
 
 ---
 
+## Sessão 37 - 28/08/2026 — Correção de Scroll Mobile: Isolamento de Gestos Touch e Bloqueio de Rolagem da Página de Fundo
+
+### O que foi feito
+
+#### 1. Diagnóstico do Problema de Rolagem no Celular
+- **Scroll Chaining e Rubber-Banding**: Em navegadores móveis (Safari iOS e Chrome Android), se o container pai ou o corpo da página permitir overflow, o gesto de rolagem do usuário no chat pode ser capturado pelo documento em vez do container interno de mensagens.
+
+#### 2. Isolamento de Rolagem no Chat do Responsável (`GuardianChatComponent` & `GuardianLayoutComponent`)
+- **Bloqueio de Overflow no Layout (`GuardianLayoutComponent`)**:
+  - Quando a rota ativa for `/guardian/chat`, o layout mestre adota `h-[100dvh] max-h-[100dvh] overflow-hidden` e a tag `<main>` recebe `overflow-hidden flex flex-col min-h-0`.
+  - Isso elimina fisicamente qualquer rolagem da página de fundo, garantindo que o único elemento rolável na tela seja a lista de mensagens.
+- **Contenção de Overscroll no Container de Mensagens (`GuardianChatComponent`)**:
+  - Adicionadas diretivas `overscroll-behavior-y: contain` e `touch-action: pan-y` em conjunto com `-webkit-overflow-scrolling: touch` na div `#chatContainer`.
+  - Impede que gestos de rolagem rápida ou nos limites da lista escapem para o documento.
+
+#### 3. Isolamento no Chat Flutuante (`ChatFloatingComponent`)
+- **Backdrop com Bloqueio de Toque no Mobile**: Ao abrir o modal flutuante em telas pequenas, um backdrop com `touch-action: none` é ativado para evitar propagação de toques para a página traseira.
+- **Contenção no Scroll de Mensagens e Conversas**: Aplicado `overscroll-behavior-y: contain` e `touch-action: pan-y` no `#scrollContainer` e na lista de conversas.
+
+#### 4. Validação
+- **Angular Build**: Compilado com 100% de sucesso (código 0).
+
+---
+
 ## Sessão 36 - 28/08/2026 — Ajuste no Chat da Equipe: Identificação Correta do Responsável e Vínculo com o Paciente
 
 ### O que foi feito

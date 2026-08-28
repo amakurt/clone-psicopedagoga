@@ -11,7 +11,7 @@ import { AuthService } from '@core/services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="flex flex-col h-[calc(100dvh-165px)] sm:h-[calc(100vh-220px)] lg:h-[calc(100vh-240px)]">
+    <div class="flex flex-col flex-1 min-h-0 h-full">
       <!-- Header (Compact on mobile) -->
       <div class="flex items-center justify-between gap-2.5 sm:gap-3 pb-2.5 sm:pb-3 shrink-0">
         <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -44,7 +44,7 @@ import { AuthService } from '@core/services/auth.service';
       <!-- Chat Box (Fills remaining height) -->
       <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl border border-gray-200 dark:border-slate-700 overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm">
         <!-- Messages Container -->
-        <div #chatContainer class="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 space-y-3 custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+        <div #chatContainer class="flex-1 min-h-0 overflow-y-auto p-3 sm:p-5 space-y-3 custom-scrollbar" style="-webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y;">
           @if (messages().length === 0) {
             <div class="flex flex-col items-center justify-center h-full text-center p-4 sm:p-6 text-gray-400 dark:text-slate-500">
               <div class="size-12 sm:size-14 rounded-3xl bg-gray-100 dark:bg-slate-700/50 flex items-center justify-center mb-2 sm:mb-3">

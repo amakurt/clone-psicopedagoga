@@ -13,7 +13,7 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
   standalone: true,
   imports: [CommonModule, RouterModule, ChatFloatingComponent, NotificationDropdownComponent],
   template: `
-    <div class="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col">
+    <div class="bg-gray-50 dark:bg-slate-900 flex flex-col" [class]="isChatRoute() ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'">
       <!-- Mobile Drawer Backdrop -->
       @if (mobileMenuOpen()) {
         <div 
@@ -233,7 +233,7 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
       </nav>
 
       <!-- Main Content Area with padding adjusted for mobile bottom bar -->
-      <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-20 sm:pb-24 lg:pb-8">
+      <main class="flex-1 max-w-7xl w-full mx-auto flex flex-col min-h-0" [class]="isChatRoute() ? 'p-2 sm:p-6 lg:p-8 pb-16 sm:pb-24 lg:pb-8 overflow-hidden' : 'p-3 sm:p-6 lg:p-8 pb-20 sm:pb-24 lg:pb-8'">
         <router-outlet></router-outlet>
       </main>
 
