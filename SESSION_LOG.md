@@ -4,6 +4,45 @@
 
 ---
 
+## Sessão 38 - 28/08/2026 — Módulo Financeiro: Lançamento de Gastos e Contas a Pagar, Resiliência do Backend e Normalização de Sessões Clínicas
+
+### O que foi feito
+
+#### 1. Lançamento de Gastos e Contas a Pagar no Banco de Dados (`backend/prisma/schema.prisma`)
+- **Despesas Gerais da Clínica**: O campo `pacienteId` no modelo `FinanceiroSessao` foi tornado opcional (`String?`), permitindo registrar custos fixos e variáveis da clínica (aluguel, condomínio, luz, água, materiais, softwares, salários) sem vínculo obrigatório a um paciente.
+- **Novos Campos**: Adicionados os campos `fornecedor` (favorecido/empresa) e `dataVencimento`.
+- **Sincronização**: Executado `prisma db push` e `prisma generate` no SQLite (`dev.db`).
+
+#### 2. Endpoints e Regras no Backend (`backend/src/routes/financeiro.ts`)
+- **Suporte aos Tipos `RECEITA` e `DESPESA`**: Ajustado `normalizeInput` e `normalizeOutput`.
+- **Normalização de Sessões Clínicas**: Registros legados com `tipo: 'SESSAO'` agora são mapeados automaticamente para `type: 'receita'`, garantindo que apareçam na aba de receitas e nos totais a receber.
+- **Filtros e Status Automático**: Suporte a filtro por tipo (`GET /financeiro?type=receita|despesa`) e cálculo automático de status `atrasado` caso uma despesa ou receita pendente tenha ultrapassado a data de vencimento.
+- **Quitação Rápida de Despesas (`PATCH /financeiro/:id/pay`)**: Nova rota para liquidar contas a pagar com registro imediato da data e método de pagamento (Boleto, PIX, Cartão, Transferência, Dinheiro).
+
+#### 3. Painel Financeiro e Formulário no Frontend
+- **Formulário Completo (`FinanceiroFormComponent`)**:
+  - Seletor de tipo (Receita vs Despesa/Conta a Pagar).
+  - Categorias dedicadas de despesa (Aluguel, Água/Luz, Internet, Materiais, Software, Limpeza, Impostos, Salários, Outros).
+  - Vínculo opcional com paciente para despesas específicas.
+- **Listagem e Painel (`FinanceiroListComponent`)**:
+  - **5 Cards de Métricas**: *Receitas Realizadas*, *Despesas Pagas*, *A Receber*, *Contas a Pagar* e *Saldo em Caixa*.
+  - **Abas de Filtragem**: *Todas as Transações*, *Receitas* e *Contas a Pagar & Despesas*.
+  - **Botão "+ Lançar Gasto / Conta"**: Modal rápido para lançar despesas sem sair da listagem.
+  - **Ação de Baixa Rápida**: Botão de quitação para pagar contas com um clique.
+  - **Responsividade Total**: Visualização otimizada para desktop e cards touch-friendly para smartphones.
+  - **Relatórios & Recibos**: Emissão de relatório mensal e comprovante em PDF/impressão adaptados para despesas e receitas.
+
+#### 4. Resiliência de Inicialização do Backend (`backend/src/index.ts`, `middleware/auth.ts`, `routes/auth.ts`)
+- **Resolução de Hoisting no TypeScript/ESM**: Adicionado `import 'dotenv/config'` na primeira linha dos arquivos principais e função `getJwtSecret()`, impedindo que o recarregamento automático (`tsx watch`) lance exceções de variáveis de ambiente antes da inicialização do `dotenv`.
+- **Integridade dos Dados**: Confirmada integridade de 100% de todos os pacientes e lançamentos financeiros no banco de dados.
+
+#### 5. Validação
+- **Backend Build (`tsc`)**: 100% OK (código 0).
+- **Angular Build (`ng build`)**: 100% OK (código 0).
+- **Testes HTTP de API**: Validado retorno HTTP 200 para `/api/pacientes` e `/api/financeiro`.
+
+---
+
 ## Sessão 37 - 28/08/2026 — Correção de Scroll Mobile: Isolamento de Gestos Touch e Bloqueio de Rolagem da Página de Fundo
 
 ### O que foi feito

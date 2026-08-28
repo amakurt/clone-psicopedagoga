@@ -1,16 +1,15 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
 import passport from 'passport';
 import path from 'path';
-import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import routes from './routes';
 import { errorHandler } from './middleware';
 import configurePassport from './config/passport';
 
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

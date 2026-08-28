@@ -10,8 +10,8 @@ router.use(authenticate);
 // Normaliza o payload do formulário (value/type/status minúsculos) p/ o schema Prisma (valor/tipo/status maiúsculo)
 function normalizeInput(body: any) {
   const data: any = {};
-  if (body.pacienteId !== undefined) data.pacienteId = body.pacienteId;
-  if (body.sessaoId !== undefined) data.sessaoId = body.sessaoId;
+  if (body.pacienteId !== undefined) data.pacienteId = body.pacienteId ? String(body.pacienteId) : null;
+  if (body.sessaoId !== undefined) data.sessaoId = body.sessaoId ? String(body.sessaoId) : null;
   if (body.value !== undefined) data.valor = Number(body.value);
   else if (body.valor !== undefined) data.valor = Number(body.valor);
   if (body.type !== undefined) data.tipo = String(body.type).toUpperCase();
@@ -19,6 +19,10 @@ function normalizeInput(body: any) {
   if (body.status !== undefined) data.status = String(body.status).toUpperCase();
   if (body.description !== undefined) data.description = body.description;
   if (body.category !== undefined) data.category = body.category;
+  if (body.fornecedor !== undefined) data.fornecedor = body.fornecedor;
+  if (body.dataVencimento !== undefined) {
+    data.dataVencimento = body.dataVencimento ? new Date(body.dataVencimento) : null;
+  }
   if (body.date !== undefined) data.dataPagamento = body.date ? new Date(body.date) : null;
   else if (body.dataPagamento !== undefined) data.dataPagamento = body.dataPagamento ? new Date(body.dataPagamento) : null;
   if (body.paymentMethod !== undefined) data.paymentMethod = String(body.paymentMethod).toUpperCase();
@@ -27,18 +31,50 @@ function normalizeInput(body: any) {
 
 // Normaliza a saída p/ o frontend (value/type/status minúsculos + paciente)
 function normalizeOutput(r: any) {
+  let status = (r.status || 'PENDENTE').toLowerCase();
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  // Se status pendente e data de vencimento passou de hoje, marcar como atrasado
+  if (status === 'pendente' && r.dataVencimento && new Date(r.dataVencimento) < hoje) {
+    status = 'atrasado';
+  }
+
+  const rawTipo = String(r.tipo || 'RECEITA').toUpperCase();
+  const isDespesa = rawTipo === 'DESPESA';
+  const type = isDespesa ? 'despesa' : 'receita';
+
   return {
     ...r,
     value: r.valor,
-    type: (r.tipo || '').toLowerCase(),
-    status: (r.status || '').toLowerCase(),
-    date: r.dataPagamento || r.createdAt,
+    type,
+    status,
+    date: r.dataPagamento || r.dataVencimento || r.createdAt,
+    dataVencimento: r.dataVencimento,
+    dataPagamento: r.dataPagamento,
+    fornecedor: r.fornecedor,
   };
 }
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
+  const { type, status } = req.query;
+
+  const where: any = {};
+  if (type) {
+    const t = String(type).toUpperCase();
+    if (t === 'RECEITA') {
+      where.tipo = { in: ['RECEITA', 'SESSAO'] };
+    } else {
+      where.tipo = t;
+    }
+  }
+  if (status) {
+    where.status = String(status).toUpperCase();
+  }
+
   const registros = await db.financeiroSessao.findMany({
+    where,
     include: { paciente: { include: { responsible: true } } },
     orderBy: { createdAt: 'desc' },
   });
@@ -66,6 +102,21 @@ router.put('/:id', async (req, res) => {
   const registro = await db.financeiroSessao.update({
     where: { id: req.params.id },
     data: normalizeInput(req.body),
+  });
+  res.json(normalizeOutput(registro));
+});
+
+// Marcar rapidamente como pago/quitado
+router.patch('/:id/pay', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const { paymentMethod, dataPagamento } = req.body;
+  const registro = await db.financeiroSessao.update({
+    where: { id: req.params.id },
+    data: {
+      status: 'PAGO',
+      dataPagamento: dataPagamento ? new Date(dataPagamento) : new Date(),
+      paymentMethod: paymentMethod ? String(paymentMethod).toUpperCase() : undefined,
+    },
   });
   res.json(normalizeOutput(registro));
 });

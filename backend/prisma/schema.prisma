@@ -500,13 +500,15 @@ model Comunicacao {
 model FinanceiroSessao {
   id            String   @id @default(cuid())
   tenantId String @default("")
-  pacienteId    String
+  pacienteId    String?
   sessaoId      String?
   valor         Float
   status        String   @default("PENDENTE")
   tipo          String?
   description   String?
   category      String?
+  fornecedor    String?
+  dataVencimento DateTime?
   dataPagamento DateTime?
   paymentMethod String?
   pixCopiaECola String?
@@ -517,9 +519,9 @@ model FinanceiroSessao {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
-  paciente Paciente @relation(fields: [pacienteId], references: [id])
-  sessao   Sessao?  @relation(fields: [sessaoId], references: [id])
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  paciente Paciente? @relation(fields: [pacienteId], references: [id])
+  sessao   Sessao?   @relation(fields: [sessaoId], references: [id])
 
   @@index([tenantId])
 }

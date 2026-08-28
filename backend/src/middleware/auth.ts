@@ -1,11 +1,17 @@
+import 'dotenv/config';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { enforceTenantStatus } from '../lib/billing';
 
-const JWT_SECRET: string = process.env.JWT_SECRET || (() => {
-  throw new Error('JWT_SECRET não definido. Configure o backend/.env antes de subir o servidor.');
-})();
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET não definido. Configure o backend/.env antes de subir o servidor.');
+  }
+  return secret;
+}
+
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -15,7 +21,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
   let payload: any;
   try {
-    payload = jwt.verify(authHeader.split(' ')[1], JWT_SECRET);
+    payload = jwt.verify(authHeader.split(' ')[1], getJwtSecret());
   } catch {
     return res.status(401).json({ error: 'Token inválido' });
   }
