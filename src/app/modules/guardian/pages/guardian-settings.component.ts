@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GuardianService } from '../services/guardian.service';
 import { AuthService } from '@core/services/auth.service';
+import { ToastService } from '@shared/components/toast.component';
+import { applyAccentColor } from '@core/utils/theme';
 
 @Component({
   selector: 'app-guardian-settings',
@@ -17,7 +19,87 @@ import { AuthService } from '@core/services/auth.service';
         </div>
         <div>
           <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Configurações da Conta</h2>
-          <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Gerencie seus dados e segurança</p>
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Gerencie seus dados, aparência e segurança</p>
+        </div>
+      </div>
+
+      <!-- Theme & Appearance -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-gray-200 dark:border-slate-700 shadow-sm">
+        <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+          <span class="material-icons text-primary">palette</span> Tema e Aparência
+        </h3>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-5">Escolha o modo de visualização e cor de destaque do seu aplicativo</p>
+
+        <!-- Theme Selector Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          @for (theme of themes; track theme.id) {
+            <button class="relative flex flex-col items-center gap-2.5 p-4 sm:p-5 rounded-2xl ring-2 transition-all hover:scale-[1.02] text-left"
+              [class]="currentTheme() === theme.id
+                ? 'ring-primary bg-primary/5 shadow-md shadow-primary/10'
+                : 'ring-gray-200 dark:ring-slate-700 hover:ring-gray-300 dark:hover:ring-slate-600 bg-gray-50 dark:bg-slate-900/50'"
+              (click)="setTheme(theme.id)">
+              @if (currentTheme() === theme.id) {
+                <div class="absolute top-2.5 right-2.5">
+                  <span class="material-icons text-primary text-base">check_circle</span>
+                </div>
+              }
+              <div class="size-12 rounded-2xl flex items-center justify-center transition-colors"
+                [class]="currentTheme() === theme.id ? 'bg-primary/10 text-primary' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'">
+                <span class="material-icons text-2xl">{{ theme.icon }}</span>
+              </div>
+              <div class="text-center">
+                <p class="font-bold text-sm"
+                  [class]="currentTheme() === theme.id ? 'text-primary' : 'text-gray-900 dark:text-white'">
+                  {{ theme.label }}
+                </p>
+                <p class="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 leading-tight">{{ theme.description }}</p>
+              </div>
+            </button>
+          }
+        </div>
+
+        <!-- Accent Colors -->
+        <div class="pt-5 border-t border-gray-100 dark:border-slate-700">
+          <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-3">Cor de Destaque</label>
+          <div class="flex flex-wrap gap-3">
+            <button class="size-9 sm:size-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95"
+              style="background: #4f46e5"
+              title="Índigo"
+              [class]="accentColor() === '#4f46e5' ? 'ring-indigo-500 ring-offset-white dark:ring-offset-slate-800' : 'ring-transparent'"
+              (click)="setAccentColor('#4f46e5')"></button>
+            <button class="size-9 sm:size-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95"
+              style="background: #6d28d9"
+              title="Violeta"
+              [class]="accentColor() === '#6d28d9' ? 'ring-violet-500 ring-offset-white dark:ring-offset-slate-800' : 'ring-transparent'"
+              (click)="setAccentColor('#6d28d9')"></button>
+            <button class="size-9 sm:size-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95"
+              style="background: #be185d"
+              title="Rosa"
+              [class]="accentColor() === '#be185d' ? 'ring-pink-500 ring-offset-white dark:ring-offset-slate-800' : 'ring-transparent'"
+              (click)="setAccentColor('#be185d')"></button>
+            <button class="size-9 sm:size-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95"
+              style="background: #047857"
+              title="Esmeralda"
+              [class]="accentColor() === '#047857' ? 'ring-emerald-500 ring-offset-white dark:ring-offset-slate-800' : 'ring-transparent'"
+              (click)="setAccentColor('#047857')"></button>
+            <button class="size-9 sm:size-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95"
+              style="background: #b45309"
+              title="Âmbar"
+              [class]="accentColor() === '#b45309' ? 'ring-amber-500 ring-offset-white dark:ring-offset-slate-800' : 'ring-transparent'"
+              (click)="setAccentColor('#b45309')"></button>
+            <button class="size-9 sm:size-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110 active:scale-95"
+              style="background: #b91c1c"
+              title="Vermelho"
+              [class]="accentColor() === '#b91c1c' ? 'ring-red-500 ring-offset-white dark:ring-offset-slate-800' : 'ring-transparent'"
+              (click)="setAccentColor('#b91c1c')"></button>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-gray-100 dark:border-slate-700 flex justify-end">
+          <button (click)="saveAppearance()" 
+            class="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-md shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+            <span class="material-icons text-[18px]">done</span> Salvar Aparência
+          </button>
         </div>
       </div>
 
@@ -91,6 +173,16 @@ import { AuthService } from '@core/services/auth.service';
 export class GuardianSettingsComponent implements OnInit {
   private guardianService = inject(GuardianService);
   private auth = inject(AuthService);
+  private toast = inject(ToastService);
+
+  themes = [
+    { id: 'light', label: 'Claro', icon: 'light_mode', description: 'Tema claro para ambientes iluminados' },
+    { id: 'dark', label: 'Escuro', icon: 'dark_mode', description: 'Tema escuro para conforto visual' },
+    { id: 'system', label: 'Sistema', icon: 'contrast', description: 'Segue o modo padrão do dispositivo' },
+  ];
+
+  currentTheme = signal(localStorage.getItem('theme') || 'system');
+  accentColor = signal(localStorage.getItem('accentColor') || '#4f46e5');
 
   name = '';
   email = signal('');
@@ -108,6 +200,45 @@ export class GuardianSettingsComponent implements OnInit {
       this.name = user.name;
       this.email.set(user.email);
     }
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      this.currentTheme.set(savedTheme);
+      this.applyTheme(savedTheme);
+    }
+
+    const savedColor = localStorage.getItem('accentColor');
+    if (savedColor) {
+      this.accentColor.set(savedColor);
+      applyAccentColor(savedColor);
+    }
+  }
+
+  setTheme(themeId: string) {
+    this.currentTheme.set(themeId);
+    this.applyTheme(themeId);
+  }
+
+  applyTheme(theme: string) {
+    const html = document.documentElement;
+    html.classList.remove('light', 'dark');
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      html.classList.add(prefersDark ? 'dark' : 'light');
+    } else {
+      html.classList.add(theme);
+    }
+  }
+
+  setAccentColor(color: string) {
+    this.accentColor.set(color);
+    applyAccentColor(color);
+  }
+
+  saveAppearance() {
+    localStorage.setItem('theme', this.currentTheme());
+    localStorage.setItem('accentColor', this.accentColor());
+    this.toast.success('Preferências de aparência salvas com sucesso!');
   }
 
   updateProfile() {
@@ -119,6 +250,7 @@ export class GuardianSettingsComponent implements OnInit {
       next: () => {
         this.saving.set(false);
         this.saveSuccess.set('Perfil atualizado com sucesso!');
+        this.toast.success('Perfil atualizado com sucesso!');
         const user = this.auth.user();
         if (user) {
           user.name = this.name;
@@ -155,10 +287,12 @@ export class GuardianSettingsComponent implements OnInit {
         this.newPassword = '';
         this.confirmPassword = '';
         this.saveSuccess.set('Senha alterada com sucesso!');
+        this.toast.success('Senha alterada com sucesso!');
       },
       error: (err: any) => {
         this.changingPassword.set(false);
         this.passwordError.set(err.error?.error || 'Erro ao alterar senha');
+        this.toast.error(err.error?.error || 'Erro ao alterar senha');
       }
     });
   }

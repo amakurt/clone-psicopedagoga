@@ -23,10 +23,10 @@ if [ -z "$LAN_IP" ]; then
 fi
 
 # --- Colima/Docker (Evolution API - Opcional) ---
-if ! docker info >/dev/null 2>&1; then
-  echo "==> Tentando iniciar Colima (Docker)..."
-  colima start >/dev/null 2>&1 || echo "    (Colima/Docker não iniciado - Evolution API ficará offline)"
-  sleep 2
+if docker info >/dev/null 2>&1; then
+  echo "==> Docker disponível"
+else
+  echo "==> Docker não detectado ou inativo (Evolution API WhatsApp ficará offline)"
 fi
 
 EVO_UP=0

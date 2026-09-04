@@ -1,6 +1,29 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 28 de Agosto de 2026
+## Última Atualização: 04 de Setembro de 2026
+
+---
+
+## Sessão 39 - 04/09/2026 — Portal da Família: Suporte Completo a Tema Claro/Escuro e Cores de Destaque
+
+### O que foi feito
+
+#### 1. Alternância Rápida de Tema no Layout do Responsável (`GuardianLayoutComponent`)
+- **Botão de Alternância no Header**: Adicionado botão com ícone dinâmico (`dark_mode` ↔ `light_mode`) no cabeçalho superior para troca instantânea de tema com 1 clique.
+- **Botão de Alternância no Drawer Mobile**: Adicionado botão de alternância no rodapé do menu lateral móvel, facilitando o acesso em celulares e tablets.
+- **Persistência e Auto-Detecção**: Inicialização no `ngOnInit` lendo `localStorage.getItem('theme')` (com suporte a `light`, `dark`, `system` e preferência do sistema operacional via `prefers-color-scheme`) e `localStorage.getItem('accentColor')` aplicando `applyAccentColor`.
+
+#### 2. Configuração de Aparência e Cores no Portal da Família (`GuardianSettingsComponent`)
+- **Seletor Visual de Temas**: Cards interativos com ícones e descrições para os modos **Claro**, **Escuro** e **Sistema**.
+- **Seletor de Cores de Destaque (*Accent Colors*)**: Paleta com 6 cores (Índigo `#4f46e5`, Violeta `#6d28d9`, Rosa `#be185d`, Esmeralda `#047857`, Âmbar `#b45309` e Vermelho `#b91c1c`).
+- **Ação de Salvar com Feedback**: Botão "Salvar Aparência" com notificação visual via `ToastService`.
+
+#### 3. Ajuste no Script de Inicialização (`start-all.sh`)
+- Removido bloqueio do Colima no macOS para inicialização imediata dos servidores em rede local (LAN).
+
+#### 4. Validação
+- **Angular Build (`ng build`)**: 100% OK (código 0).
+- **Hot Reload Dev Server**: Recompilado e atualizado com sucesso.
 
 ---
 

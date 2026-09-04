@@ -7,6 +7,7 @@ import { ApiService } from '@core/services/api.service';
 import { GuardianService } from '@modules/guardian/services/guardian.service';
 import { ChatFloatingComponent } from '@shared/components/chat-floating.component';
 import { NotificationDropdownComponent } from '@shared/components/notification-dropdown.component';
+import { applyAccentColor } from '../../core/utils/theme';
 
 @Component({
   selector: 'app-guardian-layout',
@@ -97,8 +98,15 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
         </nav>
 
         <!-- Drawer Footer -->
-        <div class="p-4 border-t border-gray-100 dark:border-slate-800">
-          <button (click)="logout()" class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+        <div class="p-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
+          <button (click)="toggleDarkMode()" class="w-full flex items-center justify-between py-2.5 px-3.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">
+            <span class="flex items-center gap-2">
+              <span class="material-icons text-[18px] text-primary">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</span>
+              <span>Tema {{ isDarkMode() ? 'Escuro' : 'Claro' }}</span>
+            </span>
+            <span class="text-[11px] text-primary font-bold">Alternar</span>
+          </button>
+          <button (click)="logout()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
             <span class="material-icons text-[18px]">logout</span> Sair da Conta
           </button>
         </div>
@@ -164,6 +172,13 @@ import { NotificationDropdownComponent } from '@shared/components/notification-d
               <span class="hidden md:inline text-xs sm:text-sm font-medium text-gray-600 dark:text-slate-300 max-w-[120px] truncate">
                 {{ userName() }}
               </span>
+
+              <!-- Dark Mode Toggle -->
+              <button (click)="toggleDarkMode()" 
+                class="p-2 sm:p-2.5 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl text-gray-500 dark:text-slate-300 hover:text-primary transition-all"
+                [title]="isDarkMode() ? 'Mudar para tema claro' : 'Mudar para tema escuro'">
+                <span class="material-icons text-xl sm:text-2xl">{{ isDarkMode() ? 'light_mode' : 'dark_mode' }}</span>
+              </button>
 
               <!-- Notification Bell -->
               <div class="relative">
@@ -299,6 +314,7 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   switching = signal(false);
   mobileMenuOpen = signal(false);
   isChatRoute = signal(false);
+  isDarkMode = signal(false);
   private notifTimer: any;
 
   navItems = [
@@ -319,6 +335,27 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Theme & Accent Color Init
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDarkMode.set(true);
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else if (savedTheme === 'light') {
+      this.isDarkMode.set(false);
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else if (savedTheme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.isDarkMode.set(prefersDark);
+      document.documentElement.classList.toggle('dark', prefersDark);
+    } else {
+      this.isDarkMode.set(document.documentElement.classList.contains('dark'));
+    }
+
+    const savedColor = localStorage.getItem('accentColor');
+    if (savedColor) applyAccentColor(savedColor);
+
     const user = this.auth.user();
     if (user) {
       this.userName.set(user.name);
@@ -342,6 +379,19 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
       this.mobileMenuOpen.set(false);
       this.isChatRoute.set(event.urlAfterRedirects?.includes('/guardian/chat') || this.router.url.includes('/guardian/chat'));
     });
+  }
+
+  toggleDarkMode() {
+    this.isDarkMode.update(v => !v);
+    const mode = this.isDarkMode() ? 'dark' : 'light';
+    localStorage.setItem('theme', mode);
+    if (this.isDarkMode()) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
   }
 
   ngOnDestroy() {
