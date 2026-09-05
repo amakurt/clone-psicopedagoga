@@ -1,0 +1,28 @@
+{
+  "session": 39,
+  "date": "2026-09-04",
+  "title": "Portal da Família: Suporte Completo a Tema Claro/Escuro e Cores de Destaque",
+  "summary": "Implementação da escolha de tema e cor de destaque no Portal da Família (layout e configurações). Ajuste no script de inicialização do ambiente local para acesso via rede LAN.",
+  "changes": [
+    {
+      "file": "src/app/layout/guardian-layout/guardian-layout.component.ts",
+      "description": "Adicionado botão de alternância de tema no header e no menu lateral móvel (drawer). Inicialização e persistência de tema e cores no ngOnInit e método toggleDarkMode()."
+    },
+    {
+      "file": "src/app/modules/guardian/pages/guardian-settings.component.ts",
+      "description": "Adicionada seção de Aparência e Tema com seletores de modo (Claro, Escuro, Sistema), paleta de 6 cores de destaque, preview instantâneo e botão de salvar com toast."
+    },
+    {
+      "file": "start-all.sh",
+      "description": "Ajuste na verificação do Docker/Colima para inicialização instantânea e sem bloqueios no macOS com exposição do IP local na LAN."
+    },
+    {
+      "file": "SESSION_LOG.md",
+      "description": "Documentação detalhada da Sessão 39."
+    }
+  ],
+  "validation": {
+    "angularBuild": "100% OK (código 0)",
+    "devServer": "Hot reload ativo em http://localhost:4200 e http://192.168.0.106:4200"
+  }
+}
