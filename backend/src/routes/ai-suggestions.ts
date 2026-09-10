@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware';
+import { authenticate, authorize } from '../middleware';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 // --- Clinical Fallback Data (Evidence-Based ABA / TEA / Neuropsicopedagogia) ---
 const abaStrategies: Record<string, any[]> = {

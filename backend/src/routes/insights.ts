@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
-import { authenticate } from '../middleware';
+import { authenticate, authorize } from '../middleware';
 import { getInstrument } from '../lib/screening-instruments';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 router.get('/:pacienteId', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);

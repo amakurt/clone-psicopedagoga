@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
-import { authenticate } from '../middleware';
+import { authenticate, authorize } from '../middleware';
 import { SCREENING_INSTRUMENTS, getInstrument, scoreScreening } from '../lib/screening-instruments';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 router.get('/instruments', (_req, res) => {
   res.json({

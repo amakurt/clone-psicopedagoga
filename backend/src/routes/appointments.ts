@@ -2,10 +2,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
-import { authenticate, validate } from '../middleware';
+import { authenticate, authorize, validate } from '../middleware';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 const appointmentSchema = z.object({
   pacienteId: z.string().min(1, 'Selecione um paciente'),

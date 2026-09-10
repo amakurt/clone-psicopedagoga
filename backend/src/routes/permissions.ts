@@ -84,13 +84,23 @@ const roleTemplates = {
   }
 };
 
-router.get('/templates', (req, res) => {
+router.get('/templates', authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'), (req, res) => {
   res.json({ data: roleTemplates });
 });
 
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', authorize('GESTOR'), async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.params.userId } });
+    const tenantId = req.user!.tenantId;
+    const userId = req.params.userId as string;
+
+    const membership = await prisma.membership.findFirst({
+      where: { userId, tenantId },
+    });
+    if (!membership) {
+      return res.status(404).json({ error: 'Usuário não encontrado nesta clínica' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
 
     let permissions = {};
@@ -109,8 +119,17 @@ router.get('/:userId', async (req, res) => {
 
 router.put('/:userId', authorize('GESTOR'), async (req, res) => {
   try {
-    const { permissions } = req.body;
+    const tenantId = req.user!.tenantId;
     const userId = req.params.userId as string;
+
+    const membership = await prisma.membership.findFirst({
+      where: { userId, tenantId },
+    });
+    if (!membership) {
+      return res.status(404).json({ error: 'Usuário não encontrado nesta clínica' });
+    }
+
+    const { permissions } = req.body;
     const user = await prisma.user.update({
       where: { id: userId },
       data: { permissions: JSON.stringify(permissions) }
@@ -122,3 +141,4 @@ router.put('/:userId', authorize('GESTOR'), async (req, res) => {
 });
 
 export default router;
+

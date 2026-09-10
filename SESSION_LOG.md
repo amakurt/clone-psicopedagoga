@@ -41,10 +41,46 @@
 - **[M2 & M7] Error Handling e Payload Limit**: Mascaramento de erros 500 no `errorHandler` em produção e fixado `express.json({ limit: '1mb' })`.
 - **Refinamento Users**: Importação explícita de `crypto` e exigência de senha no schema de criação de usuário pelo Gestor.
 
-#### 7. Validação
-- **Backend Build (`tsc`)**: 100% OK (código 0, zero erros).
-- **Testes de Isolamento Multi-tenant (`test:isolation`)**: 100% Aprovados (todos os testes passaram).
-- **Angular Build (`ng build`)**: 100% OK (código 0, zero erros).
+#### 7. Patch Blanket RBAC Staff-Only & Isolamento Granular em 31 Rotas
+- **Grupo 1 — Blanket Staff-Only (29 rotas)**: Trancadas com `router.use(authenticate)` + `router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'))`:
+  1. `anamneses.ts` (Anamneses clínicas)
+  2. `prontuarios.ts` (Prontuários e evolução clínica)
+  3. `session-records.ts` (Registros de sessões)
+  4. `session-diaries.ts` (Diários de sessão)
+  5. `frequency-sheets.ts` (Folhas de frequência)
+  6. `intervention-documents.ts` (Documentos de intervenção)
+  7. `intervention-plans.ts` (Planos de intervenção / PEI)
+  8. `protocol-evaluations.ts` (Avaliações de protocolos TEA)
+  9. `aba-protocols.ts` (Protocolos ABA e avaliações)
+  10. `screenings.ts` (Instrumentos de triagem e rastreio)
+  11. `documentos.ts` (Gestão de documentos gerais)
+  12. `encaminhamentos.ts` (Encaminhamentos multiprofissionais)
+  13. `appointments.ts` (Agendamentos e calendário clínico)
+  14. `transactions.ts` (Transações financeiras)
+  15. `consents.ts` (Termos de consentimento LGPD)
+  16. `signatures.ts` (Assinaturas digitais de profissionais)
+  17. `responsaveis.ts` (Gestão de responsáveis e familiares)
+  18. `relatorios.ts` (Geração de relatórios clínicos)
+  19. `insights.ts` (Insights e cruzamento de dados clínicos)
+  20. `session-planner.ts` (Planejador de sessões)
+  21. `evolution-comparison.ts` (Comparador de evolução clínica)
+  22. `ai-suggestions.ts` (Sugestões clínicas com IA)
+  23. `library.ts` (Biblioteca de recursos psicopedagógicos)
+  24. `comunicacao.ts` (Comunicação interna da equipe)
+  25. `availability.ts` (Disponibilidade e horários)
+  26. `waiting-room.ts` (Fila de espera da clínica)
+  27. `dashboard.ts` (Dashboard e métricas gerais)
+  28. `escolas.ts` (Cadastro e dados de escolas)
+  29. `whatsapp.ts` (Configuração e envio de WhatsApp para a equipe)
+- **Grupo 2 — Isolamento Granular**:
+  - `notifications.ts`: Permitido a `RESPONSAVEL` e demais papéis lerem apenas suas próprias notificações (`where.userId = req.user.id`), salvo papel `GESTOR`. Validação de propriedade no `POST`, `PUT` e `DELETE`.
+  - `permissions.ts`: Restrito a `authorize('GESTOR')` com validação de `Membership` no tenant correspondente, prevenindo vazamento de permissões globais.
+
+#### 8. Validação e Testes Automatizados
+- **Backend Build (`npm run build --prefix backend`)**: 100% OK (código 0, zero erros).
+- **Testes de Isolamento Multi-tenant (`npm run test:isolation --prefix backend`)**: 19/19 Aprovados (100% PASS).
+- **Angular Build (`npx ng build --configuration=development`)**: 100% OK (código 0, 2.19MB inicial).
+- **Auditoria de Rotas (`grep -L "authorize" backend/src/routes/*.ts`)**: Apenas `auth.ts`, `guardian.ts`, `document-requests.ts`, `index.ts` e `notifications.ts` (granular).
 
 ---
 

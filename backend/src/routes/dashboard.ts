@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
-import { authenticate } from '../middleware';
+import { authenticate, authorize } from '../middleware';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
