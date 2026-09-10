@@ -3,47 +3,107 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { enforcePlanLimits } from '../lib/billing';
-import { authenticate, validate } from '../middleware';
+import { authenticate, authorize, validate } from '../middleware';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
-const pacienteSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
+const basePacienteFields = {
+  name: z.string().min(1, 'Nome é obrigatório'),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
   phoneIsWhatsApp: z.coerce.boolean().optional(),
-  cpf: z.string().optional(),
-  birthDate: z.string().optional(),
-  guardianName: z.string().optional(),
-  guardianPhone: z.string().optional(),
-  school: z.string().optional(),
-  grade: z.string().optional(),
-  notes: z.string().optional(),
-  responsavelId: z.string().optional(),
-  accessCode: z.string().optional(),
-  cep: z.string().optional(),
-  street: z.string().optional(),
-  neighborhood: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-}).passthrough();
+  cpf: z.string().optional().or(z.literal('')),
+  birthDate: z.string().optional().or(z.literal('')),
+  guardianName: z.string().optional().or(z.literal('')),
+  guardianPhone: z.string().optional().or(z.literal('')),
+  school: z.string().optional().or(z.literal('')),
+  grade: z.string().optional().or(z.literal('')),
+  notes: z.string().optional().or(z.literal('')),
+  responsavelId: z.string().optional().or(z.literal('')),
+  accessCode: z.string().optional().or(z.literal('')),
+  active: z.boolean().optional(),
+  color: z.string().optional(),
+  cep: z.string().optional().or(z.literal('')),
+  street: z.string().optional().or(z.literal('')),
+  neighborhood: z.string().optional().or(z.literal('')),
+  number: z.string().optional().or(z.literal('')),
+  complement: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  state: z.string().optional().or(z.literal('')),
+};
+
+const pacienteSchema = z.object(basePacienteFields);
+const pacienteUpdateSchema = z.object(basePacienteFields).partial();
+
+function sanitizePacienteInput(body: any) {
+  const {
+    address,
+    responsavelId,
+    tenantId,
+    id,
+    createdAt,
+    updatedAt,
+    prontuarios,
+    sessoes,
+    anamneses,
+    laudos,
+    encaminhamentos,
+    financeiro,
+    documents,
+    appointments,
+    sessionRecords,
+    protocolEvaluations,
+    interventionPlans,
+    chatMessages,
+    sessionDiaries,
+    frequencySheets,
+    interventionDocuments,
+    whatsappLogs,
+    abaAssessments,
+    abaPrograms,
+    nfse,
+    waitingRoom,
+    consentLogs,
+    responsible,
+    school,
+    ...data
+  } = body;
+
+  if (address && typeof address === 'string') {
+    try { Object.assign(data, JSON.parse(address)); } catch {}
+  } else if (address && typeof address === 'object') {
+    Object.assign(data, address);
+  }
+
+  if (responsavelId !== undefined) {
+    data.responsibleId = responsavelId ? String(responsavelId) : null;
+  }
+
+  return data;
+}
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { search, active } = req.query;
   const where: any = {};
-  if (search) where.name = { contains: search };
+  if (search) where.name = { contains: String(search) };
   if (active !== undefined) where.active = active === 'true';
-  const pacientes = await db.paciente.findMany({ where, orderBy: { name: 'asc' }, include: { prontuarios: true, sessoes: true, responsible: true, school: true } });
+  const pacientes = await db.paciente.findMany({
+    where,
+    orderBy: { name: 'asc' },
+    include: { prontuarios: true, sessoes: true, responsible: true, school: true }
+  });
   res.json({ data: pacientes, total: pacientes.length });
 });
 
 router.get('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const paciente = await db.paciente.findUnique({ where: { id: req.params.id }, include: { prontuarios: true, sessoes: true, anamneses: true, laudos: true, responsible: true, school: true } });
+  const paciente = await db.paciente.findUnique({
+    where: { id: req.params.id },
+    include: { prontuarios: true, sessoes: true, anamneses: true, laudos: true, responsible: true, school: true }
+  });
   if (!paciente) return res.status(404).json({ error: 'Paciente não encontrado' });
   res.json(paciente);
 });
@@ -51,29 +111,18 @@ router.get('/:id', async (req, res) => {
 router.post('/', validate(pacienteSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   await enforcePlanLimits(req.user!.tenantId || '', 'paciente');
-  const { address, responsavelId, ...data } = req.body;
-  if (address && typeof address === 'string') {
-    try { Object.assign(data, JSON.parse(address)); } catch {}
-  } else if (address && typeof address === 'object') {
-    Object.assign(data, address);
-  }
-  delete data.address;
-  if (responsavelId !== undefined) data.responsibleId = responsavelId;
+  const data = sanitizePacienteInput(req.body);
   const paciente = await db.paciente.create({ data });
   res.status(201).json(paciente);
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(pacienteUpdateSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const { address, prontuarios, sessoes, anamneses, laudos, encaminhamentos, financeiro, documents, appointments, sessionRecords, protocolEvaluations, interventionPlans, chatMessages, sessionDiaries, frequencySheets, interventionDocuments, whatsappLogs, abaAssessments, abaPrograms, nfse, waitingRoom, consentLogs, responsible, school, responsavelId, ...data } = req.body;
-  if (address && typeof address === 'string') {
-    try { Object.assign(data, JSON.parse(address)); } catch {}
-  } else if (address && typeof address === 'object') {
-    Object.assign(data, address);
-  }
-  delete data.address;
-  if (responsavelId !== undefined) data.responsibleId = responsavelId;
-  const paciente = await db.paciente.update({ where: { id: req.params.id }, data });
+  const data = sanitizePacienteInput(req.body);
+  const paciente = await db.paciente.update({
+    where: { id: req.params.id },
+    data,
+  });
   res.json(paciente);
 });
 

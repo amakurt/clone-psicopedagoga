@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
-import { authenticate } from '../middleware';
+import { authenticate, authorize } from '../middleware';
 import { generatePixCopiaECola, normalizePixKey } from '../lib/pix';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 // Normaliza o payload do formulário (value/type/status minúsculos) p/ o schema Prisma (valor/tipo/status maiúsculo)
 function normalizeInput(body: any) {

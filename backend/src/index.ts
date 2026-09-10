@@ -42,16 +42,24 @@ app.use(cors({
     const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:4200')
       .split(',')
       .map((u: string) => u.trim());
-    if (
-      allowedOrigins.includes(origin) ||
-      /^http:\/\/localhost(:\d+)?$/.test(origin) ||
-      /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
-      /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
-      /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
-      /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?$/.test(origin)
-    ) {
+
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
+
+    // Em ambiente de desenvolvimento, permitir localhost e IPs de rede local
+    if (process.env.NODE_ENV !== 'production') {
+      if (
+        /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+        /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
+        /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
+        /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
+        /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+    }
+
     callback(new Error(`Bloqueado por CORS: ${origin}`));
   },
   credentials: true
@@ -70,12 +78,9 @@ app.use('/api', rateLimit({
   message: { error: 'Muitas requisições. Tente novamente em instantes.' },
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
-// Serve uploaded files
-app.use('/api/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Routes
+// Routes (includes authenticated /api/upload and /api/uploads)
 app.use('/api', routes);
 
 // Error handler

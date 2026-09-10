@@ -69,6 +69,7 @@ router.use('/intervention-plans', interventionPlansRoutes);
 router.use('/chat', chatRoutes);
 router.use('/guardian', guardianRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/uploads', uploadRoutes);
 router.use('/session-diaries', sessionDiariesRoutes);
 router.use('/frequency-sheets', frequencySheetsRoutes);
 router.use('/intervention-documents', interventionDocumentsRoutes);

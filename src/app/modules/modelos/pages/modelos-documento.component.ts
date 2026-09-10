@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { escapeHtml } from '../../../core/utils/escape';
 
 declare var html2pdf: any;
 
@@ -255,11 +256,13 @@ export class ModelosDocumentoComponent {
     if (!this.editingTemplate()) return;
     const title = this.editingTemplate()!.name;
     const content = this.editContent;
-    const html = `<html><head><meta charset="utf-8"><title>${title}</title>
+    const safeTitle = escapeHtml(title);
+    const safeContent = escapeHtml(content);
+    const html = `<html><head><meta charset="utf-8"><title>${safeTitle}</title>
       <style>body{font-family:Arial,sans-serif;padding:40px;color:#1e293b;font-size:13px;line-height:1.8;}
       h1{font-size:20px;color:#6366f1;margin-bottom:16px;text-align:center;}
       .footer{margin-top:40px;font-size:11px;color:#94a3b8;text-align:center;}</style></head>
-      <body><h1>${title}</h1><pre style="white-space:pre-wrap;font-family:inherit;">${content}</pre>
+      <body><h1>${safeTitle}</h1><pre style="white-space:pre-wrap;font-family:inherit;">${safeContent}</pre>
       <div class="footer">Exportado em ${new Date().toLocaleDateString('pt-BR')} - EduPsych Pro</div></body></html>`;
     const el = document.createElement('div');
     el.innerHTML = html;

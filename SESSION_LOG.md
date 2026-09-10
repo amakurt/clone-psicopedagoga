@@ -1,6 +1,49 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 04 de Setembro de 2026
+## Última Atualização: 10 de Setembro de 2026
+
+---
+
+## Sessão 40 - 10/09/2026 — Blindagem Completa de Segurança: RBAC, Anti-IDOR, Uploads Protegidos, Isolamento Multi-tenant e Sanitização XSS
+
+### O que foi feito
+
+#### 1. [C1] Blindagem do Chat & Prevenção de Impersonação (`backend/src/routes/chat.ts`)
+- **Autorização RBAC**: Rotas restritas da equipe (`GET /conversations`, `POST /conversations/:pacienteId/read`, `POST /send`, `PUT /:id`, `DELETE /:id`) trancadas com `authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA')`.
+- **Derivação de Identidade Segura**: No `POST /`, `senderId`, `senderName` e `senderRole` não são mais aceitos do body do cliente; são obtidos diretamente do token JWT autenticado e do banco de dados.
+- **Isolamento por Paciente**: Se o usuário for `RESPONSAVEL`, valida rigorosamente que o `pacienteId` é filho do responsável logado em `POST /`, `GET /` e `GET /:id`.
+
+#### 2. [C2] Correção de IDOR no Portal da Família (`backend/src/routes/guardian.ts`)
+- **Upload de Documentos**: `POST /guardian/documents` agora valida `findFirst({ where: { id: pacienteId, responsibleId: responsible.id } })`, retornando `HTTP 403 Forbidden` se o paciente não for filho do responsável logado.
+- **Chat do Responsável**: `POST /guardian/chat` valida expressamente o vínculo familiar do `pacienteId` antes de gravar a mensagem e notificar a equipe.
+
+#### 3. [C3 & H6] Controle de Acesso e Validação Estrita nas Rotas Clínicas e Financeiras
+- **Módulos Clínicos & Financeiros**: Adicionado `authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA')` em `financeiro.ts`, `laudos.ts`, `sessoes.ts` e `pacientes.ts`.
+- **Validação Estrita no Cadastro de Pacientes (`pacientes.ts`)**: Removido `.passthrough()`, adicionado schema Zod estrito e função de sanitização impedindo alteração arbitrária de `tenantId`, `accessCode` ou campos internos.
+
+#### 4. [C4 & M4] Reestruturação de Uploads: Acesso Autenticado, Anti-XSS e Exclusão Assíncrona
+- **Remoção de Static Público (`index.ts`)**: Desativado `app.use('/api/uploads', express.static(...))` público.
+- **Rota Autenticada e Segura (`upload.ts`)**: Implementada rota `GET /uploads/:filename` com autenticação, validação de vínculo familiar para responsáveis e headers estritos (`X-Content-Type-Options: nosniff` e CSP com `default-src 'none'`).
+- **Whitelist Dupla (Extensão + MIME)**: Uploads agora validam tanto a extensão real quanto o MIME type contra whitelist estrita de arquivos clínicos/documentais, bloqueando extensões executáveis e scripts (.html, .svg, .js, .php).
+- **Exclusão Segura**: `DELETE /:filename` restrito à equipe com `fs.promises.unlink` assíncrono.
+
+#### 5. [C5] Módulo de Usuários com Escopo Multi-Tenant e Hash Bcrypt (`backend/src/routes/users.ts`)
+- **Escopo por Clínica**: `GET /`, `GET /:id`, `PUT /:id` e `DELETE /:id` operam estritamente sobre a tabela `Membership` vinculada ao `tenantId` da clínica logada.
+- **Criação Segura**: `POST /` aplica hash na senha com `bcrypt.hash(..., 10)`, vincula o `Membership` do tenant e retorna o payload com `select: USER_SAFE_SELECT` (sem expor hashes ou dados sensíveis).
+
+#### 6. [H1, H2, H4, H5, M1, M2 & M7] Reforços Gerais de Segurança e Resiliência
+- **[H1] Fail-Fast de JWT**: `getJwtSecret()` em `auth.ts` agora lança erro explícito se `JWT_SECRET` não estiver configurado no `.env`, e `.env.example` foi atualizado com placeholders.
+- **[H2] Billing Seguro**: `POST /checkout` e `POST /mock-pay` protegidos com `authorize('GESTOR')`, webhook com `crypto.timingSafeEqual` e mock bloqueado em produção.
+- **[H3] Sanitização XSS no Frontend**: Utilitário `escapeHtml()` aplicado em `modelos-documento.component.ts`, `evidencias.component.ts`, `acordos.component.ts` e `materiais.service.ts`.
+- **[H4] Sanitização de Logs**: Ocultados tokens sensíveis de links de ativação/recuperação nos logs do backend.
+- **[H5] CORS Seguro**: IPs locais e LAN permitidos apenas em ambiente de desenvolvimento (`NODE_ENV !== 'production'`).
+- **[M1 & M6] Document Requests**: Rate limiting na rota pública de formulários (`publicSubmitLimiter`), teto de campos em respostas e restrição de listagem ao profissional logado (salvo GESTOR).
+- **[M2 & M7] Error Handling e Payload Limit**: Mascaramento de erros 500 no `errorHandler` em produção e fixado `express.json({ limit: '1mb' })`.
+
+#### 7. Validação
+- **Backend Build (`tsc`)**: 100% OK (código 0, zero erros).
+- **Testes de Isolamento Multi-tenant (`test:isolation`)**: 100% Aprovados (todos os testes passaram).
+- **Angular Build (`ng build`)**: 100% OK (código 0, zero erros).
 
 ---
 

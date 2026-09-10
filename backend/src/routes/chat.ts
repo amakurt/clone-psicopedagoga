@@ -2,21 +2,34 @@ import { Router } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
-import { authenticate, validate } from '../middleware';
+import { authenticate, authorize, validate } from '../middleware';
 
 const router = Router();
 router.use(authenticate);
 
-const chatMessageSchema = z.object({
-  senderId: z.string().min(1),
-  senderName: z.string().min(1),
-  message: z.string().min(1),
-  pacienteId: z.string().min(1),
-  senderRole: z.enum(['RESPONSAVEL', 'STAFF']).optional(),
+const staffRoles = ['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'];
+
+const chatMessageInputSchema = z.object({
+  message: z.string().min(1, 'Mensagem não pode ser vazia'),
+  pacienteId: z.string().min(1, 'Paciente é obrigatório'),
 });
 
+// Helper para obter o registro de responsável vinculado ao usuário
+async function getGuardianResponsible(db: any, user: any) {
+  if (!user) return null;
+  let responsible = await db.responsible.findFirst({
+    where: { userId: user.id },
+  });
+  if (!responsible && user.email) {
+    responsible = await db.responsible.findFirst({
+      where: { email: user.email },
+    });
+  }
+  return responsible;
+}
+
 // Conversation list for the staff side: one thread per patient, with unread badge and responsible info
-router.get('/conversations', async (req, res) => {
+router.get('/conversations', authorize(...staffRoles), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const messages = await db.chatMessage.findMany({
     orderBy: { createdAt: 'asc' },
@@ -70,7 +83,7 @@ router.get('/conversations', async (req, res) => {
 });
 
 // Mark a conversation as read by staff (called when the staff opens a thread)
-router.post('/conversations/:pacienteId/read', async (req, res) => {
+router.post('/conversations/:pacienteId/read', authorize(...staffRoles), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   await db.chatMessage.updateMany({
     where: { pacienteId: req.params.pacienteId, senderRole: 'RESPONSAVEL', readByStaff: false },
@@ -80,7 +93,7 @@ router.post('/conversations/:pacienteId/read', async (req, res) => {
 });
 
 // Send message as staff
-router.post('/send', async (req: any, res) => {
+router.post('/send', authorize(...staffRoles), async (req: any, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { pacienteId, message } = req.body;
   if (!pacienteId || !message || !message.trim()) {
@@ -98,7 +111,7 @@ router.post('/send', async (req: any, res) => {
       senderId: user.id,
       senderName,
       senderRole: 'STAFF',
-      message,
+      message: message.trim(),
       pacienteId,
       readByStaff: true,
     },
@@ -123,35 +136,122 @@ router.post('/send', async (req: any, res) => {
   res.status(201).json(chatMessage);
 });
 
+// List messages: staff can filter by any patient in tenant; responsible can only see their children's messages
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
+  const user = req.user;
   const { pacienteId } = req.query;
   const where: any = {};
-  if (pacienteId) where.pacienteId = pacienteId;
-  const messages = await db.chatMessage.findMany({ where, orderBy: { createdAt: 'asc' }, include: { paciente: true } });
+
+  if (user?.role === 'RESPONSAVEL') {
+    const responsible = await getGuardianResponsible(db, user);
+    if (!responsible) {
+      return res.status(403).json({ error: 'Responsável não encontrado' });
+    }
+    const children = await db.paciente.findMany({
+      where: { responsibleId: responsible.id, active: true },
+      select: { id: true },
+    });
+    const childrenIds = children.map((c: any) => c.id);
+
+    if (pacienteId) {
+      if (!childrenIds.includes(String(pacienteId))) {
+        return res.status(403).json({ error: 'Acesso negado às mensagens deste paciente' });
+      }
+      where.pacienteId = String(pacienteId);
+    } else {
+      where.pacienteId = { in: childrenIds };
+    }
+  } else {
+    if (pacienteId) where.pacienteId = String(pacienteId);
+  }
+
+  const messages = await db.chatMessage.findMany({
+    where,
+    orderBy: { createdAt: 'asc' },
+    include: { paciente: true },
+  });
   res.json({ data: messages, total: messages.length });
 });
 
+// Get single message with ownership check
 router.get('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const message = await db.chatMessage.findUnique({ where: { id: req.params.id }, include: { paciente: true } });
+  const user = req.user;
+  const message = await db.chatMessage.findUnique({
+    where: { id: req.params.id },
+    include: { paciente: true },
+  });
+
   if (!message) return res.status(404).json({ error: 'Mensagem não encontrada' });
+
+  if (user?.role === 'RESPONSAVEL') {
+    const responsible = await getGuardianResponsible(db, user);
+    if (!responsible || message.paciente?.responsibleId !== responsible.id) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+  }
+
   res.json(message);
 });
 
-router.post('/', validate(chatMessageSchema), async (req, res) => {
+// Create message via standard endpoint: derive sender identity securely from token and DB
+router.post('/', validate(chatMessageInputSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const message = await db.chatMessage.create({ data: req.body });
-  res.status(201).json(message);
+  const user = req.user;
+  const { message, pacienteId } = req.body;
+
+  let senderRole: 'STAFF' | 'RESPONSAVEL' = 'STAFF';
+  let senderName = 'Equipe';
+
+  if (user?.role === 'RESPONSAVEL') {
+    const responsible = await getGuardianResponsible(db, user);
+    if (!responsible) {
+      return res.status(403).json({ error: 'Responsável não encontrado' });
+    }
+    const patient = await db.paciente.findFirst({
+      where: { id: pacienteId, responsibleId: responsible.id, active: true },
+    });
+    if (!patient) {
+      return res.status(403).json({ error: 'Paciente não vinculado a este responsável' });
+    }
+    senderRole = 'RESPONSAVEL';
+    senderName = responsible.name;
+  } else {
+    const dbUser = await prisma.user.findUnique({ where: { id: user?.id } });
+    senderName = dbUser?.name || user?.name || 'Equipe';
+    senderRole = 'STAFF';
+  }
+
+  const chatMessage = await db.chatMessage.create({
+    data: {
+      senderId: user?.id || '',
+      senderName,
+      senderRole,
+      message: message.trim(),
+      pacienteId,
+      readByStaff: senderRole === 'STAFF',
+      readByGuardian: senderRole === 'RESPONSAVEL',
+    },
+  });
+
+  res.status(201).json(chatMessage);
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authorize(...staffRoles), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const message = await db.chatMessage.update({ where: { id: req.params.id }, data: req.body });
-  res.json(message);
+  const { message } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ error: 'Mensagem não pode ser vazia' });
+  }
+  const chatMessage = await db.chatMessage.update({
+    where: { id: req.params.id },
+    data: { message: message.trim() },
+  });
+  res.json(chatMessage);
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authorize(...staffRoles), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   await db.chatMessage.delete({ where: { id: req.params.id } });
   res.status(204).send();

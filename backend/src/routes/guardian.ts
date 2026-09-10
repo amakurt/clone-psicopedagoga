@@ -302,9 +302,21 @@ router.post('/documents', async (req, res) => {
   const userId = req.user?.id;
   const { pacienteId, name, category, fileUrl, size } = req.body;
 
+  if (!pacienteId || !name || !fileUrl) {
+    return res.status(400).json({ error: 'Paciente, nome e arquivo são obrigatórios' });
+  }
+
   const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
+  }
+
+  const patient = await db.paciente.findFirst({
+    where: { id: pacienteId, responsibleId: responsible.id }
+  });
+
+  if (!patient) {
+    return res.status(403).json({ error: 'Paciente não vinculado a este responsável' });
   }
 
   const document = await db.document.create({
@@ -322,7 +334,6 @@ router.post('/documents', async (req, res) => {
   });
 
   // Notify clinic staff that a document was uploaded by the responsible
-  const patient = await db.paciente.findUnique({ where: { id: pacienteId } });
   const staff = await getTenantStaff(req.user?.tenantId as string);
   if (staff.length > 0) {
     const patientName = patient?.name || 'Paciente';
@@ -659,6 +670,10 @@ router.post('/chat', async (req, res) => {
   const userId = req.user?.id;
   let { pacienteId, message } = req.body;
 
+  if (!message || !message.trim()) {
+    return res.status(400).json({ error: 'Mensagem não pode ser vazia' });
+  }
+
   const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(403).json({ error: 'Acesso negado' });
@@ -677,18 +692,26 @@ router.post('/chat', async (req, res) => {
     return res.status(400).json({ error: 'Nenhum paciente vinculado ao responsável' });
   }
 
+  const patient = await db.paciente.findFirst({
+    where: { id: pacienteId, responsibleId: responsible.id, active: true },
+  });
+  if (!patient) {
+    return res.status(403).json({ error: 'Paciente não vinculado a este responsável' });
+  }
+
   const chatMessage = await db.chatMessage.create({
     data: {
       senderId: userId!,
       senderName: responsible.name,
       senderRole: 'RESPONSAVEL',
-      message,
+      message: message.trim(),
       pacienteId,
       readByGuardian: true,
+      readByStaff: false,
     }
   });
 
-  await notifyStaffOnGuardianMessage(req.user!.tenantId!, responsible.name, pacienteId, message);
+  await notifyStaffOnGuardianMessage(req.user!.tenantId!, responsible.name, pacienteId, message.trim());
 
   res.status(201).json(chatMessage);
 });

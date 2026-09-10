@@ -15,7 +15,11 @@ import { sendWhatsAppMessage } from './whatsapp';
 const router = Router();
 
 function getJwtSecret(): string {
-  return process.env.JWT_SECRET || 'psico-default-jwt-secret-dev-2026';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET não definido. Configure o backend/.env antes de executar a aplicação.');
+  }
+  return secret;
 }
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 
@@ -125,7 +129,9 @@ async function sendVerificationMessage(user: any, code: string, token: string, t
     }
   }
 
-  console.log(`[DEV AUTH] ${isActivation ? 'Ativação' : 'Reset'} para ${user.email || user.phone}: código ${code} | link ${link}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[DEV AUTH] ${isActivation ? 'Ativação' : 'Reset'} para ${user.email || user.phone}: código ${code}`);
+  }
   return 'DEV';
 }
 

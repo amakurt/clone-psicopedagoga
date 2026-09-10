@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { MATERIAIS_REAIS, MaterialTerapeutico, SUBCATEGORIES_MATERIAIS, CATEGORY_COLORS } from '@core/data/materiais-reais.data';
+import { escapeHtml } from '@core/utils/escape';
 
 declare const html2pdf: any;
 
@@ -188,10 +189,11 @@ export class MateriaisService {
       // Fallback printable window
       const printWin = window.open('', '_blank');
       if (printWin) {
+        const safeTitle = escapeHtml(material.name);
         printWin.document.write(`
           <html>
             <head>
-              <title>${material.name}</title>
+              <title>${safeTitle}</title>
               <style>
                 @media print {
                   body { margin: 0; padding: 15mm; }

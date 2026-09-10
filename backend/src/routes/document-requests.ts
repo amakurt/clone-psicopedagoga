@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate, validate } from '../middleware';
@@ -8,6 +9,14 @@ import { sendEmail, emailConfigured } from '../lib/email';
 import { sendWhatsAppMessage } from './whatsapp';
 
 const router = Router();
+
+const publicSubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitas submissões. Aguarde alguns minutos.' },
+});
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
 
@@ -116,12 +125,16 @@ router.get('/public/:token', async (req, res) => {
 });
 
 // Public: submit answers (without auth)
-router.post('/public/:token/submit', async (req, res) => {
-  const { token } = req.params;
+router.post('/public/:token/submit', publicSubmitLimiter, async (req, res) => {
+  const token = req.params.token as string;
   const answers = req.body.answers;
 
   if (typeof answers !== 'object' || answers === null || Array.isArray(answers)) {
     return res.status(400).json({ error: 'Respostas inválidas' });
+  }
+
+  if (Object.keys(answers).length > 100) {
+    return res.status(400).json({ error: 'Número excessivo de respostas' });
   }
 
   const doc = await prisma.documentRequest.findUnique({ where: { token } });
@@ -201,8 +214,12 @@ router.get('/', async (req, res) => {
   const where: any = {};
   if (status) where.status = status;
   if (patientId) where.patientId = patientId;
-  if (!professionalId && req.user!.role !== 'GESTOR') where.professionalId = req.user!.id;
-  if (professionalId) where.professionalId = professionalId;
+
+  if (req.user!.role === 'GESTOR') {
+    if (professionalId) where.professionalId = String(professionalId);
+  } else {
+    where.professionalId = req.user!.id;
+  }
 
   const pageNum = parseInt(page as string);
   const limitNum = parseInt(limit as string);

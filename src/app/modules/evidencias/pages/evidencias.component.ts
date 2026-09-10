@@ -1,6 +1,7 @@
 import { Component, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { escapeHtml } from '../../../core/utils/escape';
 
 declare var html2pdf: any;
 
@@ -233,7 +234,7 @@ export class EvidenciasComponent implements OnInit {
       .content{font-size:13px;color:#475569;line-height:1.6;}
       .footer{margin-top:40px;font-size:11px;color:#94a3b8;text-align:center;}</style></head>
       <body><h1>Evidências Favoritas</h1><h2>Central de Evidências - EduPsych Pro</h2>
-      ${favItems.map(i => `<div class="item"><div class="title">${i.title}</div>${i.author ? `<div class="author">${i.author}</div>` : ''}${i.source ? `<div class="source">${i.source}</div>` : ''}<div class="content">${i.content}</div></div>`).join('')}
+      ${favItems.map(i => `<div class="item"><div class="title">${escapeHtml(i.title)}</div>${i.author ? `<div class="author">${escapeHtml(i.author)}</div>` : ''}${i.source ? `<div class="source">${escapeHtml(i.source)}</div>` : ''}<div class="content">${escapeHtml(i.content)}</div></div>`).join('')}
       <div class="footer">Exportado em ${new Date().toLocaleDateString('pt-BR')} - EduPsych Pro</div></body></html>`;
     const el = document.createElement('div');
     el.innerHTML = html;
