@@ -1,12 +1,30 @@
 import { Router } from 'express';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
-import { authenticate } from '../middleware';
+import { authenticate, authorize } from '../middleware';
 
 const router = Router();
 router.use(authenticate);
+router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
+
+function escapeHtml(value: any): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function generatePdfHtml(nfse: any) {
+  const safeNumber = escapeHtml(nfse.number);
+  const safePaciente = escapeHtml(nfse.paciente?.name || '—');
+  const safeProfissional = escapeHtml(nfse.professional?.name || '—');
+  const safeDescricao = escapeHtml(nfse.description || '');
+  const safeStatus = escapeHtml(nfse.status || '');
+  const safeNotes = escapeHtml(nfse.notes || '');
+
   return `
     <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 40px;">
       <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #007F80; padding-bottom: 20px;">
@@ -14,17 +32,17 @@ function generatePdfHtml(nfse: any) {
         <h2 style="color: #333; margin: 5px 0 0;">Nota de Serviço Eletrônica (NFS-e)</h2>
       </div>
       <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
-        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee; width: 40%;">Número:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">NFS-e nº ${nfse.number}</td></tr>
-        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Paciente:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${nfse.paciente?.name || '—'}</td></tr>
-        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Profissional:</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${nfse.professional?.name || '—'}</td></tr>
-        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Descrição:</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${nfse.description}</td></tr>
-        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Status:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: ${nfse.status === 'EMITIDA' ? '#10B981' : nfse.status === 'CANCELADA' ? '#EF4444' : '#F59E0B'};">${nfse.status}</td></tr>
-        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Valor do Serviço:</td><td style="padding: 10px; border-bottom: 1px solid #eee;">R$ ${nfse.value.toFixed(2)}</td></tr>
-        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Alíquota ISS (${nfse.taxRate}%):</td><td style="padding: 10px; border-bottom: 1px solid #eee;">R$ ${nfse.taxValue.toFixed(2)}</td></tr>
-        <tr><td style="padding: 10px; color: #666; font-size: 16px;">Valor Total:</td><td style="padding: 10px; font-size: 16px; font-weight: bold; color: #10B981;">R$ ${nfse.totalValue.toFixed(2)}</td></tr>
+        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee; width: 40%;">Número:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">NFS-e nº ${safeNumber}</td></tr>
+        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Paciente:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">${safePaciente}</td></tr>
+        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Profissional:</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${safeProfissional}</td></tr>
+        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Descrição:</td><td style="padding: 10px; border-bottom: 1px solid #eee;">${safeDescricao}</td></tr>
+        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Status:</td><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; color: ${nfse.status === 'EMITIDA' ? '#10B981' : nfse.status === 'CANCELADA' ? '#EF4444' : '#F59E0B'};">${safeStatus}</td></tr>
+        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Valor do Serviço:</td><td style="padding: 10px; border-bottom: 1px solid #eee;">R$ ${Number(nfse.value || 0).toFixed(2)}</td></tr>
+        <tr><td style="padding: 10px; color: #666; border-bottom: 1px solid #eee;">Alíquota ISS (${Number(nfse.taxRate || 0)}%):</td><td style="padding: 10px; border-bottom: 1px solid #eee;">R$ ${Number(nfse.taxValue || 0).toFixed(2)}</td></tr>
+        <tr><td style="padding: 10px; color: #666; font-size: 16px;">Valor Total:</td><td style="padding: 10px; font-size: 16px; font-weight: bold; color: #10B981;">R$ ${Number(nfse.totalValue || 0).toFixed(2)}</td></tr>
       </table>
       ${nfse.issuedAt ? `<p style="margin-top: 20px; color: #666; font-size: 12px;">Emitida em: ${new Date(nfse.issuedAt).toLocaleString('pt-BR')}</p>` : ''}
-      ${nfse.notes ? `<div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px;"><p style="font-size: 12px; color: #666;">Observações: ${nfse.notes}</p></div>` : ''}
+      ${nfse.notes ? `<div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px;"><p style="font-size: 12px; color: #666;">Observações: ${safeNotes}</p></div>` : ''}
       <p style="text-align: center; color: #999; font-size: 11px; margin-top: 30px;">Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
     </div>
   `;

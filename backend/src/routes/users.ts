@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma';
 import { enforcePlanLimits } from '../lib/billing';
@@ -12,7 +13,7 @@ const userCreateSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   email: z.string().email('Email inválido'),
   role: z.enum(['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA', 'TERAPEUTA']).default('PROFISSIONAL'),
-  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres').optional(),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
 });
 
 const userUpdateSchema = z.object({

@@ -99,8 +99,8 @@ if (doc.sentVia === 'EMAIL' && responsible?.email) {
 }
 
 // Public: get form data (no auth)
-router.get('/public/:token', async (req, res) => {
-  const { token } = req.params;
+router.get('/public/:token', publicSubmitLimiter, async (req, res) => {
+  const token = req.params.token as string;
   const doc = await prisma.documentRequest.findUnique({
     where: { token },
     include: {

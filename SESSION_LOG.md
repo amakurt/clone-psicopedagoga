@@ -34,11 +34,12 @@
 #### 6. [H1, H2, H4, H5, M1, M2 & M7] Reforços Gerais de Segurança e Resiliência
 - **[H1] Fail-Fast de JWT**: `getJwtSecret()` em `auth.ts` agora lança erro explícito se `JWT_SECRET` não estiver configurado no `.env`, e `.env.example` foi atualizado com placeholders.
 - **[H2] Billing Seguro**: `POST /checkout` e `POST /mock-pay` protegidos com `authorize('GESTOR')`, webhook com `crypto.timingSafeEqual` e mock bloqueado em produção.
-- **[H3] Sanitização XSS no Frontend**: Utilitário `escapeHtml()` aplicado em `modelos-documento.component.ts`, `evidencias.component.ts`, `acordos.component.ts` e `materiais.service.ts`.
+- **[H3] Sanitização XSS no Frontend & NFS-e**: Utilitário `escapeHtml()` aplicado em `modelos-documento.component.ts`, `evidencias.component.ts`, `acordos.component.ts`, `materiais.service.ts` e no gerador de PDF da NFS-e (`nfse.ts`).
 - **[H4] Sanitização de Logs**: Ocultados tokens sensíveis de links de ativação/recuperação nos logs do backend.
 - **[H5] CORS Seguro**: IPs locais e LAN permitidos apenas em ambiente de desenvolvimento (`NODE_ENV !== 'production'`).
-- **[M1 & M6] Document Requests**: Rate limiting na rota pública de formulários (`publicSubmitLimiter`), teto de campos em respostas e restrição de listagem ao profissional logado (salvo GESTOR).
+- **[M1 & M6] Document Requests & Uploads Rate Limit**: Rate limiting nas rotas públicas de formulários (`POST /public/:token/submit` e `GET /public/:token`), rate limiter dedicado em uploads (`uploadLimiter`), limite de 5 arquivos de 10MB por lote, teto de campos em respostas e restrição de listagem ao profissional logado (salvo GESTOR).
 - **[M2 & M7] Error Handling e Payload Limit**: Mascaramento de erros 500 no `errorHandler` em produção e fixado `express.json({ limit: '1mb' })`.
+- **Refinamento Users**: Importação explícita de `crypto` e exigência de senha no schema de criação de usuário pelo Gestor.
 
 #### 7. Validação
 - **Backend Build (`tsc`)**: 100% OK (código 0, zero erros).

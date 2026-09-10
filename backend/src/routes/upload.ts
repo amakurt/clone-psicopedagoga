@@ -3,12 +3,21 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate, authorize } from '../middleware';
 
 const router = Router();
 router.use(authenticate);
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Muitos uploads enviados. Aguarde alguns minutos.' },
+});
 
 const ALLOWED_EXTENSIONS = new Set([
   '.pdf',
@@ -79,7 +88,7 @@ const upload = multer({
 });
 
 // Upload single file
-router.post('/', upload.single('file'), (req, res) => {
+router.post('/', uploadLimiter, upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
   }
@@ -95,8 +104,8 @@ router.post('/', upload.single('file'), (req, res) => {
   });
 });
 
-// Upload multiple files
-router.post('/multiple', upload.array('files', 10), (req, res) => {
+// Upload multiple files (max 5 files per batch)
+router.post('/multiple', uploadLimiter, upload.array('files', 5), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
   }
