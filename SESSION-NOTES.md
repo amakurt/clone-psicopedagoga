@@ -2,6 +2,31 @@
 
 ---
 
+## Sessão 10/09/2026 (Quinta) — Blindagem Completa de Segurança: RBAC, Anti-IDOR, Uploads e Multi-tenant
+
+### 117. Blindagem Crítica de Segurança & Multi-tenant (C1 a C5)
+- **Chat (`chat.ts`)**: Prevenção de impersonação e derivação server-side do `senderId`/`senderRole` a partir do token JWT e do banco de dados. Validação estrita de vínculo familiar no chat com paciente.
+- **Portal da Família (`guardian.ts`)**: Correção de vulnerabilidade IDOR em upload de documentos e mensagens de chat garantindo validação de paternidade/filiação (`responsibleId`).
+- **Validação e RBAC Clínico/Financeiro**: Restrição das rotas sensíveis a `authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA')` em `pacientes.ts`, `financeiro.ts`, `laudos.ts` e `sessoes.ts`. Sanitização estrita do cadastro de pacientes.
+- **Uploads Protegidos (`upload.ts` & `index.ts`)**: Remoção de static público, rota autenticada com cabeçalhos `X-Content-Type-Options: nosniff`, CSP restritivo e whitelist de MIME/extensões.
+- **Isolamento de Usuários (`users.ts`)**: Escopo estrito por `Membership` do tenant da clínica e senhas criptografadas com `bcrypt.hash(..., 10)`.
+
+### 118. Patch Blanket RBAC Staff-Only em 29 Rotas Clínicas/Administrativas
+- Aplicado middleware de autorização padrão em lote em 29 arquivos de rotas do backend.
+- Isolamento granular em `notifications.ts` (usuários só lêem suas notificações) e `permissions.ts` (GESTOR com checagem de Tenant Membership).
+- **Validação**: Testes de isolamento multi-tenant aprovados (19/19 PASS), builds de Backend e Frontend 100% OK.
+
+---
+
+## Sessão 04/09/2026 (Sexta) — Portal da Família: Tema Claro/Escuro e Cores de Destaque
+
+### 116. Suporte a Temas e Cores no Portal da Família
+- `GuardianLayoutComponent`: Botão de alternância rápida de tema claro/escuro no header e no drawer mobile.
+- `GuardianSettingsComponent`: Seletor visual de temas (Claro, Escuro, Sistema) e 6 cores de destaque.
+- Validação: `ng build` 100% OK.
+
+---
+
 ## Sessão 28/08/2026 (Sexta) — Responsividade Mobile Completa do Portal da Família / Responsável
 
 ### 115. Portal da Família Mobile-First & Drawer Retrátil
