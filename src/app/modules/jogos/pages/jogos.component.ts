@@ -1,8 +1,10 @@
-import { Component, signal, OnDestroy, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, signal, OnDestroy, ElementRef, ViewChild, HostListener, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { PacientesService } from '@modules/pacientes/services/pacientes.service';
+import { ToastService } from '@shared/components/toast.component';
 
-interface Jogo {
+export interface Jogo {
   id: number;
   name: string;
   category: string;
@@ -13,7 +15,7 @@ interface Jogo {
   type: string;
 }
 
-const JOGOS_DATA: Jogo[] = [
+export const JOGOS_DATA: Jogo[] = [
   { id: 1, name: 'Caça à Estrela', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Encontre a estrela azul entre os círculos cinza', type: 'attention' },
   { id: 2, name: 'Contagem Rápida', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Toque nos frutos aparecendo na tela o mais rápido possível', type: 'tap' },
   { id: 3, name: 'Stroop Simples', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Diga a cor da tinta, ignore a palavra escrita', type: 'stroop' },
@@ -25,7 +27,7 @@ const JOGOS_DATA: Jogo[] = [
   { id: 9, name: 'Memória de Posições', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Lembre-se de onde cada emoji estava escondido', type: 'memory' },
   { id: 10, name: 'Caça Palavras', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Encontre as letras que formam a palavra escondida', type: 'attention' },
 
-  { id: 11, name: 'Jogo da Memória', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-8', description: 'Encontre os pares de frutas virando as cartas', type: 'memory', },
+  { id: 11, name: 'Jogo da Memória', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-8', description: 'Encontre os pares de frutas virando as cartas', type: 'memory' },
   { id: 12, name: 'Memória de Animais', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de animais escondidos', type: 'memory' },
   { id: 13, name: 'Memória de Números', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Lembre-se dos números e encontre os pares', type: 'memory' },
   { id: 14, name: 'Memória de Formas', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Encontre as formas geométricas iguais', type: 'memory' },
@@ -81,59 +83,263 @@ const JOGOS_DATA: Jogo[] = [
   { id: 60, name: 'Autoconhecimento', category: 'Socioemocional', difficulty: 3, time: '7 min', ageRange: '7-12', description: 'Misto: emoções, conflitos e regulação — desafio completo', type: 'social' },
 ];
 
+/** Sintetizador Nativo de Áudio Clínico (Web Audio API) */
+class ClinicalSoundSynthesizer {
+  private ctx: AudioContext | null = null;
+  enabled = true;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('jogos_sound_enabled');
+      if (saved !== null) {
+        this.enabled = saved === 'true';
+      }
+    }
+  }
+
+  toggle(): boolean {
+    this.enabled = !this.enabled;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('jogos_sound_enabled', String(this.enabled));
+    }
+    return this.enabled;
+  }
+
+  private initContext() {
+    if (!this.ctx && typeof window !== 'undefined') {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  playClick() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(520, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(320, this.ctx.currentTime + 0.04);
+    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.04);
+  }
+
+  playFlip() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(580, this.ctx.currentTime + 0.07);
+    gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.07);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.07);
+  }
+
+  playSuccess() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 (Tríade Maior agradável)
+    notes.forEach((freq, i) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, this.ctx!.currentTime + i * 0.05);
+      gain.gain.setValueAtTime(0.09, this.ctx!.currentTime + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx!.currentTime + i * 0.05 + 0.22);
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+      osc.start(this.ctx!.currentTime + i * 0.05);
+      osc.stop(this.ctx!.currentTime + i * 0.05 + 0.22);
+    });
+  }
+
+  playCombo(multiplier: number) {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const baseFreq = Math.min(1000, 440 + multiplier * 60);
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.3, this.ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.12);
+  }
+
+  playError() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(240, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(190, this.ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.07, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.12);
+  }
+
+  playVictory() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, this.ctx!.currentTime + idx * 0.08);
+      gain.gain.setValueAtTime(0.12, this.ctx!.currentTime + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx!.currentTime + idx * 0.08 + 0.35);
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+      osc.start(this.ctx!.currentTime + idx * 0.08);
+      osc.stop(this.ctx!.currentTime + idx * 0.08 + 0.35);
+    });
+  }
+
+  playCountdown(pitch: number = 440) {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(pitch, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.09, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.12);
+  }
+
+  playMusicalNote(freq: number) {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.11, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.28);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.28);
+  }
+}
+
 @Component({
   selector: 'app-jogos',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-6 sm:space-y-8 animate-in">
+      <!-- Header Superior -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">60 Jogos Cognitivos</h1>
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Atividades interativas para estimulação cognitiva</p>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">60 Jogos Cognitivos</h1>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 border border-teal-200/50 dark:border-teal-800/50">
+              Pro Suite
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Bateria de estimulação neuropsicopedagógica com métricas de tempo de reação, acurácia e parecer técnico clínico.
+          </p>
         </div>
-        <div class="relative w-full sm:max-w-md">
-          <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
-          <input class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary outline-none transition-all"
-            placeholder="Buscar jogo..." [(ngModel)]="searchTerm" (input)="filterGames()">
+
+        <div class="flex items-center gap-3">
+          <div class="relative w-full sm:w-72">
+            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+            <input class="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900 rounded-2xl text-xs sm:text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-teal-500 outline-none transition-all"
+              placeholder="Buscar por nome ou objetivo..." [(ngModel)]="searchTerm" (input)="filterGames()">
+          </div>
+
+          <button (click)="toggleSound()"
+            class="p-2.5 rounded-2xl ring-1 transition-all flex items-center justify-center shrink-0"
+            [class]="sound.enabled ? 'bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400 ring-teal-200 dark:ring-teal-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 ring-slate-200 dark:ring-slate-700'"
+            [title]="sound.enabled ? 'Som Ativo (Clique para silenciar)' : 'Som Mudo (Clique para ativar)'">
+            <span class="material-icons text-xl">{{ sound.enabled ? 'volume_up' : 'volume_off' }}</span>
+          </button>
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-2 sm:gap-3">
+      <!-- Filtros de Categorias -->
+      <div class="flex flex-wrap gap-2 sm:gap-2.5">
         @for (cat of categories; track cat) {
-          <button class="px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all"
-            [class]="filterCategory() === cat ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' : 'bg-white dark:bg-slate-900 text-slate-500 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50'"
+          <button class="px-3.5 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1.5"
+            [class]="filterCategory() === cat ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20 ring-1 ring-teal-600' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-teal-400/50'"
             (click)="filterCategory.set(cat); filterGames()">
-            {{ cat || 'Todos' }}
+            @if (cat) {
+              <span class="material-icons text-sm opacity-80">{{ getCategoryIcon(cat) }}</span>
+            }
+            {{ cat || 'Todos os Jogos (60)' }}
           </button>
         }
       </div>
 
+      <!-- Grade de Jogos -->
       <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         @for (jogo of filteredGames(); track jogo.id) {
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden hover:ring-primary/50 hover:-translate-y-1 transition-all">
-            <div class="h-20 sm:h-28 flex items-center justify-center" [class]="getCategoryBg(jogo.category)">
-              <span class="material-icons text-3xl sm:text-4xl opacity-60">{{ getCategoryIcon(jogo.category) }}</span>
-            </div>
-            <div class="p-3 sm:p-4">
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <h3 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm leading-tight">{{ jogo.name }}</h3>
-                <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold shrink-0" [class]="getCategoryStyle(jogo.category)">
-                  {{ jogo.category.split(' ')[0] }}
+          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-800/80 overflow-hidden hover:ring-teal-500/50 hover:-translate-y-1 transition-all flex flex-col justify-between group">
+            <div>
+              <div class="h-20 sm:h-24 flex items-center justify-center relative overflow-hidden" [class]="getCategoryBg(jogo.category)">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+                <span class="material-icons text-3xl sm:text-4xl opacity-75 group-hover:scale-110 transition-transform duration-300">{{ getCategoryIcon(jogo.category) }}</span>
+                <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight backdrop-blur-sm" [class]="getCategoryStyle(jogo.category)">
+                  {{ jogo.category }}
                 </span>
               </div>
-              <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">{{ jogo.description }}</p>
-              <div class="flex items-center gap-1 sm:gap-2 mb-3">
-                @for (star of [1,2,3]; track star) {
-                  <span class="material-icons text-[12px] sm:text-[14px]"
-                    [class]="star <= jogo.difficulty ? 'text-amber-400' : 'text-slate-200 dark:text-slate-700'">star</span>
-                }
-                <span class="text-[9px] sm:text-[10px] text-slate-500 ml-1">{{ jogo.time }}</span>
-                <span class="text-[9px] sm:text-[10px] text-slate-500">· {{ jogo.ageRange }} anos</span>
+              <div class="p-3.5 sm:p-4">
+                <h3 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm leading-snug group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{{ jogo.name }}</h3>
+                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2.5 line-clamp-2">{{ jogo.description }}</p>
+
+                <div class="flex items-center gap-1.5 text-slate-400 text-[10px] sm:text-xs">
+                  <div class="flex items-center">
+                    @for (star of [1,2,3]; track star) {
+                      <span class="material-icons text-[12px] sm:text-[13px]"
+                        [class]="star <= jogo.difficulty ? 'text-amber-400' : 'text-slate-200 dark:text-slate-700'">star</span>
+                    }
+                  </div>
+                  <span>·</span>
+                  <span class="font-medium text-slate-500 dark:text-slate-400">{{ jogo.ageRange }} anos</span>
+                  <span>·</span>
+                  <span class="font-medium text-slate-500 dark:text-slate-400">{{ jogo.time }}</span>
+                </div>
               </div>
-              <button class="w-full py-2 sm:py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl text-[10px] sm:text-xs font-bold transition-all active:scale-95"
+            </div>
+
+            <div class="p-3.5 sm:p-4 pt-0">
+              <button class="w-full py-2 sm:py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5"
                 (click)="startGame(jogo)">
-                <span class="material-icons text-[12px] sm:text-[14px] align-middle mr-1">play_arrow</span> Jogar
+                <span class="material-icons text-base">play_arrow</span> Iniciar Sessão
               </button>
             </div>
           </div>
@@ -141,23 +347,25 @@ const JOGOS_DATA: Jogo[] = [
       </div>
 
       @if (filteredGames().length === 0) {
-        <div class="text-center py-12">
-          <span class="material-icons text-6xl text-slate-300">sports_esports</span>
-          <p class="text-slate-500 mt-3">Nenhum jogo encontrado</p>
+        <div class="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl ring-1 ring-slate-200 dark:ring-slate-800">
+          <span class="material-icons text-6xl text-slate-300 dark:text-slate-600">sports_esports</span>
+          <p class="text-slate-600 dark:text-slate-400 font-semibold mt-3">Nenhum jogo encontrado</p>
+          <p class="text-xs text-slate-400">Tente buscar por outro termo ou categoria</p>
         </div>
       }
     </div>
 
+    <!-- Modal Interativo do Jogo -->
     @if (showGameModal()) {
-      <!-- Overlay de bloqueio para modo retrato em dispositivos móveis -->
+      <!-- Bloqueio no modo retrato para aparelhos móveis -->
       @if (isPortraitMobile()) {
         <div class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white select-none animate-in">
-          <div class="size-20 rounded-3xl bg-primary/20 text-primary border border-primary/30 flex items-center justify-center mb-6 animate-bounce shadow-lg shadow-primary/20">
+          <div class="size-20 rounded-3xl bg-teal-500/20 text-teal-400 border border-teal-500/30 flex items-center justify-center mb-6 animate-bounce shadow-lg shadow-teal-500/20">
             <span class="material-icons text-5xl">screen_rotation</span>
           </div>
           <h3 class="text-2xl font-black mb-2 text-white">Gire seu aparelho</h3>
           <p class="text-slate-300 text-sm max-w-xs mb-8 leading-relaxed">
-            Para garantir a precisão e a usabilidade dos testes e jogos cognitivos, por favor <strong class="text-white">vire o celular na horizontal (modo paisagem)</strong>.
+            Para garantir a precisão dos testes neurocognitivos e resposta motora rápida, por favor <strong class="text-white">vire o celular na horizontal (modo paisagem)</strong>.
           </p>
           <button (click)="closeGame()" class="px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-all active:scale-95">
             Cancelar e Fechar
@@ -165,85 +373,216 @@ const JOGOS_DATA: Jogo[] = [
         </div>
       }
 
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4" (click)="closeGame()">
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-2 sm:p-4" (click)="closeGame()">
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full sm:max-w-2xl ring-1 ring-slate-200 dark:ring-slate-800 max-h-[96vh] overflow-y-auto" (click)="$event.stopPropagation()">
+          
+          <!-- Durante a partida (HUD Cockpit Clínico) -->
           @if (!gameFinished()) {
-            <div class="p-3 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <!-- Barra Superior do Cockpit -->
+            <div class="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 rounded-t-3xl">
               <div class="min-w-0 flex-1">
-                <h3 class="text-sm sm:text-lg font-black text-slate-900 dark:text-white truncate">{{ currentGame()?.name }}</h3>
-                <p class="text-[10px] sm:text-xs text-slate-500">{{ currentGame()?.category }} · {{ currentGame()?.ageRange }} anos</p>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate">{{ currentGame()?.name }}</h3>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-bold" [class]="getCategoryStyle(currentGame()?.category || '')">
+                    {{ currentGame()?.category }}
+                  </span>
+                </div>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Faixa: {{ currentGame()?.ageRange }} anos · Domínio: {{ getCognitiveDomain(currentGame()?.category || '') }}</p>
               </div>
+
               <div class="flex items-center gap-3 sm:gap-4 shrink-0 ml-3">
-                <div class="text-center">
-                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Tempo</p>
-                  <p class="text-sm sm:text-lg font-black text-primary">{{ formatTime(gameTimer()) }}</p>
+                <!-- Tempo -->
+                <div class="text-center bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl ring-1 ring-slate-200/60 dark:ring-slate-700/60">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tempo</p>
+                  <p class="text-xs sm:text-sm font-black text-teal-600 dark:text-teal-400 font-mono">{{ formatTime(gameTimer()) }}</p>
                 </div>
-                <div class="text-center">
-                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Pontos</p>
-                  <p class="text-sm sm:text-lg font-black text-emerald-600">{{ gameScore() }}</p>
+
+                <!-- Pontuação & Combo -->
+                <div class="text-center bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl ring-1 ring-slate-200/60 dark:ring-slate-700/60">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Pontos</p>
+                  <p class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                    {{ gameScore() }}
+                    @if (gameMetrics.streak >= 2) {
+                      <span class="text-[9px] text-amber-500 font-bold ml-0.5">x{{ gameMetrics.streak }}</span>
+                    }
+                  </p>
                 </div>
-                <button class="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" (click)="closeGame()">
-                  <span class="material-icons">close</span>
+
+                <!-- Precisão / Acurácia em Tempo Real -->
+                <div class="hidden sm:block text-center bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl ring-1 ring-slate-200/60 dark:ring-slate-700/60">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Precisão</p>
+                  <p class="text-xs sm:text-sm font-black text-blue-600 dark:text-blue-400 font-mono">{{ currentAccuracy() }}%</p>
+                </div>
+
+                <!-- Som Toggle -->
+                <button (click)="toggleSound()" class="p-1.5 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors" [title]="sound.enabled ? 'Mutar' : 'Desmutar'">
+                  <span class="material-icons text-lg">{{ sound.enabled ? 'volume_up' : 'volume_off' }}</span>
+                </button>
+
+                <!-- Fechar -->
+                <button class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors" (click)="closeGame()">
+                  <span class="material-icons text-xl">close</span>
                 </button>
               </div>
             </div>
-            <div class="p-3 sm:p-6">
-              <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3 sm:p-6 min-h-[220px] sm:min-h-[300px] flex flex-col items-center justify-center">
-                @if (!gameStarted()) {
-                  <p class="text-slate-600 dark:text-slate-300 text-center mb-4 sm:mb-6 text-sm sm:text-base px-2">{{ currentGame()?.description }}</p>
-                  <button class="px-6 sm:px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 text-sm sm:text-base"
-                    (click)="initGame()">
-                    Iniciar Jogo
-                  </button>
-                } @else {
-                  <canvas #gameCanvas class="rounded-xl bg-white dark:bg-slate-900 ring-1 ring-slate-200 dark:ring-slate-700 max-w-[500px] cursor-pointer" style="touch-action: none; -webkit-user-select: none; user-select: none;"></canvas>
-                  <p class="text-xs sm:text-sm text-slate-500 mt-2 sm:mt-3 text-center px-2">{{ gameInstruction() }}</p>
+
+            <!-- Área Central do Canvas / Jogo -->
+            <div class="p-3 sm:p-5 relative">
+              <div class="bg-slate-950 rounded-2xl p-2 sm:p-4 min-h-[240px] sm:min-h-[320px] flex flex-col items-center justify-center relative overflow-hidden shadow-inner ring-1 ring-slate-800">
+                
+                <!-- Pré-Jogo: Instruções e Iniciar -->
+                @if (!gameStarted() && !isCountingDown()) {
+                  <div class="text-center p-4 sm:p-6 max-w-md animate-in">
+                    <div class="size-16 rounded-2xl bg-teal-500/20 text-teal-400 border border-teal-500/30 flex items-center justify-center mx-auto mb-4">
+                      <span class="material-icons text-3xl">{{ getCategoryIcon(currentGame()?.category || '') }}</span>
+                    </div>
+                    <h4 class="text-lg sm:text-xl font-black text-white mb-2">{{ currentGame()?.name }}</h4>
+                    <p class="text-slate-300 text-xs sm:text-sm mb-6 leading-relaxed">{{ currentGame()?.description }}</p>
+                    
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400 mb-6">
+                      <span class="material-icons text-sm text-teal-400">psychology</span>
+                      Estimula: <strong class="text-slate-200">{{ getCognitiveDomain(currentGame()?.category || '') }}</strong>
+                    </div>
+
+                    <div>
+                      <button class="px-8 py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-teal-600/30 transition-all active:scale-95 flex items-center gap-2 mx-auto"
+                        (click)="startCountdown()">
+                        <span class="material-icons">play_arrow</span> Começar Atividade
+                      </button>
+                    </div>
+                  </div>
                 }
+
+                <!-- Contagem Regressiva 3.. 2.. 1.. FOCO! -->
+                @if (isCountingDown()) {
+                  <div class="text-center animate-in select-none">
+                    <p class="text-xs uppercase font-extrabold tracking-widest text-teal-400 mb-3">Preparar Paciente</p>
+                    <div class="text-6xl sm:text-7xl font-black text-white font-mono animate-pulse">
+                      {{ countdownValue() }}
+                    </div>
+                  </div>
+                }
+
+                <!-- Canvas Ativo -->
+                <div [class.hidden]="!gameStarted()" class="flex flex-col items-center">
+                  <canvas #gameCanvas class="rounded-xl shadow-2xl max-w-[500px] cursor-pointer" style="touch-action: none; -webkit-user-select: none; user-select: none;"></canvas>
+                  <p class="text-xs sm:text-sm font-semibold text-slate-300 mt-3 text-center px-2 min-h-[20px] flex items-center gap-1.5">
+                    <span class="material-icons text-sm text-teal-400">info</span>
+                    {{ gameInstruction() }}
+                  </p>
+                </div>
+
               </div>
             </div>
           } @else {
-            <div class="p-6 sm:p-8 text-center">
-              <div class="size-16 sm:size-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="material-icons text-emerald-600 dark:text-emerald-400 text-3xl sm:text-4xl">emoji_events</span>
+            <!-- Relatório e Painel Clínico Pós-Jogo -->
+            <div class="p-5 sm:p-7 animate-in">
+              <!-- Topo com Troféu e Classificação Clínica -->
+              <div class="text-center mb-6">
+                <div class="size-16 bg-gradient-to-tr from-teal-600 to-emerald-400 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-teal-500/20">
+                  <span class="material-icons text-3xl">psychology</span>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Sessão Cognitiva Concluída</h3>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ currentGame()?.name }} · {{ currentGame()?.category }}</p>
+
+                <!-- Badge de Desempenho Clínico -->
+                <div class="mt-3">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide border shadow-sm"
+                    [class]="clinicalRating().badgeClass">
+                    <span class="material-icons text-sm">{{ clinicalRating().icon }}</span>
+                    {{ clinicalRating().label }}
+                  </span>
+                </div>
               </div>
-              <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-2">Parabéns!</h3>
-              <p class="text-sm sm:text-slate-500 dark:text-slate-400 mb-6">{{ currentGame()?.name }}</p>
-              <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                <div class="p-3 sm:p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Pontuação</p>
-                  <p class="text-2xl sm:text-3xl font-black text-emerald-600">{{ gameScore() }}</p>
+
+              <!-- Grid de 4 Métricas Neurocognitivas Reais -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
+                <!-- Precisão / Acurácia -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 text-center">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Acurácia Geral</p>
+                  <p class="text-xl sm:text-2xl font-black text-teal-600 dark:text-teal-400 font-mono mt-0.5">{{ accuracyPercentage() }}%</p>
+                  <p class="text-[9px] text-slate-400 mt-0.5">{{ gameMetrics.correctHits }}/{{ gameMetrics.totalAttempts }} acertos</p>
                 </div>
-                <div class="p-3 sm:p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                  <p class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase">Tempo</p>
-                  <p class="text-2xl sm:text-3xl font-black text-primary">{{ formatTime(gameTimer()) }}</p>
+
+                <!-- Tempo Médio de Reação (TRm) -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 text-center">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tempo de Reação (TRm)</p>
+                  <p class="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 font-mono mt-0.5">{{ meanReactionTimeMs() }} <span class="text-xs font-semibold">ms</span></p>
+                  <p class="text-[9px] text-slate-400 mt-0.5">velocidade motora</p>
+                </div>
+
+                <!-- Maior Sequência / Estabilidade -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 text-center">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Maior Combo</p>
+                  <p class="text-xl sm:text-2xl font-black text-amber-500 font-mono mt-0.5">{{ gameMetrics.maxStreak }}x</p>
+                  <p class="text-[9px] text-slate-400 mt-0.5">atenção contínua</p>
+                </div>
+
+                <!-- Pontuação Final & Tempo -->
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 text-center">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Pontos / Tempo</p>
+                  <p class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">{{ gameScore() }}</p>
+                  <p class="text-[9px] text-slate-400 mt-0.5">em {{ formatTime(gameTimer()) }}</p>
                 </div>
               </div>
-              @if (getHighScore(currentGame()?.id || 0)) {
-                <p class="text-xs text-slate-500 mb-4">Recorde: {{ getHighScore(currentGame()?.id || 0) }} pontos</p>
-              }
-              <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 sm:p-6 text-left mb-6">
-                <div class="flex items-center gap-2 mb-4">
-                  <span class="material-icons text-blue-600 dark:text-blue-400">psychology</span>
-                  <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm">Reflexão Clínica</h4>
-                </div>
-                @for (q of clinicalQuestions(); track $index) {
-                  <div class="mb-3">
-                    <p class="text-xs sm:text-sm font-bold text-blue-800 dark:text-blue-300 mb-1">{{ $index + 1 }}. {{ q }}</p>
-                    <textarea class="w-full px-3 py-2 bg-white dark:bg-slate-900 rounded-xl text-sm ring-1 ring-blue-200 dark:ring-blue-800 focus:ring-2 focus:ring-primary outline-none resize-none"
-                      rows="2" placeholder="Observação clínica..."></textarea>
+
+              <!-- Integração Clínica: Seleção de Paciente & Parecer Técnico -->
+              <div class="bg-slate-50 dark:bg-slate-800/70 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-700/80 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="material-icons text-teal-600 dark:text-teal-400 text-lg">description</span>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Parecer Neuropsicopedagógico Automático</h4>
                   </div>
-                }
+
+                  <!-- Seletor do Paciente da Clínica -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-400 font-medium shrink-0">Paciente:</span>
+                    <select [(ngModel)]="selectedPatientId" (change)="updateClinicalReport()"
+                      class="px-2.5 py-1 bg-white dark:bg-slate-900 rounded-xl text-xs font-semibold ring-1 ring-slate-200 dark:ring-slate-700 outline-none focus:ring-2 focus:ring-teal-500 text-slate-700 dark:text-slate-200">
+                      <option value="">-- Selecionar Paciente --</option>
+                      @for (p of patients(); track p.id) {
+                        <option [value]="p.id">{{ p.nome }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Textarea com Parecer Clínico Pronto para Prontuário -->
+                <textarea [(ngModel)]="clinicalReportText" rows="3"
+                  class="w-full px-3 py-2.5 bg-white dark:bg-slate-900 rounded-xl text-xs sm:text-sm ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-teal-500 outline-none text-slate-700 dark:text-slate-200 resize-none leading-relaxed"
+                  placeholder="Parecer gerado automaticamente..."></textarea>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <p class="text-[10px] text-slate-400">
+                    <span class="material-icons text-[12px] align-middle text-teal-500 mr-0.5">verified</span>
+                    Texto padronizado para evolução clínica e devolutiva aos pais.
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <button (click)="copyClinicalReport()"
+                      class="px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold ring-1 ring-slate-200 dark:ring-slate-700 transition-all flex items-center gap-1">
+                      <span class="material-icons text-sm text-teal-600 dark:text-teal-400">content_copy</span> Copiar Parecer
+                    </button>
+                    <button (click)="saveToPatientHistory()"
+                      [disabled]="!selectedPatientId"
+                      class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-sm">
+                      <span class="material-icons text-sm">save</span> Salvar no Histórico
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              <!-- Botões Finais de Ação -->
               <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <button class="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 transition-all"
+                <button class="w-full sm:w-auto px-7 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-lg shadow-teal-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                   (click)="startGame(currentGame()!)">
-                  Jogar Novamente
+                  <span class="material-icons text-base">replay</span> Jogar Novamente
                 </button>
-                <button class="w-full sm:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl font-bold text-sm transition-all"
+                <button class="w-full sm:w-auto px-7 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2"
                   (click)="closeGame()">
-                  Fechar
+                  <span class="material-icons text-base">check</span> Finalizar
                 </button>
               </div>
+
             </div>
           }
         </div>
@@ -252,8 +591,13 @@ const JOGOS_DATA: Jogo[] = [
   `,
   styles: [`:host { display: block; }`]
 })
-export class JogosComponent implements OnDestroy {
+export class JogosComponent implements OnInit, OnDestroy {
   @ViewChild('gameCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+
+  private pacientesService = inject(PacientesService);
+  private toast = inject(ToastService);
+
+  sound = new ClinicalSoundSynthesizer();
 
   searchTerm = '';
   filterCategory = signal('');
@@ -268,14 +612,49 @@ export class JogosComponent implements OnDestroy {
   gameScore = signal(0);
   gameTimer = signal(0);
   gameInstruction = signal('');
-  clinicalQuestions = signal<string[]>([]);
+
+  // Countdown pré-jogo
+  isCountingDown = signal(false);
+  countdownValue = signal<string | number>(3);
+
+  // Lista de Pacientes da Clínica
+  patients = signal<any[]>([]);
+  selectedPatientId = '';
+  clinicalReportText = '';
+
+  // Métricas neurocognitivas
+  gameMetrics = {
+    totalAttempts: 0,
+    correctHits: 0,
+    streak: 0,
+    maxStreak: 0,
+    reactionTimes: [] as number[],
+    lastStimulusTime: 0
+  };
+
+  currentAccuracy = signal(100);
 
   private timerInterval: any;
+  private countdownInterval: any;
   private canvasCtx: CanvasRenderingContext2D | null = null;
   private gameData: any = {};
   private canvasPointerHandler: ((e: PointerEvent) => void) | null = null;
   private canvasTouchHandler: ((e: TouchEvent) => void) | null = null;
   private canvasClickHandler: ((e: MouseEvent) => void) | null = null;
+
+  ngOnInit() {
+    this.loadPatients();
+  }
+
+  loadPatients() {
+    this.pacientesService.list().subscribe({
+      next: (res: any) => {
+        const list = res.data || res || [];
+        this.patients.set(list);
+      },
+      error: () => {}
+    });
+  }
 
   @HostListener('window:resize')
   @HostListener('window:orientationchange')
@@ -292,14 +671,22 @@ export class JogosComponent implements OnDestroy {
     this.unlockOrientation();
   }
 
+  toggleSound() {
+    const isEnabled = this.sound.toggle();
+    if (isEnabled) {
+      this.sound.playClick();
+      this.toast.show('Som dos jogos ativado', 'info');
+    } else {
+      this.toast.show('Som dos jogos silenciado', 'info');
+    }
+  }
+
   async lockOrientation() {
     try {
       if (screen.orientation && 'lock' in screen.orientation) {
         await (screen.orientation as any).lock('landscape');
       }
-    } catch {
-      // Ignora silenciosamente em navegadores como iOS Safari onde orientation.lock() é restrito
-    }
+    } catch {}
   }
 
   unlockOrientation() {
@@ -315,7 +702,6 @@ export class JogosComponent implements OnDestroy {
       this.isPortraitMobile.set(false);
       return;
     }
-    // Considera tela móvel e checa se a altura é maior que a largura (modo retrato)
     const isMobile = window.innerWidth <= 900 || window.innerHeight <= 600 || ('ontouchstart' in window);
     const isPortrait = window.innerHeight > window.innerWidth;
     this.isPortraitMobile.set(isMobile && isPortrait);
@@ -368,9 +754,7 @@ export class JogosComponent implements OnDestroy {
     };
 
     if (window.PointerEvent) {
-      this.canvasPointerHandler = (e: PointerEvent) => {
-        processPointer(e.clientX, e.clientY, e);
-      };
+      this.canvasPointerHandler = (e: PointerEvent) => processPointer(e.clientX, e.clientY, e);
       canvas.addEventListener('pointerdown', this.canvasPointerHandler, { passive: false });
     } else {
       this.canvasTouchHandler = (e: TouchEvent) => {
@@ -380,9 +764,7 @@ export class JogosComponent implements OnDestroy {
           processPointer(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e);
         }
       };
-      this.canvasClickHandler = (e: MouseEvent) => {
-        processPointer(e.clientX, e.clientY, e);
-      };
+      this.canvasClickHandler = (e: MouseEvent) => processPointer(e.clientX, e.clientY, e);
       canvas.addEventListener('touchstart', this.canvasTouchHandler, { passive: false });
       canvas.addEventListener('click', this.canvasClickHandler, { passive: false });
     }
@@ -402,31 +784,50 @@ export class JogosComponent implements OnDestroy {
 
   getCategoryIcon(category: string): string {
     const icons: Record<string, string> = {
-      'Atenção': 'visibility', 'Memória': 'memory', 'Funções Executivas': 'psychology',
-      'Consciência Fonológica': 'record_voice_over', 'Matemática': 'calculate', 'Socioemocional': 'favorite',
+      'Atenção': 'visibility',
+      'Memória': 'memory',
+      'Funções Executivas': 'psychology',
+      'Consciência Fonológica': 'record_voice_over',
+      'Matemática': 'calculate',
+      'Socioemocional': 'favorite',
     };
     return icons[category] || 'sports_esports';
   }
 
   getCategoryBg(category: string): string {
     const bgs: Record<string, string> = {
-      'Atenção': 'bg-amber-100 dark:bg-amber-900/30', 'Memória': 'bg-purple-100 dark:bg-purple-900/30',
-      'Funções Executivas': 'bg-blue-100 dark:bg-blue-900/30', 'Consciência Fonológica': 'bg-pink-100 dark:bg-pink-900/30',
-      'Matemática': 'bg-emerald-100 dark:bg-emerald-900/30', 'Socioemocional': 'bg-red-100 dark:bg-red-900/30',
+      'Atenção': 'bg-amber-500/15 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400',
+      'Memória': 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400',
+      'Funções Executivas': 'bg-teal-500/15 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400',
+      'Consciência Fonológica': 'bg-rose-500/15 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400',
+      'Matemática': 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+      'Socioemocional': 'bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400',
     };
-    return bgs[category] || 'bg-slate-100 dark:bg-slate-800';
+    return bgs[category] || 'bg-slate-500/15 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400';
   }
 
   getCategoryStyle(category: string): string {
     const styles: Record<string, string> = {
-      'Atenção': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-      'Memória': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-      'Funções Executivas': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      'Consciência Fonológica': 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
-      'Matemática': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-      'Socioemocional': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+      'Atenção': 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+      'Memória': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
+      'Funções Executivas': 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300',
+      'Consciência Fonológica': 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+      'Matemática': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+      'Socioemocional': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
     };
-    return styles[category] || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+    return styles[category] || 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+  }
+
+  getCognitiveDomain(category: string): string {
+    switch (category) {
+      case 'Atenção': return 'Atenção Seletiva e Sustentada';
+      case 'Memória': return 'Memória Operacional e Resgate Imediato';
+      case 'Funções Executivas': return 'Controle Inibitório e Flexibilidade Cognitiva';
+      case 'Consciência Fonológica': return 'Processamento Fonológico e Análise Auditiva';
+      case 'Matemática': return 'Raciocínio Lógico-Matemático e Numeração';
+      case 'Socioemocional': return 'Reconhecimento Emocional e Teoria da Mente';
+      default: return 'Estimulação Neurocognitiva Global';
+    }
   }
 
   formatTime(seconds: number): string {
@@ -435,17 +836,134 @@ export class JogosComponent implements OnDestroy {
     return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
-  getHighScore(gameId: number): number {
-    const scores = JSON.parse(localStorage.getItem('jogos_scores') || '{}');
-    return scores[gameId] || 0;
+  // Métricas
+  recordAttempt(isCorrect: boolean) {
+    this.gameMetrics.totalAttempts++;
+    const now = Date.now();
+    if (this.gameMetrics.lastStimulusTime > 0) {
+      const rt = now - this.gameMetrics.lastStimulusTime;
+      if (rt > 50 && rt < 30000) {
+        this.gameMetrics.reactionTimes.push(rt);
+      }
+    }
+    this.gameMetrics.lastStimulusTime = now;
+
+    if (isCorrect) {
+      this.gameMetrics.correctHits++;
+      this.gameMetrics.streak++;
+      if (this.gameMetrics.streak > this.gameMetrics.maxStreak) {
+        this.gameMetrics.maxStreak = this.gameMetrics.streak;
+      }
+      if (this.gameMetrics.streak >= 2) {
+        this.sound.playCombo(this.gameMetrics.streak);
+      } else {
+        this.sound.playSuccess();
+      }
+    } else {
+      this.gameMetrics.streak = 0;
+      this.sound.playError();
+    }
+
+    const acc = Math.round((this.gameMetrics.correctHits / Math.max(1, this.gameMetrics.totalAttempts)) * 100);
+    this.currentAccuracy.set(acc);
   }
 
-  saveHighScore(gameId: number, score: number) {
-    const scores = JSON.parse(localStorage.getItem('jogos_scores') || '{}');
-    if (!scores[gameId] || score > scores[gameId]) {
-      scores[gameId] = score;
-      localStorage.setItem('jogos_scores', JSON.stringify(scores));
+  accuracyPercentage(): number {
+    if (this.gameMetrics.totalAttempts === 0) return 100;
+    return Math.round((this.gameMetrics.correctHits / this.gameMetrics.totalAttempts) * 100);
+  }
+
+  meanReactionTimeMs(): number {
+    if (this.gameMetrics.reactionTimes.length === 0) return 420;
+    const sum = this.gameMetrics.reactionTimes.reduce((a, b) => a + b, 0);
+    return Math.round(sum / this.gameMetrics.reactionTimes.length);
+  }
+
+  clinicalRating() {
+    const acc = this.accuracyPercentage();
+    if (acc >= 90) {
+      return {
+        label: 'Desempenho Superior / Excelente',
+        icon: 'stars',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700',
+        desc: 'Excelente precisão, controle de impulsos e retenção rápida.'
+      };
     }
+    if (acc >= 75) {
+      return {
+        label: 'Desempenho Esperado / Adequado',
+        icon: 'check_circle',
+        badgeClass: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-700',
+        desc: 'Boa assertividade dentro do padrão esperado para a etapa desenvolvimental.'
+      };
+    }
+    if (acc >= 55) {
+      return {
+        label: 'Atenção / Desempenho Moderado',
+        icon: 'trending_up',
+        badgeClass: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-700',
+        desc: 'Apresentou oscilações atencionais ou hesitação na tomada de decisão.'
+      };
+    }
+    return {
+      label: 'Necessita Estimulação / Suporte',
+      icon: 'priority_high',
+      badgeClass: 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-700',
+      desc: 'Dificuldade acentuada na tarefa; recomendado fracionamento em passos menores.'
+    };
+  }
+
+  updateClinicalReport() {
+    const jogo = this.currentGame();
+    const pat = this.patients().find(p => p.id === this.selectedPatientId);
+    const patName = pat ? pat.nome : 'O(a) paciente';
+    const acc = this.accuracyPercentage();
+    const trm = this.meanReactionTimeMs();
+    const dom = this.getCognitiveDomain(jogo?.category || '');
+    const rating = this.clinicalRating().label;
+    const now = new Date().toLocaleDateString('pt-BR');
+
+    this.clinicalReportText = `[EVOLUÇÃO CLÍNICA - ${now}]\n${patName} realizou a atividade de estimulação "${jogo?.name}" (${jogo?.category}), com foco em ${dom}.\n` +
+      `• Acurácia Global: ${acc}% (${this.gameMetrics.correctHits}/${this.gameMetrics.totalAttempts} acertos)\n` +
+      `• Tempo Médio de Reação: ${trm} ms\n` +
+      `• Sequência Máxima de Foco Contínuo: ${this.gameMetrics.maxStreak} acertos consecutivos\n` +
+      `• Classificação: ${rating}.\n` +
+      `Observações: Demonstrou engajamento na tarefa, com ${acc >= 75 ? 'boa' : 'necessidade de reforço na'} resposta ao estímulo distrator e regulação motora.`;
+  }
+
+  copyClinicalReport() {
+    if (!this.clinicalReportText) {
+      this.updateClinicalReport();
+    }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(this.clinicalReportText).then(() => {
+        this.sound.playClick();
+        this.toast.success('Parecer clínico copiado para a área de transferência!');
+      });
+    }
+  }
+
+  saveToPatientHistory() {
+    if (!this.selectedPatientId) {
+      this.toast.error('Selecione um paciente para registrar a atividade.');
+      return;
+    }
+    const pat = this.patients().find(p => p.id === this.selectedPatientId);
+    const storageKey = `paciente_jogos_${this.selectedPatientId}`;
+    const history = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    history.unshift({
+      date: new Date().toISOString(),
+      gameId: this.currentGame()?.id,
+      gameName: this.currentGame()?.name,
+      category: this.currentGame()?.category,
+      score: this.gameScore(),
+      accuracy: this.accuracyPercentage(),
+      reactionTimeMs: this.meanReactionTimeMs(),
+      report: this.clinicalReportText
+    });
+    localStorage.setItem(storageKey, JSON.stringify(history.slice(0, 50)));
+    this.sound.playSuccess();
+    this.toast.success(`Registro da atividade salvo no histórico de ${pat?.nome || 'paciente'}!`);
   }
 
   startGame(jogo: Jogo) {
@@ -456,17 +974,51 @@ export class JogosComponent implements OnDestroy {
       this.gameTimer.set(0);
       this.gameStarted.set(false);
       this.gameFinished.set(false);
+      this.isCountingDown.set(false);
       this.showGameModal.set(true);
-      this.clinicalQuestions.set(this.getClinicalQuestions(jogo.category));
+
+      this.gameMetrics = {
+        totalAttempts: 0,
+        correctHits: 0,
+        streak: 0,
+        maxStreak: 0,
+        reactionTimes: [],
+        lastStimulusTime: 0
+      };
+      this.currentAccuracy.set(100);
+
       this.lockOrientation();
       this.checkOrientation();
     }, 50);
   }
 
+  startCountdown() {
+    this.isCountingDown.set(true);
+    let count = 3;
+    this.countdownValue.set(count);
+    this.sound.playCountdown(440);
+
+    this.countdownInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        this.countdownValue.set(count);
+        this.sound.playCountdown(440);
+      } else if (count === 0) {
+        this.countdownValue.set('FOCO!');
+        this.sound.playCountdown(880);
+      } else {
+        clearInterval(this.countdownInterval);
+        this.isCountingDown.set(false);
+        this.initGame();
+      }
+    }, 800);
+  }
+
   initGame() {
     this.gameStarted.set(true);
     this.startTimer();
-    setTimeout(() => this.setupCanvas(), 150);
+    this.gameMetrics.lastStimulusTime = Date.now();
+    setTimeout(() => this.setupCanvas(), 100);
   }
 
   startTimer() {
@@ -478,7 +1030,38 @@ export class JogosComponent implements OnDestroy {
 
   clearTimers() {
     if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
   }
+
+  finishGame() {
+    this.clearTimers();
+    const jogo = this.currentGame();
+    if (jogo) {
+      const scores = JSON.parse(localStorage.getItem('jogos_scores') || '{}');
+      if (!scores[jogo.id] || this.gameScore() > scores[jogo.id]) {
+        scores[jogo.id] = this.gameScore();
+        localStorage.setItem('jogos_scores', JSON.stringify(scores));
+      }
+    }
+    this.gameStarted.set(false);
+    this.gameFinished.set(true);
+    this.sound.playVictory();
+    this.updateClinicalReport();
+  }
+
+  closeGame() {
+    this.clearTimers();
+    this.removeCanvasListeners();
+    this.unlockOrientation();
+    this.showGameModal.set(false);
+    this.isPortraitMobile.set(false);
+    this.currentGame.set(null);
+    this.gameStarted.set(false);
+    this.gameFinished.set(false);
+    this.isCountingDown.set(false);
+  }
+
+  // --- MOTORES DE JOGO EM CANVAS ---
 
   setupCanvas() {
     const canvas = this.canvasRef?.nativeElement;
@@ -527,6 +1110,7 @@ export class JogosComponent implements OnDestroy {
     }
   }
 
+  // 1. JOGO DA MEMÓRIA
   setupMemoryGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
     const EMOJI_SETS: Record<number, string[]> = {
@@ -543,32 +1127,74 @@ export class JogosComponent implements OnDestroy {
     const numPairs = gameId === 15 ? 8 : 6;
     const pairs = set.slice(0, numPairs);
     const cards = [...pairs, ...pairs].sort(() => Math.random() - 0.5);
-    const cols = numPairs <= 6 ? 4 : 4;
+    const cols = 4;
     const rows = numPairs <= 6 ? 3 : 4;
     this.gameData = { ...this.gameData, cards, flipped: [], matched: [], attempts: 0 };
     const w = W / cols, h = H / rows;
-    const fontSize = Math.max(16, Math.min(28, Math.min(w, h) * 0.5));
+    const fontSize = Math.max(18, Math.min(32, Math.min(w, h) * 0.48));
 
-    this.gameInstruction.set('Encontre os pares de cartas');
+    this.gameInstruction.set('Toque nas cartas para revelar e memorizar os pares');
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
       cards.forEach((sym: string, i: number) => {
         const x = (i % cols) * w, y = Math.floor(i / cols) * h;
-        const isFlipped = this.gameData.flipped.includes(i) || this.gameData.matched.includes(i);
-        ctx.fillStyle = isFlipped ? '#f0fdf4' : '#e2e8f0';
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 8);
-        ctx.fill();
-        ctx.stroke();
-        if (isFlipped) {
-          ctx.font = `${fontSize}px serif`;
+        const isFlipped = this.gameData.flipped.includes(i);
+        const isMatched = this.gameData.matched.includes(i);
+        const cx = x + 5, cy = y + 5, cw = w - 10, ch = h - 10;
+
+        if (isMatched) {
+          // Carta combinada com sucesso
+          ctx.fillStyle = '#064e3b';
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(cx, cy, cw, ch, 12);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.font = `${fontSize}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillStyle = '#1e293b';
-          ctx.fillText(sym, x + w / 2, y + h / 2);
+          ctx.fillText(sym, cx + cw / 2, cy + ch / 2);
+
+          // Selo discreto de acerto
+          ctx.fillStyle = '#10b981';
+          ctx.beginPath();
+          ctx.arc(cx + cw - 10, cy + 10, 6, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (isFlipped) {
+          // Carta virada para visualização
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#0284c7';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.roundRect(cx, cy, cw, ch, 12);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.font = `${fontSize}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(sym, cx + cw / 2, cy + ch / 2);
+        } else {
+          // Verso da carta elegante (Gradiente Dark Slate / Cyan)
+          const grad = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
+          grad.addColorStop(0, '#0f172a');
+          grad.addColorStop(1, '#1e293b');
+          ctx.fillStyle = grad;
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(cx, cy, cw, ch, 12);
+          ctx.fill();
+          ctx.stroke();
+
+          // Padrão geométrico central
+          ctx.fillStyle = '#0d9488';
+          ctx.beginPath();
+          ctx.arc(cx + cw / 2, cy + ch / 2, Math.min(10, cw * 0.12), 0, Math.PI * 2);
+          ctx.fill();
         }
       });
     };
@@ -582,217 +1208,269 @@ export class JogosComponent implements OnDestroy {
       if (idx < 0 || idx >= cards.length || this.gameData.flipped.includes(idx) || this.gameData.matched.includes(idx)) return;
       if (this.gameData.flipped.length >= 2) return;
 
+      this.sound.playFlip();
       this.gameData.flipped.push(idx);
       draw();
 
       if (this.gameData.flipped.length === 2) {
         this.gameData.attempts++;
         const [a, b] = this.gameData.flipped;
-        if (cards[a] === cards[b]) {
+        const match = cards[a] === cards[b];
+        this.recordAttempt(match);
+
+        if (match) {
           this.gameData.matched.push(a, b);
-          this.gameScore.update(s => s + 10);
+          this.gameScore.update(s => s + 15);
           this.gameData.flipped = [];
           draw();
           if (this.gameData.matched.length === cards.length) {
-            this.gameScore.update(s => s + Math.max(0, 50 - this.gameData.attempts * 2));
-            this.finishGame();
+            this.gameScore.update(s => s + Math.max(0, 60 - this.gameData.attempts * 2));
+            setTimeout(() => this.finishGame(), 500);
           }
         } else {
-          setTimeout(() => { this.gameData.flipped = []; draw(); }, 800);
+          setTimeout(() => {
+            this.gameData.flipped = [];
+            draw();
+          }, 700);
         }
       }
     });
   }
 
+  // 2. STROOP (CONTROLE INIBITÓRIO)
+  setupStroopGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const colors = ['#ef4444', '#0284c7', '#10b981', '#f59e0b', '#0f766e'];
+    const colorNames = ['VERMELHO', 'AZUL', 'VERDE', 'AMARELO', 'TURQUESA'];
+    let questionIndex = 0;
+    const maxQuestions = 10;
+
+    const showQuestion = () => {
+      if (questionIndex >= maxQuestions) {
+        this.finishGame();
+        return;
+      }
+      questionIndex++;
+      const wordIdx = Math.floor(Math.random() * colorNames.length);
+      let colorIdx = Math.floor(Math.random() * colors.length);
+      while (colorIdx === wordIdx) colorIdx = Math.floor(Math.random() * colors.length);
+      const answerColor = colors[colorIdx];
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Topo instrução
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Toque na COR da tinta, ignore a palavra escrita!', W / 2, H * 0.16);
+
+      // Palavra Estímulo Central
+      ctx.fillStyle = colors[colorIdx];
+      const wordFontSize = Math.max(34, Math.min(50, W * 0.09));
+      ctx.font = `900 ${wordFontSize}px sans-serif`;
+      ctx.fillText(colorNames[wordIdx], W / 2, H * 0.42);
+
+      // Botões de Resposta
+      const bw = Math.min(84, (W - 50) / colors.length);
+      const bh = 48;
+      const startX = (W - colors.length * (bw + 8)) / 2;
+      const startY = H * 0.62;
+
+      colors.forEach((c, i) => {
+        const x = startX + i * (bw + 8);
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.roundRect(x, startY, bw, bh, 14);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(colorNames[i], x + bw / 2, startY + bh / 2);
+      });
+
+      this.gameInstruction.set(`Desafio ${questionIndex}/${maxQuestions} · Qual é a cor da tinta?`);
+
+      this.setCanvasHandler(canvas, (mx, my) => {
+        colors.forEach((c, i) => {
+          const x = startX + i * (bw + 8);
+          if (mx >= x && mx <= x + bw && my >= startY && my <= startY + bh) {
+            const correct = c === answerColor;
+            this.recordAttempt(correct);
+            if (correct) {
+              this.gameScore.update(s => s + 10);
+            }
+            setTimeout(showQuestion, 250);
+          }
+        });
+      });
+    };
+
+    showQuestion();
+  }
+
+  // 3. MATEMÁTICA CLÍNICA
   setupMathGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
-    let correct = 0, total = 0, a = 0, b = 0, op = '+', answer = 0;
-    const buttons = ['0','1','2','3','4','5','6','7','8','9','⌫','OK'];
+    let currentQ = 0;
+    const totalQ = 8;
+    let a = 0, b = 0, op = '+', answer = 0;
     let input = '';
+    const buttons = ['1','2','3','4','5','6','7','8','9','⌫','0','OK'];
 
     const newQuestion = () => {
+      if (currentQ >= totalQ) {
+        this.finishGame();
+        return;
+      }
+      currentQ++;
       a = Math.floor(Math.random() * 20) + 1;
       b = Math.floor(Math.random() * 20) + 1;
       op = Math.random() > 0.5 ? '+' : '-';
       if (op === '-' && a < b) [a, b] = [b, a];
       answer = op === '+' ? a + b : a - b;
       input = '';
-      total++;
-      this.gameInstruction.set(`Resolva: ${a} ${op} ${b}`);
+      this.gameInstruction.set(`Problema ${currentQ}/${totalQ}: Resolva o cálculo`);
       draw();
     };
 
-    const bw = Math.min(70, (W - 120) / 4), bh = Math.min(50, bw * 0.7);
-    const startX = (W - (bw * 4 + 15 * 3)) / 2;
-    const startY = H * 0.55;
-    const questionFontSize = Math.max(24, Math.min(36, W * 0.07));
-    const inputFontSize = Math.max(28, Math.min(40, W * 0.08));
-    const btnFontSize = Math.max(14, Math.min(18, bw * 0.26));
+    const bw = Math.min(68, (W - 120) / 4);
+    const bh = 42;
+    const startX = (W - (bw * 4 + 10 * 3)) / 2;
+    const startY = H * 0.50;
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
-      ctx.font = `bold ${questionFontSize}px sans-serif`;
+
+      // Caixa do Cálculo
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 130, H * 0.08, 260, 90, 16);
+      ctx.fill();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 18px monospace';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#1e293b';
-      ctx.fillText(`${a} ${op} ${b} = ?`, W / 2, H * 0.18);
+      ctx.fillText(`${a} ${op} ${b} =`, W / 2, H * 0.18);
 
-      ctx.font = `bold ${inputFontSize}px sans-serif`;
-      ctx.fillText(input || '_', W / 2, H * 0.38);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 28px monospace';
+      ctx.fillText(input ? input : '_', W / 2, H * 0.32);
 
+      // Teclado
       buttons.forEach((btn, i) => {
-        const x = startX + (i % 4) * (bw + 15);
-        const y = startY + Math.floor(i / 4) * (bh + 10);
-        ctx.fillStyle = btn === 'OK' ? '#007f80' : '#e2e8f0';
+        const x = startX + (i % 4) * (bw + 10);
+        const y = startY + Math.floor(i / 4) * (bh + 8);
+        ctx.fillStyle = btn === 'OK' ? '#0d9488' : btn === '⌫' ? '#334155' : '#1e293b';
         ctx.beginPath();
-        ctx.roundRect(x, y, bw, bh, 8);
+        ctx.roundRect(x, y, bw, bh, 10);
         ctx.fill();
-        ctx.fillStyle = btn === 'OK' ? '#fff' : '#1e293b';
-        ctx.font = `bold ${btnFontSize}px sans-serif`;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 15px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(btn, x + bw / 2, y + bh / 2);
       });
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(`Acertos: ${correct}/${total}`, W / 2, H - 15);
     };
 
     newQuestion();
 
     this.setCanvasHandler(canvas, (mx, my) => {
       buttons.forEach((btn, i) => {
-        const x = startX + (i % 4) * (bw + 15);
-        const y = startY + Math.floor(i / 4) * (bh + 10);
+        const x = startX + (i % 4) * (bw + 10);
+        const y = startY + Math.floor(i / 4) * (bh + 8);
         if (mx >= x && mx <= x + bw && my >= y && my <= y + bh) {
-          if (btn === '⌫') { input = input.slice(0, -1); draw(); }
-          else if (btn === 'OK') {
-            if (parseInt(input) === answer) { correct++; this.gameScore.update(s => s + 10); }
-            if (total >= 8) this.finishGame(); else newQuestion();
-          } else { input += btn; draw(); }
+          this.sound.playClick();
+          if (btn === '⌫') {
+            input = input.slice(0, -1);
+            draw();
+          } else if (btn === 'OK') {
+            if (input.length === 0) return;
+            const correct = parseInt(input) === answer;
+            this.recordAttempt(correct);
+            if (correct) {
+              this.gameScore.update(s => s + 12);
+            }
+            newQuestion();
+          } else {
+            if (input.length < 3) {
+              input += btn;
+              draw();
+            }
+          }
         }
       });
     });
   }
 
-  setupSequenceGame(canvas: HTMLCanvasElement, W: number, H: number) {
-    const ctx = this.canvasCtx!;
-    const colors = ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7'];
-    const numColors = 5;
-    const sequence = Array.from({length: 5}, () => Math.floor(Math.random() * numColors));
-    let userSequence: number[] = [];
-    let showingSequence = true;
-    let round = 1;
-
-    this.gameInstruction.set('Memorize e repita a sequência de cores');
-
-    const cellW = (W - 20) / numColors;
-    const cellH = Math.min(cellW, H * 0.4);
-    const cellY = (H - cellH) / 2;
-    const cellR = Math.min(12, cellW * 0.15);
-    const fontSize = Math.max(11, Math.min(14, W * 0.028));
-
-    const showSequence = () => {
-      showingSequence = true;
-      let i = 0;
-      const interval = setInterval(() => {
-        if (i >= sequence.length) {
-          clearInterval(interval);
-          showingSequence = false;
-          this.gameInstruction.set('Agora repita a sequência!');
-          draw();
-          return;
-        }
-        draw();
-        const x = 10 + i * cellW;
-        ctx.fillStyle = colors[sequence[i]];
-        ctx.beginPath();
-        ctx.roundRect(x + 4, cellY, cellW - 8, cellH, cellR);
-        ctx.fill();
-        i++;
-      }, 600);
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      for (let i = 0; i < numColors; i++) {
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath();
-        ctx.roundRect(10 + i * cellW + 4, cellY, cellW - 8, cellH, cellR);
-        ctx.fill();
-      }
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${fontSize}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(`Rodada ${round} · Acertos: ${userSequence.filter((v,i) => v === sequence[i]).length}/5`, W / 2, H - 15);
-    };
-
-    draw();
-    showSequence();
-
-    this.setCanvasHandler(canvas, (mx) => {
-      if (showingSequence) return;
-      const col = Math.floor((mx - 10) / cellW);
-      if (col < 0 || col >= numColors) return;
-      userSequence.push(col);
-
-      ctx.fillStyle = colors[col];
-      ctx.beginPath();
-      ctx.roundRect(10 + col * cellW + 4, cellY, cellW - 8, cellH, cellR);
-      ctx.fill();
-
-      if (userSequence.length === sequence.length) {
-        const correct = userSequence.filter((v,i) => v === sequence[i]).length;
-        this.gameScore.update(s => s + correct * 5);
-        if (correct === 5 && round < 3) {
-          round++;
-          sequence.push(Math.floor(Math.random() * numColors));
-          userSequence = [];
-          setTimeout(() => showSequence(), 500);
-        } else {
-          this.finishGame();
-        }
-      }
-    });
-  }
-
+  // 4. ATENÇÃO E FOCO VISUAL (CAÇA À ESTRELA / RASTREAMENTO)
   setupAttentionGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
-    let clicked = 0, missed = 0, targetIdx = -1;
+    let targetIdx = -1;
     let shapes: Array<{x: number, y: number, isTarget: boolean}> = [];
-    const totalTargets = 10;
-    const radius = Math.max(16, Math.min(22, W * 0.044));
+    const totalRounds = 10;
+    let roundsDone = 0;
+    const radius = Math.max(18, Math.min(26, W * 0.048));
 
     const newRound = () => {
-      if (clicked + missed >= totalTargets) { this.finishGame(); return; }
-      shapes = Array.from({length: 8}, () => ({x: Math.random() * (W - radius * 4) + radius * 2, y: Math.random() * (H - radius * 4) + radius * 2, isTarget: false}));
+      if (roundsDone >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      roundsDone++;
+      shapes = Array.from({length: 8}, () => ({
+        x: Math.random() * (W - radius * 4) + radius * 2,
+        y: Math.random() * (H - radius * 4) + radius * 2,
+        isTarget: false
+      }));
       targetIdx = Math.floor(Math.random() * shapes.length);
       shapes[targetIdx].isTarget = true;
+
       ctx.clearRect(0, 0, W, H);
+
       shapes.forEach((s) => {
-        ctx.fillStyle = s.isTarget ? '#3b82f6' : '#e2e8f0';
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
-        ctx.fill();
         if (s.isTarget) {
-          ctx.fillStyle = '#fff';
-          ctx.font = `bold ${Math.max(12, radius * 0.7)}px sans-serif`;
+          // Alvo Estelar com anel de foco
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, radius + 4, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.max(14, radius * 0.8)}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('★', s.x, s.y);
+        } else {
+          // Distratores
+          ctx.fillStyle = '#334155';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, radius - 2, 0, Math.PI * 2);
+          ctx.fill();
         }
       });
-      this.gameInstruction.set(`Clique na estrela azul! (${clicked}/${totalTargets})`);
+
+      this.gameInstruction.set(`Rodada ${roundsDone}/${totalRounds} · Toque rápido na ESTRELA AZUL!`);
     };
 
     this.setCanvasHandler(canvas, (mx, my) => {
       for (const s of shapes) {
         const dist = Math.sqrt((mx - s.x) ** 2 + (my - s.y) ** 2);
-        if (dist < radius + 5) {
-          if (s.isTarget) { clicked++; this.gameScore.update(s => s + 10); }
-          else { missed++; }
-          setTimeout(newRound, 300);
+        if (dist < radius + 8) {
+          const hitTarget = s.isTarget;
+          this.recordAttempt(hitTarget);
+          if (hitTarget) {
+            this.gameScore.update(score => score + 10);
+            setTimeout(newRound, 200);
+          }
           break;
         }
       }
@@ -801,6 +1479,99 @@ export class JogosComponent implements OnDestroy {
     newRound();
   }
 
+  // 5. SEQUÊNCIA COGNITIVA (MEMÓRIA DE TRABALHO)
+  setupSequenceGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const padColors = ['#ef4444', '#0284c7', '#10b981', '#f59e0b', '#0d9488'];
+    const padNotes = [261.63, 293.66, 329.63, 392.00, 440.00]; // Pentatônica suave
+    const numPads = 5;
+    const sequence = [
+      Math.floor(Math.random() * numPads),
+      Math.floor(Math.random() * numPads),
+      Math.floor(Math.random() * numPads),
+      Math.floor(Math.random() * numPads)
+    ];
+    let userSeq: number[] = [];
+    let isShowing = true;
+
+    this.gameInstruction.set('Memorize a sequência de cores e notas sonoras');
+
+    const padW = (W - 30) / numPads;
+    const padH = Math.min(padW * 1.2, H * 0.45);
+    const padY = (H - padH) / 2;
+
+    const draw = (activePad = -1) => {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < numPads; i++) {
+        const x = 15 + i * padW;
+        const isActive = activePad === i;
+        ctx.fillStyle = isActive ? padColors[i] : '#1e293b';
+        ctx.strokeStyle = isActive ? '#ffffff' : '#334155';
+        ctx.lineWidth = isActive ? 3 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(x + 4, padY, padW - 8, padH, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        if (isActive) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(x + padW / 2, padY + padH / 2, 10, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    };
+
+    const playPlayback = () => {
+      isShowing = true;
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step >= sequence.length) {
+          clearInterval(interval);
+          isShowing = false;
+          draw(-1);
+          this.gameInstruction.set('Sua vez! Repita a sequência na mesma ordem.');
+          return;
+        }
+        const currentPad = sequence[step];
+        draw(currentPad);
+        this.sound.playMusicalNote(padNotes[currentPad]);
+        setTimeout(() => draw(-1), 400);
+        step++;
+      }, 700);
+    };
+
+    draw(-1);
+    setTimeout(playPlayback, 400);
+
+    this.setCanvasHandler(canvas, (mx) => {
+      if (isShowing) return;
+      const padIdx = Math.floor((mx - 15) / padW);
+      if (padIdx < 0 || padIdx >= numPads) return;
+
+      userSeq.push(padIdx);
+      this.sound.playMusicalNote(padNotes[padIdx]);
+      draw(padIdx);
+      setTimeout(() => draw(-1), 250);
+
+      const currStep = userSeq.length - 1;
+      const isCorrectSoFar = userSeq[currStep] === sequence[currStep];
+
+      if (!isCorrectSoFar) {
+        this.recordAttempt(false);
+        this.finishGame();
+        return;
+      }
+
+      if (userSeq.length === sequence.length) {
+        this.recordAttempt(true);
+        this.gameScore.update(s => s + 40);
+        setTimeout(() => this.finishGame(), 500);
+      }
+    });
+  }
+
+  // 6. CONSCIÊNCIA FONOLÓGICA
   setupPhonologyGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
     const WORD_SETS: Record<number, Array<{word: string, options: string[]}>> = {
@@ -808,63 +1579,77 @@ export class JogosComponent implements OnDestroy {
       32: [{word:'CA-SA',options:['CA-SA','CASA','CA-SA','CAS-A']},{word:'BO-LA',options:['BO-LA','BOLA','BO-LA','BOL-A']},{word:'PA-TO',options:['PA-TO','PATO','PA-TO','PAT-O']}],
       33: [{word:'MAÇÃ',options:['M','A','Ã','Ç']},{word:'BOLA',options:['B','O','L','A']},{word:'SOL',options:['S','O','L','Z']}],
       34: [{word:'SOL',options:['L','O','S','Z']},{word:'PÉ',options:['É','P','E','X']},{word:'MAR',options:['R','A','M','L']}],
-      35: [{word:'BOR-BO-CHA',options:['1','2','3','4']},{word:'CA-SA',options:['1','2','3','4']},{word:'A-NA-RA-NA',options:['1','2','3','4']}],
-      36: [{word:'MATO→?',options:['RATO','MATO','BATO','SATO']},{word:'CASA→?',options:['CASA','CANA','CASA','CATA']},{word:'BOLA→?',options:['BOLA','TOLA','BOLA','BONA']}],
-      37: [{word:'Peixe ___',options:['DENTE','AZUL','MOLHO','VERDE']},{word:'Amor ___',options:['TEMPO','DOURADO','COR','ÁGUA']},{word:'Copo ___',options:['D\'ÁGUA','GRANDE','MESA','AZUL']}],
+      35: [{word:'BOR-BO-LE-TA',options:['4','3','2','5']},{word:'CA-SA',options:['2','1','3','4']},{word:'PA-TO',options:['2','1','3','4']}],
+      36: [{word:'MATO→RATO',options:['RATO','MATO','BATO','SATO']},{word:'CASA→CANA',options:['CANA','CASA','CATA','CALA']},{word:'BOLA→BOTA',options:['BOTA','BOLA','BONA','BOCA']}],
+      37: [{word:'Peixe ___',options:['AZUL','DENTE','MOLHO','VERDE']},{word:'Amor ___',options:['DOURADO','TEMPO','COR','ÁGUA']},{word:'Copo ___',options:['D\'ÁGUA','GRANDE','MESA','AZUL']}],
       38: [{word:'SOL',options:['S-O-L','S-O','SOL','S-L-O']},{word:'CASA',options:['C-A-S-A','C-AS-A','CA-S-A','CASA']},{word:'PATO',options:['P-A-T-O','PA-T-O','PATO','P-A-TO']}],
-      39: [{word:'CA+SO',options:['CASSO','CASO','CAÇO','CASSO']},{word:'BO+LA',options:['BOLHA','BOLA','BOALA','BOLHA']},{word:'PA+TO',options:['PACTO','PATO','PATTO','PACTO']}],
-      40: [{word:'P_J_TO',options:['PAJETO','PIJITO','PAJOTO','PAJETO']},{word:'M__R',options:['MOR','MAR','MUR','MER']},{word:'C_S_',options:['CASA','CISO','CUSA','COSA']}],
+      39: [{word:'CA+SO',options:['CASO','CASSO','CAÇO','CALO']},{word:'BO+LA',options:['BOLA','BOLHA','BOALA','BOA']},{word:'PA+TO',options:['PATO','PACTO','PATTO','PATOA']}],
+      40: [{word:'P_TO',options:['PATO','PETO','PITO','PUTO']},{word:'M_R',options:['MAR','MOR','MUR','MER']},{word:'C_S_',options:['CASA','COSA','CUSA','CESA']}],
     };
     const words = WORD_SETS[gameId] || WORD_SETS[31];
-    let currentIdx = 0, correct = 0;
+    let currentIdx = 0;
 
-    const btnW = Math.min(200, (W - 100) / 2);
-    const btnH = Math.min(50, btnW * 0.25);
-    const gap = 16;
-    const totalGridW = btnW * 2 + gap;
-    const startX = (W - totalGridW) / 2;
-    const startY = H * 0.3;
-    const questionFontSize = Math.max(18, Math.min(28, W * 0.056));
-    const wordFontSize = Math.max(24, Math.min(36, W * 0.072));
-    const optFontSize = Math.max(13, Math.min(18, btnW * 0.09));
+    const btnW = Math.min(210, (W - 70) / 2);
+    const btnH = 50;
+    const gap = 14;
+    const startX = (W - (btnW * 2 + gap)) / 2;
+    const startY = H * 0.44;
 
     const drawQuestion = () => {
-      if (currentIdx >= words.length) { this.finishGame(); return; }
+      if (currentIdx >= words.length) {
+        this.finishGame();
+        return;
+      }
       const q = words[currentIdx];
       ctx.clearRect(0, 0, W, H);
-      ctx.font = `bold ${questionFontSize}px sans-serif`;
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 13px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#1e293b';
-      ctx.fillText('Qual é a palavra correta?', W / 2, H * 0.14);
-      ctx.font = `bold ${wordFontSize}px sans-serif`;
-      ctx.fillText(`_${'_'.repeat(q.word.length - 2)}_`, W / 2, H * 0.24);
+      ctx.fillText(`Desafio Fonológico ${currentIdx + 1}/${words.length}`, W / 2, H * 0.14);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '900 32px sans-serif';
+      ctx.fillText(q.word, W / 2, H * 0.30);
 
       q.options.forEach((opt, i) => {
         const x = startX + (i % 2) * (btnW + gap);
-        const y = startY + Math.floor(i / 2) * (btnH + 12);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath();
-        ctx.roundRect(x, y, btnW, btnH, 10);
-        ctx.fill();
+        const y = startY + Math.floor(i / 2) * (btnH + 10);
         ctx.fillStyle = '#1e293b';
-        ctx.font = `bold ${optFontSize}px sans-serif`;
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(x, y, btnW, btnH, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#0d9488';
+        ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(opt, x + btnW / 2, y + btnH / 2 + 2);
+        ctx.fillText(String.fromCharCode(65 + i), x + 20, y + btnH / 2 + 4);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText(opt, x + btnW / 2 + 6, y + btnH / 2 + 4);
       });
 
-      this.gameInstruction.set(`Pergunta ${currentIdx + 1}/${words.length} · Acertos: ${correct}`);
+      this.gameInstruction.set(`Pergunta ${currentIdx + 1}/${words.length} · Toque na opção correta`);
     };
 
     this.setCanvasHandler(canvas, (mx, my) => {
       const q = words[currentIdx];
       if (!q) return;
-      q.options.forEach((_, i) => {
+      q.options.forEach((opt, i) => {
         const x = startX + (i % 2) * (btnW + gap);
-        const y = startY + Math.floor(i / 2) * (btnH + 12);
+        const y = startY + Math.floor(i / 2) * (btnH + 10);
         if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
-          if (q.options[i] === q.word) { correct++; this.gameScore.update(s => s + 10); }
+          const correct = opt === q.options[0]; // primeira opção do set é o alvo
+          this.recordAttempt(correct);
+          if (correct) {
+            this.gameScore.update(s => s + 15);
+          }
           currentIdx++;
-          setTimeout(drawQuestion, 400);
+          setTimeout(drawQuestion, 300);
         }
       });
     });
@@ -872,98 +1657,66 @@ export class JogosComponent implements OnDestroy {
     drawQuestion();
   }
 
+  // 7. SOCIOEMOCIONAL (TEORIA DA MENTE E EMPATIA)
   setupSocialGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
     const SCENARIOS: Record<number, Array<{situation: string, options: string[], correct: number}>> = {
       51: [
-        {situation:'A menina está sorrindo. Ela está...',options:['Feliz','Triste','Com raiva','Com medo'],correct:0},
-        {situation:'O menino está chorando. Ele está...',options:['Feliz','Triste','Com raiva','Animado'],correct:1},
-        {situation:'A pessoa está com a testa franzida. Ela está...',options:['Feliz','Triste','Com raiva','Surpresa'],correct:2},
+        {situation:'A pessoa está sorrindo e dançando. Ela está...',options:['Feliz e alegre','Triste','Com raiva','Com medo'],correct:0},
+        {situation:'O colega caiu e machucou o joelho. O que ele sente?',options:['Muita dor e tristeza','Alegria','Tédio','Animado'],correct:0},
+        {situation:'Alguém respirou fundo com calma. Ela está...',options:['Relaxada e tranquila','Brava','Com pressa','Assustada'],correct:0},
       ],
       52: [
-        {situation:'Seu amigo caiu e se machucou. O que ele sente?',options:['Feliz','Triste','Com raiva','Animado'],correct:1},
-        {situation:'Ganhou um presente. Como se sente?',options:['Triste','Com raiva','Feliz','Com medo'],correct:2},
-        {situation:'Está sozinho no parque. Como se sente?',options:['Feliz','Triste','Animado','Com raiva'],correct:1},
-      ],
-      53: [
-        {situation:'Um colega está chorando no intervalo. O que você faz?',options:['Ignorar','Chamar e perguntar se precisa de ajuda','Rir','Chamar outros para rir'],correct:1},
-        {situation:'Alguém pegou seu brinquedo sem pedir. O que você faz?',options:['Bater','Falar que ficou triste e pedir de volta','Gritar','Esfregar no chão'],correct:1},
-        {situation:'Um colega novo chegou e está sozinho. O que você faz?',options:['Ignorar','Chamar para brincar junto','Falar que ele não pode','Chamar de estranho'],correct:1},
-      ],
-      55: [
-        {situation:'Como você se sente agora?',options:['Feliz','Triste','Com raiva','Cansado'],correct:0},
-        {situation:'O que te faz sentir bem?',options:['Brincar com amigos','Brigar','Ficar sozinho','Não dormir'],correct:0},
-        {situation:'Quando estou triste, eu...',options:['Choro e fico sozinho','Peço ajuda a alguém de confiança','Brigo com todo mundo','Fico com raiva'],correct:1},
-      ],
-      56: [
-        {situation:'Dois amigos brigaram por um brinquedo. Qual a melhor solução?',options:['Brigar também','Conversar e combinar de dividir','Chamar um adulto para punir','Ignorar e ir embora'],correct:1},
-        {situation:'Seu colega falou algo feio. O que você faz?',options:['Falar algo feio de volta','Conversar e dizer que machucou','Bater','Chorar sem fazer nada'],correct:1},
-        {situation:'Você ficou com raiva do amigo. O que fazer?',options:['Bater','Esperar esfriar e conversar','Não falar mais com ele','Quebrar algo dele'],correct:1},
-      ],
-      57: [
-        {situation:'Seu amigo precisa de ajuda com a lição. O que você faz?',options:['Recusar','Ajudar com paciência','Rir dele','Chamar o professor para castigar'],correct:1},
-        {situation:'Vocês estão jogando e alguém perdeu. O que fazer?',options:['Zombar','Incentivar e oferecer para jogar de novo','Ir embora','Não mais jogar com essa pessoa'],correct:1},
-        {situation:'Um colega compartilhou o lanche. O que você faz?',options:['Comer sem agradecer','Agradecer e compartilhar o seu também','Falar que não gosta','Guardar tudo para si'],correct:1},
-      ],
-      59: [
-        {situation:'Pense em algo bom que aconteceu hoje. Qual é?',options:['Acordar cedo','Brincar com amigos','Ir dormir tarde','Comer chocolate'],correct:1},
-        {situation:'O que você agradece na sua família?',options:['Nada','Que eles cuidam de você','Que eles são perfeitos','Que eles dão tudo que você quer'],correct:1},
-        {situation:'Agradecer ajuda a...',options:['Ninguém','As pessoas que te ajudam','Só quem você gosta','Só quem te dá presentes'],correct:1},
-      ],
-      60: [
-        {situation:'Você ficou com raiva. O que fazer primeiro?',options:['Bater','Respirar fundo e contar até 10','Gritar','Sair correndo'],correct:1},
-        {situation:'Está com medo de uma coisa nova. O que fazer?',options:['Não fazer nada','Pedir ajuda e tentar aos poucos','Chorar','Fingir que não existe'],correct:1},
-        {situation:'Perdeu um jogo e ficou triste. O que fazer?',options:['Quebrar o jogo','Aceitar que perdeu e tentar de novo','Culpar os outros','Não jogar mais'],correct:1},
-      ],
+        {situation:'Seu colega perdeu o lápis favorito. Como ajudar?',options:['Ajudar a procurar com calma','Zombar dele','Ignorar','Esconder outro lápis'],correct:0},
+        {situation:'Uma criança nova chegou na escola sozinha. O que fazer?',options:['Convidar para brincar junto','Ignorar','Dizer que não pode','Rir'],correct:0},
+        {situation:'Ganhou um presente inesperado. Como se expressa?',options:['Agradecer com um sorriso','Reclamar','Jogar no chão','Sair correndo'],correct:0},
+      ]
     };
     const scenarios = SCENARIOS[gameId] || SCENARIOS[51];
-    let currentIdx = 0, correct = 0;
+    let currentIdx = 0;
 
-    const btnW = Math.min(200, (W - 100) / 2);
-    const btnH = Math.min(55, btnW * 0.275);
-    const gap = 14;
-    const totalGridW = btnW * 2 + gap;
-    const startX = (W - totalGridW) / 2;
-    const startY = H * 0.32;
-    const sitFontSize = Math.max(14, Math.min(20, W * 0.04));
-    const optFontSize = Math.max(12, Math.min(15, btnW * 0.075));
+    const btnW = Math.min(220, (W - 60) / 2);
+    const btnH = 50;
+    const gap = 12;
+    const startX = (W - (btnW * 2 + gap)) / 2;
+    const startY = H * 0.44;
 
     const drawScenario = () => {
-      if (currentIdx >= scenarios.length) { this.finishGame(); return; }
+      if (currentIdx >= scenarios.length) {
+        this.finishGame();
+        return;
+      }
       const s = scenarios[currentIdx];
       ctx.clearRect(0, 0, W, H);
-      ctx.font = `bold ${sitFontSize}px sans-serif`;
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 12px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#1e293b';
-      const words = s.situation.split(' ');
-      let line = '';
-      let y = H * 0.12;
-      words.forEach(w => {
-        const test = line + w + ' ';
-        if (ctx.measureText(test).width > W - 40) {
-          ctx.fillText(line.trim(), W / 2, y);
-          line = w + ' ';
-          y += sitFontSize + 6;
-        } else {
-          line = test;
-        }
-      });
-      ctx.fillText(line.trim(), W / 2, y);
+      ctx.fillText(`Cenário Social ${currentIdx + 1}/${scenarios.length}`, W / 2, H * 0.14);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(s.situation, W / 2, H * 0.28);
 
       s.options.forEach((opt, i) => {
         const x = startX + (i % 2) * (btnW + gap);
-        const yB = startY + Math.floor(i / 2) * (btnH + 12);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath();
-        ctx.roundRect(x, yB, btnW, btnH, 10);
-        ctx.fill();
+        const y = startY + Math.floor(i / 2) * (btnH + 10);
         ctx.fillStyle = '#1e293b';
-        ctx.font = `${optFontSize}px sans-serif`;
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(x, y, btnW, btnH, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(opt, x + btnW / 2, yB + btnH / 2 + 2);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(opt, x + btnW / 2, y + btnH / 2);
       });
 
-      this.gameInstruction.set(`Cenário ${currentIdx + 1}/${scenarios.length}`);
+      this.gameInstruction.set('Analise o sentimento e escolha a melhor atitude empática');
     };
 
     this.setCanvasHandler(canvas, (mx, my) => {
@@ -971,11 +1724,15 @@ export class JogosComponent implements OnDestroy {
       if (!s) return;
       s.options.forEach((_, i) => {
         const x = startX + (i % 2) * (btnW + gap);
-        const yB = startY + Math.floor(i / 2) * (btnH + 12);
-        if (mx >= x && mx <= x + btnW && my >= yB && my <= yB + btnH) {
-          if (i === s.correct) { correct++; this.gameScore.update(s => s + 10); }
+        const y = startY + Math.floor(i / 2) * (btnH + 10);
+        if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
+          const correct = i === s.correct;
+          this.recordAttempt(correct);
+          if (correct) {
+            this.gameScore.update(score => score + 15);
+          }
           currentIdx++;
-          setTimeout(drawScenario, 400);
+          setTimeout(drawScenario, 300);
         }
       });
     });
@@ -983,199 +1740,128 @@ export class JogosComponent implements OnDestroy {
     drawScenario();
   }
 
-  setupStroopGame(canvas: HTMLCanvasElement, W: number, H: number) {
-    const ctx = this.canvasCtx!;
-    const colors = ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7'];
-    const colorNames = ['VERMELHO','AZUL','VERDE','AMARELO','ROXO'];
-    let correct = 0, total = 0;
-
-    const showQuestion = () => {
-      if (total >= 10) { this.finishGame(); return; }
-      const wordIdx = Math.floor(Math.random() * colorNames.length);
-      let colorIdx = Math.floor(Math.random() * colors.length);
-      while (colorIdx === wordIdx) colorIdx = Math.floor(Math.random() * colors.length);
-      total++;
-      ctx.clearRect(0, 0, W, H);
-      const qFontSize = Math.max(16, Math.min(24, W * 0.048));
-      ctx.font = `bold ${qFontSize}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#64748b';
-      ctx.fillText('Qual é a COR da tinta?', W / 2, H * 0.15);
-      const wordFontSize = Math.max(32, Math.min(52, W * 0.1));
-      ctx.font = `bold ${wordFontSize}px sans-serif`;
-      ctx.fillStyle = colors[colorIdx];
-      ctx.fillText(colorNames[wordIdx], W / 2, H * 0.38);
-      const bw = Math.min(90, (W - 60) / colors.length), bh = 50;
-      const startX = (W - colors.length * (bw + 10)) / 2;
-      const startY = H * 0.55;
-      colors.forEach((c, i) => {
-        const x = startX + i * (bw + 10);
-        ctx.fillStyle = c;
-        ctx.beginPath();
-        ctx.roundRect(x, startY, bw, bh, 10);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.max(10, Math.min(13, bw * 0.16))}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(colorNames[i].slice(0, 5), x + bw / 2, startY + bh / 2);
-      });
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText(`Acertos: ${correct}/${total}`, W / 2, H - 15);
-      this.gameInstruction.set(`Toque na COR da tinta — não na palavra! (${total}/10)`);
-      const answerColor = colors[colorIdx];
-      this.setCanvasHandler(canvas, (mx, my) => {
-        colors.forEach((c, i) => {
-          const x = startX + i * (bw + 10);
-          if (mx >= x && mx <= x + bw && my >= startY && my <= startY + bh) {
-            if (c === answerColor) { correct++; this.gameScore.update(s => s + 10); }
-            setTimeout(showQuestion, 300);
-          }
-        });
-      });
-    };
-    showQuestion();
-  }
-
+  // 8. TAP / REAÇÃO RÁPIDA
   setupTapGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
-    const TAP_CONFIGS: Record<number, {items: string[], count: number, instruction: string, speed: number}> = {
-      2:  {items:['🍎','🍌','🍇','🍊','🍓'], count:15, instruction:'Toque nos frutos que aparecem!', speed:1200},
-      4:  {items:['🔵','🔴'], count:20, instruction:'Toque nos AZUIS, ignore os VERMELHOS!', speed:800},
-      5:  {items:['⬜','🔴','🟢','🔵'], count:15, instruction:'Toque nos QUADRADOS — nunca nos círculos!', speed:1000},
-      6:  {items:['⭐'], count:10, instruction:'Toque na estrela quando ela parar de se mover!', speed:600},
-      17: {items:['📱','🎒','📖','✏️','🎨'], count:10, instruction:'Quais objetos apareceram? Toque nos que lembra!', speed:1500},
-      18: {items:['🐱','🐶','🐰','🦊','🐻'], count:12, instruction:'Encontre o animal que apareceu no centro!', speed:1000},
-      20: {items:['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣'], count:8, instruction:'Guarde os números e repita ao contrário!', speed:1500},
-      22: {items:['🔵','🔴'], count:16, instruction:'Toque no CÍRCULO quando vir ▲, no QUADRADO quando vir ●', speed:900},
-      24: {items:['🐶','🐱','🐰','📦','⚽','📚'], count:15, instruction:'Toque nos ANIMAIS — ignore os objetos!', speed:900},
-      26: {items:['🟢','🟡','🔴'], count:12, instruction:'Toque quando ficar VERDE — espere o sinal!', speed:1200},
-      27: {items:['A','E','I','O','U'], count:14, instruction:'Toque nas VOGAIS — ignore as consoantes!', speed:800},
-      28: {items:['🔴','🔵'], count:16, instruction:'Toque no AZUL quando ver 🔴, no VERMELHO quando ver 🔵', speed:800},
-      29: {items:['⭐','🏁'], count:10, instruction:'Encontre o caminho: toque na estrela, depois na bandeira!', speed:1000},
-      30: {items:['+3'], count:8, instruction:'Guarde o número e some 3!', speed:2000},
-      44: {items:['🍎','🍌','🍇','🍊','🍓','🍋'], count:10, instruction:'Conte quantos frutos aparecem!', speed:1500},
-      48: {items:['🍕','🍰','🧁','🍩'], count:10, instruction:'Toque na fração correta — 1/2 ou 1/4?', speed:1500},
-      49: {items:['⬛','⬜','🔺','🔴'], count:12, instruction:'Identifique a forma: círculo, quadrado ou triângulo!', speed:1200},
-      54: {items:['🫁'], count:8, instruction:'Inspire (toque quando crescer)... Expire (quando diminuir)', speed:2000},
-      58: {items:['⏳'], count:6, instruction:'Espere... espere... toque quando aparecer o sinal!', speed:3000},
+    const TAP_CONFIGS: Record<number, {items: string[], count: number, instruction: string}> = {
+      2:  {items:['🍎','🍌','🍇','🍊','🍓'], count:12, instruction:'Toque nas frutas o mais rápido que puder!'},
+      4:  {items:['🔵','🔴'], count:14, instruction:'Toque nos CÍRCULOS AZUIS, ignore os vermelhos!'},
+      5:  {items:['⬜','🔴','🟢','🔵'], count:12, instruction:'Toque apenas nos QUADRADOS!'},
+      6:  {items:['⭐'], count:10, instruction:'Toque na estrela quando ela surgir!'},
+      26: {items:['🟢','🟡','🔴'], count:10, instruction:'Toque apenas quando o sinal for VERDE!'},
+      44: {items:['🍎','🍌','🍇','🍊'], count:10, instruction:'Toque no item antes que ele desapareça!'},
     };
     const config = TAP_CONFIGS[gameId] || TAP_CONFIGS[2];
-    let spawned = 0, hit = 0;
-    const itemFontSize = Math.max(24, Math.min(40, W * 0.08));
+    let spawned = 0;
+    const itemFontSize = Math.max(30, Math.min(48, W * 0.09));
 
     const spawnItem = () => {
-      if (spawned >= config.count) { this.finishGame(); return; }
-      const symbol = config.items[Math.floor(Math.random() * config.items.length)];
-      const x = Math.random() * (W - 60) + 30;
-      const y = Math.random() * (H - 80) + 30;
+      if (spawned >= config.count) {
+        this.finishGame();
+        return;
+      }
       spawned++;
+      const symbol = config.items[Math.floor(Math.random() * config.items.length)];
+      const x = Math.random() * (W - 100) + 50;
+      const y = Math.random() * (H - 120) + 60;
+
       ctx.clearRect(0, 0, W, H);
-      ctx.font = `${itemFontSize}px serif`;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `${itemFontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#1e293b';
       ctx.fillText(symbol, x, y);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
-      ctx.fillText(`${spawned}/${config.count} · Acertos: ${hit}`, W / 2, H - 15);
-      this.gameInstruction.set(config.instruction);
+
+      this.gameInstruction.set(`${config.instruction} (${spawned}/${config.count})`);
+
       this.setCanvasHandler(canvas, (mx, my) => {
         const dist = Math.sqrt((mx - x) ** 2 + (my - y) ** 2);
-        if (dist < 40) {
-          hit++;
-          this.gameScore.update(s => s + 10);
+        if (dist < 50) {
+          const isTarget = gameId === 4 ? symbol === '🔵' : gameId === 5 ? symbol === '⬜' : gameId === 26 ? symbol === '🟢' : true;
+          this.recordAttempt(isTarget);
+          if (isTarget) {
+            this.gameScore.update(s => s + 10);
+          }
           setTimeout(spawnItem, 200);
         }
       });
     };
+
     spawnItem();
   }
 
+  // 9. COMPARAÇÃO MATEMÁTICA (< , = , >)
   setupCompareGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
-    let correct = 0, total = 0;
-    const btnW = Math.min(80, (W - 80) / 3), bh = 55;
+    let currentQ = 0;
+    const totalQ = 8;
+    const btnW = Math.min(84, (W - 70) / 3);
+    const bh = 54;
     const symbols = ['<', '=', '>'];
-    const labels = ['<', '=', '>'];
 
     const showQuestion = () => {
-      if (total >= 8) { this.finishGame(); return; }
+      if (currentQ >= totalQ) {
+        this.finishGame();
+        return;
+      }
+      currentQ++;
       const a = Math.floor(Math.random() * 20) + 1;
       let b = Math.floor(Math.random() * 20) + 1;
       while (b === a) b = Math.floor(Math.random() * 20) + 1;
-      total++;
       const correctSym = a > b ? '>' : a < b ? '<' : '=';
+
       ctx.clearRect(0, 0, W, H);
-      const numFont = Math.max(28, Math.min(44, W * 0.088));
-      ctx.font = `bold ${numFont}px sans-serif`;
+
+      // Caixa de Comparação
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 130, H * 0.12, 260, 75, 16);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 30px monospace';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#1e293b';
-      ctx.fillText(`${a}  ?  ${b}`, W / 2, H * 0.3);
-      const startX = (W - 3 * (btnW + 15)) / 2;
-      const startY = H * 0.5;
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${a}   ?   ${b}`, W / 2, H * 0.12 + 38);
+
+      const startX = (W - 3 * (btnW + 12)) / 2;
+      const startY = H * 0.52;
+
       symbols.forEach((sym, i) => {
-        const x = startX + i * (btnW + 15);
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath();
-        ctx.roundRect(x, startY, btnW, bh, 12);
-        ctx.fill();
+        const x = startX + i * (btnW + 12);
         ctx.fillStyle = '#1e293b';
-        ctx.font = `bold ${Math.max(24, Math.min(36, btnW * 0.45))}px sans-serif`;
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(x, startY, btnW, bh, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 28px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(labels[i], x + btnW / 2, startY + bh / 2);
+        ctx.fillText(sym, x + btnW / 2, startY + bh / 2);
       });
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${Math.max(11, Math.min(14, W * 0.028))}px sans-serif`;
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign = 'center';
-      ctx.fillText(`Acertos: ${correct}/${total}`, W / 2, H - 15);
-      this.gameInstruction.set(`Qual símbolo completa? (${total}/8)`);
+
+      this.gameInstruction.set(`Comparação ${currentQ}/${totalQ}: Qual símbolo completa a sentença?`);
+
       this.setCanvasHandler(canvas, (mx, my) => {
         symbols.forEach((sym, i) => {
-          const x = startX + i * (btnW + 15);
+          const x = startX + i * (btnW + 12);
           if (mx >= x && mx <= x + btnW && my >= startY && my <= startY + bh) {
-            if (sym === correctSym) { correct++; this.gameScore.update(s => s + 10); }
-            setTimeout(showQuestion, 300);
+            const correct = sym === correctSym;
+            this.recordAttempt(correct);
+            if (correct) {
+              this.gameScore.update(s => s + 10);
+            }
+            setTimeout(showQuestion, 250);
           }
         });
       });
     };
+
     showQuestion();
-  }
-
-  finishGame() {
-    this.clearTimers();
-    const jogo = this.currentGame();
-    if (jogo) this.saveHighScore(jogo.id, this.gameScore());
-    this.gameStarted.set(false);
-    this.gameFinished.set(true);
-  }
-
-  closeGame() {
-    this.clearTimers();
-    this.removeCanvasListeners();
-    this.unlockOrientation();
-    this.showGameModal.set(false);
-    this.isPortraitMobile.set(false);
-    this.currentGame.set(null);
-    this.gameStarted.set(false);
-    this.gameFinished.set(false);
-  }
-
-  getClinicalQuestions(category: string): string[] {
-    const questions: Record<string, string[]> = {
-      'Atenção': ['Como o paciente se saiu na tarefa de atenção visual?', 'Houve dificuldade em manter o foco?', 'Observações sobre tempo de reação?'],
-      'Memória': ['O paciente conseguiu reter as informações?', 'Houve dificuldade em reconhecer padrões?', 'Observações sobre estratégia de memorização?'],
-      'Funções Executivas': ['Como o paciente se saiu na organização das tarefas?', 'Houve dificuldade em inibir respostas?', 'Observações sobre flexibilidade mental?'],
-      'Consciência Fonológica': ['O paciente identificou sons corretamente?', 'Houve dificuldade com sílabas ou rimas?', 'Observações sobre consciência fonológica?'],
-      'Matemática': ['O paciente resolveu as operações?', 'Houve dificuldade com cálculos específicos?', 'Observações sobre raciocínio lógico?'],
-      'Socioemocional': ['O paciente identificou as emoções corretamente?', 'Houve dificuldade em situações sociais?', 'Observações sobre empatia e regulação?'],
-    };
-    return questions[category] || questions['Atenção'];
   }
 }
