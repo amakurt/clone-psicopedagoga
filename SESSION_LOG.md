@@ -1,6 +1,42 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 10 de Setembro de 2026
+## Última Atualização: 14 de Setembro de 2026
+
+---
+
+## Sessão 41 - 14/09/2026 — Planejamento de Infraestrutura em Produção: Seleção de VPS, Dimensionamento de Recursos e Auditoria de Segurança/LGPD
+
+### O que foi feito
+
+#### 1. Levantamento de Requisitos e Dimensionamento de Hardware (Footprint do Sistema)
+- **Mapeamento de Cargas**: Análise dos serviços que compõem o ecossistema do EduPsych Pro definidos nos scripts de provisionamento e orquestração (`start-all.sh`, `deploy/provision.sh`, `deploy/evolution-compose.yml` e `deploy/postgres-compose.yml`):
+  - **Nginx**: Proxy reverso, SSL Let's Encrypt / TLS 1.3 e entrega estática otimizada do Angular (~30-50 MB RAM).
+  - **Backend Node.js/Express + Prisma**: Gerenciado em produção via PM2 em cluster/fork (~150-250 MB RAM).
+  - **PostgreSQL 16 Principal**: Banco de dados relacional multi-tenant do sistema clínico (~200-400 MB RAM).
+  - **Evolution API v2 (WhatsApp)**: Motor de mensageria baseado em Baileys/Chromium com sessões ativas (~500 MB a 1.2 GB RAM sob tráfego).
+  - **PostgreSQL Secundário (Evolution)**: Banco exclusivo para persistência de chats, contatos e histórico do WhatsApp (~150-250 MB RAM).
+  - **Redis 7 Alpine**: Cache em memória das instâncias e filas do WhatsApp (~50-100 MB RAM).
+- **Dimensionamento Mínimo e Recomendado**:
+  - *Mínimo Absoluto*: 4 GB RAM / 2 vCPUs (com 2GB a 4GB de SWAP configurado obrigatoriamente para evitar o *OOM Killer*).
+  - *Recomendado (Produção Estável)*: 8 GB RAM / 2 a 4 vCPUs / 50GB+ NVMe SSD.
+
+#### 2. Matriz Comparativa de Provedores de VPS
+- **Hostinger VPS (KVM 2 / KVM 4)**:
+  - *Destaque*: Data Center físico no Brasil (São Paulo) com latência reduzida (15-30ms), faturamento em Reais (PIX/Boleto sem IOF) e painel intuitivo.
+- **Hetzner Cloud (CPX21 / CPX31 - Ashburn/EUA ou Alemanha)**:
+  - *Destaque*: Melhor relação de custo por performance do mercado mundial (processadores AMD EPYC e NVMe de alta velocidade), cobrança mensal em Euros.
+- **AWS Lightsail (São Paulo - sa-east-1)**:
+  - *Destaque*: Infraestrutura corporativa AWS com preço previsível e região brasileira nativa, cobrança em Dólar.
+
+#### 3. Auditoria de Segurança de Infraestrutura e Conformidade LGPD
+- **Adequação da Hostinger**:
+  - Virtualização KVM com isolamento total de kernel, memória e processamento entre instâncias.
+  - Proteção Anti-DDoS e data center Tier III com certificação ISO/IEC 27001.
+  - Vantagem regulatória: Manutenção dos dados sensíveis de pacientes (dados de saúde e menores de idade - Art. 11 da Lei 13.709/2018 - LGPD) em território nacional, dispensando transferência internacional de dados.
+- **Blindagem do Projeto em `deploy/`**:
+  - Isolamento estrito de portas no `postgres-compose.yml` (`127.0.0.1:5432:5432`), garantindo que o banco de dados nunca seja exposto à internet pública.
+  - Firewall UFW configurado em `provision.sh` com liberação exclusiva das portas 22 (SSH), 80 (HTTP) e 443 (HTTPS).
+  - Diretrizes para ativação: desativação de login SSH por senha (apenas chaves Ed25519/RSA), fail2ban ativo e rotinas diárias de backup com `backup.sh`.
 
 ---
 

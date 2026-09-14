@@ -2,6 +2,16 @@
 
 ---
 
+## Sessão 14/09/2026 (Segunda) — Planejamento de Infraestrutura em Produção: VPS, Dimensionamento e Segurança LGPD
+
+### 119. Dimensionamento de Infraestrutura e Seleção de VPS
+- **Footprint do Sistema**: Mapeamento do consumo conjunto de Nginx, Backend Node.js/Express, 2 instâncias PostgreSQL 16 (EduPsych + Evolution WhatsApp), Redis 7 e Evolution API v2.
+- **Hardware Recomendado**: 8 GB RAM / 2 a 4 vCPUs / 50GB+ NVMe SSD (mínimo absoluto de 4 GB RAM + SWAP para tolerar picos do Chromium/WhatsApp sem trigger de OOM Killer).
+- **Provedor Homologado (Hostinger VPS)**: Data center KVM em São Paulo (baixa latência nacional e conformidade LGPD para dados sensíveis de saúde de menores), pagamento em Reais sem IOF.
+- **Arquitetura de Segurança**: Validação de portas fechadas (`127.0.0.1:5432` no Postgres), firewall UFW (`provision.sh`), certificados SSL Let's Encrypt e login SSH restrito a chaves criptográficas.
+
+---
+
 ## Sessão 10/09/2026 (Quinta) — Blindagem Completa de Segurança: RBAC, Anti-IDOR, Uploads e Multi-tenant
 
 ### 117. Blindagem Crítica de Segurança & Multi-tenant (C1 a C5)

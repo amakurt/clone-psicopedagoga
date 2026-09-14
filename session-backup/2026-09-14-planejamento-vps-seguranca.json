@@ -1,0 +1,37 @@
+{
+  "session": 41,
+  "date": "2026-09-14",
+  "title": "Planejamento de Infraestrutura em Produção: Seleção de VPS, Dimensionamento de Recursos e Auditoria de Segurança/LGPD",
+  "summary": "Análise técnica do ecossistema EduPsych Pro para implantação em produção. Dimensionamento do footprint de memória e processamento para Nginx, Node.js/Express, 2 instâncias PostgreSQL, Redis e Evolution API WhatsApp. Comparativo de provedores de VPS e auditoria de segurança da Hostinger KVM no Brasil.",
+  "highlights": [
+    {
+      "category": "Dimensionamento de Hardware",
+      "items": [
+        "Mapeamento de serviços: Nginx, Backend PM2, Postgres Principal, Evolution API v2, Postgres Evolution e Redis",
+        "Requisito mínimo de memória: 4 GB RAM + SWAP de 2 a 4 GB para evitar Out-Of-Memory (OOM Killer)",
+        "Requisito recomendado: 8 GB RAM / 2 a 4 vCPUs / 50GB+ NVMe SSD"
+      ]
+    },
+    {
+      "category": "Provedores de VPS Avaliados",
+      "items": [
+        "Hostinger VPS (KVM 2 / KVM 4): Data Center em São Paulo (baixa latência), pagamento em BRL sem IOF e isolamento KVM",
+        "Hetzner Cloud (CPX21 / CPX31): Alta performance de CPU AMD EPYC e custo reduzido em EUR (data centers EUA/Alemanha)",
+        "AWS Lightsail: Confiabilidade corporativa da AWS com região sa-east-1 (São Paulo) em USD"
+      ]
+    },
+    {
+      "category": "Auditoria de Segurança & LGPD",
+      "items": [
+        "Isolamento KVM de kernel/memória, proteção Anti-DDoS e data center Tier III certificado",
+        "Conformidade com Art. 11 da LGPD (dados pessoais sensíveis de saúde e menores de idade mantidos em solo brasileiro)",
+        "Blindagem já estruturada nos scripts deploy/: Postgres amarrado a 127.0.0.1, firewall UFW restrito a portas 22/80/443 e SSL Let's Encrypt"
+      ]
+    }
+  ],
+  "recommendations": {
+    "provider": "Hostinger VPS KVM 2 (8 GB RAM)",
+    "datacenter": "São Paulo, Brasil",
+    "operatingSystem": "Ubuntu 22.04 LTS ou 24.04 LTS"
+  }
+}
