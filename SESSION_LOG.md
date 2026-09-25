@@ -33,6 +33,7 @@
   - Modais interativos com feedback visual instantâneo via `ToastService`.
 - **Banner Global de Modo Suporte**: Banner superior fixo em toda a aplicação quando impersonando uma clínica, com botão de 1 clique para retornar ao Painel Master.
 - **Atalho no Menu**: Link discreto "Painel Master" com ícone de escudo no menu lateral, condicionado a contas Superadmin.
+- **Redirecionamento Direto de Login**: Ao autenticar com uma conta `SUPERADMIN` (seja por formulário local ou Google OAuth), o sistema redireciona o usuário diretamente para o Painel Master (`/master`), em vez de abrir o dashboard de uma clínica específica. Além disso, se já estiver logado como Superadmin e acessar `/login`, o redirecionamento para o `/master` é automático.
 
 #### 4. Testes e Validação Completa
 - **Testes da API Superadmin**: Criado [`backend/scripts/test-superadmin.ts`](file:///Users/amauri/clone-psicopedagoga/backend/scripts/test-superadmin.ts) com 100% de aprovação (usuário comum barrado com 403, cálculo de stats, listagem, trial, plano e token de impersonação).

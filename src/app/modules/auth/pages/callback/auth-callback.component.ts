@@ -47,6 +47,10 @@ export class AuthCallbackComponent implements OnInit {
         this.api.post('/auth/google/exchange', { code }).subscribe({
           next: (res: any) => {
             this.auth.login(res.token, res.user);
+            if (res.user?.role === 'SUPERADMIN') {
+              this.router.navigate(['/master']);
+              return;
+            }
             this.auth
               .refreshTenants()
               .then(() => {

@@ -188,6 +188,10 @@ export class LoginComponent {
   private route = inject(ActivatedRoute);
 
   constructor() {
+    if (this.auth.token && this.auth.user()?.role === 'SUPERADMIN') {
+      this.router.navigate(['/master']);
+      return;
+    }
     const mode = this.route.snapshot.queryParamMap.get('mode');
     const plan = this.route.snapshot.queryParamMap.get('plan');
     const type = this.route.snapshot.queryParamMap.get('type');
@@ -275,6 +279,10 @@ export class LoginComponent {
     })
     .then(data => {
       this.auth.login(data.token, data.user, data.tenants, data.tenant);
+      if (data.user?.role === 'SUPERADMIN') {
+        this.router.navigate(['/master']);
+        return;
+      }
       const tenants = this.auth.tenants();
       if (!tenants.length) {
         throw new Error('Sua conta não está vinculada a nenhuma clínica');
