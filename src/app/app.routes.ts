@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { superAdminGuard } from './core/guards/superadmin.guard';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) },
@@ -10,6 +11,11 @@ export const routes: Routes = [
   { path: 'auth/callback', loadComponent: () => import('./modules/auth/pages/callback/auth-callback.component').then(m => m.AuthCallbackComponent) },
   { path: 'auth/select-clinic', loadComponent: () => import('./modules/auth/pages/select-clinic/select-clinic.component').then(m => m.SelectClinicComponent) },
   { path: 'formulario/:token', loadComponent: () => import('./modules/formulario/formulario.component').then(m => m.PublicFormComponent) },
+  {
+    path: 'master',
+    loadComponent: () => import('./modules/superadmin/pages/superadmin-dashboard.component').then(m => m.SuperAdminDashboardComponent),
+    canActivate: [authGuard, superAdminGuard]
+  },
   {
     path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),

@@ -5,7 +5,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test:isolation": "tsx scripts/test-isolation.ts"
+    "test:isolation": "tsx scripts/test-isolation.ts",
+    "test:superadmin": "tsx scripts/test-superadmin.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

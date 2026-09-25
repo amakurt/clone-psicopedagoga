@@ -2,6 +2,21 @@
 
 ---
 
+## Sessão 25/09/2026 (Sexta) — Painel do Superadmin (Master SaaS)
+
+### 121. Gestão Central de Clínicas, MRR, Inadimplência, Trial e Modo Suporte
+- **Autenticação & Papel SUPERADMIN**: Papel dedicado com `authorizeSuperAdmin` no backend e guard `superAdminGuard` no Angular. Script CLI `node backend/scripts/promote-superadmin.js <email>` para atribuir acesso master.
+- **Cockpit e KPIs do SaaS**: Rota `/master` com visualização de MRR Estimado em R$ (`mrrFormatted`), total de clínicas (ativas vs bloqueadas), trials ativos e total de pacientes/profissionais/sessões na rede.
+- **Gestão Operacional de Clínicas**:
+  - Busca em tempo real e filtros por status e plano.
+  - Bloqueio/desbloqueio de inadimplência em 1 clique (com suspensão automática de assinaturas).
+  - Prorrogação flexível de trials (+7, +14, +30 dias).
+  - Troca de plano manual (Trial, Básico, Pro, VIP Vitalício).
+- **Modo Suporte (Impersonação)**: O Superadmin pode impersonar qualquer clínica para prestar suporte técnico direto. Banner superior fixo em toda a aplicação permite navegar como a clínica e voltar ao `/master` instantaneamente com 1 clique.
+- **Validação**: Testes automatizados `test-superadmin.ts` (6/6 PASS), `test:isolation` (19/19 PASS), `npm run build` backend OK e `npx ng build` frontend 100% OK.
+
+---
+
 ## Sessão 14/09/2026 (Segunda) — Modernização Profissional dos 60 Jogos Cognitivos
 
 ### 120. Áudio Clínico Nativo, Visual High-DPI, Métricas e Prontuário

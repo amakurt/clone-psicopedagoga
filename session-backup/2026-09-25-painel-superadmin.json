@@ -1,0 +1,48 @@
+{
+  "session": 43,
+  "date": "2026-09-25",
+  "title": "Painel do Superadmin (Master SaaS): Gestão Central de Clínicas, MRR, Controle de Inadimplência, Extensão de Trial e Modo Suporte / Impersonação",
+  "summary": "Implementação completa da suíte de controle e gestão para o Dono do SaaS (Superadmin), permitindo visualizar métricas financeiras globais (MRR), gerenciar todas as clínicas da plataforma, bloquear inadimplentes, estender prazos de trial, alterar planos manualmente e impersonar contas de clínicas para atendimento de suporte com retorno em 1 clique.",
+  "highlights": [
+    {
+      "category": "Autenticação e Permissões de Superadmin",
+      "items": [
+        "Papel dedicado SUPERADMIN implementado e validado no backend",
+        "Script CLI backend/scripts/promote-superadmin.js <email> para promoção de contas",
+        "Middleware authorizeSuperAdmin isolando as rotas da API",
+        "Guard superAdminGuard protegendo a rota /master no Angular"
+      ]
+    },
+    {
+      "category": "API de Gestão Global (backend/src/routes/superadmin.ts)",
+      "items": [
+        "GET /stats: cálculo de MRR Estimado (R$), total de clínicas ativas/bloqueadas/trial, pacientes globais, profissionais e sessões",
+        "GET /tenants: listagem com busca dinâmica por clínica/slug/gestor, filtros por status e plano",
+        "PATCH /tenants/:id/status: bloqueio imediato com suspensão da assinatura",
+        "PATCH /tenants/:id/trial: prorrogação de dias de teste (+7, +14, +30 dias)",
+        "PATCH /tenants/:id/plan: alteração manual de plano (TRIAL, BASICO, PRO, VIP)",
+        "POST /tenants/:id/impersonate: geração de token JWT de suporte para acesso à clínica"
+      ]
+    },
+    {
+      "category": "Interface do Painel Master (/master)",
+      "items": [
+        "Design High-DPI na paleta Slate/Teal/Cyan/Amber com tema dark clínico premium",
+        "Cockpit com 4 KPIs: MRR Estimado, Total de Clínicas, Clínicas em Trial e Volume na Rede",
+        "Visualização híbrida com tabela desktop de rolagem suave e cards móveis touch-friendly",
+        "Modais interativos para prorrogação de trial e alteração de plano",
+        "Banner superior fixo de Modo Suporte permitindo retornar ao /master a qualquer momento",
+        "Atalho 'Painel Master' no sidebar condicionado exclusivamente a contas Superadmin"
+      ]
+    },
+    {
+      "category": "Validação e Testes Automatizados",
+      "items": [
+        "Script de testes backend/scripts/test-superadmin.ts (6/6 testes aprovados - 100% PASS)",
+        "Testes de isolamento multi-tenant npm run test:isolation (19/19 PASS)",
+        "Compilação do Backend (npm run build) com 0 erros",
+        "Compilação de produção do Angular (npx ng build) com 0 erros (código 0)"
+      ]
+    }
+  ]
+}

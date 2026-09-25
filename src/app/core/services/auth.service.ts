@@ -8,11 +8,28 @@ export class AuthService {
   private userKey = 'auth_user';
   private tenantsKey = 'auth_tenants';
   private tenantKey = 'auth_tenant';
+  private impersonationBackupKey = 'superadmin_impersonate_backup';
 
   user = signal<any>(null);
   tenants = signal<any[]>([]);
   tenant = signal<any>(null);
+  isImpersonating = signal<boolean>(false);
+  impersonatedClinicName = signal<string>('');
+
   isLoggedIn = computed(() => !!this.token);
+
+  isSuperAdmin = computed(() => {
+    if (this.user()?.role === 'SUPERADMIN') return true;
+    if (this.isImpersonating()) {
+      const backupRaw = sessionStorage.getItem(this.impersonationBackupKey);
+      if (backupRaw) {
+        try {
+          return JSON.parse(backupRaw).user?.role === 'SUPERADMIN';
+        } catch {}
+      }
+    }
+    return false;
+  });
 
   constructor(private router: Router) {
     // Migração: remover credenciais antigas do localStorage (agora a sessão é sessionStorage)
@@ -29,6 +46,15 @@ export class AuthService {
 
     const savedTenant = sessionStorage.getItem(this.tenantKey);
     if (savedTenant) this.tenant.set(JSON.parse(savedTenant));
+
+    const impersonateBackup = sessionStorage.getItem(this.impersonationBackupKey);
+    if (impersonateBackup) {
+      this.isImpersonating.set(true);
+      try {
+        const parsed = JSON.parse(impersonateBackup);
+        this.impersonatedClinicName.set(parsed.targetClinicName || '');
+      } catch {}
+    }
   }
 
   get token(): string | null {
@@ -88,14 +114,51 @@ export class AuthService {
     return data.tenant;
   }
 
+  startImpersonation(token: string, user: any, tenant: any) {
+    const backup = {
+      token: this.token,
+      user: this.user(),
+      tenants: this.tenants(),
+      tenant: this.tenant(),
+      targetClinicName: tenant?.name || 'Clínica',
+    };
+    sessionStorage.setItem(this.impersonationBackupKey, JSON.stringify(backup));
+    this.login(token, user, [tenant], tenant);
+    this.isImpersonating.set(true);
+    this.impersonatedClinicName.set(tenant?.name || 'Clínica');
+    this.router.navigate(['/app/dashboard']);
+  }
+
+  stopImpersonation() {
+    const backupRaw = sessionStorage.getItem(this.impersonationBackupKey);
+    if (backupRaw) {
+      try {
+        const backup = JSON.parse(backupRaw);
+        sessionStorage.removeItem(this.impersonationBackupKey);
+        this.isImpersonating.set(false);
+        this.impersonatedClinicName.set('');
+        this.login(backup.token, backup.user, backup.tenants, backup.tenant);
+        this.router.navigate(['/master']);
+        return;
+      } catch (e) {
+        console.error('Erro ao restaurar sessão de Superadmin', e);
+      }
+    }
+    this.isImpersonating.set(false);
+    this.router.navigate(['/master']);
+  }
+
   logout() {
     sessionStorage.removeItem(this.tokenKey);
     sessionStorage.removeItem(this.userKey);
     sessionStorage.removeItem(this.tenantsKey);
     sessionStorage.removeItem(this.tenantKey);
+    sessionStorage.removeItem(this.impersonationBackupKey);
     this.user.set(null);
     this.tenants.set([]);
     this.tenant.set(null);
+    this.isImpersonating.set(false);
+    this.impersonatedClinicName.set('');
     this.router.navigate(['/login']);
   }
 

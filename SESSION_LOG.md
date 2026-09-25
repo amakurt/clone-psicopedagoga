@@ -1,6 +1,44 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 14 de Setembro de 2026
+## Última Atualização: 25 de Setembro de 2026
+
+---
+
+## Sessão 43 - 25/09/2026 — Painel do Superadmin (Master SaaS): Gestão Central de Clínicas, MRR, Inadimplência, Trial e Modo Suporte
+
+### O que foi feito
+
+#### 1. Autenticação, Permissão e Papel `SUPERADMIN`
+- **Papel Dedicado**: Criação do papel `SUPERADMIN` com suporte nativo em banco e tokens JWT.
+- **Script de Promoção CLI**: Desenvolvido [`backend/scripts/promote-superadmin.js`](file:///Users/amauri/clone-psicopedagoga/backend/scripts/promote-superadmin.js) para promover usuários a Superadmin por email de forma direta e segura.
+- **Middleware de Segurança**: Criado `authorizeSuperAdmin` em [`backend/src/middleware/auth.ts`](file:///Users/amauri/clone-psicopedagoga/backend/src/middleware/auth.ts) isolando todas as rotas de administração do SaaS contra acessos não autorizados.
+- **Isenção de Bloqueio**: Contas com papel `SUPERADMIN` não são afetadas por eventuais bloqueios de tenants ao autenticar no sistema.
+
+#### 2. Módulo e Rotas da API Master (`backend/src/routes/superadmin.ts`)
+- **`GET /api/superadmin/stats`**: Cockpit de KPIs com MRR Estimado em BRL (`mrrFormatted`), contadores de clínicas ativas, bloqueadas e em trial, total de pacientes atendidos na rede, profissionais e sessões clínicas.
+- **`GET /api/superadmin/tenants`**: Listagem com busca global por nome, slug ou dados do gestor, paginação e filtros por status (`ATIVO`, `BLOQUEADO`) e plano (`TRIAL`, `BASICO`, `PRO`, `VIP`). Agregações automáticas de volume de pacientes, profissionais e sessões por clínica.
+- **`PATCH /api/superadmin/tenants/:id/status`**: Bloqueio/desbloqueio instantâneo do acesso da clínica com sincronização automática do status da assinatura.
+- **`PATCH /api/superadmin/tenants/:id/trial`**: Prorrogação flexível de dias de teste gratuito (+7, +14, +30 dias) e reativação automática em caso de bloqueio prévio.
+- **`PATCH /api/superadmin/tenants/:id/plan`**: Alteração manual de plano da clínica com suporte a planos padrão e `VIP Vitalício` (10 anos de vigência cortesia).
+- **`POST /api/superadmin/tenants/:id/impersonate`**: Geração de token JWT temporário de suporte para acesso direto à visão de gestor da clínica.
+
+#### 3. Frontend: Painel Master (`/master`), Guard e Serviços
+- **Guard de Rota**: Criado [`src/app/core/guards/superadmin.guard.ts`](file:///Users/amauri/clone-psicopedagoga/src/app/core/guards/superadmin.guard.ts) para restringir a rota `/master` exclusivamente a contas Superadmin.
+- **Serviço Angular**: Criado [`src/app/core/services/superadmin.service.ts`](file:///Users/amauri/clone-psicopedagoga/src/app/core/services/superadmin.service.ts) com tipagem forte e métodos reativos para todas as operações da API.
+- **Sessão e Suporte no `AuthService`**: Implementados `isSuperAdmin`, `isImpersonating`, `startImpersonation` e `stopImpersonation` com backup e restauração limpa de sessão via `sessionStorage`.
+- **Interface High-DPI (`SuperAdminDashboardComponent`)**:
+  - Paleta refinada (*Dark Slate / Cyan / Teal / Amber*).
+  - 4 Cards de KPIs com destaque para receita recorrente mensal (MRR).
+  - Visualização híbrida: tabela desktop com rolagem suave + cards mobile touch-friendly.
+  - Modais interativos com feedback visual instantâneo via `ToastService`.
+- **Banner Global de Modo Suporte**: Banner superior fixo em toda a aplicação quando impersonando uma clínica, com botão de 1 clique para retornar ao Painel Master.
+- **Atalho no Menu**: Link discreto "Painel Master" com ícone de escudo no menu lateral, condicionado a contas Superadmin.
+
+#### 4. Testes e Validação Completa
+- **Testes da API Superadmin**: Criado [`backend/scripts/test-superadmin.ts`](file:///Users/amauri/clone-psicopedagoga/backend/scripts/test-superadmin.ts) com 100% de aprovação (usuário comum barrado com 403, cálculo de stats, listagem, trial, plano e token de impersonação).
+- **Testes de Isolamento Multi-tenant**: `npm run test:isolation` aprovado (19/19 PASS).
+- **Build Backend**: `npm run build` executado com 0 erros (código 0).
+- **Build Angular**: `npx ng build --configuration=development` executado com 100% de sucesso (código 0, bundle gerado sem erros).
 
 ---
 

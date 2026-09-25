@@ -42,6 +42,7 @@ import screeningsRoutes from './screenings';
 import relatoriosRoutes from './relatorios';
 import insightsRoutes from './insights';
 import sessionPlannerRoutes from './session-planner';
+import superadminRoutes from './superadmin';
 
 const router = Router();
 
@@ -90,5 +91,6 @@ router.use('/screenings', screeningsRoutes);
 router.use('/relatorios', relatoriosRoutes);
 router.use('/insights', insightsRoutes);
 router.use('/session-planner', sessionPlannerRoutes);
+router.use('/superadmin', superadminRoutes);
 
 export default router;

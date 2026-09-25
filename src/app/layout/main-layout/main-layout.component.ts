@@ -154,12 +154,45 @@ type NavItem = {
               </a>
             }
           }
+
+          <!-- Atalho Exclusivo Superadmin -->
+          @if (auth.isSuperAdmin()) {
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+              <a routerLink="/master"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30"
+                [class.lg:justify-center]="!sidebarOpen()"
+                title="Painel Master SaaS">
+                <span class="material-icons text-[20px] text-amber-500 shrink-0">shield_person</span>
+                <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 flex-1 text-left"
+                  [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()"
+                  [class.lg:w-auto]="sidebarOpen()" [class.lg:opacity-100]="sidebarOpen()">
+                  Painel Master
+                </span>
+              </a>
+            </div>
+          }
         </nav>
       </aside>
 
       <!-- Conteúdo Principal -->
       <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#eff2f6] dark:bg-[#19212e] transition-colors duration-200">
         
+        <!-- Banner de Impersonação / Modo Suporte -->
+        @if (auth.isImpersonating()) {
+          <div class="bg-amber-500 text-slate-950 px-4 py-2 text-xs sm:text-sm font-bold flex items-center justify-between shadow-md z-40 shrink-0 border-b border-amber-600">
+            <div class="flex items-center gap-2 truncate">
+              <span class="material-icons text-base shrink-0 animate-pulse">support_agent</span>
+              <span class="truncate">Você está acessando em <strong>Modo Suporte</strong> na clínica: <strong class="underline decoration-slate-950/40">{{ auth.impersonatedClinicName() }}</strong></span>
+            </div>
+            <button
+              (click)="auth.stopImpersonation()"
+              class="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-white rounded-lg transition-all text-xs font-bold shrink-0 ml-3 flex items-center gap-1.5 shadow-sm active:scale-95">
+              <span class="material-icons text-xs">logout</span>
+              Voltar ao Painel Master
+            </button>
+          </div>
+        }
+
         <!-- Header Superior -->
         <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 lg:px-8 shrink-0 z-30">
           

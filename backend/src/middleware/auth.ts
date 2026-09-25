@@ -36,6 +36,38 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return res.status(403).json({ error: 'Conta não ativada. Verifique seu email ou reenvie o link de ativação.' });
     }
 
+    if (user.role === 'SUPERADMIN') {
+      const memberships = await prisma.membership.findMany({
+        where: { userId: user.id, active: true },
+        orderBy: { createdAt: 'asc' },
+        include: { tenant: { include: { subscription: true } } },
+      });
+
+      const headerTenantId = String(req.headers['x-tenant-id'] || '');
+      const membership = headerTenantId
+        ? memberships.find((m) => m.tenantId === headerTenantId)
+        : memberships[0];
+
+      req.user = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: 'SUPERADMIN',
+        tenantId: membership?.tenantId || '',
+        tenantRole: 'SUPERADMIN',
+        tenant: membership?.tenant ? {
+          id: membership.tenant.id,
+          name: membership.tenant.name,
+          slug: membership.tenant.slug,
+          plan: membership.tenant.plan,
+          status: membership.tenant.status,
+          logoUrl: membership.tenant.logoUrl,
+          colors: membership.tenant.colors,
+        } : undefined,
+      };
+      return next();
+    }
+
     const memberships = await prisma.membership.findMany({
       where: { userId: user.id, active: true },
       orderBy: { createdAt: 'asc' },
@@ -81,6 +113,43 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     next();
   } catch {
     return res.status(500).json({ error: 'Erro ao autenticar' });
+  }
+};
+
+export const authorizeSuperAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token não fornecido' });
+  }
+
+  let payload: any;
+  try {
+    payload = jwt.verify(authHeader.split(' ')[1], getJwtSecret());
+  } catch {
+    return res.status(401).json({ error: 'Token inválido' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'Usuário não encontrado ou inativo' });
+    }
+
+    if (user.role !== 'SUPERADMIN') {
+      return res.status(403).json({ error: 'Acesso restrito ao Superadmin' });
+    }
+
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: 'SUPERADMIN',
+      tenantId: '',
+      tenantRole: 'SUPERADMIN',
+    };
+    next();
+  } catch {
+    return res.status(500).json({ error: 'Erro ao autenticar superadmin' });
   }
 };
 
