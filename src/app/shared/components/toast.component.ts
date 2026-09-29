@@ -39,6 +39,7 @@ export class ToastService {
   success(message: string) { this.show(message, 'success'); }
   error(message: string) { this.show(message, 'error', 4500); }
   warning(message: string) { this.show(message, 'warning', 4500); }
+  info(message: string) { this.show(message, 'info'); }
 }
 
 @Component({

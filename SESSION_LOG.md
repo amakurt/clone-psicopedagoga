@@ -4,6 +4,51 @@
 
 ---
 
+## Sessão 46 - 29/09/2026 — Correção do Salvamento de Fotos de Pacientes e Editor Interativo de Recorte, Zoom e Enquadramento (Cropper)
+
+### O que foi feito
+
+#### 1. Diagnóstico e Correção no Backend (`backend/src/routes/pacientes.ts`)
+- **Problema Identificado**:
+  - O modelo do Prisma possui a coluna `avatarUrl String?`, porém a rota `backend/src/routes/pacientes.ts` não incluía os campos `avatarUrl` e `avatar` no schema de validação Zod (`basePacienteFields`).
+  - O frontend tentava enviar um objeto `FormData` com `'avatar'`, porém as rotas `/api/pacientes` não usavam `multer`, resultando em descarte silencioso do payload ou corpo vazio.
+  - Além disso, a listagem e os detalhes retornavam os dados com `avatarUrl`, enquanto alguns componentes esperavam `.avatar`.
+- **Solução Implementada**:
+  - Adicionados os campos `avatarUrl` e `avatar` ao schema Zod com aceitação de string ou null.
+  - Atualizada a função `sanitizePacienteInput` para mapear de forma transparente `body.avatar` para `data.avatarUrl`.
+  - Mapeamento uniforme nas respostas de `GET /`, `GET /:id`, `POST /` e `PUT /:id` contendo tanto `avatarUrl` quanto `avatar`.
+  - Criada rota dedicada `PATCH /api/pacientes/:id/avatar` para atualizações diretas de imagem.
+  - Aumentado o limite de JSON no Express (`backend/src/index.ts`) para 15MB, acomodando fotos em alta definição com tranquilidade.
+
+#### 2. Criação do Componente Reutilizável de Recorte e Ajuste (`ImageCropperModalComponent`)
+- **Arquivo Criado**: [`src/app/shared/components/image-cropper-modal.component.ts`](file:///Users/amauri/clone-psicopedagoga/src/app/shared/components/image-cropper-modal.component.ts).
+- **Recursos Interativos**:
+  - **Área de Recorte Circular**: Overlay escuro com janela circular translúcida e borda demarcada em Primary, mostrando exatamente como a foto ficará no avatar circular.
+  - **Arrastar e Mover (Pan)**: Suporte completo a mouse drag e gestos de toque no celular para mover a foto e posicionar o rosto/área desejada com precisão.
+  - **Zoom Flexível**: Slider de zoom contínuo (50% a 300%), botões de ajuste fino (+ / -) e suporte a rolagem do mouse (wheel zoom).
+  - **Girar & Resetar**: Botão para girar a imagem em 90° no sentido horário (útil para fotos tiradas na vertical pelo smartphone) e botão de reset para centralizar.
+  - **Prévia ao Vivo**: Miniatura circular em tempo real mostrando a renderização final antes de salvar.
+  - **Exportação Otimizada**: Renderização em canvas off-screen com interpolação suave (high quality) em formato JPEG otimizado (~30KB), garantindo nitidez sem pesar o banco.
+
+#### 3. Integração com as Telas de Pacientes
+- **Cadastro e Edição (`PacienteFormComponent`)**:
+  - Ao selecionar uma imagem pelo input de arquivo ou pelo botão "Trocar Foto", o modal de recorte abre automaticamente.
+  - Botão dedicado "Ajustar Área & Zoom" para reajustar uma foto já carregada.
+  - Botão de lixeira para remover a foto e restaurar as iniciais coloridas.
+  - O formulário agora envia `avatarUrl` diretamente no JSON para `this.service.create()` ou `this.service.update()`.
+- **Detalhes do Paciente (`PacienteDetailComponent`)**:
+  - Ao passar o mouse sobre o avatar do paciente na página de detalhes, um botão translúcido de câmera "Ajustar" permite trocar a foto diretamente da página de visualização.
+  - Salva instantaneamente via API e atualiza a interface sem recarregar.
+- **Listagem de Pacientes (`PacientesListComponent`)**:
+  - Atualizada tanto a tabela desktop quanto os cards mobile para exibir a foto do paciente (`avatarUrl` / `avatar`) quando existente, com fallback elegante para as iniciais coloridas.
+
+#### 4. Validação & Build
+- **Build Backend**: `npm run build` compilado com 100% de sucesso.
+- **Build Angular**: `npx ng build --configuration=development` finalizado com 0 erros (código 0).
+- **Servidores em Execução**: Backend e Frontend atualizados e ativos.
+
+---
+
 ## Sessão 45 - 29/09/2026 — Refatoração de Configurações: Remoção da Seleção Redundante de Tema
 
 ### O que foi feito

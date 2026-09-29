@@ -32,6 +32,8 @@ const basePacienteFields = {
   complement: z.string().optional().or(z.literal('')),
   city: z.string().optional().or(z.literal('')),
   state: z.string().optional().or(z.literal('')),
+  avatarUrl: z.string().optional().or(z.literal('')).nullable(),
+  avatar: z.string().optional().or(z.literal('')).nullable(),
 };
 
 const pacienteSchema = z.object(basePacienteFields);
@@ -81,6 +83,15 @@ function sanitizePacienteInput(body: any) {
     data.responsibleId = responsavelId ? String(responsavelId) : null;
   }
 
+  // Suporte a avatar / avatarUrl
+  if (body.avatar !== undefined && !data.avatarUrl) {
+    data.avatarUrl = body.avatar || null;
+  }
+  if (data.avatarUrl === '') {
+    data.avatarUrl = null;
+  }
+  delete data.avatar;
+
   return data;
 }
 
@@ -95,7 +106,8 @@ router.get('/', async (req, res) => {
     orderBy: { name: 'asc' },
     include: { prontuarios: true, sessoes: true, responsible: true, school: true }
   });
-  res.json({ data: pacientes, total: pacientes.length });
+  const mapped = pacientes.map((p: any) => ({ ...p, avatar: p.avatarUrl }));
+  res.json({ data: mapped, total: mapped.length });
 });
 
 router.get('/:id', async (req, res) => {
@@ -105,7 +117,7 @@ router.get('/:id', async (req, res) => {
     include: { prontuarios: true, sessoes: true, anamneses: true, laudos: true, responsible: true, school: true }
   });
   if (!paciente) return res.status(404).json({ error: 'Paciente não encontrado' });
-  res.json(paciente);
+  res.json({ ...paciente, avatar: paciente.avatarUrl });
 });
 
 router.post('/', validate(pacienteSchema), async (req, res) => {
@@ -113,7 +125,7 @@ router.post('/', validate(pacienteSchema), async (req, res) => {
   await enforcePlanLimits(req.user!.tenantId || '', 'paciente');
   const data = sanitizePacienteInput(req.body);
   const paciente = await db.paciente.create({ data });
-  res.status(201).json(paciente);
+  res.status(201).json({ ...paciente, avatar: paciente.avatarUrl });
 });
 
 router.put('/:id', validate(pacienteUpdateSchema), async (req, res) => {
@@ -123,7 +135,17 @@ router.put('/:id', validate(pacienteUpdateSchema), async (req, res) => {
     where: { id: req.params.id },
     data,
   });
-  res.json(paciente);
+  res.json({ ...paciente, avatar: paciente.avatarUrl });
+});
+
+router.patch('/:id/avatar', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const avatarUrl = req.body.avatarUrl || req.body.avatar || null;
+  const paciente = await db.paciente.update({
+    where: { id: req.params.id },
+    data: { avatarUrl: avatarUrl ? String(avatarUrl) : null }
+  });
+  res.json({ ...paciente, avatar: paciente.avatarUrl });
 });
 
 router.delete('/:id', async (req, res) => {

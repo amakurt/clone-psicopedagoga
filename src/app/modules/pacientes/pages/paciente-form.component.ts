@@ -9,11 +9,12 @@ import { AddressFormComponent, Address } from '@core/components/address-form.com
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
 
 @Component({
   selector: 'app-paciente-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -29,25 +30,55 @@ import { ToastService } from '@shared/components/toast.component';
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
         <!-- Avatar Header -->
         <div class="p-8 border-b border-slate-100 dark:border-slate-800">
-          <div class="flex items-center gap-4">
-            <div class="size-20 rounded-full flex items-center justify-center text-2xl font-bold text-white cursor-pointer relative overflow-hidden shadow-lg"
-              [style.background]="getAvatarColor(form.name)">
-              @if (avatarPreview()) {
-                <img [src]="avatarPreview()" class="w-full h-full object-cover">
-              } @else {
-                {{ getInitials(form.name) }}
-              }
-              <label class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-                <span class="material-icons text-white text-2xl">camera_alt</span>
-                <input type="file" accept="image/*" class="hidden" (change)="onAvatarChange($event)">
-              </label>
-            </div>
-            <div>
-              <p class="font-bold text-slate-900 dark:text-white">{{ form.name || 'Nome do Paciente' }}</p>
-              <p class="text-sm text-slate-500 dark:text-slate-400">Foto do perfil</p>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="size-20 sm:size-24 rounded-full flex items-center justify-center text-2xl font-bold text-white relative overflow-hidden shadow-lg ring-4 ring-primary/20 shrink-0"
+                [style.background]="getAvatarColor(form.name)">
+                @if (avatarPreview()) {
+                  <img [src]="avatarPreview()" class="size-full object-cover">
+                } @else {
+                  {{ getInitials(form.name) }}
+                }
+                <label class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer" title="Selecionar nova foto">
+                  <span class="material-icons text-white text-2xl">camera_alt</span>
+                  <input type="file" accept="image/*" class="hidden" (change)="onAvatarChange($event)" #fileInput>
+                </label>
+              </div>
+              <div>
+                <p class="font-bold text-slate-900 dark:text-white text-base sm:text-lg">{{ form.name || 'Nome do Paciente' }}</p>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Foto do perfil e prontuário</p>
+                
+                <div class="flex flex-wrap items-center gap-2 mt-2">
+                  <button type="button" (click)="fileInput.click()"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary transition-all flex items-center gap-1.5 active:scale-95">
+                    <span class="material-icons text-sm">photo_camera</span>
+                    <span>{{ avatarPreview() ? 'Trocar Foto' : 'Adicionar Foto' }}</span>
+                  </button>
+
+                  @if (avatarPreview()) {
+                    <button type="button" (click)="openCropperWithCurrent()"
+                      class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1.5 active:scale-95" title="Ajustar enquadramento, zoom e área da foto">
+                      <span class="material-icons text-sm">crop</span>
+                      <span>Ajustar Área & Zoom</span>
+                    </button>
+                    <button type="button" (click)="removeAvatar()"
+                      class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center gap-1" title="Remover foto">
+                      <span class="material-icons text-sm">delete</span>
+                    </button>
+                  }
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        @if (showCropperModal() && rawImageToCrop()) {
+          <app-image-cropper-modal
+            [imageSrc]="rawImageToCrop()!"
+            [title]="'Ajustar Foto de ' + (form.name || 'Paciente')"
+            (cropped)="onPhotoCropped($event)"
+            (cancelled)="closeCropper()" />
+        }
 
         <div class="p-8">
           <!-- Dados Pessoais -->
@@ -302,7 +333,8 @@ export class PacienteFormComponent implements OnInit {
   filteredResponsaveis = signal<any[]>([]);
   escolas = signal<any[]>([]);
   avatarPreview = signal<string | null>(null);
-  avatarFile: File | null = null;
+  showCropperModal = signal(false);
+  rawImageToCrop = signal<string | null>(null);
   
   responsavelSearch = '';
   showResponsavelDropdown = signal(false);
@@ -352,7 +384,11 @@ export class PacienteFormComponent implements OnInit {
             state: res.state || ''
           }
         };
-        if (res.avatar) this.avatarPreview.set(res.avatar);
+        const av = res.avatarUrl || res.avatar;
+        if (av) {
+          this.avatarPreview.set(av);
+          this.form.avatarUrl = av;
+        }
         if (res.responsibleId && res.responsible) {
           this.selectedResponsavel.set(res.responsible);
           this.responsavelSearch = res.responsible.name;
@@ -470,11 +506,40 @@ export class PacienteFormComponent implements OnInit {
   onAvatarChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
-      this.avatarFile = input.files[0];
+      const file = input.files[0];
       const reader = new FileReader();
-      reader.onload = (e) => this.avatarPreview.set(e.target?.result as string);
-      reader.readAsDataURL(input.files[0]);
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        this.rawImageToCrop.set(result);
+        this.showCropperModal.set(true);
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
     }
+  }
+
+  openCropperWithCurrent() {
+    if (this.avatarPreview()) {
+      this.rawImageToCrop.set(this.avatarPreview());
+      this.showCropperModal.set(true);
+    }
+  }
+
+  onPhotoCropped(croppedDataUrl: string) {
+    this.avatarPreview.set(croppedDataUrl);
+    this.form.avatarUrl = croppedDataUrl;
+    this.showCropperModal.set(false);
+    this.toast.success('Foto ajustada com sucesso!');
+  }
+
+  closeCropper() {
+    this.showCropperModal.set(false);
+  }
+
+  removeAvatar() {
+    this.avatarPreview.set(null);
+    this.form.avatarUrl = null;
+    this.toast.info('Foto removida');
   }
 
   save() {
@@ -492,6 +557,7 @@ export class PacienteFormComponent implements OnInit {
       notes: this.form.notes || '',
       accessCode: this.form.accessCode || '',
       responsavelId: this.form.responsavelId || '',
+      avatarUrl: this.form.avatarUrl !== undefined ? this.form.avatarUrl : (this.avatarPreview() || null),
       cep: this.form.address?.cep || '',
       street: this.form.address?.street || '',
       neighborhood: this.form.address?.neighborhood || '',
@@ -501,26 +567,16 @@ export class PacienteFormComponent implements OnInit {
       state: this.form.address?.state || '',
     };
 
-    let obs;
-    if (this.avatarFile) {
-      const formData = new FormData();
-      Object.keys(data).forEach(key => {
-        if (data[key] !== undefined && data[key] !== null) {
-          formData.append(key, String(data[key]));
-        }
-      });
-      formData.append('avatar', this.avatarFile);
-      obs = this.isEdit ? this.service.update(this.id, formData) : this.service.create(formData);
-    } else {
-      obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
-    }
-
+    const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
       next: () => {
         this.toast.success(this.isEdit ? 'Paciente atualizado com sucesso!' : 'Paciente criado com sucesso!');
         this.router.navigate(['/app/pacientes']);
       },
-      error: () => { this.saving.set(false); this.toast.error('Erro ao salvar'); }
+      error: () => { 
+        this.saving.set(false); 
+        this.toast.error('Erro ao salvar paciente'); 
+      }
     });
   }
 }

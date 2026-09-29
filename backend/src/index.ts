@@ -78,7 +78,8 @@ app.use('/api', rateLimit({
   message: { error: 'Muitas requisições. Tente novamente em instantes.' },
 }));
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
 // Routes (includes authenticated /api/upload and /api/uploads)
 app.use('/api', routes);

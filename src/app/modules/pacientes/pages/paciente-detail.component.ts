@@ -4,11 +4,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PacientesService } from '../services/pacientes.service';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
 
 @Component({
   selector: 'app-paciente-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ImageCropperModalComponent],
   template: `
     <div class="min-h-screen bg-gray-50 p-6 legacy-page">
       <div class="max-w-5xl mx-auto">
@@ -29,13 +30,18 @@ import { ToastService } from '@shared/components/toast.component';
         @if (paciente()) {
           <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
             <div class="p-6 flex items-center gap-6 border-b border-gray-100">
-              <div class="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold text-white flex-shrink-0"
+              <div class="relative group size-20 rounded-full flex items-center justify-center text-2xl font-bold text-white shrink-0 overflow-hidden shadow-md ring-4 ring-primary/20"
                 [style.background]="getAvatarColor(paciente()?.name)">
-                @if (paciente()?.avatar) {
-                  <img [src]="paciente()?.avatar" class="w-full h-full rounded-full object-cover">
+                @if (paciente()?.avatarUrl || paciente()?.avatar) {
+                  <img [src]="paciente()?.avatarUrl || paciente()?.avatar" class="size-full rounded-full object-cover">
                 } @else {
                   {{ getInitials(paciente()?.name) }}
                 }
+                <label class="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white" title="Alterar e ajustar foto">
+                  <span class="material-icons text-xl">photo_camera</span>
+                  <span class="text-[9px] font-bold uppercase tracking-wider">Ajustar</span>
+                  <input type="file" accept="image/*" class="hidden" (change)="onAvatarFileSelect($event)" #detailFileInput>
+                </label>
               </div>
               <div class="flex-1">
                 <h1 class="text-2xl font-bold text-gray-900">{{ paciente()?.name }}</h1>
@@ -205,6 +211,14 @@ import { ToastService } from '@shared/components/toast.component';
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         }
+
+        @if (showCropperModal() && rawImageToCrop()) {
+          <app-image-cropper-modal
+            [imageSrc]="rawImageToCrop()!"
+            [title]="'Ajustar Foto de ' + (paciente()?.name || 'Paciente')"
+            (cropped)="onPhotoCropped($event)"
+            (cancelled)="closeCropper()" />
+        }
       </div>
     </div>
   `,
@@ -222,10 +236,43 @@ export class PacienteDetailComponent implements OnInit {
   insights = signal<any>(null);
   insightsLoading = signal(false);
 
+  showCropperModal = signal(false);
+  rawImageToCrop = signal<string | null>(null);
+
   ngOnInit() {
     this.id = this.route.snapshot.params['id'];
     this.service.get(this.id).subscribe((res: any) => this.paciente.set(res));
     this.loadInsights();
+  }
+
+  onAvatarFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        this.rawImageToCrop.set(result);
+        this.showCropperModal.set(true);
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+  }
+
+  onPhotoCropped(croppedDataUrl: string) {
+    this.showCropperModal.set(false);
+    this.service.update(this.id, { avatarUrl: croppedDataUrl }).subscribe({
+      next: () => {
+        this.paciente.update((p: any) => ({ ...p, avatarUrl: croppedDataUrl, avatar: croppedDataUrl }));
+        this.toast.success('Foto do paciente atualizada com sucesso!');
+      },
+      error: () => this.toast.error('Erro ao salvar a foto do paciente')
+    });
+  }
+
+  closeCropper() {
+    this.showCropperModal.set(false);
   }
 
   loadInsights() {

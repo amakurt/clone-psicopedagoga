@@ -84,9 +84,13 @@ import { ToastService } from '@shared/components/toast.component';
                   <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                     <td class="px-6 py-4">
                       <div class="flex items-center gap-3">
-                        <div class="size-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-800 shrink-0"
+                        <div class="size-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-800 shrink-0 overflow-hidden"
                           [style.background]="getAvatarColor(p.name)">
-                          {{ getInitials(p.name) }}
+                          @if (p.avatarUrl || p.avatar) {
+                            <img [src]="p.avatarUrl || p.avatar" class="size-full object-cover">
+                          } @else {
+                            {{ getInitials(p.name) }}
+                          }
                         </div>
                         <div class="min-w-0">
                           <p class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ p.name }}</p>
@@ -137,9 +141,13 @@ import { ToastService } from '@shared/components/toast.component';
               <div class="p-4 space-y-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <div class="size-11 rounded-full flex items-center justify-center text-sm font-black text-white shadow-sm shrink-0"
+                    <div class="size-11 rounded-full flex items-center justify-center text-sm font-black text-white shadow-sm shrink-0 overflow-hidden"
                       [style.background]="getAvatarColor(p.name)">
-                      {{ getInitials(p.name) }}
+                      @if (p.avatarUrl || p.avatar) {
+                        <img [src]="p.avatarUrl || p.avatar" class="size-full object-cover">
+                      } @else {
+                        {{ getInitials(p.name) }}
+                      }
                     </div>
                     <div class="min-w-0 flex-1">
                       <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ p.name }}</h4>
