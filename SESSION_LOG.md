@@ -4,6 +4,24 @@
 
 ---
 
+## Sessão 45 - 29/09/2026 — Refatoração de Configurações: Remoção da Seleção Redundante de Tema
+
+### O que foi feito
+
+#### 1. Simplificação da Tela de Configurações (`ConfiguracoesComponent`)
+- **Remoção de Redundância**: Com a introdução do botão rápido de 1 clique para alternar entre tema claro e escuro no cabeçalho superior (`MainLayoutComponent`), a seleção de temas dentro da página de Configurações (`/configuracoes`) tornou-se desnecessária e obsoleta.
+- **Limpeza de Código e Interface**:
+  - Removida a aba e o bloco condicional de "Aparência" do template.
+  - Removido o tipo `'aparencia'` do sinal `activeTab` e da lista de `tabs`.
+  - As abas ativas do sistema agora são focadas estritamente nas regras do negócio clínico: `Perfil`, `Segurança`, `Clínica`, `Notificações`, `Disponibilidade` e `Recebimento` (PIX).
+  - Removidos métodos e injeções não utilizados no componente (`ThemeService`, `setAccentColor`, `saveAppearance`).
+
+#### 2. Validação e Compilação
+- **Build Angular (`npx ng build --configuration=development`)**: Compilado com sucesso absoluto (0 erros, código de saída 0).
+- **Servidor Dev**: Testado e funcionando com hot-reload ativo.
+
+---
+
 ## Sessão 44 - 29/09/2026 — Identidade Visual Completa: Favicon Multi-formato (SVG / ICO / PNG), PWA Manifest, Apple Touch Icon e Integração da Marca da IA
 
 ### O que foi feito

@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
-import { ThemeService, AppTheme } from '@core/services/theme.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { ToastService } from '@shared/components/toast.component';
@@ -279,82 +278,6 @@ import { ToastService } from '@shared/components/toast.component';
         </div>
       }
 
-      <!-- Aparência Tab -->
-      @if (activeTab() === 'aparencia') {
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
-          <div class="p-8">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6">Aparência</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              @for (theme of themes; track theme.id) {
-                <button class="relative flex flex-col items-center gap-3 p-6 rounded-2xl ring-2 transition-all hover:scale-[1.02]"
-                  [class]="currentTheme() === theme.id
-                    ? 'ring-primary bg-primary/5 shadow-lg shadow-primary/10'
-                    : 'ring-slate-200 dark:ring-slate-700 hover:ring-slate-300 dark:hover:ring-slate-600 bg-slate-50 dark:bg-slate-800'"
-                  (click)="setTheme(theme.id)">
-                  @if (currentTheme() === theme.id) {
-                    <div class="absolute top-3 right-3">
-                      <span class="material-icons text-primary text-lg">check_circle</span>
-                    </div>
-                  }
-                  <div class="size-16 rounded-2xl flex items-center justify-center"
-                    [class]="currentTheme() === theme.id ? 'bg-primary/10' : 'bg-slate-200 dark:bg-slate-700'">
-                    <span class="material-icons text-3xl"
-                      [class]="currentTheme() === theme.id ? 'text-primary' : 'text-slate-500 dark:text-slate-400'">
-                      {{ theme.icon }}
-                    </span>
-                  </div>
-                  <div class="text-center">
-                    <p class="font-bold text-sm"
-                      [class]="currentTheme() === theme.id ? 'text-primary' : 'text-slate-900 dark:text-white'">
-                      {{ theme.label }}
-                    </p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ theme.description }}</p>
-                  </div>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- Simulação de cores -->
-          <div class="p-8 border-t border-slate-100 dark:border-slate-800">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Cores do Tema</h3>
-            <div class="flex flex-wrap gap-3">
-              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #4f46e5"
-                [class]="accentColor() === '#4f46e5' ? 'ring-indigo-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#4f46e5')"></button>
-              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #6d28d9"
-                [class]="accentColor() === '#6d28d9' ? 'ring-violet-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#6d28d9')"></button>
-              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #be185d"
-                [class]="accentColor() === '#be185d' ? 'ring-pink-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#be185d')"></button>
-              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #047857"
-                [class]="accentColor() === '#047857' ? 'ring-emerald-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#047857')"></button>
-              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #b45309"
-                [class]="accentColor() === '#b45309' ? 'ring-amber-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#b45309')"></button>
-              <button class="w-10 h-10 rounded-full ring-2 ring-offset-2 transition-all hover:scale-110"
-                style="background: #b91c1c"
-                [class]="accentColor() === '#b91c1c' ? 'ring-red-500 ring-offset-white dark:ring-offset-slate-900' : 'ring-transparent'"
-                (click)="setAccentColor('#b91c1c')"></button>
-            </div>
-          </div>
-
-          <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
-              (click)="saveAppearance()">
-              Salvar Aparência
-            </button>
-          </div>
-        </div>
-      }
-
       <!-- Disponibilidade Tab -->
       @if (activeTab() === 'disponibilidade') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
@@ -479,13 +402,10 @@ export class ConfiguracoesComponent implements OnInit {
   auth = inject(AuthService);
   private api = inject(ApiService);
   private toast = inject(ToastService);
-  themeService = inject(ThemeService);
-
-  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'aparencia' | 'disponibilidade' | 'recebimento'>('perfil');
+  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'disponibilidade' | 'recebimento'>('perfil');
   avatarPreview = signal<string | null>(null);
   showToast = signal(false);
   toastMessage = signal('');
-  currentTheme = this.themeService.theme;
   hasPassword = signal(true);
   availabilities = signal<any[]>([]);
   showAvailabilityForm = signal(false);
@@ -500,16 +420,7 @@ export class ConfiguracoesComponent implements OnInit {
     { id: 'notificacoes' as const, label: 'Notificações' },
     { id: 'disponibilidade' as const, label: 'Disponibilidade' },
     { id: 'recebimento' as const, label: 'Recebimento' },
-    { id: 'aparencia' as const, label: 'Aparência' },
   ];
-
-  themes = [
-    { id: 'light', label: 'Claro', icon: 'light_mode', description: 'Tema claro para ambientes bem iluminados' },
-    { id: 'dark', label: 'Escuro', icon: 'dark_mode', description: 'Tema escuro para reduzir cansaço visual' },
-    { id: 'system', label: 'Sistema', icon: 'contrast', description: 'Segue a preferência do seu sistema operacional' },
-  ];
-
-  accentColor = this.themeService.accentColor;
 
   profileForm = { name: '', email: '', phone: '', phoneIsWhatsApp: false, registration: '', bio: '' };
   pixForm = { pixKey: '', pixKeyType: 'EMAIL' };
@@ -650,18 +561,6 @@ export class ConfiguracoesComponent implements OnInit {
   saveNotifications() {
     localStorage.setItem('notification_prefs', JSON.stringify(this.notificationOptions));
     this.showNotification('Preferências salvas!');
-  }
-
-  setTheme(themeId: string) {
-    this.themeService.setTheme(themeId as AppTheme);
-  }
-
-  setAccentColor(color: string) {
-    this.themeService.setAccentColor(color);
-  }
-
-  saveAppearance() {
-    this.toast.success('Aparência salva com sucesso!');
   }
 
   loadAvailabilities() {
