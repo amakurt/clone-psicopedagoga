@@ -14,7 +14,7 @@ import { environment } from '../../../../../environments/environment';
       <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-[420px] overflow-hidden legacy-card">
         <!-- Header -->
         <div class="p-10 pb-8 text-center">
-          <span class="material-icons text-[56px] text-primary">psychology</span>
+          <img src="/web-app-manifest-192x192.png" alt="EduPsych Pro" class="size-16 mx-auto rounded-2xl shadow-lg shadow-primary/20 object-contain">
           <h1 class="mt-3 text-[26px] font-black text-slate-900">EduPsych Pro</h1>
           <p class="text-sm text-slate-500 mt-1">{{ isRegister() ? 'Crie sua conta' : 'Acesse sua conta' }}</p>
         </div>

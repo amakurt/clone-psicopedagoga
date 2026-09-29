@@ -51,9 +51,7 @@ type NavItem = {
         <div class="p-4 sm:p-6 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 lg:border-b-0"
           [class.lg:justify-center]="!sidebarOpen()" [class.lg:px-4]="!sidebarOpen()">
           <div class="flex items-center gap-3">
-            <div class="size-10 bg-primary rounded-xl flex items-center justify-center text-on-primary shadow-lg shadow-primary/20 shrink-0">
-              <span class="material-icons text-[24px]">dashboard</span>
-            </div>
+            <img src="/favicon-96x96.png" alt="EduPsych Pro" class="size-10 rounded-xl shadow-md shrink-0 object-contain">
             <div class="overflow-hidden transition-all duration-300" 
               [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()" 
               [class.lg:w-auto]="sidebarOpen()" [class.lg:opacity-100]="sidebarOpen()">

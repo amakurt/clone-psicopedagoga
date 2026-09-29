@@ -4,35 +4,41 @@
 
 ---
 
-## Sessão 44 - 29/09/2026 — Identidade Visual Completa: Favicon Multi-formato (SVG / ICO / PNG), PWA Manifest e Apple Touch Icon
+## Sessão 44 - 29/09/2026 — Identidade Visual Completa: Favicon Multi-formato (SVG / ICO / PNG), PWA Manifest, Apple Touch Icon e Integração da Marca da IA
 
 ### O que foi feito
 
-#### 1. Criação do Favicon e Ícones da Marca
-- **Design Exclusivo EduPsych Pro**:
-  - Base em squircle geométrico com gradiente de alta fidelidade (*Deep Teal* `#005A5B` → *Brand Teal* `#007F80` → *Cyan Sky* `#0EA5E9`).
-  - Símbolo clínico de Neuropsicopedagogia: letra grega **Psi (Ψ)** combinada com nódulos de foco sináptico e centelha de desenvolvimento cognitivo no ápice.
-  - Sombra sutil tátil (*drop shadow*) e reflexo superior de vidro (*glass highlight*).
-- **Favicon Vetorial SVG (`public/favicon.svg`)**:
-  - Escalabilidade infinita para navegadores modernos (Chrome, Firefox, Safari, Edge) em telas Retina e HiDPI sem perda de nitidez.
-- **Favicon Multi-resolução ICO (`public/favicon.ico` e `src/favicon.ico`)**:
-  - Camadas embutidas de 16x16, 32x32 e 48x48 para compatibilidade com qualquer navegador e sistemas operacionais legado.
-- **Ícones de Alta Densidade e Mobile**:
-  - `public/favicon-96x96.png` para abas de navegadores desktop de alta densidade.
-  - `public/apple-touch-icon.png` (180x180) para atalho na tela inicial de iPhones e iPads (iOS Safari).
-  - `public/web-app-manifest-192x192.png` e `public/web-app-manifest-512x512.png` (maskable) para instalação PWA em Android e desktops.
-  - Script de geração automatizada em [`backend/scripts/generate-favicons.py`](file:///Users/amauri/clone-psicopedagoga/backend/scripts/generate-favicons.py) com supersampling anti-aliasing via Pillow (PIL).
+#### 1. Processamento e Isolamento da Imagem da Marca Gerada por IA
+- **Eliminação do Checkerboard Falso**:
+  - A IA gerou o ícone com padrão quadriculado de transparência falso embutido nos pixels.
+  - Desenvolvido script de visão computacional em Python ([`backend/scripts/process-uploaded-icon.py`](file:///Users/amauri/clone-psicopedagoga/backend/scripts/process-uploaded-icon.py)) para detecção de limites de cor, recorte estrito e aplicação de máscara squircle super-amostrada (4x Lanczos), isolando o ícone com canal alfa (RGBA) 100% limpo e transparente.
+- **Simbolismo Oficial**:
+  - Letra grega **Psi (Ψ)** com curvatura orgânica, caule e base de sustentação.
+  - Brotos de folhas em ascensão (desenvolvimento psicopedagógico e neuroaprendizagem infantil).
+  - Rede neural de sinapses cognitivas interconectadas encimada por uma estrela radiante no ápice.
+  - Fundo em degradê profundo *Teal/Ocean* (`#007F80` / `#0284c7`).
 
-#### 2. Metadados e PWA (`src/index.html` e `public/site.webmanifest`)
-- **PWA Webmanifest (`public/site.webmanifest`)**:
-  - Configurado nome do app, tema visual `#007F80`, cor de fundo e modos de exibição standalone.
-- **Cabeçalho HTML (`src/index.html`)**:
-  - Atualizado título oficial da aplicação para `EduPsych Pro - Gestão Clínica & Psicopedagogia`.
-  - Inseridas todas as tags `<link rel="icon">`, `<link rel="apple-touch-icon">`, `<link rel="manifest">` e `<meta name="theme-color">`.
+#### 2. Exportação do Pacote de Ícones e Identidade Completa
+- **`public/logo-master.png`**: Ícone mestre de alta definição em 1024x1024 com cantos arredondados e transparência real.
+- **`public/web-app-manifest-512x512.png` & `192x192.png`**: PWA Splash Screen e ícones de instalação para Android e Chrome Desktop.
+- **`public/apple-touch-icon.png` (180x180)**: Ícone nítido para iPhone/iPad ao adicionar o app à Tela de Início.
+- **`public/favicon-96x96.png`**: Favicon para monitores desktop de alta densidade (HiDPI / Retina).
+- **`public/favicon.ico` & `src/favicon.ico`**: Arquivo ICO com múltiplas resoluções embutidas (16, 32 e 48px).
+- **`public/favicon.svg`**: Favicon vetorial com container de alta resolução preservando nitidez máxima em qualquer nível de zoom do navegador.
+- **Logos Horizontais da Aplicação**:
+  - `public/logo-horizontal.png` (800x200): Versão para fundos claros, cabeçalhos, laudos e impressos.
+  - `public/logo-horizontal-white.png` (800x200): Versão para fundos escuros e Dark Mode.
 
-#### 3. Validação e Testes
+#### 3. Integração com a Interface da Aplicação
+- **Sidebar Principal (`MainLayoutComponent`)**: Substituído o ícone genérico `dashboard` pela logo oficial `favicon-96x96.png` com sombra suave e cantos arredondados.
+- **Tela de Login (`LoginComponent`)**: Substituído o ícone genérico `psychology` pela marca oficial `web-app-manifest-192x192.png`.
+- **Metadados e PWA (`src/index.html` e `public/site.webmanifest`)**:
+  - Título oficial: `EduPsych Pro - Gestão Clínica & Psicopedagogia`.
+  - Links para favicons, apple-touch-icon, webmanifest e cor de tema `#007F80`.
+
+#### 4. Validação e Testes
 - **Build Angular (`npx ng build --configuration=development`)**: 100% OK (código 0).
-- **Servidor Dev**: Testadas requisições HTTP com retorno `200 OK` para `/favicon.ico`, `/favicon.svg`, `/favicon-96x96.png`, `/apple-touch-icon.png` e `/site.webmanifest`.
+- **Servidor Dev**: Testadas requisições HTTP locais com retorno `200 OK` para `/favicon.ico`, `/favicon.svg`, `/logo-horizontal.png`, `/web-app-manifest-512x512.png`, etc.
 
 ---
 
