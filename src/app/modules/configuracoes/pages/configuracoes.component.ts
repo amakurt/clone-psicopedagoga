@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ApiService } from '@core/services/api.service';
-import { applyAccentColor } from '@core/utils/theme';
+import { ThemeService, AppTheme } from '@core/services/theme.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { ToastService } from '@shared/components/toast.component';
@@ -479,12 +479,13 @@ export class ConfiguracoesComponent implements OnInit {
   auth = inject(AuthService);
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  themeService = inject(ThemeService);
 
   activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'aparencia' | 'disponibilidade' | 'recebimento'>('perfil');
   avatarPreview = signal<string | null>(null);
   showToast = signal(false);
   toastMessage = signal('');
-  currentTheme = signal<string>(localStorage.getItem('theme') || 'light');
+  currentTheme = this.themeService.theme;
   hasPassword = signal(true);
   availabilities = signal<any[]>([]);
   showAvailabilityForm = signal(false);
@@ -508,7 +509,7 @@ export class ConfiguracoesComponent implements OnInit {
     { id: 'system', label: 'Sistema', icon: 'contrast', description: 'Segue a preferência do seu sistema operacional' },
   ];
 
-  accentColor = signal(localStorage.getItem('accentColor') || '#6366f1');
+  accentColor = this.themeService.accentColor;
 
   profileForm = { name: '', email: '', phone: '', phoneIsWhatsApp: false, registration: '', bio: '' };
   pixForm = { pixKey: '', pixKeyType: 'EMAIL' };
@@ -555,13 +556,6 @@ export class ConfiguracoesComponent implements OnInit {
         ...parsed,
         address: parsed.address || this.clinicForm.address
       };
-    }
-
-    this.applyTheme(this.currentTheme());
-    const savedColor = localStorage.getItem('accentColor');
-    if (savedColor) {
-      this.accentColor.set(savedColor);
-      applyAccentColor(savedColor);
     }
   }
 
@@ -659,30 +653,15 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   setTheme(themeId: string) {
-    this.currentTheme.set(themeId);
-    this.applyTheme(themeId);
-  }
-
-  applyTheme(theme: string) {
-    const html = document.documentElement;
-    html.classList.remove('light', 'dark');
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      html.classList.add(prefersDark ? 'dark' : 'light');
-    } else {
-      html.classList.add(theme);
-    }
+    this.themeService.setTheme(themeId as AppTheme);
   }
 
   setAccentColor(color: string) {
-    this.accentColor.set(color);
-    applyAccentColor(color);
+    this.themeService.setAccentColor(color);
   }
 
   saveAppearance() {
-    localStorage.setItem('theme', this.currentTheme());
-    localStorage.setItem('accentColor', this.accentColor());
-    this.toast.success('Aparência salva com sucesso');
+    this.toast.success('Aparência salva com sucesso!');
   }
 
   loadAvailabilities() {

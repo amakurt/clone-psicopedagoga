@@ -43,9 +43,22 @@
   - Configurado aliasing global em [`src/styles.scss`](file:///Users/amauri/clone-psicopedagoga/src/styles.scss) para `.material-symbols-rounded` e `.material-icons`, atualizando instantaneamente todos os mais de 150 componentes do sistema para a nova estética suave sem necessidade de refatorar código legado.
   - Suporte nativo a variações de espessura (`.icon-light`, `.icon-bold`) e preenchimento (`.filled`).
 
-#### 5. Validação e Testes
+#### 5. Correção do Tema Claro e Criação do ThemeService Reativo Unificado
+- **Diagnóstico da Falha**:
+  - `ConfiguracoesComponent` alterava o elemento `<html>`, porém `MainLayoutComponent` mantinha um signal isolado com a diretiva `[class.dark]="isDarkMode()"`. Como não havia comunicação entre os componentes, a `div` mestre permanecia eternamente em Dark Mode.
+  - Além disso, a alternância para modo Claro não possuía atalho rápido no cabeçalho dos profissionais.
+- **Criação do `ThemeService` (`src/app/core/services/theme.service.ts`)**:
+  - Gerenciamento reativo centralizado do tema (`light` / `dark` / `system`) e cor de destaque (`accentColor`).
+  - Sincronização automática com `document.documentElement` (`class="dark"` / `class="light"`).
+  - Listener dinâmico para mudanças no sistema operacional (`window.matchMedia('(prefers-color-scheme: dark)')`).
+- **Integração Global**:
+  - `MainLayoutComponent`, `ConfiguracoesComponent`, `GuardianLayoutComponent` e `GuardianSettingsComponent` migrados para consumir o `ThemeService`.
+  - Adicionado botão de alternância rápida de 1 clique (`light_mode` ↔ `dark_mode`) no cabeçalho superior da clínica (ao lado das notificações).
+  - Agora, ao clicar em "Claro" em Configurações ou no botão do cabeçalho, a aplicação inteira transiciona instantaneamente para o Tema Claro.
+
+#### 6. Validação e Testes
 - **Build Angular (`npx ng build --configuration=development`)**: 100% OK (código 0).
-- **Servidor Dev**: Testadas requisições HTTP locais com retorno `200 OK` para `/favicon.ico`, `/favicon.svg`, `/logo-horizontal.png`, `/web-app-manifest-512x512.png`, etc.
+- **Servidor Dev**: Testadas requisições HTTP locais com retorno `200 OK` e hot reload em tempo real.
 
 ---
 

@@ -7,7 +7,7 @@ import { ApiService } from '@core/services/api.service';
 import { GuardianService } from '@modules/guardian/services/guardian.service';
 import { ChatFloatingComponent } from '@shared/components/chat-floating.component';
 import { NotificationDropdownComponent } from '@shared/components/notification-dropdown.component';
-import { applyAccentColor } from '../../core/utils/theme';
+import { ThemeService } from '@core/services/theme.service';
 
 @Component({
   selector: 'app-guardian-layout',
@@ -314,7 +314,8 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   switching = signal(false);
   mobileMenuOpen = signal(false);
   isChatRoute = signal(false);
-  isDarkMode = signal(false);
+  theme = inject(ThemeService);
+  isDarkMode = this.theme.isDarkMode;
   private notifTimer: any;
 
   navItems = [
@@ -335,27 +336,6 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Theme & Accent Color Init
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      this.isDarkMode.set(true);
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else if (savedTheme === 'light') {
-      this.isDarkMode.set(false);
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    } else if (savedTheme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.isDarkMode.set(prefersDark);
-      document.documentElement.classList.toggle('dark', prefersDark);
-    } else {
-      this.isDarkMode.set(document.documentElement.classList.contains('dark'));
-    }
-
-    const savedColor = localStorage.getItem('accentColor');
-    if (savedColor) applyAccentColor(savedColor);
-
     const user = this.auth.user();
     if (user) {
       this.userName.set(user.name);
@@ -382,16 +362,7 @@ export class GuardianLayoutComponent implements OnInit, OnDestroy {
   }
 
   toggleDarkMode() {
-    this.isDarkMode.update(v => !v);
-    const mode = this.isDarkMode() ? 'dark' : 'light';
-    localStorage.setItem('theme', mode);
-    if (this.isDarkMode()) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    }
+    this.theme.toggleDarkMode();
   }
 
   ngOnDestroy() {

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { GuardianService } from '../services/guardian.service';
 import { AuthService } from '@core/services/auth.service';
 import { ToastService } from '@shared/components/toast.component';
-import { applyAccentColor } from '@core/utils/theme';
+import { ThemeService, AppTheme } from '@core/services/theme.service';
 
 @Component({
   selector: 'app-guardian-settings',
@@ -181,8 +181,9 @@ export class GuardianSettingsComponent implements OnInit {
     { id: 'system', label: 'Sistema', icon: 'contrast', description: 'Segue o modo padrão do dispositivo' },
   ];
 
-  currentTheme = signal(localStorage.getItem('theme') || 'system');
-  accentColor = signal(localStorage.getItem('accentColor') || '#4f46e5');
+  themeService = inject(ThemeService);
+  currentTheme = this.themeService.theme;
+  accentColor = this.themeService.accentColor;
 
   name = '';
   email = signal('');
@@ -200,44 +201,17 @@ export class GuardianSettingsComponent implements OnInit {
       this.name = user.name;
       this.email.set(user.email);
     }
-
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      this.currentTheme.set(savedTheme);
-      this.applyTheme(savedTheme);
-    }
-
-    const savedColor = localStorage.getItem('accentColor');
-    if (savedColor) {
-      this.accentColor.set(savedColor);
-      applyAccentColor(savedColor);
-    }
   }
 
   setTheme(themeId: string) {
-    this.currentTheme.set(themeId);
-    this.applyTheme(themeId);
-  }
-
-  applyTheme(theme: string) {
-    const html = document.documentElement;
-    html.classList.remove('light', 'dark');
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      html.classList.add(prefersDark ? 'dark' : 'light');
-    } else {
-      html.classList.add(theme);
-    }
+    this.themeService.setTheme(themeId as AppTheme);
   }
 
   setAccentColor(color: string) {
-    this.accentColor.set(color);
-    applyAccentColor(color);
+    this.themeService.setAccentColor(color);
   }
 
   saveAppearance() {
-    localStorage.setItem('theme', this.currentTheme());
-    localStorage.setItem('accentColor', this.accentColor());
     this.toast.success('Preferências de aparência salvas com sucesso!');
   }
 

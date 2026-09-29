@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
-import { applyAccentColor } from '../../core/utils/theme';
+import { ThemeService } from '../../core/services/theme.service';
 import { ToastComponent } from '../../shared/components/toast.component';
 import { NotificationDropdownComponent } from '../../shared/components/notification-dropdown.component';
 import { ChatFloatingComponent } from '../../shared/components/chat-floating.component';
@@ -24,7 +24,7 @@ type NavItem = {
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ToastComponent, NotificationDropdownComponent, ChatFloatingComponent],
   template: `
-    <div class="flex h-screen overflow-hidden" [class.dark]="isDarkMode()">
+    <div class="flex h-screen overflow-hidden" [class.dark]="theme.isDarkMode()">
       
       <!-- Backdrop móvel para tela pequena (< lg) -->
       @if (mobileSidebarOpen()) {
@@ -262,6 +262,12 @@ type NavItem = {
               </div>
             }
 
+            <!-- Alternância de Tema Rápida -->
+            <button class="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-500 hover:text-primary transition-all flex items-center justify-center"
+              (click)="theme.toggleDarkMode()" [title]="theme.isDarkMode() ? 'Mudar para tema claro' : 'Mudar para tema escuro'">
+              <span class="material-icons text-xl">{{ theme.isDarkMode() ? 'light_mode' : 'dark_mode' }}</span>
+            </button>
+
             <!-- Notificações -->
             <div class="relative">
               <button class="p-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl text-slate-500 hover:text-primary transition-all relative flex items-center justify-center"
@@ -302,12 +308,12 @@ type NavItem = {
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
+  theme = inject(ThemeService);
   private api = inject(ApiService);
   private router = inject(Router);
 
   sidebarOpen = signal(true);
   mobileSidebarOpen = signal(false);
-  isDarkMode = signal(false);
   notifCount = signal(0);
   notifOpen = signal(false);
   tenantOpen = signal(false);
@@ -400,15 +406,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    const savedTheme = localStorage.getItem('theme');
-    this.isDarkMode.set(savedTheme === 'dark');
-    if (this.isDarkMode()) {
-      document.documentElement.classList.add('dark');
-    }
-
-    const savedColor = localStorage.getItem('accentColor');
-    if (savedColor) applyAccentColor(savedColor);
-
     const savedSidebar = localStorage.getItem('sidebar_open');
     if (savedSidebar !== null) {
       this.sidebarOpen.set(savedSidebar === 'true');
@@ -541,12 +538,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   toggleDarkMode() {
-    this.isDarkMode.update(v => !v);
-    localStorage.setItem('theme', this.isDarkMode() ? 'dark' : 'light');
-    if (this.isDarkMode()) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    this.theme.toggleDarkMode();
   }
 }
