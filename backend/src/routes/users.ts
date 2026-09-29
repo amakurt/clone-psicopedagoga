@@ -14,6 +14,10 @@ const userCreateSchema = z.object({
   email: z.string().email('Email inválido'),
   role: z.enum(['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA', 'TERAPEUTA']).default('PROFISSIONAL'),
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+  avatarUrl: z.string().optional().or(z.literal('')).nullable(),
+  phone: z.string().optional(),
+  registration: z.string().optional(),
+  bio: z.string().optional(),
 });
 
 const userUpdateSchema = z.object({
@@ -24,6 +28,7 @@ const userUpdateSchema = z.object({
   phone: z.string().optional(),
   registration: z.string().optional(),
   bio: z.string().optional(),
+  avatarUrl: z.string().optional().or(z.literal('')).nullable(),
 });
 
 const USER_SAFE_SELECT = {
@@ -94,7 +99,7 @@ router.post('/', authorize('GESTOR'), validate(userCreateSchema), async (req, re
   const tenantId = req.user!.tenantId || '';
   await enforcePlanLimits(tenantId, 'profissional');
 
-  const { name, email, role, password } = req.body;
+  const { name, email, role, password, avatarUrl, phone, registration, bio } = req.body;
   const normalizedEmail = email.toLowerCase().trim();
 
   // Verificar se o usuário já existe
@@ -117,6 +122,12 @@ router.post('/', authorize('GESTOR'), validate(userCreateSchema), async (req, re
         active: true,
       },
     });
+    if (avatarUrl !== undefined) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { avatarUrl: avatarUrl || null }
+      });
+    }
   } else {
     // Hashear a senha
     const rawPassword = password || crypto.randomUUID().slice(0, 10);
@@ -128,6 +139,10 @@ router.post('/', authorize('GESTOR'), validate(userCreateSchema), async (req, re
         email: normalizedEmail,
         password: hashedPassword,
         role: role || 'PROFISSIONAL',
+        avatarUrl: avatarUrl || null,
+        phone: phone || null,
+        registration: registration || null,
+        bio: bio || null,
         active: true,
         memberships: {
           create: {
@@ -161,7 +176,7 @@ router.put('/:id', authorize('GESTOR'), validate(userUpdateSchema), async (req: 
     return res.status(404).json({ error: 'Usuário não encontrado nesta clínica' });
   }
 
-  const { name, email, role, active, phone, registration, bio } = req.body;
+  const { name, email, role, active, phone, registration, bio, avatarUrl } = req.body;
   const updateData: any = {};
   if (name !== undefined) updateData.name = name;
   if (email !== undefined) updateData.email = email.toLowerCase().trim();
@@ -170,6 +185,7 @@ router.put('/:id', authorize('GESTOR'), validate(userUpdateSchema), async (req: 
   if (phone !== undefined) updateData.phone = phone;
   if (registration !== undefined) updateData.registration = registration;
   if (bio !== undefined) updateData.bio = bio;
+  if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl || null;
 
   const user = await prisma.user.update({
     where: { id },

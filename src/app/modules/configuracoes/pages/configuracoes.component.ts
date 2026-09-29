@@ -7,11 +7,12 @@ import { ApiService } from '@core/services/api.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { ToastService } from '@shared/components/toast.component';
+import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
 
 @Component({
   selector: 'app-configuracoes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Header -->
@@ -35,25 +36,55 @@ import { ToastService } from '@shared/components/toast.component';
       @if (activeTab() === 'perfil') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
           <div class="p-8 border-b border-slate-100 dark:border-slate-800">
-            <div class="flex items-center gap-4">
-              <div class="size-20 rounded-full flex items-center justify-center text-2xl font-bold text-white cursor-pointer relative overflow-hidden shadow-lg"
-                [style.background]="getAvatarColor(profileForm.name)">
-                @if (avatarPreview()) {
-                  <img [src]="avatarPreview()" class="w-full h-full object-cover">
-                } @else {
-                  {{ getInitials(profileForm.name) }}
-                }
-                <label class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-                  <span class="material-icons text-white text-2xl">camera_alt</span>
-                  <input type="file" accept="image/*" class="hidden" (change)="onAvatarChange($event)">
-                </label>
-              </div>
-              <div>
-                <p class="font-bold text-slate-900 dark:text-white">{{ profileForm.name || 'Seu Nome' }}</p>
-                <p class="text-sm text-slate-500 dark:text-slate-400">{{ profileForm.email || 'seu@email.com' }}</p>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="size-20 sm:size-24 rounded-full flex items-center justify-center text-2xl font-bold text-white relative overflow-hidden shadow-lg ring-4 ring-primary/20 shrink-0"
+                  [style.background]="getAvatarColor(profileForm.name)">
+                  @if (avatarPreview()) {
+                    <img [src]="avatarPreview()" class="size-full object-cover">
+                  } @else {
+                    {{ getInitials(profileForm.name) }}
+                  }
+                  <label class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer" title="Selecionar nova foto">
+                    <span class="material-icons text-white text-2xl">camera_alt</span>
+                    <input type="file" accept="image/*" class="hidden" (change)="onAvatarChange($event)" #userFileInput>
+                  </label>
+                </div>
+                <div>
+                  <p class="font-bold text-slate-900 dark:text-white text-base sm:text-lg">{{ profileForm.name || 'Seu Nome' }}</p>
+                  <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{{ profileForm.email || 'seu@email.com' }}</p>
+                  
+                  <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <button type="button" (click)="userFileInput.click()"
+                      class="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary transition-all flex items-center gap-1.5 active:scale-95">
+                      <span class="material-icons text-sm">photo_camera</span>
+                      <span>{{ avatarPreview() ? 'Trocar Foto' : 'Adicionar Foto' }}</span>
+                    </button>
+
+                    @if (avatarPreview()) {
+                      <button type="button" (click)="openCropperWithCurrent()"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1.5 active:scale-95" title="Ajustar enquadramento, zoom e área da foto">
+                        <span class="material-icons text-sm">crop</span>
+                        <span>Ajustar Área & Zoom</span>
+                      </button>
+                      <button type="button" (click)="removeAvatar()"
+                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center gap-1" title="Remover foto">
+                        <span class="material-icons text-sm">delete</span>
+                      </button>
+                    }
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
+          @if (showCropperModal() && rawImageToCrop()) {
+            <app-image-cropper-modal
+              [imageSrc]="rawImageToCrop()!"
+              title="Ajustar Foto do Seu Perfil"
+              (cropped)="onPhotoCropped($event)"
+              (cancelled)="closeCropper()" />
+          }
 
           <div class="p-8">
             <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Informações Pessoais</h3>
@@ -404,6 +435,8 @@ export class ConfiguracoesComponent implements OnInit {
   private toast = inject(ToastService);
   activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'disponibilidade' | 'recebimento'>('perfil');
   avatarPreview = signal<string | null>(null);
+  showCropperModal = signal(false);
+  rawImageToCrop = signal<string | null>(null);
   showToast = signal(false);
   toastMessage = signal('');
   hasPassword = signal(true);
@@ -484,10 +517,48 @@ export class ConfiguracoesComponent implements OnInit {
   onAvatarChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
+      const file = input.files[0];
       const reader = new FileReader();
-      reader.onload = (e) => this.avatarPreview.set(e.target?.result as string);
-      reader.readAsDataURL(input.files[0]);
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        this.rawImageToCrop.set(result);
+        this.showCropperModal.set(true);
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
     }
+  }
+
+  openCropperWithCurrent() {
+    if (this.avatarPreview()) {
+      this.rawImageToCrop.set(this.avatarPreview());
+      this.showCropperModal.set(true);
+    }
+  }
+
+  onPhotoCropped(croppedDataUrl: string) {
+    this.avatarPreview.set(croppedDataUrl);
+    this.showCropperModal.set(false);
+    this.saveProfileAvatar(croppedDataUrl);
+  }
+
+  saveProfileAvatar(avatarUrl: string | null) {
+    this.api.put('/auth/profile', { avatarUrl }).subscribe({
+      next: (res: any) => {
+        if (res?.user) this.auth.updateUser(res.user);
+        this.toast.success('Foto do perfil salva com sucesso!');
+      },
+      error: () => this.toast.error('Erro ao salvar foto do perfil')
+    });
+  }
+
+  closeCropper() {
+    this.showCropperModal.set(false);
+  }
+
+  removeAvatar() {
+    this.avatarPreview.set(null);
+    this.saveProfileAvatar(null);
   }
 
   onClinicAddressChange(address: Address) {
@@ -505,7 +576,11 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   saveProfile() {
-    this.api.put('/auth/profile', this.profileForm).subscribe({
+    const payload = {
+      ...this.profileForm,
+      avatarUrl: this.avatarPreview() || null
+    };
+    this.api.put('/auth/profile', payload).subscribe({
       next: (res: any) => {
         this.showNotification('Perfil atualizado com sucesso!');
         if (res?.user) this.auth.updateUser(res.user);

@@ -9,8 +9,25 @@ import { ResponsaveisService } from '../services/responsaveis.service';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="page">
-      <div class="header"><div><h1>{{ item()?.name }}</h1><p class="subtitle">{{ item()?.relationship }}</p></div>
-        <div class="actions"><a routerLink="/app/responsaveis" class="btn btn-outline"><span class="material-icons">arrow_back</span></a><a [routerLink]="['/app/responsaveis', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a></div></div>
+      <div class="header">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: rgba(0, 127, 128, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            @if (item()?.avatarUrl) {
+              <img [src]="item()?.avatarUrl" [alt]="item()?.name" style="width: 100%; height: 100%; object-fit: cover;">
+            } @else {
+              {{ getInitials(item()?.name) }}
+            }
+          </div>
+          <div>
+            <h1>{{ item()?.name }}</h1>
+            <p class="subtitle">{{ item()?.relationship }}</p>
+          </div>
+        </div>
+        <div class="actions">
+          <a routerLink="/app/responsaveis" class="btn btn-outline"><span class="material-icons">arrow_back</span></a>
+          <a [routerLink]="['/app/responsaveis', id, 'editar']" class="btn btn-primary"><span class="material-icons">edit</span></a>
+        </div>
+      </div>
       @if (item()) { <div class="card"><div class="card-body">
         <div class="info-grid">
           <div class="info-section"><h3>CPF</h3><p>{{ item()?.cpf || '—' }}</p></div>
@@ -32,5 +49,16 @@ import { ResponsaveisService } from '../services/responsaveis.service';
 export class ResponsavelDetailComponent implements OnInit {
   private service = inject(ResponsaveisService); private route = inject(ActivatedRoute);
   id = ''; item = signal<any>(null);
+
+  getInitials(name?: string): string {
+    if (!name) return 'R';
+    return name
+      .split(' ')
+      .filter(n => n.length > 0)
+      .slice(0, 2)
+      .map(n => n[0].toUpperCase())
+      .join('');
+  }
+
   ngOnInit() { this.id = this.route.snapshot.params['id']; this.service.get(this.id).subscribe((res: any) => this.item.set(res)); }
 }

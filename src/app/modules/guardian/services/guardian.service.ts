@@ -67,8 +67,10 @@ export class GuardianService {
     return this.api.get<{ data: SessionRecord[]; total: number }>(`${this.base}/sessions/${patientId}`);
   }
 
-  updateProfile(name: string) {
-    return this.api.put(`${this.base}/profile`, { name });
+  updateProfile(name: string, avatarUrl?: string | null) {
+    const payload: any = { name };
+    if (avatarUrl !== undefined) payload.avatarUrl = avatarUrl;
+    return this.api.put(`${this.base}/profile`, payload);
   }
 
   changePassword(currentPassword: string, newPassword: string) {

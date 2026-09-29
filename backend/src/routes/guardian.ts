@@ -558,20 +558,31 @@ router.get('/appointments/:patientId', async (req, res) => {
   res.json({ data: appointments, total: appointments.length });
 });
 
-// Guardian profile - update name
+// Guardian profile - update name and avatar
 router.put('/profile', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const { name } = req.body;
+  const { name, avatarUrl } = req.body;
 
   const responsible = await getGuardianResponsible(db, req.user);
   if (!responsible) {
     return res.status(404).json({ error: 'Perfil não encontrado' });
   }
 
+  const updateData: any = {};
+  if (name) updateData.name = name;
+  if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl || null;
+
   const updated = await db.responsible.update({
     where: { id: responsible.id },
-    data: { name }
+    data: updateData
   });
+
+  if (avatarUrl !== undefined && req.user?.id) {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatarUrl: avatarUrl || null }
+    }).catch(() => {});
+  }
 
   res.json(updated);
 });

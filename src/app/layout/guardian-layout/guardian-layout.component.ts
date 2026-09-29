@@ -48,8 +48,12 @@ import { ThemeService } from '@core/services/theme.service';
         <!-- User info inside drawer -->
         <div class="p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
           <div class="flex items-center gap-3">
-            <div class="size-10 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center text-sm shadow-sm">
-              {{ (userName() || 'R').charAt(0).toUpperCase() }}
+            <div class="size-10 rounded-full overflow-hidden bg-primary text-on-primary font-bold flex items-center justify-center text-sm shadow-sm shrink-0 border border-primary/20">
+              @if (auth.user()?.avatarUrl) {
+                <img [src]="auth.user()?.avatarUrl" [alt]="userName()" class="size-full object-cover">
+              } @else {
+                {{ (userName() || 'R').charAt(0).toUpperCase() }}
+              }
             </div>
             <div class="min-w-0 flex-1">
               <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ userName() }}</p>
@@ -169,9 +173,18 @@ import { ThemeService } from '@core/services/theme.service';
                 </div>
               }
 
-              <span class="hidden md:inline text-xs sm:text-sm font-medium text-gray-600 dark:text-slate-300 max-w-[120px] truncate">
-                {{ userName() }}
-              </span>
+              <div class="hidden sm:flex items-center gap-2 pr-2 border-r border-gray-200 dark:border-slate-700">
+                <div class="size-8 rounded-full overflow-hidden bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shrink-0 border border-primary/20">
+                  @if (auth.user()?.avatarUrl) {
+                    <img [src]="auth.user()?.avatarUrl" [alt]="userName()" class="size-full object-cover">
+                  } @else {
+                    {{ (userName() || 'R').charAt(0).toUpperCase() }}
+                  }
+                </div>
+                <span class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-slate-200 max-w-[130px] truncate">
+                  {{ userName() }}
+                </span>
+              </div>
 
               <!-- Dark Mode Toggle -->
               <button (click)="toggleDarkMode()" 

@@ -4,6 +4,53 @@
 
 ---
 
+## Sessão 47 - 29/09/2026 — Expansão do Editor de Fotos, Recorte Circular e Upload de Avatares em Todo o Sistema (Perfil, Responsáveis, Usuários e Portal do Responsável)
+
+### O que foi feito
+
+#### 1. Perfil do Terapeuta / Usuário Logado (`ConfiguracoesComponent`)
+- **Integração do Editor Interativo**:
+  - Adicionado o modal `ImageCropperModalComponent` na aba **Perfil** de `Configurações` ([`src/app/modules/configuracoes/pages/configuracoes.component.ts`](file:///Users/amauri/clone-psicopedagoga/src/app/modules/configuracoes/pages/configuracoes.component.ts)).
+  - Adicionados botões "Trocar Foto", "Ajustar Área & Zoom" e "Remover Foto".
+  - Implementado salvamento direto via endpoint `/api/auth/profile` e atualização reativa do sinal `auth.user()`, fazendo com que a foto de perfil no cabeçalho superior (`MainLayoutComponent`) atualize instantaneamente sem necessidade de reload.
+
+#### 2. Módulo de Responsáveis (`src/app/modules/responsaveis/`)
+- **Formulário de Cadastro e Edição (`ResponsavelFormComponent`)**:
+  - Adicionado card de foto de identificação com prévia circular, iniciais como fallback, botão de câmera e integração ao modal de recorte (`ImageCropperModalComponent`).
+  - Suporte a reajuste fino de enquadramento/zoom ("Ajustar Área & Zoom") e remoção da foto ("Remover Foto").
+  - O payload de criação e edição agora envia `avatarUrl` persistido no modelo `Responsible` do Prisma.
+- **Listagem de Responsáveis (`ResponsaveisListComponent`)**:
+  - Atualizada a tabela para desktop e os cards para smartphones para renderizar a imagem da foto do responsável quando presente (`r.avatarUrl`), mantendo as cores e iniciais estilizadas caso não haja foto.
+- **Visualização de Detalhes (`ResponsavelDetailComponent`)**:
+  - Cabeçalho da página de detalhes aprimorado com o avatar circular em alta definição ao lado do nome do responsável.
+
+#### 3. Módulo de Usuários e Equipe da Clínica (`src/app/modules/users/`)
+- **Backend (`backend/src/routes/users.ts`)**:
+  - Adicionado o campo `avatarUrl` com validação flexível nos schemas Zod `userCreateSchema` e `userUpdateSchema`.
+  - Atualizados os endpoints `POST /api/users` e `PUT /api/users/:id` para salvar e atualizar `avatarUrl` no banco de dados.
+- **Formulário de Usuário (`UserFormComponent`)**:
+  - Adicionada seção estilizada para upload de foto de perfil/colaborador com recorte circular, zoom e rotação.
+  - Carregamento de `avatarUrl` na edição e envio no formulário reativo.
+- **Listagem de Usuários (`UsersListComponent`)**:
+  - Miniaturas de avatar na tabela desktop e nos cards mobile agora exibem a foto do colaborador com borda e fallback elegante.
+
+#### 4. Portal do Responsável / Família (`src/app/modules/guardian/`)
+- **Backend (`backend/src/routes/guardian.ts`)**:
+  - Endpoint `PUT /api/guardian/profile` atualizado para receber `avatarUrl` e sincronizar simultaneamente nas tabelas `Responsible` e `User`.
+- **Serviço Angular (`GuardianService`)**:
+  - Atualizado método `updateProfile(name: string, avatarUrl?: string | null)` para encaminhar a nova imagem ao backend.
+- **Configurações da Conta do Responsável (`GuardianSettingsComponent`)**:
+  - Seção "Dados Pessoais" enriquecida com o seletor e recortador interativo de foto, permitindo ao responsável escolher sua própria foto ou avatar.
+- **Layout do Portal (`GuardianLayoutComponent`)**:
+  - O menu gaveta (drawer) e o cabeçalho superior do portal do responsável agora exibem a foto do usuário em tempo real (`auth.user()?.avatarUrl`).
+
+#### 5. Validação Técnica
+- **Backend Build**: `npm run build` compilado com 100% de sucesso (código 0).
+- **Frontend Build**: `npx ng build --configuration=development` gerou os bundles sem nenhum erro de tipagem ou de template (código 0).
+- **Servidores Ativos**: Backend e Frontend em execução contínua.
+
+---
+
 ## Sessão 46 - 29/09/2026 — Correção do Salvamento de Fotos de Pacientes e Editor Interativo de Recorte, Zoom e Enquadramento (Cropper)
 
 ### O que foi feito

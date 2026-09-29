@@ -5,11 +5,12 @@ import { GuardianService } from '../services/guardian.service';
 import { AuthService } from '@core/services/auth.service';
 import { ToastService } from '@shared/components/toast.component';
 import { ThemeService, AppTheme } from '@core/services/theme.service';
+import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
 
 @Component({
   selector: 'app-guardian-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ImageCropperModalComponent],
   template: `
     <div class="space-y-5 sm:space-y-6 max-w-2xl">
       <!-- Header -->
@@ -108,6 +109,51 @@ import { ThemeService, AppTheme } from '@core/services/theme.service';
         <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <span class="material-icons text-primary">person</span> Dados Pessoais
         </h3>
+
+        <!-- Foto de Perfil / Avatar -->
+        <div class="mb-5 p-4 rounded-2xl bg-gray-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-700/60 flex flex-col sm:flex-row items-center gap-5">
+          <div class="relative group shrink-0">
+            <div class="size-20 sm:size-24 rounded-full overflow-hidden bg-primary/10 text-primary border-2 border-primary/20 shadow-inner flex items-center justify-center">
+              @if (avatarPreview()) {
+                <img [src]="avatarPreview()!" alt="Foto de Perfil" class="size-full object-cover">
+              } @else {
+                <span class="text-2xl font-black">{{ name ? getInitials(name) : 'R' }}</span>
+              }
+            </div>
+            <label class="absolute bottom-0 right-0 p-2 bg-primary hover:bg-primary/90 text-on-primary rounded-full cursor-pointer shadow-md hover:scale-105 active:scale-95 transition-all"
+              title="Escolher foto">
+              <span class="material-icons text-[16px]">photo_camera</span>
+              <input type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
+            </label>
+          </div>
+
+          <div class="flex-1 text-center sm:text-left space-y-1.5">
+            <h4 class="text-sm font-bold text-gray-900 dark:text-white">Foto de Identificação</h4>
+            <p class="text-xs text-gray-500 dark:text-slate-400">
+              Personalize sua foto no portal. Ajuste a área, o zoom e o enquadramento ideal.
+            </p>
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+              <label class="px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-600 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-xs">
+                <span class="material-icons text-[16px]">upload</span>
+                <span>{{ avatarPreview() ? 'Trocar Foto' : 'Adicionar Foto' }}</span>
+                <input type="file" accept="image/*" class="hidden" (change)="onFileSelected($event)">
+              </label>
+              @if (avatarPreview()) {
+                <button type="button" (click)="openCropperWithCurrent()"
+                  class="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                  <span class="material-icons text-[16px]">crop</span>
+                  Ajustar Área & Zoom
+                </button>
+                <button type="button" (click)="removeAvatar()"
+                  class="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+                  <span class="material-icons text-[16px]">delete</span>
+                  Remover Foto
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 mb-1.5">Seu Nome Completo</label>
@@ -168,6 +214,15 @@ import { ThemeService, AppTheme } from '@core/services/theme.service';
         <span class="px-2.5 py-1 bg-primary/10 text-primary text-xs font-black rounded-full">v1.0.0</span>
       </div>
     </div>
+
+    <!-- Modal de Recorte e Ajuste de Foto -->
+    @if (showCropperModal() && rawImageToCrop()) {
+      <app-image-cropper-modal
+        [imageSrc]="rawImageToCrop()!"
+        title="Ajustar Foto do Perfil"
+        (cropped)="onCroppedImage($event)"
+        (cancelled)="onCropperCancelled()" />
+    }
   `
 })
 export class GuardianSettingsComponent implements OnInit {
@@ -187,6 +242,10 @@ export class GuardianSettingsComponent implements OnInit {
 
   name = '';
   email = signal('');
+  avatarPreview = signal<string | null>(null);
+  showCropperModal = signal(false);
+  rawImageToCrop = signal<string | null>(null);
+
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
@@ -195,11 +254,64 @@ export class GuardianSettingsComponent implements OnInit {
   changingPassword = signal(false);
   passwordError = signal('');
 
+  getInitials(name?: string): string {
+    if (!name) return 'R';
+    return name
+      .split(' ')
+      .filter(n => n.length > 0)
+      .slice(0, 2)
+      .map(n => n[0].toUpperCase())
+      .join('');
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      this.toast.warning('Por favor, selecione um arquivo de imagem válido');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.rawImageToCrop.set(reader.result as string);
+      this.showCropperModal.set(true);
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  openCropperWithCurrent() {
+    if (this.avatarPreview()) {
+      this.rawImageToCrop.set(this.avatarPreview());
+      this.showCropperModal.set(true);
+    }
+  }
+
+  onCroppedImage(croppedDataUrl: string) {
+    this.avatarPreview.set(croppedDataUrl);
+    this.showCropperModal.set(false);
+    this.toast.success('Foto pronta! Clique em Salvar Alterações para confirmar.');
+  }
+
+  onCropperCancelled() {
+    this.showCropperModal.set(false);
+    this.rawImageToCrop.set(null);
+  }
+
+  removeAvatar() {
+    this.avatarPreview.set(null);
+    this.toast.info('Foto removida. Clique em Salvar Alterações para confirmar.');
+  }
+
   ngOnInit() {
     const user = this.auth.user();
     if (user) {
       this.name = user.name;
       this.email.set(user.email);
+      if (user.avatarUrl) {
+        this.avatarPreview.set(user.avatarUrl);
+      }
     }
   }
 
@@ -220,7 +332,8 @@ export class GuardianSettingsComponent implements OnInit {
     this.saving.set(true);
     this.saveSuccess.set('');
 
-    this.guardianService.updateProfile(this.name).subscribe({
+    const newAvatar = this.avatarPreview();
+    this.guardianService.updateProfile(this.name, newAvatar).subscribe({
       next: () => {
         this.saving.set(false);
         this.saveSuccess.set('Perfil atualizado com sucesso!');
@@ -228,7 +341,8 @@ export class GuardianSettingsComponent implements OnInit {
         const user = this.auth.user();
         if (user) {
           user.name = this.name;
-          this.auth.updateUser({ name: this.name });
+          user.avatarUrl = newAvatar || undefined;
+          this.auth.updateUser({ name: this.name, avatarUrl: newAvatar || undefined });
         }
       },
       error: () => this.saving.set(false)

@@ -65,8 +65,12 @@ import { ToastService } from '@shared/components/toast.component';
                   <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
                     <td class="px-6 py-4">
                       <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                          {{ user.name.charAt(0).toUpperCase() }}
+                        <div class="size-9 rounded-full overflow-hidden bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0 border border-primary/20">
+                          @if (user.avatarUrl) {
+                            <img [src]="user.avatarUrl" [alt]="user.name" class="size-full object-cover">
+                          } @else {
+                            {{ user.name.charAt(0).toUpperCase() }}
+                          }
                         </div>
                         <span class="font-bold text-slate-900 dark:text-white text-sm">{{ user.name }}</span>
                       </div>
@@ -117,8 +121,12 @@ import { ToastService } from '@shared/components/toast.component';
               <div class="p-4 space-y-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <div class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-sm shrink-0">
-                      {{ user.name.charAt(0).toUpperCase() }}
+                    <div class="size-10 rounded-full overflow-hidden bg-primary/10 text-primary flex items-center justify-center font-black text-sm shrink-0 border border-primary/20">
+                      @if (user.avatarUrl) {
+                        <img [src]="user.avatarUrl" [alt]="user.name" class="size-full object-cover">
+                      } @else {
+                        {{ user.name.charAt(0).toUpperCase() }}
+                      }
                     </div>
                     <div class="min-w-0 flex-1">
                       <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ user.name }}</h4>
