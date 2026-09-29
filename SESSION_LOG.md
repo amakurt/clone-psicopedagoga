@@ -36,7 +36,14 @@
   - Título oficial: `EduPsych Pro - Gestão Clínica & Psicopedagogia`.
   - Links para favicons, apple-touch-icon, webmanifest e cor de tema `#007F80`.
 
-#### 4. Validação e Testes
+#### 4. Atualização para Google Material Symbols (Rounded)
+- **Biblioteca Aberta Integrada**:
+  - Adicionada a biblioteca aberta **Google Material Symbols (Rounded)** via preconnect no [`src/index.html`](file:///Users/amauri/clone-psicopedagoga/src/index.html).
+  - Mais de 3.000 ícones modernos de saúde, clínica, educação, neurociência e finanças com cantos arredondados e traço orgânico.
+  - Configurado aliasing global em [`src/styles.scss`](file:///Users/amauri/clone-psicopedagoga/src/styles.scss) para `.material-symbols-rounded` e `.material-icons`, atualizando instantaneamente todos os mais de 150 componentes do sistema para a nova estética suave sem necessidade de refatorar código legado.
+  - Suporte nativo a variações de espessura (`.icon-light`, `.icon-bold`) e preenchimento (`.filled`).
+
+#### 5. Validação e Testes
 - **Build Angular (`npx ng build --configuration=development`)**: 100% OK (código 0).
 - **Servidor Dev**: Testadas requisições HTTP locais com retorno `200 OK` para `/favicon.ico`, `/favicon.svg`, `/logo-horizontal.png`, `/web-app-manifest-512x512.png`, etc.
 

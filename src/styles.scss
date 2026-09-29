@@ -403,3 +403,50 @@ select.form-control { appearance: auto; cursor: pointer; }
   }
 }
 
+/* ==========================================================================
+   Google Material Symbols Rounded - Configuração Global de Ícones
+   ========================================================================== */
+.material-symbols-rounded,
+.material-icons {
+  font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  vertical-align: middle;
+  user-select: none;
+}
+
+/* Variação de Ícone Preenchido (Filled / Active State) */
+.material-symbols-rounded.filled,
+.material-icons.filled,
+.icon-filled {
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* Variações de Espessura (Light / Regular / Bold) */
+.icon-light {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+.icon-bold {
+  font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+}
+
+
