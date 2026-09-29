@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient (Teal to Cyan-Sky) -->
+    <linearGradient id="epBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#005A5B"/>
+      <stop offset="60%" stop-color="#007F80"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+
+    <!-- Top Highlight Glass Reflection -->
+    <linearGradient id="epGloss" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Tactile Shadow -->
+    <filter id="epShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#003538" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect width="512" height="512" rx="112" fill="url(#epBg)"/>
+
+  <!-- Subtle Top Highlight -->
+  <rect width="512" height="230" rx="112" fill="url(#epGloss)"/>
+
+  <!-- Psi (Ψ) Neuropsicopedagogia Symbol -->
+  <g filter="url(#epShadow)">
+    <!-- Curved U-Wing Arc -->
+    <path d="M 140 180 C 140 330, 215 345, 256 345 C 297 345, 372 330, 372 180" 
+          fill="none" 
+          stroke="#FFFFFF" 
+          stroke-width="36" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+
+    <!-- Central Trunk / Growth Stem -->
+    <line x1="256" y1="145" x2="256" y2="385" 
+          stroke="#FFFFFF" 
+          stroke-width="36" 
+          stroke-linecap="round"/>
+
+    <!-- Left & Right Wing Terminal Focus Nodes -->
+    <circle cx="140" cy="180" r="20" fill="#F0FDFA"/>
+    <circle cx="372" cy="180" r="20" fill="#F0FDFA"/>
+
+    <!-- Central Insight Node (Apex Spark) -->
+    <circle cx="256" cy="120" r="20" fill="#FFFFFF"/>
+    <circle cx="256" cy="120" r="9" fill="#007F80"/>
+  </g>
+</svg>
