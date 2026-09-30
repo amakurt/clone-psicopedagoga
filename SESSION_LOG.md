@@ -32,13 +32,18 @@
 - **Suporte a `suppressSound` em `recordAttempt`**:
   - Permite que jogos com áudio temático exclusivo (como a estrela) toquem seus efeitos sem conflito de notas com o sintetizador genérico de combo.
 
-#### 3. Polimento nos Demais Jogos em Canvas
-- **Jogo 6 ("Rastreamento Visual" com Estrela `⭐`) e Jogos de Reação Rápida (`setupTapGame`)**:
-  - Zona de toque expandida (`Math.max(54, itemFontSize * 1.05)`).
-  - Trava de disparo para evitar pulo de itens em cliques rápidos.
-  - Integração do som especial `playStarCollect()` ao tocar a estrela e efeito visual de anel de pulso.
-- **Jogos Stroop, Fonológico e Socioemocional**:
-  - Travas `isTransitioning` adicionadas aos manipuladores de toque para evitar pulos acidentais de perguntas e duplicidade de pontuação em cliques rápidos.
+#### 3. Correção Crítica no Jogo "Atenção Dividida" (Go/No-Go e Inibição de Resposta)
+- **Causa Raiz do Congelamento nos Círculos Vermelhos**:
+  - No jogo de Atenção Dividida (Jogo 4 - "Toque nos círculos azuis e ignore os vermelhos"), o motor apenas avançava para a próxima rodada quando um clique ocorria (`if (dist <= hitRadius)`).
+  - Quando um círculo vermelho surgia, o paciente obedecia à instrução clínica ("ignore os vermelhos") e não clicava. Como não havia temporizador de expiração nem auto-avanço, o círculo vermelho ficava permanentemente preso na tela, dando a impressão de que o jogo só gerava círculos vermelhos.
+  - Além disso, a geração por `Math.random()` puramente 50/50 podia gerar sequências consecutivas de vermelhos sem garantia de início com estímulo alvo.
+- **Solução Implementada**:
+  - **Sequência Balanceada (70% Alvos / 30% Inibição)**: Criação de baralho pré-estruturado (10 círculos azuis e 4 vermelhos), com o **primeiro item garantidamente AZUL (`🔵`)**.
+  - **Temporizador de Janela de Resposta (1800ms)**: Cada estímulo possui um anel visual dinâmico de tempo em `requestAnimationFrame`.
+  - **Recompensa por Inibição Bem-Sucedida**: Se o paciente ignora o círculo vermelho e o tempo expira, o sistema pontua positivamente (+10 pontos, `recordAttempt(true)`), toca som de sucesso e exibe "✓ Foco mantido!", avançando automaticamente para o próximo estímulo.
+  - **Detecção de Erro de Comissão**: Se o paciente toca impulsivamente no círculo vermelho, o erro é registrado (`recordAttempt(false)`), exibindo anel de alerta e avançando.
+  - **Padronização para Demais Jogos Go/No-Go**: A mesma lógica clínica de auto-avanço e inibição foi estendida aos jogos de Inibir Resposta (Jogo 5 - Quadrados vs Círculos), Controle de Impulsos (Jogo 26 - Semáforo Verde) e Classificação (Jogo 24 - Animais vs Objetos).
+  - **Limpeza de Timers e Animações**: `clearTimers()` e `removeCanvasListeners()` agora cancelam explicitamente `activeTimeout` e `activeAnimFrame`.
 
 #### 4. Validação Técnica
 - **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (Código 0, 0 erros).

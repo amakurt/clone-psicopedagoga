@@ -765,6 +765,14 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.canvasClickHandler = null;
       }
     }
+    if (this.gameData?.activeTimeout) {
+      clearTimeout(this.gameData.activeTimeout);
+      this.gameData.activeTimeout = null;
+    }
+    if (this.gameData?.activeAnimFrame) {
+      cancelAnimationFrame(this.gameData.activeAnimFrame);
+      this.gameData.activeAnimFrame = null;
+    }
   }
 
   getPointerPos(canvas: HTMLCanvasElement, clientX: number, clientY: number): { x: number; y: number } {
@@ -1078,6 +1086,14 @@ export class JogosComponent implements OnInit, OnDestroy {
   clearTimers() {
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (this.countdownInterval) clearInterval(this.countdownInterval);
+    if (this.gameData?.activeTimeout) {
+      clearTimeout(this.gameData.activeTimeout);
+      this.gameData.activeTimeout = null;
+    }
+    if (this.gameData?.activeAnimFrame) {
+      cancelAnimationFrame(this.gameData.activeAnimFrame);
+      this.gameData.activeAnimFrame = null;
+    }
   }
 
   finishGame() {
@@ -1921,82 +1937,293 @@ export class JogosComponent implements OnInit, OnDestroy {
     drawScenario();
   }
 
-  // 8. TAP / REAÇÃO RÁPIDA
+  // 8. TAP / REAÇÃO RÁPIDA / GO-NO-GO (ATENÇÃO DIVIDIDA E INIBIÇÃO)
   setupTapGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
-    const TAP_CONFIGS: Record<number, {items: string[], count: number, instruction: string}> = {
-      2:  {items:['🍎','🍌','🍇','🍊','🍓'], count:12, instruction:'Toque nas frutas o mais rápido que puder!'},
-      4:  {items:['🔵','🔴'], count:14, instruction:'Toque nos CÍRCULOS AZUIS, ignore os vermelhos!'},
-      5:  {items:['⬜','🔴','🟢','🔵'], count:12, instruction:'Toque apenas nos QUADRADOS!'},
-      6:  {items:['⭐'], count:10, instruction:'Toque na estrela quando ela surgir!'},
-      26: {items:['🟢','🟡','🔴'], count:10, instruction:'Toque apenas quando o sinal for VERDE!'},
-      44: {items:['🍎','🍌','🍇','🍊'], count:10, instruction:'Toque no item antes que ele desapareça!'},
-    };
-    const config = TAP_CONFIGS[gameId] || TAP_CONFIGS[2];
-    let spawned = 0;
-    let isTransitioning = false;
-    const itemFontSize = Math.max(32, Math.min(50, W * 0.095));
 
-    const spawnItem = () => {
-      isTransitioning = false;
-      if (spawned >= config.count) {
+    interface TapItemTrial {
+      symbol: string;
+      isTarget: boolean;
+    }
+
+    // Gerador de baralho equilibrado e clinicamente estruturado
+    const buildSequence = (): { trials: TapItemTrial[]; instruction: string; durationMs: number } => {
+      if (gameId === 4) {
+        // Atenção Dividida (70% Círculos Azuis [Alvos], 30% Círculos Vermelhos [Ignorar])
+        // 14 rodadas: 10 azuis e 4 vermelhos. A primeira é SEMPRE azul!
+        const pool: TapItemTrial[] = [];
+        for (let i = 0; i < 9; i++) pool.push({ symbol: '🔵', isTarget: true });
+        for (let i = 0; i < 4; i++) pool.push({ symbol: '🔴', isTarget: false });
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return {
+          trials: [{ symbol: '🔵', isTarget: true }, ...pool],
+          instruction: 'Toque no CÍRCULO AZUL! Ignore o vermelho!',
+          durationMs: 1800
+        };
+      }
+
+      if (gameId === 5) {
+        // Inibir Resposta (Toque apenas nos quadrados)
+        const distractors = ['🔴', '🟢', '🔵'];
+        const pool: TapItemTrial[] = [];
+        for (let i = 0; i < 7; i++) pool.push({ symbol: '⬜', isTarget: true });
+        for (let i = 0; i < 4; i++) pool.push({ symbol: distractors[i % distractors.length], isTarget: false });
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return {
+          trials: [{ symbol: '⬜', isTarget: true }, ...pool],
+          instruction: 'Toque apenas no QUADRADO! Ignore os círculos!',
+          durationMs: 1800
+        };
+      }
+
+      if (gameId === 26) {
+        // Controle de Impulsos (Semáforo Verde)
+        const distractors = ['🟡', '🔴'];
+        const pool: TapItemTrial[] = [];
+        for (let i = 0; i < 7; i++) pool.push({ symbol: '🟢', isTarget: true });
+        for (let i = 0; i < 4; i++) pool.push({ symbol: distractors[i % distractors.length], isTarget: false });
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return {
+          trials: [{ symbol: '🟢', isTarget: true }, ...pool],
+          instruction: 'Toque quando for VERDE! Espere se for amarelo ou vermelho!',
+          durationMs: 1900
+        };
+      }
+
+      if (gameId === 24) {
+        // Classificação (Animais vs Objetos)
+        const animals = ['🐶', '🐱', '🐰', '🦊', '🐻'];
+        const objects = ['🚗', '⚽', '📱', '🎸'];
+        const pool: TapItemTrial[] = [];
+        for (let i = 0; i < 7; i++) pool.push({ symbol: animals[i % animals.length], isTarget: true });
+        for (let i = 0; i < 4; i++) pool.push({ symbol: objects[i % objects.length], isTarget: false });
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return {
+          trials: [{ symbol: animals[0], isTarget: true }, ...pool],
+          instruction: 'Toque nos ANIMAIS! Ignore os objetos!',
+          durationMs: 2000
+        };
+      }
+
+      if (gameId === 6) {
+        // Rastreamento Estelar
+        const trials: TapItemTrial[] = Array.from({ length: 10 }, () => ({ symbol: '⭐', isTarget: true }));
+        return {
+          trials,
+          instruction: 'Toque na estrela quando ela surgir!',
+          durationMs: 2500
+        };
+      }
+
+      if (gameId === 44) {
+        // Reação Rápida
+        const fruits = ['🍎', '🍌', '🍇', '🍊'];
+        const trials: TapItemTrial[] = Array.from({ length: 10 }, (_, i) => ({ symbol: fruits[i % fruits.length], isTarget: true }));
+        return {
+          trials,
+          instruction: 'Toque no item antes que ele desapareça!',
+          durationMs: 1500
+        };
+      }
+
+      // Padrão (Game 2 - Contagem Rápida)
+      const fruits = ['🍎', '🍌', '🍇', '🍊', '🍓'];
+      const trials: TapItemTrial[] = Array.from({ length: 12 }, (_, i) => ({ symbol: fruits[i % fruits.length], isTarget: true }));
+      return {
+        trials,
+        instruction: 'Toque nas frutas o mais rápido que puder!',
+        durationMs: 2200
+      };
+    };
+
+    const session = buildSequence();
+    let currentIndex = 0;
+    let isTransitioning = false;
+    const itemFontSize = Math.max(34, Math.min(52, W * 0.098));
+    const hitRadius = Math.max(56, itemFontSize * 1.15);
+
+    const spawnNext = () => {
+      if (this.gameData.activeTimeout) {
+        clearTimeout(this.gameData.activeTimeout);
+        this.gameData.activeTimeout = null;
+      }
+      if (this.gameData.activeAnimFrame) {
+        cancelAnimationFrame(this.gameData.activeAnimFrame);
+        this.gameData.activeAnimFrame = null;
+      }
+
+      if (currentIndex >= session.trials.length) {
         this.finishGame();
         return;
       }
-      spawned++;
-      const symbol = config.items[Math.floor(Math.random() * config.items.length)];
-      const x = Math.random() * (W - 120) + 60;
-      const y = Math.random() * (H - 120) + 60;
 
-      ctx.clearRect(0, 0, W, H);
+      isTransitioning = false;
+      const trial = session.trials[currentIndex];
+      currentIndex++;
 
-      // Efeito de aura suave para o item
-      ctx.beginPath();
-      ctx.arc(x, y, itemFontSize * 0.8, 0, Math.PI * 2);
-      ctx.fillStyle = symbol === '⭐' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)';
-      ctx.fill();
+      const x = Math.random() * (W - 140) + 70;
+      const y = Math.random() * (H - 140) + 70;
+      const startTime = performance.now();
+      const duration = session.durationMs;
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `${itemFontSize}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(symbol, x, y + 2);
+      this.gameInstruction.set(`${session.instruction} (${currentIndex}/${session.trials.length})`);
 
-      this.gameInstruction.set(`${config.instruction} (${spawned}/${config.count})`);
+      // Animação de frame com anel de tempo decorrido
+      const render = (now: number) => {
+        if (isTransitioning) return;
+        const elapsed = now - startTime;
+        const remainingRatio = Math.max(0, 1 - elapsed / duration);
 
+        ctx.clearRect(0, 0, W, H);
+
+        // Anel de tempo sutil circundando o estímulo
+        const ringRadius = hitRadius * 0.85;
+        ctx.beginPath();
+        ctx.arc(x, y, ringRadius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * remainingRatio, false);
+        ctx.strokeStyle = trial.isTarget ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.40)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Aura suave de fundo
+        ctx.beginPath();
+        ctx.arc(x, y, itemFontSize * 0.75, 0, Math.PI * 2);
+        ctx.fillStyle = trial.symbol === '⭐'
+          ? 'rgba(56, 189, 248, 0.16)'
+          : trial.symbol === '🔵'
+          ? 'rgba(2, 132, 199, 0.15)'
+          : trial.symbol === '🔴'
+          ? 'rgba(239, 68, 68, 0.15)'
+          : 'rgba(255, 255, 255, 0.05)';
+        ctx.fill();
+
+        // Desenha o símbolo/emoji central
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${itemFontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(trial.symbol, x, y + 2);
+
+        if (elapsed < duration && !isTransitioning) {
+          this.gameData.activeAnimFrame = requestAnimationFrame(render);
+        }
+      };
+
+      this.gameData.activeAnimFrame = requestAnimationFrame(render);
+
+      // Handler do clique
       this.setCanvasHandler(canvas, (mx, my) => {
         if (isTransitioning) return;
         const dist = Math.hypot(mx - x, my - y);
-        const hitRadius = Math.max(54, itemFontSize * 1.05);
 
         if (dist <= hitRadius) {
           isTransitioning = true;
-          const isTarget = gameId === 4 ? symbol === '🔵' : gameId === 5 ? symbol === '⬜' : gameId === 26 ? symbol === '🟢' : true;
-
-          if (isTarget && symbol === '⭐') {
-            this.sound.playStarCollect();
-            this.recordAttempt(true, true);
-          } else {
-            this.recordAttempt(isTarget);
+          if (this.gameData.activeTimeout) {
+            clearTimeout(this.gameData.activeTimeout);
+            this.gameData.activeTimeout = null;
+          }
+          if (this.gameData.activeAnimFrame) {
+            cancelAnimationFrame(this.gameData.activeAnimFrame);
+            this.gameData.activeAnimFrame = null;
           }
 
-          if (isTarget) {
+          if (trial.isTarget) {
+            // ACERTO NO ALVO
+            if (trial.symbol === '⭐') {
+              this.sound.playStarCollect();
+              this.recordAttempt(true, true);
+            } else {
+              this.recordAttempt(true);
+            }
             this.gameScore.update(s => s + 10);
 
-            // Animação de anel de acerto
+            // Anel azul/ciano de acerto
+            ctx.clearRect(0, 0, W, H);
             ctx.beginPath();
             ctx.arc(x, y, hitRadius * 0.9, 0, Math.PI * 2);
             ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 3.5;
             ctx.stroke();
+
+            ctx.font = `${itemFontSize * 1.1}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(trial.symbol, x, y + 2);
+          } else {
+            // ERRO DE COMISSÃO (Tocou no não-alvo que devia ignorar!)
+            this.sound.playError();
+            this.recordAttempt(false);
+
+            // Anel vermelho de erro
+            ctx.clearRect(0, 0, W, H);
+            ctx.beginPath();
+            ctx.arc(x, y, hitRadius * 0.9, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            ctx.font = `${itemFontSize}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(trial.symbol, x, y + 2);
           }
 
-          setTimeout(spawnItem, 220);
+          setTimeout(spawnNext, 240);
         }
       });
+
+      // TIMEOUT DE APRESENTAÇÃO (Se o tempo expirar sem clique)
+      this.gameData.activeTimeout = setTimeout(() => {
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        if (this.gameData.activeAnimFrame) {
+          cancelAnimationFrame(this.gameData.activeAnimFrame);
+          this.gameData.activeAnimFrame = null;
+        }
+
+        if (!trial.isTarget) {
+          // SUCESSO DE INIBIÇÃO! (O jogador ignorou corretamente o círculo vermelho ou distrator!)
+          this.sound.playSuccess();
+          this.recordAttempt(true, true);
+          this.gameScore.update(s => s + 10);
+
+          // Feedback visual sutil de inibição bem-sucedida
+          ctx.clearRect(0, 0, W, H);
+          ctx.beginPath();
+          ctx.arc(x, y, hitRadius * 0.7, 0, Math.PI * 2);
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#10b981';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('✓ Foco mantido!', x, y - hitRadius * 0.85);
+
+          setTimeout(spawnNext, 320);
+        } else {
+          // OMISSÃO! (O jogador não tocou a tempo no alvo)
+          this.recordAttempt(false);
+          ctx.clearRect(0, 0, W, H);
+          setTimeout(spawnNext, 180);
+        }
+      }, duration);
     };
 
-    spawnItem();
+    spawnNext();
   }
 
   // 9. COMPARAÇÃO MATEMÁTICA (< , = , >)
