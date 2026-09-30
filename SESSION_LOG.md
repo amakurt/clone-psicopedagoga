@@ -37,13 +37,16 @@
   - No jogo de Atenção Dividida (Jogo 4 - "Toque nos círculos azuis e ignore os vermelhos"), o motor apenas avançava para a próxima rodada quando um clique ocorria (`if (dist <= hitRadius)`).
   - Quando um círculo vermelho surgia, o paciente obedecia à instrução clínica ("ignore os vermelhos") e não clicava. Como não havia temporizador de expiração nem auto-avanço, o círculo vermelho ficava permanentemente preso na tela, dando a impressão de que o jogo só gerava círculos vermelhos.
   - Além disso, a geração por `Math.random()` puramente 50/50 podia gerar sequências consecutivas de vermelhos sem garantia de início com estímulo alvo.
-- **Solução Implementada**:
+- **Solução Definitiva e Renderização Vetorial Nativa**:
+  - **Fim da Dependência de Fontes Emoji do SO**: Os círculos azuis (`🔵`) e vermelhos (`🔴`) eram renderizados como caracteres de texto emoji (`ctx.fillText`). Em certos navegadores e resoluções, o emoji de cor não era desenhado ou dependia de fontes específicas do sistema operacional. Agora, são renderizados com primitivas vetoriais nativas do Canvas (`ctx.arc`, `ctx.fill`, `ctx.stroke`), com halos luminosos, efeito tridimensional de brilho e 100% de visibilidade garantida em qualquer dispositivo.
+  - **Renderização Síncrona Instantânea**: O item é desenhado imediatamente ao iniciar a rodada, sem depender de loop assíncrono de animação que pudesse ser cancelado antes do primeiro frame.
+  - **Cálculo Seguro de Coordenadas (`safeW`, `safeH`)**: Impede que telas menores ou proporções reduzidas gerem coordenadas negativas ou fora da área visível.
+  - **Registro Único do Event Listener**: O `setCanvasHandler` agora é registrado uma única vez no início do jogo, roteando dinamicamente para o item atual sem reanexar listeners repetidamente.
   - **Sequência Balanceada (70% Alvos / 30% Inibição)**: Criação de baralho pré-estruturado (10 círculos azuis e 4 vermelhos), com o **primeiro item garantidamente AZUL (`🔵`)**.
-  - **Temporizador de Janela de Resposta (1800ms)**: Cada estímulo possui um anel visual dinâmico de tempo em `requestAnimationFrame`.
+  - **Temporizador de Janela de Resposta (1800ms)**: Cada estímulo possui controle de tempo preciso com auto-avanço.
   - **Recompensa por Inibição Bem-Sucedida**: Se o paciente ignora o círculo vermelho e o tempo expira, o sistema pontua positivamente (+10 pontos, `recordAttempt(true)`), toca som de sucesso e exibe "✓ Foco mantido!", avançando automaticamente para o próximo estímulo.
   - **Detecção de Erro de Comissão**: Se o paciente toca impulsivamente no círculo vermelho, o erro é registrado (`recordAttempt(false)`), exibindo anel de alerta e avançando.
-  - **Padronização para Demais Jogos Go/No-Go**: A mesma lógica clínica de auto-avanço e inibição foi estendida aos jogos de Inibir Resposta (Jogo 5 - Quadrados vs Círculos), Controle de Impulsos (Jogo 26 - Semáforo Verde) e Classificação (Jogo 24 - Animais vs Objetos).
-  - **Limpeza de Timers e Animações**: `clearTimers()` e `removeCanvasListeners()` agora cancelam explicitamente `activeTimeout` e `activeAnimFrame`.
+  - **Padronização para Demais Jogos Go/No-Go**: A mesma lógica clínica foi estendida aos jogos de Inibir Resposta (Jogo 5), Controle de Impulsos (Jogo 26) e Classificação (Jogo 24).
 
 #### 4. Validação Técnica
 - **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (Código 0, 0 erros).

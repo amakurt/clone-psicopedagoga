@@ -765,14 +765,6 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.canvasClickHandler = null;
       }
     }
-    if (this.gameData?.activeTimeout) {
-      clearTimeout(this.gameData.activeTimeout);
-      this.gameData.activeTimeout = null;
-    }
-    if (this.gameData?.activeAnimFrame) {
-      cancelAnimationFrame(this.gameData.activeAnimFrame);
-      this.gameData.activeAnimFrame = null;
-    }
   }
 
   getPointerPos(canvas: HTMLCanvasElement, clientX: number, clientY: number): { x: number; y: number } {
@@ -2051,17 +2043,155 @@ export class JogosComponent implements OnInit, OnDestroy {
     const session = buildSequence();
     let currentIndex = 0;
     let isTransitioning = false;
-    const itemFontSize = Math.max(34, Math.min(52, W * 0.098));
-    const hitRadius = Math.max(56, itemFontSize * 1.15);
+    const radius = Math.max(26, Math.min(38, W * 0.08));
+    const hitRadius = Math.max(56, radius * 1.5);
+
+    // Registro ÚNICO do event listener no canvas
+    let currentHandler: ((mx: number, my: number) => void) | null = null;
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (currentHandler) {
+        currentHandler(mx, my);
+      }
+    });
+
+    const drawItem = (symbol: string, x: number, y: number, isTarget: boolean, pulseColor: string | null = null) => {
+      ctx.clearRect(0, 0, W, H);
+
+      if (symbol === '🔵') {
+        // CÍRCULO AZUL VETORIAL (Alvo de Atenção Dividida - 100% garantido e visível)
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+        ctx.fill();
+
+        ctx.strokeStyle = pulseColor || '#38bdf8';
+        ctx.lineWidth = pulseColor ? 4 : 3;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ponto de brilho interno para efeito tridimensional
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.beginPath();
+        ctx.arc(x - radius * 0.32, y - radius * 0.32, radius * 0.24, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+
+      if (symbol === '🔴') {
+        // CÍRCULO VERMELHO VETORIAL (Distrator de Inibição - 100% garantido e visível)
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+        ctx.fill();
+
+        ctx.strokeStyle = pulseColor || '#f87171';
+        ctx.lineWidth = pulseColor ? 4 : 3;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ponto de brilho interno
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.beginPath();
+        ctx.arc(x - radius * 0.32, y - radius * 0.32, radius * 0.24, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+
+      if (symbol === '🟢') {
+        // CÍRCULO VERDE
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 10, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
+        ctx.fill();
+
+        ctx.strokeStyle = pulseColor || '#34d399';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 3, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+
+      if (symbol === '🟡') {
+        // CÍRCULO AMARELO
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+        ctx.fill();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+
+      if (symbol === '⬜') {
+        // QUADRADO VETORIAL
+        const size = radius * 1.8;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(x - size / 2, y - size / 2, size, size, 8);
+        ctx.fill();
+        ctx.strokeStyle = pulseColor || '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        return;
+      }
+
+      if (symbol === '⭐') {
+        // ESTRELA DOURADA
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+        ctx.fill();
+
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#facc15';
+        ctx.font = `bold ${Math.max(20, radius * 1.0)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★', x, y + 1);
+        return;
+      }
+
+      // Emojis de animais / frutas
+      ctx.beginPath();
+      ctx.arc(x, y, radius + 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fill();
+
+      ctx.font = `${Math.max(30, radius * 1.25)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(symbol, x, y + 2);
+    };
 
     const spawnNext = () => {
       if (this.gameData.activeTimeout) {
         clearTimeout(this.gameData.activeTimeout);
         this.gameData.activeTimeout = null;
-      }
-      if (this.gameData.activeAnimFrame) {
-        cancelAnimationFrame(this.gameData.activeAnimFrame);
-        this.gameData.activeAnimFrame = null;
       }
 
       if (currentIndex >= session.trials.length) {
@@ -2073,57 +2203,21 @@ export class JogosComponent implements OnInit, OnDestroy {
       const trial = session.trials[currentIndex];
       currentIndex++;
 
-      const x = Math.random() * (W - 140) + 70;
-      const y = Math.random() * (H - 140) + 70;
-      const startTime = performance.now();
+      const paddingX = radius + 24;
+      const paddingY = radius + 24;
+      const safeW = Math.max(20, W - paddingX * 2);
+      const safeH = Math.max(20, H - paddingY * 2);
+      const x = Math.random() * safeW + paddingX;
+      const y = Math.random() * safeH + paddingY;
       const duration = session.durationMs;
 
       this.gameInstruction.set(`${session.instruction} (${currentIndex}/${session.trials.length})`);
 
-      // Animação de frame com anel de tempo decorrido
-      const render = (now: number) => {
-        if (isTransitioning) return;
-        const elapsed = now - startTime;
-        const remainingRatio = Math.max(0, 1 - elapsed / duration);
+      // Renderiza o item imediatamente na tela
+      drawItem(trial.symbol, x, y, trial.isTarget);
 
-        ctx.clearRect(0, 0, W, H);
-
-        // Anel de tempo sutil circundando o estímulo
-        const ringRadius = hitRadius * 0.85;
-        ctx.beginPath();
-        ctx.arc(x, y, ringRadius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * remainingRatio, false);
-        ctx.strokeStyle = trial.isTarget ? 'rgba(56, 189, 248, 0.45)' : 'rgba(239, 68, 68, 0.40)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Aura suave de fundo
-        ctx.beginPath();
-        ctx.arc(x, y, itemFontSize * 0.75, 0, Math.PI * 2);
-        ctx.fillStyle = trial.symbol === '⭐'
-          ? 'rgba(56, 189, 248, 0.16)'
-          : trial.symbol === '🔵'
-          ? 'rgba(2, 132, 199, 0.15)'
-          : trial.symbol === '🔴'
-          ? 'rgba(239, 68, 68, 0.15)'
-          : 'rgba(255, 255, 255, 0.05)';
-        ctx.fill();
-
-        // Desenha o símbolo/emoji central
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `${itemFontSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(trial.symbol, x, y + 2);
-
-        if (elapsed < duration && !isTransitioning) {
-          this.gameData.activeAnimFrame = requestAnimationFrame(render);
-        }
-      };
-
-      this.gameData.activeAnimFrame = requestAnimationFrame(render);
-
-      // Handler do clique
-      this.setCanvasHandler(canvas, (mx, my) => {
+      // Define o manipulador do toque no item atual
+      currentHandler = (mx, my) => {
         if (isTransitioning) return;
         const dist = Math.hypot(mx - x, my - y);
 
@@ -2133,10 +2227,7 @@ export class JogosComponent implements OnInit, OnDestroy {
             clearTimeout(this.gameData.activeTimeout);
             this.gameData.activeTimeout = null;
           }
-          if (this.gameData.activeAnimFrame) {
-            cancelAnimationFrame(this.gameData.activeAnimFrame);
-            this.gameData.activeAnimFrame = null;
-          }
+          currentHandler = null;
 
           if (trial.isTarget) {
             // ACERTO NO ALVO
@@ -2148,77 +2239,51 @@ export class JogosComponent implements OnInit, OnDestroy {
             }
             this.gameScore.update(s => s + 10);
 
-            // Anel azul/ciano de acerto
-            ctx.clearRect(0, 0, W, H);
-            ctx.beginPath();
-            ctx.arc(x, y, hitRadius * 0.9, 0, Math.PI * 2);
+            // Halo ciano de acerto
+            drawItem(trial.symbol, x, y, true, '#38bdf8');
             ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.arc(x, y, radius + 12, 0, Math.PI * 2);
             ctx.stroke();
-
-            ctx.font = `${itemFontSize * 1.1}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(trial.symbol, x, y + 2);
           } else {
-            // ERRO DE COMISSÃO (Tocou no não-alvo que devia ignorar!)
+            // ERRO DE COMISSÃO (Tocou no vermelho/distrator que devia ignorar!)
             this.sound.playError();
             this.recordAttempt(false);
 
             // Anel vermelho de erro
-            ctx.clearRect(0, 0, W, H);
-            ctx.beginPath();
-            ctx.arc(x, y, hitRadius * 0.9, 0, Math.PI * 2);
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 3.5;
-            ctx.stroke();
-
-            ctx.font = `${itemFontSize}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(trial.symbol, x, y + 2);
+            drawItem(trial.symbol, x, y, false, '#ef4444');
           }
 
-          setTimeout(spawnNext, 240);
+          this.gameData.activeTimeout = setTimeout(spawnNext, 240);
         }
-      });
+      };
 
-      // TIMEOUT DE APRESENTAÇÃO (Se o tempo expirar sem clique)
+      // TIMEOUT DE APRESENTAÇÃO
       this.gameData.activeTimeout = setTimeout(() => {
         if (isTransitioning) return;
         isTransitioning = true;
-
-        if (this.gameData.activeAnimFrame) {
-          cancelAnimationFrame(this.gameData.activeAnimFrame);
-          this.gameData.activeAnimFrame = null;
-        }
+        currentHandler = null;
 
         if (!trial.isTarget) {
-          // SUCESSO DE INIBIÇÃO! (O jogador ignorou corretamente o círculo vermelho ou distrator!)
+          // SUCESSO DE INIBIÇÃO! (O jogador ignorou corretamente o círculo vermelho!)
           this.sound.playSuccess();
           this.recordAttempt(true, true);
           this.gameScore.update(s => s + 10);
 
-          // Feedback visual sutil de inibição bem-sucedida
-          ctx.clearRect(0, 0, W, H);
-          ctx.beginPath();
-          ctx.arc(x, y, hitRadius * 0.7, 0, Math.PI * 2);
-          ctx.strokeStyle = '#10b981';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-
+          // Feedback visual de sucesso inibitório
+          drawItem(trial.symbol, x, y, false, '#10b981');
           ctx.fillStyle = '#10b981';
           ctx.font = 'bold 13px sans-serif';
           ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('✓ Foco mantido!', x, y - hitRadius * 0.85);
+          ctx.fillText('✓ Foco mantido!', x, y - radius - 14);
 
-          setTimeout(spawnNext, 320);
+          this.gameData.activeTimeout = setTimeout(spawnNext, 340);
         } else {
           // OMISSÃO! (O jogador não tocou a tempo no alvo)
           this.recordAttempt(false);
           ctx.clearRect(0, 0, W, H);
-          setTimeout(spawnNext, 180);
+          this.gameData.activeTimeout = setTimeout(spawnNext, 180);
         }
       }, duration);
     };
