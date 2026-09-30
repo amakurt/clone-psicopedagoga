@@ -39,13 +39,20 @@ import { EscolasService } from '../services/escolas.service';
               <div class="p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <span class="material-icons text-primary">school</span>
                     </div>
                     <div>
-                      <a [routerLink]="['/app/escolas', e.id]" class="font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors">
-                        {{ e.name }}
-                      </a>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <a [routerLink]="['/app/escolas', e.id]" class="font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors">
+                          {{ e.name }}
+                        </a>
+                        @if (e.inep) {
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-primary/10 text-primary border border-primary/20">
+                            INEP: {{ e.inep }}
+                          </span>
+                        }
+                      </div>
                       <div class="flex flex-wrap gap-1 mt-1">
                         @for (level of getLevels(e); track level) {
                           <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-slate-600 text-gray-600 dark:text-slate-300">
@@ -65,11 +72,13 @@ import { EscolasService } from '../services/escolas.service';
                     </div>
                     <div class="flex items-center gap-1">
                       <a [routerLink]="['/app/escolas', e.id]" 
-                        class="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all">
+                        class="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                        title="Visualizar">
                         <span class="material-icons text-[20px]">visibility</span>
                       </a>
                       <a [routerLink]="['/app/escolas', e.id, 'editar']" 
-                        class="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all">
+                        class="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all"
+                        title="Editar">
                         <span class="material-icons text-[20px]">edit</span>
                       </a>
                     </div>

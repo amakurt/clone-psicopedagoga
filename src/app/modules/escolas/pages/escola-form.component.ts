@@ -35,11 +35,23 @@ import { ToastService } from '@shared/components/toast.component';
       <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Informações da Escola</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Nome *</label>
-            <input [(ngModel)]="form.name" 
-              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Nome da escola">
+          <div class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Nome da Escola *</label>
+              <input [(ngModel)]="form.name" 
+                class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Ex: Escola Municipal Monteiro Lobato">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                <span>Código INEP</span>
+                <span class="text-xs text-gray-400 font-normal">8 dígitos</span>
+              </label>
+              <input [(ngModel)]="form.inep" 
+                maxlength="8"
+                class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent font-mono tracking-wider"
+                placeholder="Ex: 12345678">
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Níveis de Ensino</label>
@@ -71,6 +83,12 @@ import { ToastService } from '@shared/components/toast.component';
             </app-phone-input>
           </div>
           <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Contato / Coordenação</label>
+            <input [(ngModel)]="form.contactName" 
+              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Nome do coordenador(a)">
+          </div>
+          <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Email de Contato</label>
             <input [(ngModel)]="form.contactEmail" type="email"
               class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -122,10 +140,12 @@ export class EscolaFormComponent implements OnInit {
 
   form: any = {
     name: '',
+    inep: '',
     levels: [],
     status: 'Ativa',
     phone: '',
     phoneIsWhatsApp: false,
+    contactName: '',
     contactEmail: '',
     notes: '',
     address: {
@@ -156,10 +176,12 @@ export class EscolaFormComponent implements OnInit {
         this.form = {
           ...this.form,
           ...res,
+          inep: res.inep || '',
           levels,
           phone: res.phone || '',
           contactName: res.contactName || '',
           contactEmail: res.contactEmail || '',
+          notes: res.notes || '',
           status: res.status || 'Ativa',
           address: {
             cep: res.cep || '',
@@ -202,12 +224,14 @@ export class EscolaFormComponent implements OnInit {
     this.saving.set(true);
 
     const data: any = {
-      name: this.form.name,
+      name: this.form.name.trim(),
+      inep: this.form.inep ? this.form.inep.trim() : null,
       levels: JSON.stringify(this.form.levels),
       status: this.form.status,
-      contactEmail: this.form.contactEmail,
-      contactName: this.form.contactName,
-      phone: this.form.phone,
+      contactEmail: this.form.contactEmail ? this.form.contactEmail.trim() : null,
+      contactName: this.form.contactName ? this.form.contactName.trim() : null,
+      phone: this.form.phone || null,
+      notes: this.form.notes || null,
       cep: this.form.address?.cep || '',
       street: this.form.address?.street || '',
       number: this.form.address?.number || '',
@@ -216,17 +240,16 @@ export class EscolaFormComponent implements OnInit {
       city: this.form.address?.city || '',
       state: this.form.address?.state || '',
     };
-    if (this.isEdit) data.id = this.id;
-
     const obs = this.isEdit ? this.service.update(this.id, data) : this.service.create(data);
     obs.subscribe({
       next: () => {
         this.toast.success(this.isEdit ? 'Escola atualizada com sucesso' : 'Escola criada com sucesso');
         this.router.navigate(['/app/escolas']);
       },
-      error: () => {
+      error: (err: any) => {
         this.saving.set(false);
-        this.toast.error('Erro ao salvar escola');
+        const errorMsg = err?.error?.error || err?.message || 'Erro ao salvar escola';
+        this.toast.error(errorMsg);
       }
     });
   }

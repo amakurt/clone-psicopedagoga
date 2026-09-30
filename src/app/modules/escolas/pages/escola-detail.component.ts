@@ -17,13 +17,18 @@ import { EscolasService } from '../services/escolas.service';
           </a>
           <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ item()?.name }}</h1>
-            <div class="flex flex-wrap gap-2 mt-1">
+            <div class="flex flex-wrap items-center gap-2 mt-1">
+              @if (item()?.inep) {
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-mono font-semibold bg-primary/10 text-primary border border-primary/20">
+                  INEP: {{ item()?.inep }}
+                </span>
+              }
               @for (level of getLevels(); track level) {
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                   {{ getLevelLabel(level) }}
                 </span>
               }
-              @if (getLevels().length === 0) {
+              @if (getLevels().length === 0 && !item()?.inep) {
                 <span class="text-sm text-gray-400">Sem nível definido</span>
               }
             </div>
@@ -42,21 +47,31 @@ import { EscolasService } from '../services/escolas.service';
           <div class="lg:col-span-2 space-y-6">
             <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informações</h3>
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div>
                   <p class="text-sm text-gray-500 dark:text-slate-400">Status</p>
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold mt-1"
                     [class]="item()?.status === 'Ativa' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'">
                     {{ item()?.status }}
                   </span>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-slate-400">Pacientes</p>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white">{{ item()?.patients?.length || item()?.patientCount || 0 }}</p>
+                  <p class="text-sm text-gray-500 dark:text-slate-400">Código INEP</p>
+                  <p class="text-gray-900 dark:text-white font-mono font-semibold mt-1">{{ item()?.inep || '—' }}</p>
                 </div>
                 <div>
+                  <p class="text-sm text-gray-500 dark:text-slate-400">Pacientes Vinculados</p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white">{{ item()?.patients?.length || item()?.patientCount || 0 }}</p>
+                </div>
+                @if (item()?.contactName) {
+                  <div>
+                    <p class="text-sm text-gray-500 dark:text-slate-400">Contato / Coordenação</p>
+                    <p class="text-gray-900 dark:text-white mt-1">{{ item()?.contactName }}</p>
+                  </div>
+                }
+                <div>
                   <p class="text-sm text-gray-500 dark:text-slate-400">Telefone</p>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 mt-1">
                     <p class="text-gray-900 dark:text-white">{{ item()?.phone || '—' }}</p>
                     @if (item()?.phoneIsWhatsApp) {
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-green-600">
@@ -66,8 +81,8 @@ import { EscolasService } from '../services/escolas.service';
                   </div>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500 dark:text-slate-400">Email</p>
-                  <p class="text-gray-900 dark:text-white">{{ item()?.contactEmail || '—' }}</p>
+                  <p class="text-sm text-gray-500 dark:text-slate-400">Email de Contato</p>
+                  <p class="text-gray-900 dark:text-white mt-1">{{ item()?.contactEmail || '—' }}</p>
                 </div>
               </div>
             </div>

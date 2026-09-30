@@ -9,29 +9,37 @@ router.use(authenticate);
 router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 const schoolSchema = z.object({
-  name: z.string().min(1),
-  levels: z.string().optional(),
-  cep: z.string().optional(),
-  street: z.string().optional(),
-  neighborhood: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  phone: z.string().optional(),
-  contactName: z.string().optional(),
-  contactEmail: z.string().optional(),
-  patientCount: z.number().optional(),
-  status: z.string().optional(),
-  imageUrl: z.string().optional(),
-  notes: z.string().optional(),
+  id: z.string().optional().nullable(),
+  name: z.string().min(1, 'Nome da escola é obrigatório'),
+  inep: z.string().optional().nullable(),
+  levels: z.string().optional().nullable(),
+  cep: z.string().optional().nullable(),
+  street: z.string().optional().nullable(),
+  neighborhood: z.string().optional().nullable(),
+  number: z.string().optional().nullable(),
+  complement: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  state: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  contactName: z.string().optional().nullable(),
+  contactEmail: z.string().optional().nullable(),
+  patientCount: z.number().optional().nullable(),
+  status: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
 });
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
   const { search, status } = req.query;
   const where: any = {};
-  if (search) where.name = { contains: search };
+  if (search) {
+    const s = String(search);
+    where.OR = [
+      { name: { contains: s } },
+      { inep: { contains: s } },
+    ];
+  }
   if (status) where.status = status;
   const escolas = await db.school.findMany({ where, orderBy: { name: 'asc' }, include: { patients: true } });
   res.json({ data: escolas, total: escolas.length });
@@ -46,13 +54,15 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', validate(schoolSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const school = await db.school.create({ data: req.body });
+  const { id, ...data } = req.body;
+  const school = await db.school.create({ data });
   res.status(201).json(school);
 });
 
 router.put('/:id', validate(schoolSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const school = await db.school.update({ where: { id: req.params.id }, data: req.body });
+  const { id, ...data } = req.body;
+  const school = await db.school.update({ where: { id: req.params.id }, data });
   res.json(school);
 });
 

@@ -449,4 +449,81 @@ select.form-control { appearance: auto; cursor: pointer; }
   font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
 }
 
+/* ==========================================================================
+   Configuração Profissional de Impressão (@media print)
+   ========================================================================== */
+@media print {
+  /* 1. Ocultar completamente menus laterais, topo, botões e elementos de navegação do sistema */
+  aside,
+  header,
+  nav,
+  button,
+  .no-print,
+  .print-hide,
+  .icon-tooltip,
+  .cdk-overlay-container,
+  .p-toast,
+  app-main-layout > div > aside,
+  app-main-layout > div > div > header,
+  app-clinical-doc-editor .top-actions-bar,
+  app-clinical-doc-editor .formatting-toolbar {
+    display: none !important;
+  }
+
+  /* 2. Resetar background, margens e scrollbars da página */
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  main {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 3. Ajuste de página A4 padrão para impressoras e PDF */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 12mm 15mm;
+  }
+
+  /* 4. Folha A4 clínica - ocupar 100% da área útil sem molduras escuras */
+  #clinical-a4-sheet,
+  .clinical-a4-sheet,
+  .printable-document {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    background: #ffffff !important;
+  }
+
+  /* 5. Evitar quebra inadequada de seções e tabelas */
+  h1, h2, h3, h4, h5, h6, .keep-together {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  table, figure, img, .signature-box {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+
 
