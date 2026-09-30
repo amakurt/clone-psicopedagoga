@@ -1960,4 +1960,9 @@ npm run start
     - **Progressão Clínica de Span:** 5 níveis escalonando a amplitude de retenção de 2 a 6 blocos consecutivos.
     - **Feedback Multimodal:** Cada bloco possui frequência harmônica exclusiva na escala maior; acendimento com halo luminoso e toques numerados em tempo real.
     - **Tolerância a Erro e Recompensas:** Re-demonstração da sequência caso haja deslize na 1ª tentativa, celebração com confetes e registro de acertos e pontuação.
+- **Diferenciação Completa de Lembre-se dos Objetos (ID 17) e Memória Visual (ID 18):**
+  - **Problema identificado:** Ambos os jogos estavam com `type: 'tap'` sem tratamento específico no `setupTapGame`, caindo por padrão no jogo genérico de toque em frutas (ID 2 - Contagem Rápida), ficando idênticos entre si.
+  - **Solução implementada:**
+    - **Memória Visual (ID 18 - `setupVisualMatchingGame`):** Paradigma neuropsicológico clássico de *Delayed Match-to-Sample* (DMS). Exibe um objeto detalhado em card central com barra regressiva de 2.6s. O card é ocultado (`?`) e surgem 4 opções com distratores para identificação exata do alvo. 5 rodadas com revelação em verde esmeralda e confetes.
+    - **Lembre-se dos Objetos (ID 17 - `setupObjectRecallGame`):** Teste de recordação livre e discriminação em vitrine de múltiplos itens. Exibe uma vitrine de 3 a 5 objetos cotidianos por 3.6s. Os objetos desaparecem da vitrine deixando slots vazios pontilhados. Uma bandeja inferior com 8 opções (alvos + intrusos) é apresentada para a criança tocar e recolocar todos os itens corretos na vitrine.
 

@@ -33,8 +33,8 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 14, name: 'Memória de Formas', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Encontre as formas geométricas iguais', type: 'memory' },
   { id: 15, name: 'Super Memória', category: 'Memória', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Grade 4x4 com 8 pares — desafio máximo', type: 'memory' },
   { id: 16, name: 'Blocos de Corsi (Sequências)', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Memorize a ordem dos blocos espaciais que acendem', type: 'corsi' },
-  { id: 17, name: 'Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados? Toque nos que lembra', type: 'tap' },
-  { id: 18, name: 'Memória Visual', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Veja a imagem e encontre ela entre as opções', type: 'tap' },
+  { id: 17, name: 'Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados? Toque nos que lembra', type: 'object_recall' },
+  { id: 18, name: 'Memória Visual', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Veja a imagem e encontre ela entre as opções', type: 'visual_matching' },
   { id: 19, name: 'Pares de Emojis', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de emojis iguais', type: 'memory' },
   { id: 20, name: 'Memória de Trabalho', category: 'Memória', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Guarde 5 números na memória e repita ao contrário', type: 'tap' },
 
@@ -1165,6 +1165,8 @@ export class JogosComponent implements OnInit, OnDestroy {
         break;
       case 'number_sequence': this.setupNumberSequenceGame(canvas, logicalW, logicalH); break;
       case 'corsi': this.setupCorsiGame(canvas, logicalW, logicalH); break;
+      case 'object_recall': this.setupObjectRecallGame(canvas, logicalW, logicalH); break;
+      case 'visual_matching': this.setupVisualMatchingGame(canvas, logicalW, logicalH); break;
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
       case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'social': this.setupSocialGame(canvas, logicalW, logicalH, jogo.id); break;
@@ -1173,6 +1175,10 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'tap': 
         if (jogo.id === 6) {
           this.setupVisualTrackingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 17) {
+          this.setupObjectRecallGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 18) {
+          this.setupVisualMatchingGame(canvas, logicalW, logicalH);
         } else {
           this.setupTapGame(canvas, logicalW, logicalH, jogo.id);
         }
@@ -2697,6 +2703,676 @@ export class JogosComponent implements OnInit, OnDestroy {
                 this.finishGame();
               }, 1400);
             }
+          }
+          break;
+        }
+      }
+    });
+  }
+
+  // 5d. RECONHECIMENTO VISUAL IMEDIATO / MATCH-TO-SAMPLE (MEMÓRIA VISUAL - ID 18)
+  setupVisualMatchingGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const totalRounds = 5;
+    let currentRound = 0;
+    let phase: 'SHOW' | 'RECALL' = 'SHOW';
+    let isTransitioning = false;
+    let wrongOptionIdx: number | null = null;
+    let animFrameId: number | null = null;
+    let roundTimer: any = null;
+    let showStartTime = 0;
+    const showDurationMs = 2600;
+
+    const itemPool = ['🚀', '⛵', '🏰', '🚁', '🦁', '🎸', '🎨', '🧸', '🚂', '🛸', '👑', '💎', '🦄', '🎯', '🚲', '🌴'];
+
+    interface MatchRound {
+      target: string;
+      options: string[];
+    }
+
+    const generateRounds = (): MatchRound[] => {
+      const shuffled = [...itemPool].sort(() => Math.random() - 0.5);
+      const rounds: MatchRound[] = [];
+
+      for (let r = 0; r < totalRounds; r++) {
+        const target = shuffled[r % shuffled.length];
+        const others = itemPool.filter(it => it !== target).sort(() => Math.random() - 0.5).slice(0, 3);
+        const options = [target, ...others].sort(() => Math.random() - 0.5);
+        rounds.push({ target, options });
+      }
+      return rounds;
+    };
+
+    const rounds = generateRounds();
+    let currentData = rounds[0];
+
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      alpha: number;
+      color: string;
+      size: number;
+    }
+    let particles: Particle[] = [];
+
+    const cleanup = () => {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (roundTimer) {
+        clearTimeout(roundTimer);
+        roundTimer = null;
+      }
+    };
+
+    const spawnSparkles = (cx: number, cy: number) => {
+      const colors = ['#38bdf8', '#facc15', '#10b981', '#ffffff', '#fb923c'];
+      for (let i = 0; i < 28; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 4 + 1.8;
+        particles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1,
+          alpha: 1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 4 + 2
+        });
+      }
+    };
+
+    const centerCardSize = Math.min(108, Math.min(W * 0.32, H * 0.38));
+    const centerX = (W - centerCardSize) / 2;
+    const centerY = H * 0.18;
+
+    const optW = Math.min(84, (W - 50) / 4);
+    const optH = 54;
+    const optGap = Math.max(8, (W - (optW * 4)) / 5);
+    const optStartX = (W - (optW * 4 + optGap * 3)) / 2;
+    const optY = H * 0.66;
+
+    const startShowPhase = (roundIdx: number) => {
+      currentRound = roundIdx;
+      currentData = rounds[roundIdx];
+      phase = 'SHOW';
+      isTransitioning = false;
+      wrongOptionIdx = null;
+      showStartTime = performance.now();
+
+      this.gameInstruction.set(`👀 Memorize o objeto com atenção!`);
+
+      if (roundTimer) clearTimeout(roundTimer);
+      roundTimer = setTimeout(() => {
+        phase = 'RECALL';
+        this.gameInstruction.set(`👉 Qual objeto você acabou de ver? Toque na opção correta!`);
+      }, showDurationMs);
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Badge Superior de Rodada
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      const badgeW = 160;
+      const badgeH = 26;
+      ctx.beginPath();
+      ctx.roundRect((W - badgeW) / 2, 8, badgeW, badgeH, 13);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`RODADA ${currentRound + 1} DE ${totalRounds}`, W / 2, 21);
+
+      // 2. Card Central
+      ctx.save();
+      if (phase === 'SHOW') {
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+        ctx.shadowBlur = 18;
+      } else if (isTransitioning) {
+        ctx.fillStyle = '#064e3b';
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3.5;
+        ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
+        ctx.shadowBlur = 20;
+      } else {
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 250);
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = `rgba(245, 158, 11, ${0.5 + pulse * 0.5})`;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
+        ctx.shadowBlur = 10 + pulse * 6;
+      }
+
+      ctx.beginPath();
+      ctx.roundRect(centerX, centerY, centerCardSize, centerCardSize, 18);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (phase === 'SHOW' || isTransitioning) {
+        ctx.font = `${Math.round(centerCardSize * 0.52)}px sans-serif`;
+        ctx.fillText(currentData.target, centerX + centerCardSize / 2, centerY + centerCardSize / 2);
+
+        if (phase === 'SHOW') {
+          const elapsed = performance.now() - showStartTime;
+          const remainingPct = Math.max(0, 1 - elapsed / showDurationMs);
+          const barW = centerCardSize - 16;
+          const barH = 4;
+          const barX = centerX + 8;
+          const barY = centerY + centerCardSize - 12;
+
+          ctx.fillStyle = '#334155';
+          ctx.beginPath();
+          ctx.roundRect(barX, barY, barW, barH, 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.roundRect(barX, barY, barW * remainingPct, barH, 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 38px sans-serif';
+        ctx.fillText('?', centerX + centerCardSize / 2, centerY + centerCardSize / 2);
+      }
+
+      // 3. Opções
+      if (phase === 'RECALL') {
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '600 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ESCOLHA O OBJETO QUE VOCÊ VIU:', W / 2, optY - 18);
+
+        for (let i = 0; i < currentData.options.length; i++) {
+          const ox = optStartX + i * (optW + optGap);
+          const item = currentData.options[i];
+          const isWrong = wrongOptionIdx === i;
+          const isCorrect = isTransitioning && item === currentData.target;
+
+          ctx.save();
+          if (isWrong) {
+            ctx.fillStyle = '#7f1d1d';
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2.5;
+          } else if (isCorrect) {
+            ctx.fillStyle = '#064e3b';
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+          } else {
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 1.8;
+          }
+
+          ctx.beginPath();
+          ctx.roundRect(ox, optY, optW, optH, 14);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.font = '28px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item, ox + optW / 2, optY + optH / 2);
+        }
+      }
+
+      // 4. Partículas
+      if (particles.length > 0) {
+        for (let pIdx = particles.length - 1; pIdx >= 0; pIdx--) {
+          const p = particles[pIdx];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.alpha -= 0.025;
+
+          if (p.alpha <= 0) {
+            particles.splice(pIdx, 1);
+            continue;
+          }
+
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+      }
+
+      animFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+    startShowPhase(0);
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (phase !== 'RECALL' || isTransitioning) return;
+
+      for (let i = 0; i < currentData.options.length; i++) {
+        const ox = optStartX + i * (optW + optGap);
+        if (mx >= ox && mx <= ox + optW && my >= optY && my <= optY + optH) {
+          const chosen = currentData.options[i];
+
+          if (chosen === currentData.target) {
+            isTransitioning = true;
+            wrongOptionIdx = null;
+
+            this.sound.playSuccess();
+            this.recordAttempt(true, true);
+            this.gameScore.update(s => s + 20);
+
+            spawnSparkles(centerX + centerCardSize / 2, centerY + centerCardSize / 2);
+            this.gameInstruction.set(`⭐ Muito bem! Você acertou o objeto!`);
+
+            roundTimer = setTimeout(() => {
+              if (currentRound + 1 < totalRounds) {
+                startShowPhase(currentRound + 1);
+              } else {
+                cleanup();
+                this.sound.playVictory();
+                this.finishGame();
+              }
+            }, 1100);
+          } else {
+            wrongOptionIdx = i;
+            this.sound.playError();
+            this.recordAttempt(false);
+            this.gameInstruction.set(`Não foi esse! Tente lembrar da forma ou cor.`);
+
+            setTimeout(() => {
+              if (wrongOptionIdx === i) wrongOptionIdx = null;
+            }, 500);
+          }
+          break;
+        }
+      }
+    });
+  }
+
+  // 5e. RECORDAÇÃO LIVRE DE MÚLTIPLOS ITENS (LEMBRE-SE DOS OBJETOS - ID 17)
+  setupObjectRecallGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const showcaseCounts = [3, 3, 4, 5];
+    const totalRounds = showcaseCounts.length;
+    let currentRound = 0;
+    let phase: 'SHOW' | 'RECALL' = 'SHOW';
+    let isTransitioning = false;
+    let animFrameId: number | null = null;
+    let roundTimer: any = null;
+    let showStartTime = 0;
+    const showDurationMs = 3600;
+
+    const itemCatalog = [
+      '⚽', '🚗', '🍎', '🧸', '🎸', '🎈', '🐶', '🍦',
+      '🚀', '👑', '🍌', '🍕', '🚲', '🎨', '🐱', '🔔'
+    ];
+
+    interface ObjectRecallRound {
+      targets: string[];
+      trayOptions: string[];
+    }
+
+    const generateRound = (roundIdx: number): ObjectRecallRound => {
+      const count = showcaseCounts[roundIdx];
+      const shuffled = [...itemCatalog].sort(() => Math.random() - 0.5);
+      const targets = shuffled.slice(0, count);
+      const others = shuffled.slice(count, count + (8 - count));
+      const trayOptions = [...targets, ...others].sort(() => Math.random() - 0.5);
+      return { targets, trayOptions };
+    };
+
+    let currentData = generateRound(0);
+    const foundTargets = new Set<string>();
+    let wrongOptionIdx: number | null = null;
+
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      alpha: number;
+      color: string;
+      size: number;
+    }
+    let particles: Particle[] = [];
+
+    const cleanup = () => {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (roundTimer) {
+        clearTimeout(roundTimer);
+        roundTimer = null;
+      }
+    };
+
+    const spawnSparkles = (cx: number, cy: number) => {
+      const colors = ['#38bdf8', '#facc15', '#10b981', '#ffffff', '#fb923c'];
+      for (let i = 0; i < 28; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 4 + 1.8;
+        particles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1,
+          alpha: 1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 4 + 2
+        });
+      }
+    };
+
+    const startShowPhase = (roundIdx: number) => {
+      currentRound = roundIdx;
+      currentData = generateRound(roundIdx);
+      foundTargets.clear();
+      phase = 'SHOW';
+      isTransitioning = false;
+      wrongOptionIdx = null;
+      showStartTime = performance.now();
+
+      this.gameInstruction.set(`👀 Memorize os ${currentData.targets.length} objetos da vitrine!`);
+
+      if (roundTimer) clearTimeout(roundTimer);
+      roundTimer = setTimeout(() => {
+        phase = 'RECALL';
+        this.gameInstruction.set(`👉 Toque nos objetos que estavam na vitrine! (0/${currentData.targets.length})`);
+      }, showDurationMs);
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Badge Superior de Rodada
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      const badgeW = 160;
+      const badgeH = 26;
+      ctx.beginPath();
+      ctx.roundRect((W - badgeW) / 2, 8, badgeW, badgeH, 13);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`RODADA ${currentRound + 1} DE ${totalRounds}`, W / 2, 21);
+
+      // 2. Vitrine de Objetos (Showcase)
+      const targetCount = currentData.targets.length;
+      const showcaseW = Math.min(W - 32, targetCount * 68 + 24);
+      const showcaseH = 68;
+      const showcaseX = (W - showcaseW) / 2;
+      const showcaseY = 46;
+
+      ctx.save();
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = phase === 'SHOW' ? '#38bdf8' : '#334155';
+      ctx.lineWidth = phase === 'SHOW' ? 2.5 : 1.5;
+      if (phase === 'SHOW') {
+        ctx.shadowColor = 'rgba(56, 189, 248, 0.4)';
+        ctx.shadowBlur = 12;
+      }
+      ctx.beginPath();
+      ctx.roundRect(showcaseX, showcaseY, showcaseW, showcaseH, 16);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Slots da vitrine
+      const slotSize = 50;
+      const slotGap = (showcaseW - 20 - targetCount * slotSize) / Math.max(1, targetCount - 1);
+      const slotStartX = showcaseX + 10;
+
+      for (let s = 0; s < targetCount; s++) {
+        const sx = slotStartX + s * (slotSize + slotGap);
+        const sy = showcaseY + (showcaseH - slotSize) / 2;
+        const targetItem = currentData.targets[s];
+        const isFound = foundTargets.has(targetItem);
+
+        ctx.save();
+        if (phase === 'SHOW') {
+          ctx.fillStyle = '#0f172a';
+          ctx.strokeStyle = '#0284c7';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.roundRect(sx, sy, slotSize, slotSize, 12);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.font = '26px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(targetItem, sx + slotSize / 2, sy + slotSize / 2);
+        } else {
+          if (isFound) {
+            ctx.fillStyle = '#064e3b';
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.roundRect(sx, sy, slotSize, slotSize, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.font = '26px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(targetItem, sx + slotSize / 2, sy + slotSize / 2);
+          } else {
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.roundRect(sx, sy, slotSize, slotSize, 12);
+            ctx.fill();
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#475569';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', sx + slotSize / 2, sy + slotSize / 2);
+          }
+        }
+        ctx.restore();
+      }
+
+      if (phase === 'SHOW') {
+        const elapsed = performance.now() - showStartTime;
+        const remainingPct = Math.max(0, 1 - elapsed / showDurationMs);
+        const barW = showcaseW - 20;
+        const barH = 4;
+        const barX = showcaseX + 10;
+        const barY = showcaseY + showcaseH - 8;
+
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW, barH, 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW * remainingPct, barH, 2);
+        ctx.fill();
+      }
+
+      // 3. Grade de 8 Opções de Objetos
+      if (phase === 'RECALL') {
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '600 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('TOQUE NOS OBJETOS QUE ESTAVAM NA VITRINE:', W / 2, 134);
+
+        const cols = 4;
+        const btnW = Math.min(64, (W - 48) / 4);
+        const btnH = 48;
+        const gapX = Math.max(8, (W - (btnW * 4)) / 5);
+        const gapY = 10;
+        const startX = (W - (btnW * 4 + gapX * 3)) / 2;
+        const startY = 150;
+
+        for (let i = 0; i < currentData.trayOptions.length; i++) {
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const bx = startX + col * (btnW + gapX);
+          const by = startY + row * (btnH + gapY);
+
+          const item = currentData.trayOptions[i];
+          const isFound = foundTargets.has(item);
+          const isWrong = wrongOptionIdx === i;
+
+          ctx.save();
+          if (isWrong) {
+            ctx.fillStyle = '#7f1d1d';
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2.5;
+          } else if (isFound) {
+            ctx.fillStyle = '#064e3b';
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+          } else {
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 1.8;
+          }
+
+          ctx.beginPath();
+          ctx.roundRect(bx, by, btnW, btnH, 12);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.font = '24px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item, bx + btnW / 2, by + btnH / 2);
+        }
+      }
+
+      // 4. Renderizar partículas
+      if (particles.length > 0) {
+        for (let pIdx = particles.length - 1; pIdx >= 0; pIdx--) {
+          const p = particles[pIdx];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.alpha -= 0.025;
+
+          if (p.alpha <= 0) {
+            particles.splice(pIdx, 1);
+            continue;
+          }
+
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+      }
+
+      animFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+    startShowPhase(0);
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (phase !== 'RECALL' || isTransitioning) return;
+
+      const cols = 4;
+      const btnW = Math.min(64, (W - 48) / 4);
+      const btnH = 48;
+      const gapX = Math.max(8, (W - (btnW * 4)) / 5);
+      const gapY = 10;
+      const startX = (W - (btnW * 4 + gapX * 3)) / 2;
+      const startY = 150;
+
+      for (let i = 0; i < currentData.trayOptions.length; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const bx = startX + col * (btnW + gapX);
+        const by = startY + row * (btnH + gapY);
+
+        if (mx >= bx && mx <= bx + btnW && my >= by && my <= by + btnH) {
+          const item = currentData.trayOptions[i];
+
+          if (foundTargets.has(item)) return;
+
+          if (currentData.targets.includes(item)) {
+            foundTargets.add(item);
+            this.sound.playStarCollect();
+            this.recordAttempt(true);
+            this.gameScore.update(s => s + 10);
+
+            spawnSparkles(bx + btnW / 2, by + btnH / 2);
+
+            this.gameInstruction.set(
+              `⭐ Encontrou! (${foundTargets.size}/${currentData.targets.length})`
+            );
+
+            if (foundTargets.size === currentData.targets.length) {
+              isTransitioning = true;
+              this.sound.playSuccess();
+              this.recordAttempt(true, true);
+              this.gameScore.update(s => s + 15);
+
+              spawnSparkles(W / 2, 70);
+
+              if (currentRound + 1 < totalRounds) {
+                this.gameInstruction.set(`🎉 Perfeito! Você lembrou de toda a vitrine!`);
+                roundTimer = setTimeout(() => {
+                  startShowPhase(currentRound + 1);
+                }, 1300);
+              } else {
+                this.gameInstruction.set(`🏆 Incrível! Você completou todas as vitrines!`);
+                roundTimer = setTimeout(() => {
+                  cleanup();
+                  this.sound.playVictory();
+                  this.finishGame();
+                }, 1400);
+              }
+            }
+          } else {
+            wrongOptionIdx = i;
+            this.sound.playError();
+            this.recordAttempt(false);
+            this.gameInstruction.set(`Esse objeto não estava na vitrine! Procure outro.`);
+
+            setTimeout(() => {
+              if (wrongOptionIdx === i) wrongOptionIdx = null;
+            }, 500);
           }
           break;
         }
