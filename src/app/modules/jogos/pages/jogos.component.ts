@@ -21,7 +21,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 3, name: 'Stroop Simples', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Diga a cor da tinta, ignore a palavra escrita', type: 'stroop' },
   { id: 4, name: 'Atenção Dividida', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Toque nos círculos azuis e ignore os vermelhos ao mesmo tempo', type: 'tap' },
   { id: 5, name: 'Inibir Resposta', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Toque apenas nos quadrados — nunca nos círculos', type: 'tap' },
-  { id: 6, name: 'Rastreamento Visual', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Siga a estrela com o olhar e toque nela quando parar', type: 'tap' },
+  { id: 6, name: 'Rastreamento Visual', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Siga a estrela com o olhar e toque nela quando parar', type: 'tracking' },
   { id: 7, name: 'Memória de Cores', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Lembre-se das cores mostradas e repita a sequência', type: 'sequence' },
   { id: 8, name: 'Sequência Numérica', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Complete a sequência de números na ordem correta', type: 'sequence' },
   { id: 9, name: 'Memória de Posições', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Lembre-se de onde cada emoji estava escondido', type: 'memory' },
@@ -1159,7 +1159,14 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'social': this.setupSocialGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'stroop': this.setupStroopGame(canvas, logicalW, logicalH); break;
-      case 'tap': this.setupTapGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'tracking': this.setupVisualTrackingGame(canvas, logicalW, logicalH); break;
+      case 'tap': 
+        if (jogo.id === 6) {
+          this.setupVisualTrackingGame(canvas, logicalW, logicalH);
+        } else {
+          this.setupTapGame(canvas, logicalW, logicalH, jogo.id);
+        }
+        break;
       case 'compare': this.setupCompareGame(canvas, logicalW, logicalH); break;
       default: this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id);
     }
@@ -2289,6 +2296,241 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     spawnNext();
+  }
+
+  // 10. RASTREAMENTO VISUAL (SEGUIMENTO OCULAR SUAVE E FIXAÇÃO SACÁDICA)
+  setupVisualTrackingGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const totalRounds = 8;
+    let roundsDone = 0;
+    let isMoving = false;
+    let isStopped = false;
+    let isTransitioning = false;
+    let animFrameId: number | null = null;
+    let stopTimeout: any = null;
+    let roundTimeout: any = null;
+
+    const starRadius = Math.max(22, Math.min(32, W * 0.065));
+    const hitRadius = Math.max(50, starRadius * 1.6);
+    let targetX = W / 2;
+    let targetY = H / 2;
+
+    const cleanup = () => {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (stopTimeout) {
+        clearTimeout(stopTimeout);
+        stopTimeout = null;
+      }
+      if (roundTimeout) {
+        clearTimeout(roundTimeout);
+        roundTimeout = null;
+      }
+      if (this.gameData?.activeTimeout) {
+        clearTimeout(this.gameData.activeTimeout);
+        this.gameData.activeTimeout = null;
+      }
+    };
+
+    const drawStar = (x: number, y: number, stopped: boolean, pulseProgress: number = 0) => {
+      // 1. Efeito de resplendor / brilho
+      ctx.beginPath();
+      ctx.arc(x, y, starRadius + (stopped ? 10 + pulseProgress * 6 : 6), 0, Math.PI * 2);
+      ctx.fillStyle = stopped
+        ? `rgba(56, 189, 248, ${0.25 - pulseProgress * 0.1})`
+        : 'rgba(56, 189, 248, 0.18)';
+      ctx.fill();
+
+      // 2. Anel de foco se estiver parada (convidando ao toque)
+      if (stopped) {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x, y, starRadius + 4 + pulseProgress * 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 3. Núcleo da estrela (círculo azul profundo)
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.arc(x, y, starRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Estrela dourada no centro
+      ctx.fillStyle = '#facc15';
+      ctx.font = `bold ${Math.max(18, starRadius * 0.95)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', x, y + 1);
+    };
+
+    const newRound = () => {
+      cleanup();
+      isTransitioning = false;
+      isStopped = false;
+      isMoving = true;
+
+      if (roundsDone >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      roundsDone++;
+
+      // Cria trajetória cinemática clínica para esta rodada
+      const padding = starRadius + 30;
+      const startX = Math.random() > 0.5 ? padding : W - padding;
+      const startY = Math.random() * (H - padding * 2) + padding;
+      const endX = startX === padding ? W - padding : padding;
+      const endY = Math.random() * (H - padding * 2) + padding;
+
+      // Ponto de controle para curva Bezier suave
+      const ctrlX = W / 2 + (Math.random() - 0.5) * (W * 0.35);
+      const ctrlY = Math.random() > 0.5 ? padding : H - padding;
+
+      // Duração da movimentação (2.4 a 2.8 segundos - velocidade ideal para rastreamento visual)
+      const travelDuration = 2600;
+      const moveStartTime = performance.now();
+      const trailPoints: Array<{ x: number; y: number }> = [];
+
+      this.gameInstruction.set(`Rodada ${roundsDone}/${totalRounds} · 👀 Siga a estrela com os olhos...`);
+
+      const animateMove = (now: number) => {
+        const elapsed = now - moveStartTime;
+        const t = Math.min(1, elapsed / travelDuration);
+
+        // Interpolação suave Bezier com aceleração e desaceleração gradual
+        const te = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        const currentX = (1 - te) * (1 - te) * startX + 2 * (1 - te) * te * ctrlX + te * te * endX;
+        const currentY = (1 - te) * (1 - te) * startY + 2 * (1 - te) * te * ctrlY + te * te * endY;
+
+        targetX = currentX;
+        targetY = currentY;
+
+        // Adiciona ponto de rastro luminoso
+        trailPoints.push({ x: currentX, y: currentY });
+        if (trailPoints.length > 20) trailPoints.shift();
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Desenha cauda de poeira estelar suave (Trail)
+        trailPoints.forEach((pt, i) => {
+          const ratio = i / trailPoints.length;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, starRadius * (0.2 + ratio * 0.45), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(56, 189, 248, ${ratio * 0.25})`;
+          ctx.fill();
+        });
+
+        // Desenha a estrela em movimento
+        drawStar(currentX, currentY, false);
+
+        if (t < 1) {
+          animFrameId = requestAnimationFrame(animateMove);
+        } else {
+          onStarStopped(endX, endY);
+        }
+      };
+
+      const onStarStopped = (finalX: number, finalY: number) => {
+        isMoving = false;
+        isStopped = true;
+        targetX = finalX;
+        targetY = finalY;
+
+        this.sound.playClick();
+        this.gameInstruction.set(`Rodada ${roundsDone}/${totalRounds} · ⭐ PAROU! Toque rápido na estrela!`);
+
+        const stopStartTime = performance.now();
+        const pulseLoop = (now: number) => {
+          if (!isStopped || isTransitioning) return;
+          const stopElapsed = (now - stopStartTime) / 1000;
+          const pulse = (Math.sin(stopElapsed * 6) + 1) / 2;
+
+          ctx.clearRect(0, 0, W, H);
+          drawStar(targetX, targetY, true, pulse);
+
+          animFrameId = requestAnimationFrame(pulseLoop);
+        };
+        animFrameId = requestAnimationFrame(pulseLoop);
+
+        // Se o paciente não tocar em 4.5 segundos, avisa e avança
+        roundTimeout = setTimeout(() => {
+          if (!isStopped || isTransitioning) return;
+          isTransitioning = true;
+          this.recordAttempt(false);
+          newRound();
+        }, 4500);
+      };
+
+      animFrameId = requestAnimationFrame(animateMove);
+    };
+
+    // Handler de toque no canvas
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (isTransitioning) return;
+
+      if (isMoving) {
+        // Tocou enquanto ainda estava se movendo
+        this.sound.playClick();
+        this.gameInstruction.set(`Rodada ${roundsDone}/${totalRounds} · Espere ela parar! Continue seguindo com os olhos 👀`);
+        return;
+      }
+
+      if (isStopped) {
+        const dist = Math.hypot(mx - targetX, my - targetY);
+        if (dist <= hitRadius) {
+          isTransitioning = true;
+          isStopped = false;
+          cleanup();
+
+          this.sound.playStarCollect();
+          this.recordAttempt(true, true);
+          this.gameScore.update(s => s + 15);
+
+          // Efeito de celebração no acerto
+          const hitStart = performance.now();
+          const burstAnim = (now: number) => {
+            const burstElapsed = now - hitStart;
+            const progress = Math.min(1, burstElapsed / 260);
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Anel expansivo
+            ctx.beginPath();
+            ctx.arc(targetX, targetY, starRadius + progress * 32, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(56, 189, 248, ${1 - progress})`;
+            ctx.lineWidth = 3.5 * (1 - progress * 0.5);
+            ctx.stroke();
+
+            // Estrelinhas saindo em 6 direções
+            const pDist = progress * 30;
+            for (let i = 0; i < 6; i++) {
+              const ang = (i * Math.PI) / 3;
+              const px = targetX + Math.cos(ang) * (starRadius + pDist);
+              const py = targetY + Math.sin(ang) * (starRadius + pDist);
+              ctx.fillStyle = `rgba(250, 204, 21, ${1 - progress})`;
+              ctx.beginPath();
+              ctx.arc(px, py, 2.5 * (1 - progress * 0.4), 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            drawStar(targetX, targetY, true, 0);
+
+            if (progress < 1) {
+              animFrameId = requestAnimationFrame(burstAnim);
+            } else {
+              setTimeout(newRound, 120);
+            }
+          };
+
+          animFrameId = requestAnimationFrame(burstAnim);
+        }
+      }
+    });
+
+    newRound();
   }
 
   // 9. COMPARAÇÃO MATEMÁTICA (< , = , >)

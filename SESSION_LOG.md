@@ -1898,6 +1898,36 @@ npm run start
   - Frontend: Sanitização do formulário no carregamento (`ngOnInit`), na seleção de registros anteriores (`editRecord`) e no payload de envio (`save`).
 - **Validação:** Fluxo de edição e alteração de horário testado no navegador com sucesso sem nenhum erro.
 
+---
 
+## Sessão 32 - 30/09/2026 — Integração Global do Editor Clínico, Modais Padronizados e Motor de Jogos Cognitivos
 
+### O que foi feito
 
+#### 1. Integração Global do Editor de Texto Clínico A4
+- Substituição de textareas simples pelo componente reutilizável `RichTextEditorComponent` em múltiplos módulos clínicos:
+  - **Planos de Intervenção / PEI / PDI:** Edição estruturada com suporte a formatação A4, cabeçalhos, marcadores e checklist.
+  - **Encaminhamentos:** Editor enriquecido com carregamento dinâmico de modelos predefinidos.
+  - **Acordo Terapêutico:** Termos e acordos com diagramação profissional.
+
+#### 2. Padronização de Diálogos com `ConfirmModalComponent`
+- Remoção de `window.confirm()` cru em `encaminhamentos-form.component.ts` e `plano-form.component.ts`.
+- Inclusão do modal institucional com suporte a tema escuro, botões estilizados, título contextual e mensagens de confirmação elegantes ao alternar modelos de texto.
+
+#### 3. Polimento e Correção dos Jogos Cognitivos (`jogos.component.ts`)
+- **Caça às Estrelas (ID 1):**
+  - Ajuste fino da detecção de toque com margem de tolerância adaptativa (50px).
+  - Síntese de áudio imediata via Web Audio API (`playStarCollect`) com acordes cintilantes em frequência ascendente (523Hz → 659Hz → 784Hz).
+  - Efeito de explosão com partículas douradas e feedback tátil/visual instantâneo.
+- **Atenção Dividida / Inibição Go/No-Go (ID 2):**
+  - Correção na geração de estímulos: garantia de 1 a 3 círculos azuis (alvo / GO) balanceados com 1 a 3 círculos vermelhos (distrator / NO-GO).
+  - Renderização vetorial nativa no Canvas HTML5 com anéis concêntricos e sombras luminosas, eliminando falhas de exibição de sprites.
+- **Rastreamento Visual (ID 6 - Motor Cinemático de Seguimento Ocular):**
+  - **Problema identificado:** O jogo estava classificado erroneamente como `type: 'tap'`, fazendo com que o objeto já aparecesse estático e apenas pulasse de coordenada após o clique.
+  - **Solução implementada:**
+    - Reclassificação para `type: 'tracking'` e criação do motor dedicado `setupVisualTrackingGame`.
+    - **Trajetória Cinemática Suave:** Movimentação em curvas de Bézier quadráticas com amortecimento `easeInOutQuad`, simulando a velocidade ideal de seguimento ocular contínuo (perseguição visual lenta).
+    - **Rastro de Poeira Estelar (Stardust Trail):** Partículas translúcidas que demarcam a trajetória do objeto para guiar o olhar da criança.
+    - **Instruções Dinâmicas:** Exibe *"👀 Siga a estrela com os olhos..."* durante o movimento. Caso tocada antes de parar, fornece aviso amigável sem penalizar.
+    - **Parada e Alerta Sonoro:** Ao atingir o destino, a estrela desacelera suavemente até parar por completo, emite um chime suave de notificação e exibe anéis de pulso concêntricos.
+    - **Toque com Recompensa:** O usuário toca na estrela parada, disparando o som de acerto, +15 pontos e explosão dourada antes de iniciar o próximo arco de perseguição ocular (8 rodadas clínicas).
