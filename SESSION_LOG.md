@@ -4,6 +4,47 @@
 
 ---
 
+## Sessão 49 - 30/09/2026 — Polimento dos Jogos Terapêuticos: Correção de Detecção de Cliques, Prevenção de Colisões, Feedback Visual e Síntese de Áudio no Jogo Caça à Estrela
+
+### O que foi feito
+
+#### 1. Correção Crítica no Jogo "Caça à Estrela" (Atenção e Foco Visual)
+- **Causa Raiz Identificada**:
+  - As formas eram geradas em coordenadas aleatórias sem verificação de distância mínima (`Math.random()`), provocando sobreposição de distratores cinza diretamente sobre a estrela alvo.
+  - Ao clicar, o loop verificava a primeira forma próxima na lista. Se um distrator sobreposto estivesse antes da estrela no array, ele interceptava o clique registrando erro (`hitTarget = false`), não chamava `newRound()` e a estrela ficava congelada na tela.
+  - O raio de detecção (`radius + 8` ≈ 28px) era muito estrito para crianças e telas touch, gerando cliques silenciosos e ignorados.
+  - Faltava feedback visual imediato ao tocar a estrela ou distrator.
+- **Solução Implementada em `src/app/modules/jogos/pages/jogos.component.ts`**:
+  - **Algoritmo Anti-Sobreposição (Poisson-Disc / Separação Mínima)**: Todas as 8 formas agora respeitam distância mínima garantida (`radius * 2.8`), impedindo qualquer sobreposição entre círculos e o alvo.
+  - **Prioridade Absoluta ao Alvo**: A estrela alvo é sempre avaliada primeiro com uma zona de toque generosa e acessível (`Math.max(radius + 16, 36)` px, área mínima de toque de ~72px).
+  - **Trava de Transição Reativa (`isTransitioning`)**: Evita processamento de cliques duplicados ou múltiplos agendamentos concorrentes de rodada.
+  - **Animação Visual de Acerto**: Efeito fluido de resplendor/halo estelar com onda expansiva e 6 partículas de brilho em `requestAnimationFrame` (240ms) antes de avançar para a próxima rodada.
+  - **Feedback Visual de Erro**: Caso o paciente toque em um distrator neutro, a borda do círculo pulsa em vermelho/coral sutil (`#ef4444`) por 180ms indicando desvio, sem travar a tela e permitindo tocar a estrela logo em seguida.
+
+#### 2. Sintetizador de Áudio Clínico Nativo (`ClinicalSoundSynthesizer`)
+- **Desbloqueio Garantido de Áudio (`ensureUnlocked`)**:
+  - O método `ensureUnlocked()` agora é disparado no primeiro evento de ponteiro do usuário (`pointerdown`/`touchstart`/`click`), garantindo que o `AudioContext` do navegador saia imediatamente do estado `suspended` (requisito de Autoplay Policy dos navegadores).
+- **Novo Som Exclusivo de Captura de Estrela (`playStarCollect`)**:
+  - Arpejo cristalino ascendente com 3 notas brilhantes (E5 659.25Hz → A5 880.00Hz → E6 1318.51Hz) e decaimento em shimmer.
+- **Ganho e Curvas de Áudio Balanceados**:
+  - Volumes elevados de ~0.08 para níveis claros e confortáveis (0.18 a 0.24) em `playClick`, `playSuccess`, `playCombo`, `playError` e `playVictory`.
+  - Agendamentos de tempo com buffer de segurança (`ctx.currentTime + 0.005`) eliminando ruídos e cortes no início da onda.
+- **Suporte a `suppressSound` em `recordAttempt`**:
+  - Permite que jogos com áudio temático exclusivo (como a estrela) toquem seus efeitos sem conflito de notas com o sintetizador genérico de combo.
+
+#### 3. Polimento nos Demais Jogos em Canvas
+- **Jogo 6 ("Rastreamento Visual" com Estrela `⭐`) e Jogos de Reação Rápida (`setupTapGame`)**:
+  - Zona de toque expandida (`Math.max(54, itemFontSize * 1.05)`).
+  - Trava de disparo para evitar pulo de itens em cliques rápidos.
+  - Integração do som especial `playStarCollect()` ao tocar a estrela e efeito visual de anel de pulso.
+- **Jogos Stroop, Fonológico e Socioemocional**:
+  - Travas `isTransitioning` adicionadas aos manipuladores de toque para evitar pulos acidentais de perguntas e duplicidade de pontuação em cliques rápidos.
+
+#### 4. Validação Técnica
+- **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (Código 0, 0 erros).
+
+---
+
 ## Sessão 48 - 30/09/2026 — Expansão do Editor Clínico A4 com Papel Timbrado e 37 Modelos para Planos (PEI/PDI), Encaminhamentos e Contratos
 
 ### O que foi feito

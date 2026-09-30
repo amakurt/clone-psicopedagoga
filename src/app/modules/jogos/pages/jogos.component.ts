@@ -111,60 +111,94 @@ class ClinicalSoundSynthesizer {
       if (AudioCtx) this.ctx = new AudioCtx();
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
+  }
+
+  /** Garante que o contexto de áudio é desbloqueado no primeiro gesto do usuário */
+  ensureUnlocked() {
+    this.initContext();
   }
 
   playClick() {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(520, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(320, this.ctx.currentTime + 0.04);
-    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+    osc.frequency.setValueAtTime(560, t);
+    osc.frequency.exponentialRampToValueAtTime(320, t + 0.05);
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.04);
+    osc.start(t);
+    osc.stop(t + 0.05);
   }
 
   playFlip() {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(260, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(580, this.ctx.currentTime + 0.07);
-    gain.gain.setValueAtTime(0.06, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.07);
+    osc.frequency.setValueAtTime(280, t);
+    osc.frequency.exponentialRampToValueAtTime(620, t + 0.08);
+    gain.gain.setValueAtTime(0.16, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.07);
+    osc.start(t);
+    osc.stop(t + 0.08);
   }
 
   playSuccess() {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
     const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 (Tríade Maior agradável)
     notes.forEach((freq, i) => {
       const osc = this.ctx!.createOscillator();
       const gain = this.ctx!.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, this.ctx!.currentTime + i * 0.05);
-      gain.gain.setValueAtTime(0.09, this.ctx!.currentTime + i * 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx!.currentTime + i * 0.05 + 0.22);
+      const noteT = t + i * 0.055;
+      osc.frequency.setValueAtTime(freq, noteT);
+      gain.gain.setValueAtTime(0.22, noteT);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteT + 0.24);
       osc.connect(gain);
       gain.connect(this.ctx!.destination);
-      osc.start(this.ctx!.currentTime + i * 0.05);
-      osc.stop(this.ctx!.currentTime + i * 0.05 + 0.22);
+      osc.start(noteT);
+      osc.stop(noteT + 0.24);
+    });
+  }
+
+  /** Som especial cristalino de captura de estrela (Arpejo Brilhante) */
+  playStarCollect() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
+    // Notas ascendentes brilhantes: E5 (659.25), A5 (880.00), E6 (1318.51)
+    const tones = [659.25, 880.00, 1318.51];
+    tones.forEach((freq, i) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = i === 2 ? 'sine' : 'triangle';
+      const noteT = t + i * 0.06;
+      const dur = 0.26;
+      osc.frequency.setValueAtTime(freq, noteT);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.04, noteT + dur);
+      gain.gain.setValueAtTime(0.24, noteT);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteT + dur);
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+      osc.start(noteT);
+      osc.stop(noteT + dur);
     });
   }
 
@@ -172,53 +206,58 @@ class ClinicalSoundSynthesizer {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
-    const baseFreq = Math.min(1000, 440 + multiplier * 60);
+    const t = this.ctx.currentTime + 0.005;
+    const baseFreq = Math.min(1080, 480 + multiplier * 65);
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.3, this.ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+    osc.frequency.setValueAtTime(baseFreq, t);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.35, t + 0.14);
+    gain.gain.setValueAtTime(0.24, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.12);
+    osc.start(t);
+    osc.stop(t + 0.14);
   }
 
   playError() {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
+    // Tom clínico suave de desvio (duplo tom sutil e distinto, sem agredir)
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(240, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(190, this.ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.07, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.linearRampToValueAtTime(180, t + 0.14);
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.12);
+    osc.start(t);
+    osc.stop(t + 0.14);
   }
 
   playVictory() {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
     const notes = [523.25, 659.25, 783.99, 1046.50];
     notes.forEach((freq, idx) => {
       const osc = this.ctx!.createOscillator();
       const gain = this.ctx!.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, this.ctx!.currentTime + idx * 0.08);
-      gain.gain.setValueAtTime(0.12, this.ctx!.currentTime + idx * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx!.currentTime + idx * 0.08 + 0.35);
+      const noteT = t + idx * 0.08;
+      osc.frequency.setValueAtTime(freq, noteT);
+      gain.gain.setValueAtTime(0.24, noteT);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteT + 0.35);
       osc.connect(gain);
       gain.connect(this.ctx!.destination);
-      osc.start(this.ctx!.currentTime + idx * 0.08);
-      osc.stop(this.ctx!.currentTime + idx * 0.08 + 0.35);
+      osc.start(noteT);
+      osc.stop(noteT + 0.35);
     });
   }
 
@@ -226,34 +265,37 @@ class ClinicalSoundSynthesizer {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(pitch, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.09, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+    osc.frequency.setValueAtTime(pitch, t);
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.12);
+    osc.start(t);
+    osc.stop(t + 0.12);
   }
 
   playMusicalNote(freq: number) {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.11, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.28);
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.20, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.28);
+    osc.start(t);
+    osc.stop(t + 0.28);
   }
 }
+
 
 @Component({
   selector: 'app-jogos',
@@ -742,6 +784,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     let lastHandledTime = 0;
 
     const processPointer = (clientX: number, clientY: number, e: Event) => {
+      this.sound.ensureUnlocked();
       const now = Date.now();
       if (now - lastHandledTime < 50) return;
       lastHandledTime = now;
@@ -837,7 +880,7 @@ export class JogosComponent implements OnInit, OnDestroy {
   }
 
   // Métricas
-  recordAttempt(isCorrect: boolean) {
+  recordAttempt(isCorrect: boolean, suppressSound: boolean = false) {
     this.gameMetrics.totalAttempts++;
     const now = Date.now();
     if (this.gameMetrics.lastStimulusTime > 0) {
@@ -854,14 +897,18 @@ export class JogosComponent implements OnInit, OnDestroy {
       if (this.gameMetrics.streak > this.gameMetrics.maxStreak) {
         this.gameMetrics.maxStreak = this.gameMetrics.streak;
       }
-      if (this.gameMetrics.streak >= 2) {
-        this.sound.playCombo(this.gameMetrics.streak);
-      } else {
-        this.sound.playSuccess();
+      if (!suppressSound) {
+        if (this.gameMetrics.streak >= 2) {
+          this.sound.playCombo(this.gameMetrics.streak);
+        } else {
+          this.sound.playSuccess();
+        }
       }
     } else {
       this.gameMetrics.streak = 0;
-      this.sound.playError();
+      if (!suppressSound) {
+        this.sound.playError();
+      }
     }
 
     const acc = Math.round((this.gameMetrics.correctHits / Math.max(1, this.gameMetrics.totalAttempts)) * 100);
@@ -1244,8 +1291,10 @@ export class JogosComponent implements OnInit, OnDestroy {
     const colorNames = ['VERMELHO', 'AZUL', 'VERDE', 'AMARELO', 'TURQUESA'];
     let questionIndex = 0;
     const maxQuestions = 10;
+    let isTransitioning = false;
 
     const showQuestion = () => {
+      isTransitioning = false;
       if (questionIndex >= maxQuestions) {
         this.finishGame();
         return;
@@ -1293,9 +1342,11 @@ export class JogosComponent implements OnInit, OnDestroy {
       this.gameInstruction.set(`Desafio ${questionIndex}/${maxQuestions} · Qual é a cor da tinta?`);
 
       this.setCanvasHandler(canvas, (mx, my) => {
+        if (isTransitioning) return;
         colors.forEach((c, i) => {
           const x = startX + i * (bw + 8);
           if (mx >= x && mx <= x + bw && my >= startY && my <= startY + bh) {
+            isTransitioning = true;
             const correct = c === answerColor;
             this.recordAttempt(correct);
             if (correct) {
@@ -1405,74 +1456,196 @@ export class JogosComponent implements OnInit, OnDestroy {
     });
   }
 
-  // 4. ATENÇÃO E FOCO VISUAL (CAÇA À ESTRELA / RASTREAMENTO)
+  // 4. ATENÇÃO E FOCO VISUAL (CAÇA À ESTRELA)
   setupAttentionGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
-    let targetIdx = -1;
-    let shapes: Array<{x: number, y: number, isTarget: boolean}> = [];
+    interface AttentionShape {
+      x: number;
+      y: number;
+      isTarget: boolean;
+      errorFlash?: boolean;
+    }
+    let shapes: AttentionShape[] = [];
     const totalRounds = 10;
     let roundsDone = 0;
-    const radius = Math.max(18, Math.min(26, W * 0.048));
+    const radius = Math.max(20, Math.min(28, W * 0.052));
+    let isTransitioning = false;
+    let animFrameId: number | null = null;
 
-    const newRound = () => {
-      if (roundsDone >= totalRounds) {
-        this.finishGame();
-        return;
-      }
-      roundsDone++;
-      shapes = Array.from({length: 8}, () => ({
-        x: Math.random() * (W - radius * 4) + radius * 2,
-        y: Math.random() * (H - radius * 4) + radius * 2,
-        isTarget: false
-      }));
-      targetIdx = Math.floor(Math.random() * shapes.length);
-      shapes[targetIdx].isTarget = true;
-
+    const renderBoard = () => {
       ctx.clearRect(0, 0, W, H);
 
       shapes.forEach((s) => {
         if (s.isTarget) {
-          // Alvo Estelar com anel de foco
-          ctx.fillStyle = '#0284c7';
+          // Efeito de resplendor externo (Glow / Halo de Foco)
           ctx.beginPath();
-          ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+          ctx.arc(s.x, s.y, radius + 8, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
           ctx.fill();
 
+          // Anel de foco estelar
           ctx.strokeStyle = '#38bdf8';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.arc(s.x, s.y, radius + 4, 0, Math.PI * 2);
           ctx.stroke();
 
+          // Círculo central da estrela
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Estrela central brilhante
           ctx.fillStyle = '#ffffff';
-          ctx.font = `bold ${Math.max(14, radius * 0.8)}px sans-serif`;
+          ctx.font = `bold ${Math.max(16, radius * 0.9)}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('★', s.x, s.y);
+          ctx.fillText('★', s.x, s.y + 0.5);
         } else {
-          // Distratores
-          ctx.fillStyle = '#334155';
+          // Distratores (Círculos neutros com borda sutil ou flash de erro)
+          ctx.fillStyle = s.errorFlash ? '#451a1a' : '#1e293b';
           ctx.beginPath();
           ctx.arc(s.x, s.y, radius - 2, 0, Math.PI * 2);
           ctx.fill();
+
+          ctx.strokeStyle = s.errorFlash ? '#ef4444' : '#334155';
+          ctx.lineWidth = s.errorFlash ? 2.5 : 1.5;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, radius - 2, 0, Math.PI * 2);
+          ctx.stroke();
         }
       });
+    };
 
+    const animateCelebration = (centerX: number, centerY: number, onComplete: () => void) => {
+      const startTime = performance.now();
+      const duration = 240;
+
+      const step = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+
+        renderBoard();
+
+        // Onda de choque / anel de energia estelar
+        const waveRadius = radius + progress * 32;
+        const alpha = Math.max(0, 1 - progress);
+        ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+        ctx.lineWidth = 3 * (1 - progress * 0.5);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, waveRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Pequenas partículas de brilho estelar saindo em 6 direções
+        const particleDist = progress * 28;
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * Math.PI) / 3;
+          const px = centerX + Math.cos(angle) * (radius + particleDist);
+          const py = centerY + Math.sin(angle) * (radius + particleDist);
+          ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(px, py, 2.5 * (1 - progress * 0.4), 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (progress < 1) {
+          animFrameId = requestAnimationFrame(step);
+        } else {
+          animFrameId = null;
+          onComplete();
+        }
+      };
+
+      animFrameId = requestAnimationFrame(step);
+    };
+
+    const newRound = () => {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      isTransitioning = false;
+
+      if (roundsDone >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      roundsDone++;
+
+      // Geração de formas garantindo distância mínima (Sem sobreposição!)
+      const shapeCount = 8;
+      const minDistance = radius * 2.8;
+      const paddingX = radius + 24;
+      const paddingY = radius + 24;
+      const generated: AttentionShape[] = [];
+
+      for (let i = 0; i < shapeCount; i++) {
+        let placed = false;
+        let attempts = 0;
+        let x = 0;
+        let y = 0;
+
+        while (!placed && attempts < 90) {
+          attempts++;
+          x = Math.random() * (W - paddingX * 2) + paddingX;
+          y = Math.random() * (H - paddingY * 2) + paddingY;
+          const overlap = generated.some(s => Math.hypot(s.x - x, s.y - y) < minDistance);
+          if (!overlap) {
+            placed = true;
+          }
+        }
+        if (!placed) {
+          // Fallback seguro em telas menores
+          x = Math.random() * (W - paddingX * 2) + paddingX;
+          y = Math.random() * (H - paddingY * 2) + paddingY;
+        }
+        generated.push({ x, y, isTarget: false });
+      }
+
+      const targetIdx = Math.floor(Math.random() * generated.length);
+      generated[targetIdx].isTarget = true;
+      shapes = generated;
+
+      renderBoard();
       this.gameInstruction.set(`Rodada ${roundsDone}/${totalRounds} · Toque rápido na ESTRELA AZUL!`);
     };
 
     this.setCanvasHandler(canvas, (mx, my) => {
-      for (const s of shapes) {
-        const dist = Math.sqrt((mx - s.x) ** 2 + (my - s.y) ** 2);
-        if (dist < radius + 8) {
-          const hitTarget = s.isTarget;
-          this.recordAttempt(hitTarget);
-          if (hitTarget) {
-            this.gameScore.update(score => score + 10);
-            setTimeout(newRound, 200);
-          }
-          break;
+      if (isTransitioning) return;
+
+      // 1. PRIORIDADE MÁXIMA AO ALVO (ESTRELA) com raio de toque generoso
+      const targetShape = shapes.find(s => s.isTarget);
+      if (targetShape) {
+        const distTarget = Math.hypot(mx - targetShape.x, my - targetShape.y);
+        const targetHitRadius = Math.max(radius + 16, 36);
+
+        if (distTarget <= targetHitRadius) {
+          isTransitioning = true;
+          this.sound.playStarCollect();
+          this.recordAttempt(true, true);
+          this.gameScore.update(score => score + 10);
+
+          animateCelebration(targetShape.x, targetShape.y, () => {
+            newRound();
+          });
+          return;
         }
+      }
+
+      // 2. Verificação de distratores clicados
+      const clickedDistractor = shapes.find(s => !s.isTarget && Math.hypot(mx - s.x, my - s.y) <= radius + 10);
+      if (clickedDistractor) {
+        this.sound.playError();
+        this.recordAttempt(false);
+
+        // Feedback visual imediato no distrator incorreto
+        clickedDistractor.errorFlash = true;
+        renderBoard();
+        setTimeout(() => {
+          clickedDistractor.errorFlash = false;
+          renderBoard();
+        }, 180);
       }
     });
 
@@ -1595,7 +1768,9 @@ export class JogosComponent implements OnInit, OnDestroy {
     const startX = (W - (btnW * 2 + gap)) / 2;
     const startY = H * 0.44;
 
+    let isTransitioning = false;
     const drawQuestion = () => {
+      isTransitioning = false;
       if (currentIdx >= words.length) {
         this.finishGame();
         return;
@@ -1637,12 +1812,14 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (isTransitioning) return;
       const q = words[currentIdx];
       if (!q) return;
       q.options.forEach((opt, i) => {
         const x = startX + (i % 2) * (btnW + gap);
         const y = startY + Math.floor(i / 2) * (btnH + 10);
         if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
+          isTransitioning = true;
           const correct = opt === q.options[0]; // primeira opção do set é o alvo
           this.recordAttempt(correct);
           if (correct) {
@@ -1674,6 +1851,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
     const scenarios = SCENARIOS[gameId] || SCENARIOS[51];
     let currentIdx = 0;
+    let isTransitioning = false;
 
     const btnW = Math.min(220, (W - 60) / 2);
     const btnH = 50;
@@ -1682,6 +1860,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const startY = H * 0.44;
 
     const drawScenario = () => {
+      isTransitioning = false;
       if (currentIdx >= scenarios.length) {
         this.finishGame();
         return;
@@ -1720,12 +1899,14 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (isTransitioning) return;
       const s = scenarios[currentIdx];
       if (!s) return;
       s.options.forEach((_, i) => {
         const x = startX + (i % 2) * (btnW + gap);
         const y = startY + Math.floor(i / 2) * (btnH + 10);
         if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
+          isTransitioning = true;
           const correct = i === s.correct;
           this.recordAttempt(correct);
           if (correct) {
@@ -1753,37 +1934,64 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
     const config = TAP_CONFIGS[gameId] || TAP_CONFIGS[2];
     let spawned = 0;
-    const itemFontSize = Math.max(30, Math.min(48, W * 0.09));
+    let isTransitioning = false;
+    const itemFontSize = Math.max(32, Math.min(50, W * 0.095));
 
     const spawnItem = () => {
+      isTransitioning = false;
       if (spawned >= config.count) {
         this.finishGame();
         return;
       }
       spawned++;
       const symbol = config.items[Math.floor(Math.random() * config.items.length)];
-      const x = Math.random() * (W - 100) + 50;
+      const x = Math.random() * (W - 120) + 60;
       const y = Math.random() * (H - 120) + 60;
 
       ctx.clearRect(0, 0, W, H);
+
+      // Efeito de aura suave para o item
+      ctx.beginPath();
+      ctx.arc(x, y, itemFontSize * 0.8, 0, Math.PI * 2);
+      ctx.fillStyle = symbol === '⭐' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+      ctx.fill();
 
       ctx.fillStyle = '#ffffff';
       ctx.font = `${itemFontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(symbol, x, y);
+      ctx.fillText(symbol, x, y + 2);
 
       this.gameInstruction.set(`${config.instruction} (${spawned}/${config.count})`);
 
       this.setCanvasHandler(canvas, (mx, my) => {
-        const dist = Math.sqrt((mx - x) ** 2 + (my - y) ** 2);
-        if (dist < 50) {
+        if (isTransitioning) return;
+        const dist = Math.hypot(mx - x, my - y);
+        const hitRadius = Math.max(54, itemFontSize * 1.05);
+
+        if (dist <= hitRadius) {
+          isTransitioning = true;
           const isTarget = gameId === 4 ? symbol === '🔵' : gameId === 5 ? symbol === '⬜' : gameId === 26 ? symbol === '🟢' : true;
-          this.recordAttempt(isTarget);
+
+          if (isTarget && symbol === '⭐') {
+            this.sound.playStarCollect();
+            this.recordAttempt(true, true);
+          } else {
+            this.recordAttempt(isTarget);
+          }
+
           if (isTarget) {
             this.gameScore.update(s => s + 10);
+
+            // Animação de anel de acerto
+            ctx.beginPath();
+            ctx.arc(x, y, hitRadius * 0.9, 0, Math.PI * 2);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.stroke();
           }
-          setTimeout(spawnItem, 200);
+
+          setTimeout(spawnItem, 220);
         }
       });
     };
