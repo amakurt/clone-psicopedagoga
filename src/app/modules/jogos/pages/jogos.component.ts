@@ -1674,39 +1674,147 @@ export class JogosComponent implements OnInit, OnDestroy {
     newRound();
   }
 
-  // 5. SEQUÊNCIA COGNITIVA (MEMÓRIA DE TRABALHO)
+  // 5. SEQUÊNCIA COGNITIVA (MEMÓRIA DE CORES E TRABALHO)
   setupSequenceGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
     const padColors = ['#ef4444', '#0284c7', '#10b981', '#f59e0b', '#0d9488'];
     const padNotes = [261.63, 293.66, 329.63, 392.00, 440.00]; // Pentatônica suave
     const numPads = 5;
-    const sequence = [
-      Math.floor(Math.random() * numPads),
-      Math.floor(Math.random() * numPads),
-      Math.floor(Math.random() * numPads),
-      Math.floor(Math.random() * numPads)
-    ];
+
+    // Progressão clínica em 5 níveis
+    const levelLengths = [3, 4, 4, 5, 6];
+    const totalLevels = levelLengths.length;
+    let currentLevel = 0;
+    let sequence: number[] = [];
     let userSeq: number[] = [];
     let isShowing = true;
+    let isTransitioning = false;
+    let activePadIndex = -1;
+    let playbackInterval: any = null;
+    let animFrameId: number | null = null;
+    let activeTimeout: any = null;
+    let attemptsOnCurrentLevel = 0;
 
-    this.gameInstruction.set('Memorize a sequência de cores e notas sonoras');
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      alpha: number;
+      color: string;
+      size: number;
+    }
+    let particles: Particle[] = [];
 
-    const padW = (W - 30) / numPads;
-    const padH = Math.min(padW * 1.2, H * 0.45);
-    const padY = (H - padH) / 2;
+    const cleanup = () => {
+      if (playbackInterval) {
+        clearInterval(playbackInterval);
+        playbackInterval = null;
+      }
+      if (activeTimeout) {
+        clearTimeout(activeTimeout);
+        activeTimeout = null;
+      }
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    };
 
-    const draw = (activePad = -1) => {
+    const padW = (W - 36) / numPads;
+    const padH = Math.min(padW * 1.3, H * 0.42);
+    const padY = (H - padH) / 2 + 10;
+
+    const spawnSparkles = (cx: number, cy: number) => {
+      const colors = ['#facc15', '#38bdf8', '#10b981', '#ffffff', '#fb923c'];
+      for (let i = 0; i < 24; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 4 + 1.5;
+        particles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1,
+          alpha: 1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 4 + 2
+        });
+      }
+    };
+
+    const draw = () => {
       ctx.clearRect(0, 0, W, H);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Badge de Nível no topo
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      const badgeW = 150;
+      const badgeH = 26;
+      ctx.beginPath();
+      ctx.roundRect((W - badgeW) / 2, 10, badgeW, badgeH, 13);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`NÍVEL ${currentLevel + 1} DE ${totalLevels}`, W / 2, 23);
+
+      // 2. Progresso de toques na sequência (bolinhas indicadoras)
+      const dotRadius = 5;
+      const dotGap = 8;
+      const totalSeqW = sequence.length * (dotRadius * 2 + dotGap) - dotGap;
+      const dotStartX = (W - totalSeqW) / 2;
+      const dotY = padY - 24;
+
+      for (let s = 0; s < sequence.length; s++) {
+        const dx = dotStartX + s * (dotRadius * 2 + dotGap) + dotRadius;
+        ctx.beginPath();
+        ctx.arc(dx, dotY, dotRadius, 0, Math.PI * 2);
+
+        if (s < userSeq.length) {
+          ctx.fillStyle = padColors[userSeq[s]];
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else if (isShowing && s === activePadIndex) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        } else {
+          ctx.fillStyle = '#334155';
+          ctx.fill();
+        }
+      }
+
+      // 3. Desenho dos 5 Pads de Cores
       for (let i = 0; i < numPads; i++) {
-        const x = 15 + i * padW;
-        const isActive = activePad === i;
-        ctx.fillStyle = isActive ? padColors[i] : '#1e293b';
-        ctx.strokeStyle = isActive ? '#ffffff' : '#334155';
-        ctx.lineWidth = isActive ? 3 : 1.5;
+        const x = 18 + i * padW;
+        const isActive = activePadIndex === i;
+
+        ctx.save();
+        if (isActive) {
+          ctx.fillStyle = padColors[i];
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3.5;
+          ctx.shadowColor = padColors[i];
+          ctx.shadowBlur = 18;
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = padColors[i];
+          ctx.lineWidth = 2;
+        }
+
         ctx.beginPath();
         ctx.roundRect(x + 4, padY, padW - 8, padH, 14);
         ctx.fill();
         ctx.stroke();
+        ctx.restore();
 
         if (isActive) {
           ctx.fillStyle = '#ffffff';
@@ -1715,53 +1823,157 @@ export class JogosComponent implements OnInit, OnDestroy {
           ctx.fill();
         }
       }
+
+      // 4. Renderizar partículas
+      if (particles.length > 0) {
+        for (let pIdx = particles.length - 1; pIdx >= 0; pIdx--) {
+          const p = particles[pIdx];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.alpha -= 0.025;
+
+          if (p.alpha <= 0) {
+            particles.splice(pIdx, 1);
+            continue;
+          }
+
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+      }
+
+      animFrameId = requestAnimationFrame(draw);
+    };
+
+    const startLevel = (level: number) => {
+      currentLevel = level;
+      userSeq = [];
+      isShowing = true;
+      isTransitioning = false;
+      activePadIndex = -1;
+
+      const len = levelLengths[level];
+      sequence = [];
+      for (let i = 0; i < len; i++) {
+        let nextPad = Math.floor(Math.random() * numPads);
+        if (i >= 2 && sequence[i - 1] === nextPad && sequence[i - 2] === nextPad) {
+          nextPad = (nextPad + 1) % numPads;
+        }
+        sequence.push(nextPad);
+      }
+
+      this.gameInstruction.set(`👀 Nível ${level + 1}: Memorize a sequência de ${len} cores`);
+
+      activeTimeout = setTimeout(() => {
+        playPlayback();
+      }, 700);
     };
 
     const playPlayback = () => {
       isShowing = true;
+      userSeq = [];
+      activePadIndex = -1;
       let step = 0;
-      const interval = setInterval(() => {
+
+      if (playbackInterval) clearInterval(playbackInterval);
+
+      playbackInterval = setInterval(() => {
         if (step >= sequence.length) {
-          clearInterval(interval);
+          clearInterval(playbackInterval);
+          playbackInterval = null;
           isShowing = false;
-          draw(-1);
-          this.gameInstruction.set('Sua vez! Repita a sequência na mesma ordem.');
+          activePadIndex = -1;
+          this.gameInstruction.set(`👉 Sua vez! Repita a sequência de ${sequence.length} cores`);
           return;
         }
+
         const currentPad = sequence[step];
-        draw(currentPad);
+        activePadIndex = currentPad;
         this.sound.playMusicalNote(padNotes[currentPad]);
-        setTimeout(() => draw(-1), 400);
+
+        activeTimeout = setTimeout(() => {
+          if (activePadIndex === currentPad) activePadIndex = -1;
+        }, 380);
+
         step++;
-      }, 700);
+      }, 680);
     };
 
-    draw(-1);
-    setTimeout(playPlayback, 400);
+    draw();
+    startLevel(0);
 
-    this.setCanvasHandler(canvas, (mx) => {
-      if (isShowing) return;
-      const padIdx = Math.floor((mx - 15) / padW);
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (isShowing || isTransitioning) return;
+      if (my < padY || my > padY + padH) return;
+
+      const padIdx = Math.floor((mx - 18) / padW);
       if (padIdx < 0 || padIdx >= numPads) return;
 
       userSeq.push(padIdx);
+      activePadIndex = padIdx;
       this.sound.playMusicalNote(padNotes[padIdx]);
-      draw(padIdx);
-      setTimeout(() => draw(-1), 250);
+
+      setTimeout(() => {
+        if (activePadIndex === padIdx) activePadIndex = -1;
+      }, 220);
 
       const currStep = userSeq.length - 1;
       const isCorrectSoFar = userSeq[currStep] === sequence[currStep];
 
       if (!isCorrectSoFar) {
+        this.sound.playError();
         this.recordAttempt(false);
-        this.finishGame();
+        attemptsOnCurrentLevel++;
+
+        if (attemptsOnCurrentLevel < 2) {
+          this.gameInstruction.set(`Ops! Vamos ver a sequência novamente...`);
+          isShowing = true;
+          activeTimeout = setTimeout(() => {
+            playPlayback();
+          }, 900);
+        } else {
+          this.gameInstruction.set(`Não se preocupe! Próximo desafio...`);
+          isTransitioning = true;
+          activeTimeout = setTimeout(() => {
+            attemptsOnCurrentLevel = 0;
+            if (currentLevel + 1 < totalLevels) {
+              startLevel(currentLevel + 1);
+            } else {
+              cleanup();
+              this.finishGame();
+            }
+          }, 1100);
+        }
         return;
       }
 
       if (userSeq.length === sequence.length) {
-        this.recordAttempt(true);
-        this.gameScore.update(s => s + 40);
-        setTimeout(() => this.finishGame(), 500);
+        isTransitioning = true;
+        this.sound.playSuccess();
+        this.recordAttempt(true, true);
+        this.gameScore.update(s => s + 25);
+        attemptsOnCurrentLevel = 0;
+
+        spawnSparkles(W / 2, padY + padH / 2);
+
+        if (currentLevel + 1 < totalLevels) {
+          this.gameInstruction.set(`⭐ Excelente! Nível ${currentLevel + 1} concluído!`);
+          activeTimeout = setTimeout(() => {
+            startLevel(currentLevel + 1);
+          }, 1200);
+        } else {
+          this.gameInstruction.set(`🎉 Fantástico! Você dominou todos os 5 níveis de memória!`);
+          activeTimeout = setTimeout(() => {
+            cleanup();
+            this.sound.playVictory();
+            this.finishGame();
+          }, 1400);
+        }
       }
     });
   }
