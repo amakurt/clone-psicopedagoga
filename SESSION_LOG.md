@@ -1944,5 +1944,12 @@ npm run start
     - Arquitetura de **5 Níveis Progressivos de Memória Operacional** (tamanhos de sequência: 3, 4, 4, 5 e 6 cores).
     - **Indicadores de Progresso em Tempo Real:** Badge de nível superior (`NÍVEL X DE 5`) e esferas dinâmicas de preenchimento de toques.
     - **Tolerância Pedagógica a Erros:** Em vez de finalizar o jogo no primeiro deslize, o sistema oferece uma 2ª chance com repetição da sequência auditiva e visual.
-    - **Recompensas e Partículas:** Sons pentatônicos harmonizados, chuva de faíscas brilhantes a cada nível concluído e celebração final de vitória ao dominar os 5 níveis.
+- **Correção dos Temas do Jogo da Memória (IDs 11, 12, 13, 14, 15):**
+  - **Problema identificado:** O dicionário `EMOJI_SETS` estava com IDs trocados, fazendo com que o jogo *Memória de Animais* (ID 12) exibisse números (`1️⃣, 2️⃣...`), *Jogo da Memória* (ID 11) exibisse animais em vez de frutas, e *Memória de Números* (ID 13) exibisse círculos.
+  - **Solução implementada:**
+    - ID 11 (*Jogo da Memória*): Frutas (`🍎, 🍌, 🍇, 🍊, 🍓, 🍋, 🥝, 🍒`).
+    - ID 12 (*Memória de Animais*): Animais expressivos (`🐶, 🐱, 🦁, 🐰, 🦊, 🐻, 🐼, 🐵`).
+    - ID 13 (*Memória de Números*): Números (`1️⃣, 2️⃣, 3️⃣, 4️⃣, 5️⃣, 6️⃣, 7️⃣, 8️⃣`).
+    - ID 14 (*Memória de Formas*): Formas geométricas contrastantes (`⭐, 🔷, 🔶, 🔺, ⬛, ⚪, 🔻, 💎`).
+    - ID 15 (*Super Memória*): Símbolos e tesouros de alta distinção (`🚀, 🌟, 👑, 💎, 🏆, 🎯, 🎈, 🍀`).
 
