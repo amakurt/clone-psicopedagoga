@@ -4,6 +4,37 @@
 
 ---
 
+## Sessão 50 - 30/09/2026 — Correção de Layout, Quebra de Texto (Word-Wrapping) e Cenários Dedicados no Jogo "Autoconhecimento" e Módulo Socioemocional
+
+### O que foi feito
+
+#### 1. Correção de Quebra de Palavras e Cards Cortados no Jogo "Autoconhecimento" (Jogo 60) e Jogos Socioemocionais
+- **Causa Raiz Identificada**:
+  - No motor socioemocional (`setupSocialGame`), tanto a descrição da situação quanto as opções de resposta eram desenhadas com chamada única de `ctx.fillText()` sem qualquer quebra de linha.
+  - Frases com mais de 35-45 caracteres ultrapassavam a largura do canvas nas bordas esquerda e direita.
+  - Os botões de opções utilizavam alturas e posições fixas (`startY = H * 0.44`, `btnH = 50`), fazendo com que em alturas reduzidas de tela a segunda fileira de botões fosse cortada para fora da área visível do canvas.
+  - O jogo 60 (*Autoconhecimento*) não possuía perguntas próprias estruturadas, caindo por fallback nas opções de identificação básica de expressões faciais do jogo 51.
+- **Solução Implementada em `src/app/modules/jogos/pages/jogos.component.ts`**:
+  - **Função de Quebra Dinâmica de Linhas (`wrapText`)**: Algoritmo que quebra o texto por palavras respeitando rigorosamente a largura interna do card (`maxWidth`), com suporte a fontes adaptadas à resolução (`12px` / `13px` para situação e `10.5px` / `11.5px` para botões).
+  - **Card de Situação Proporcional e Delimitado**: Card arredondado (`roundRect`) com cor de fundo `#1e293b` e borda `#334155`, centralizando verticalmente o texto distribuído em múltiplas linhas e respeitando um teto máximo de 35% da altura da tela.
+  - **Grid de Opções Responsivo com Limites Rígidos**:
+    - Distribuição em 2 colunas x 2 linhas calculando a altura dos botões dinamicamente a partir do espaço vertical restante (`availableH = H - optionsStartY - 8`).
+    - Margem inferior garantida de no mínimo 8px da borda do canvas, eliminando qualquer risco de corte dos botões.
+    - Quebra de linha interna automática nas opções em até 2 linhas por botão, mantendo legibilidade perfeita e texto perfeitamente centralizado.
+  - **Cenários Clínicos Dedicados para o Jogo 60 (*Autoconhecimento*, 7-12 anos)**:
+    - 5 dilemas reflexivos sobre: reconhecimento e correção de erros, regulação de raiva e impulsividade, compreensão de limites e sentimentos, resiliência em desafios complexos e humildade no desenvolvimento de talentos.
+  - **Expansão do Banco Socioemocional Completo**:
+    - Cenários estruturados para os jogos 51 (Emoções no Rosto), 52 (Empatia), 53 (Situações Sociais), 55 (Expressão de Sentimentos), 56 (Resolução de Conflitos), 57 (Cooperação) e 59 (Gratidão).
+  - **Randomização Segura de Alternativas (Anti-Vício)**:
+    - As 4 alternativas agora têm suas posições embaralhadas a cada rodada, impedindo que a resposta correta fique sempre no mesmo botão.
+  - **Feedback Visual Instantâneo**:
+    - Realce visual imediato ao tocar (borda e fundo verde esmeralda para a resposta correta e vermelho para incorreta) antes de transicionar de cenário (600ms), com pontuação (+15 pontos) e efeitos sonoros sincronizados.
+
+#### 2. Validação Técnica
+- **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (Código de saída 0, 0 erros).
+
+---
+
 ## Sessão 49 - 30/09/2026 — Polimento dos Jogos Terapêuticos: Correção de Detecção de Cliques, Prevenção de Colisões, Feedback Visual e Síntese de Áudio no Jogo Caça à Estrela
 
 ### O que foi feito

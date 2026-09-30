@@ -3470,33 +3470,98 @@ export class JogosComponent implements OnInit, OnDestroy {
     drawQuestion();
   }
 
-  // 7. SOCIOEMOCIONAL (TEORIA DA MENTE E EMPATIA)
+  // 7. SOCIOEMOCIONAL (TEORIA DA MENTE, EMPATIA E AUTOCONHECIMENTO)
   setupSocialGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
     const ctx = this.canvasCtx!;
-    const SCENARIOS: Record<number, Array<{situation: string, options: string[], correct: number}>> = {
+    const SCENARIOS: Record<number, Array<{ situation: string; options: string[]; correct: number }>> = {
       51: [
-        {situation:'A pessoa está sorrindo e dançando. Ela está...',options:['Feliz e alegre','Triste','Com raiva','Com medo'],correct:0},
-        {situation:'O colega caiu e machucou o joelho. O que ele sente?',options:['Muita dor e tristeza','Alegria','Tédio','Animado'],correct:0},
-        {situation:'Alguém respirou fundo com calma. Ela está...',options:['Relaxada e tranquila','Brava','Com pressa','Assustada'],correct:0},
+        { situation: 'A pessoa está sorrindo com os olhos brilhando e dançando. Ela está...', options: ['Feliz e alegre', 'Triste e chorando', 'Com muita raiva', 'Com muito sono'], correct: 0 },
+        { situation: 'O colega caiu no pátio e machucou o joelho. O que ele está sentindo?', options: ['Dor e precisando de ajuda', 'Alegria e festa', 'Tédio', 'Muito animado'], correct: 0 },
+        { situation: 'Alguém respirou fundo bem devagar para se acalmar. Ela está...', options: ['Relaxada e tranquila', 'Brava e gritando', 'Com muita pressa', 'Assustada'], correct: 0 },
+        { situation: 'Uma criança cruzou os braços e fechou a cara após perder a vez. Ela está...', options: ['Frustrada ou com raiva', 'Muito contente', 'Dando risada', 'Aliviada'], correct: 0 }
       ],
       52: [
-        {situation:'Seu colega perdeu o lápis favorito. Como ajudar?',options:['Ajudar a procurar com calma','Zombar dele','Ignorar','Esconder outro lápis'],correct:0},
-        {situation:'Uma criança nova chegou na escola sozinha. O que fazer?',options:['Convidar para brincar junto','Ignorar','Dizer que não pode','Rir'],correct:0},
-        {situation:'Ganhou um presente inesperado. Como se expressa?',options:['Agradecer com um sorriso','Reclamar','Jogar no chão','Sair correndo'],correct:0},
+        { situation: 'Seu colega perdeu o lápis favorito e começou a chorar. Como ajudar?', options: ['Ajudar a procurar com calma', 'Zombar do choro dele', 'Fingir que não viu nada', 'Esconder outro lápis dele'], correct: 0 },
+        { situation: 'Uma criança nova chegou na escola e está sozinha no recreio. O que fazer?', options: ['Convidar para brincar junto', 'Dizer para não falarem com ela', 'Ignorar a presença dela', 'Rir dela de longe'], correct: 0 },
+        { situation: 'Você ganhou um presente surpresa de um amigo. Como se expressar?', options: ['Agradecer com carinho e sorriso', 'Reclamar do que ganhou', 'Jogar no chão com desdém', 'Sair correndo sem falar'], correct: 0 },
+        { situation: 'Um amigo tirou uma nota baixa e ficou desanimado. Como apoiá-lo?', options: ['Incentivar e propor estudar juntos', 'Dizer que ele não sabe nada', 'Ficar se gabando da sua nota', 'Zombar dele'], correct: 0 }
+      ],
+      53: [
+        { situation: 'Você quer usar o brinquedo que outro colega já está usando. O que fazer?', options: ['Esperar sua vez ou propor revezar', 'Arrancar o brinquedo da mão dele', 'Gritar e espernear no chão', 'Empurrar o colega'], correct: 0 },
+        { situation: 'Durante a explicação do professor surgiu uma dúvida importante. O que fazer?', options: ['Levantar a mão e aguardar a vez', 'Gritar no meio da aula', 'Interromper o colega que fala', 'Jogar papel no professor'], correct: 0 },
+        { situation: 'Você acidentalmente esbarrou em alguém no corredor. Como reagir?', options: ['Pedir desculpas educadamente', 'Sair correndo sem falar nada', 'Colocar a culpa na outra pessoa', 'Ficar bravo e discutir'], correct: 0 }
+      ],
+      55: [
+        { situation: 'Quando algo dá muito errado e vem uma onda de raiva, o que é mais saudável?', options: ['Respirar fundo e falar o que sente', 'Quebrar objetos ao redor', 'Bater em quem estiver perto', 'Guardar tudo calado com rancor'], correct: 0 },
+        { situation: 'Como demonstrar para a família que você está muito contente hoje?', options: ['Dar um abraço e conversar alegremente', 'Se trancar no quarto isolado', 'Ficar emburrado reclamando', 'Gritar com as pessoas'], correct: 0 },
+        { situation: 'Se você sente ciúmes ou inveja de um amigo, qual a melhor saída?', options: ['Conversar com alguém de confiança', 'Estragar o brinquedo do amigo', 'Falar mal dele pelas costas', 'Tratar o amigo com desprezo'], correct: 0 }
+      ],
+      56: [
+        { situation: 'Dois colegas querem o mesmo jogo de tabuleiro ao mesmo tempo. Qual a solução?', options: ['Jogar juntos ou combinar turnos', 'Disputar na força até rasgar', 'Ficar brigados para sempre', 'Destruir as peças do jogo'], correct: 0 },
+        { situation: 'Um amigo disse algo que te chateou muito. Como resolver pacificamente?', options: ['Dizer com calma como você se sentiu', 'Partir para agressão física', 'Inventar mentiras sobre ele', 'Gritar ofensas no pátio'], correct: 0 },
+        { situation: 'Em uma brincadeira em grupo houve desacordo sobre as regras. O que propor?', options: ['Revisar as regras juntos com diálogo', 'Abandonar o jogo com raiva', 'Inventar regras só para vencer', 'Chorar e culpar os outros'], correct: 0 }
+      ],
+      57: [
+        { situation: 'A sala de aula ficou bagunçada depois de uma atividade coletiva. O que fazer?', options: ['Todos ajudarem a arrumar juntos', 'Deixar para uma pessoa só fazer', 'Chutar as coisas para debaixo do armário', 'Ir embora sem guardar nada'], correct: 0 },
+        { situation: 'Em um trabalho em equipe, um colega tem mais dificuldade. Como cooperar?', options: ['Explicar com paciência e incentivá-lo', 'Excluir o colega do trabalho', 'Fazer tudo sozinho e reclamar', 'Zombar das dúvidas dele'], correct: 0 },
+        { situation: 'O grupo precisa tomar uma decisão sobre o projeto. Qual a atitude colaborativa?', options: ['Ouvir as ideias de todos e votar', 'Impor somente a própria vontade', 'Não deixar ninguém opinar', 'Ignorar o que o grupo decide'], correct: 0 }
+      ],
+      59: [
+        { situation: 'Alguém preparou um lanche com muito carinho para você. O que fazer?', options: ['Agradecer e valorizar o cuidado', 'Reclamar sem nem experimentar', 'Comer e sair sem agradecer', 'Exigir outra coisa grosseiramente'], correct: 0 },
+        { situation: 'Seu amigo te emprestou um casaco quando você estava com frio. O que dizer?', options: ['Muito obrigado por me emprestar!', 'Você demorou demais para me dar', 'Nem estava tão frio assim', 'Jogar o casaco no chão depois'], correct: 0 },
+        { situation: 'Ao final de um dia corrido, qual hábito traz bem-estar emocional?', options: ['Lembrar das coisas boas pelas quais é grato', 'Ficar remoendo apenas aborrecimentos', 'Reclamar de tudo e de todos', 'Ignorar quem te ajudou no dia'], correct: 0 }
+      ],
+      60: [
+        { situation: 'Quando você comete um erro importante em uma prova ou tarefa, qual a atitude madura?', options: ['Reconhecer, aprender com o erro e corrigir', 'Culpar o colega de classe pelo erro', 'Fingir que não foi você e mentir', 'Ficar com raiva e desistir de estudar'], correct: 0 },
+        { situation: 'Você percebe que está muito irritado antes de responder a alguém. O que fazer?', options: ['Pausar, respirar fundo e pensar antes', 'Gritar para desabafar imediatamente', 'Bater portas e guardar rancor', 'Dizer palavras duras para magoar'], correct: 0 },
+        { situation: 'O que significa desenvolver "autoconhecimento" no seu cotidiano?', options: ['Compreender seus limites, forças e emoções', 'Achar que você é perfeito e nunca erra', 'Querer ser superior a todos os colegas', 'Fazer tudo apenas para agradar aos outros'], correct: 0 },
+        { situation: 'Quando um desafio parece muito difícil, o que demonstra inteligência emocional?', options: ['Dividir em etapas e pedir apoio se precisar', 'Desistir no primeiro obstáculo difícil', 'Achar que não tem capacidade para nada', 'Esperar que façam tudo em seu lugar'], correct: 0 },
+        { situation: 'Se você descobre um talento seu (desenho, matemática ou esporte), como agir?', options: ['Praticar com dedicação e humildade', 'Se gabar e humilhar quem tem dificuldade', 'Ter vergonha e nunca mais praticar', 'Parar de se esforçar no resto'], correct: 0 }
       ]
     };
-    const scenarios = SCENARIOS[gameId] || SCENARIOS[51];
+
+    const rawScenarios = SCENARIOS[gameId] || SCENARIOS[60] || SCENARIOS[51];
+
+    // Embaralha as opções de cada cenário mantendo o rastreamento do índice correto
+    const scenarios = rawScenarios.map(s => {
+      const items = s.options.map((opt, i) => ({ opt, isCorrect: i === s.correct }));
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      return {
+        situation: s.situation,
+        options: items.map(item => item.opt),
+        correct: items.findIndex(item => item.isCorrect)
+      };
+    });
+
     let currentIdx = 0;
     let isTransitioning = false;
+    let feedback: { clickedIdx: number; isCorrect: boolean } | null = null;
+    let optionRects: Array<{ x: number; y: number; w: number; h: number }> = [];
 
-    const btnW = Math.min(220, (W - 60) / 2);
-    const btnH = 50;
-    const gap = 12;
-    const startX = (W - (btnW * 2 + gap)) / 2;
-    const startY = H * 0.44;
+    // Função utilitária para quebra de texto em múltiplas linhas
+    const wrapText = (text: string, maxWidth: number, font: string): string[] => {
+      ctx.font = font;
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+
+      for (const word of words) {
+        const testLine = currentLine ? currentLine + ' ' + word : word;
+        if (ctx.measureText(testLine).width <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    };
 
     const drawScenario = () => {
-      isTransitioning = false;
       if (currentIdx >= scenarios.length) {
         this.finishGame();
         return;
@@ -3504,52 +3569,131 @@ export class JogosComponent implements OnInit, OnDestroy {
       const s = scenarios[currentIdx];
       ctx.clearRect(0, 0, W, H);
 
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 12px sans-serif';
+      // 1. Cabeçalho / Indicador de Progresso
+      const progressText = `Cenário ${currentIdx + 1} de ${scenarios.length}`;
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`Cenário Social ${currentIdx + 1}/${scenarios.length}`, W / 2, H * 0.14);
+      ctx.textBaseline = 'top';
+      ctx.fillText(progressText, W / 2, 8);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText(s.situation, W / 2, H * 0.28);
+      // 2. Card da Situação (Responsivo e com Quebra de Linha)
+      const cardX = 14;
+      const cardW = W - 28;
+      const cardY = 26;
+
+      const sitFont = W < 400 ? 'bold 12px sans-serif' : 'bold 13px sans-serif';
+      const sitLineH = W < 400 ? 16 : 18;
+      const sitLines = wrapText(s.situation, cardW - 24, sitFont);
+      const sitTextH = sitLines.length * sitLineH;
+
+      // Altura do card adaptada ao texto e à altura disponível
+      const cardH = Math.min(Math.max(48, sitTextH + 16), Math.round(H * 0.35));
+
+      // Fundo do Card da Situação
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, cardW, cardH, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      // Linhas da Situação dentro do Card
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = sitFont;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const textStartY = cardY + (cardH - sitTextH) / 2 + sitLineH / 2;
+      sitLines.forEach((line, lIdx) => {
+        ctx.fillText(line, W / 2, textStartY + lIdx * sitLineH);
+      });
+
+      // 3. Grid de Opções (2 colunas x 2 linhas com limites rígidos)
+      const optionsStartY = cardY + cardH + 8;
+      const availableH = H - optionsStartY - 8;
+      const gapX = 10;
+      const gapY = 6;
+      const btnW = (cardW - gapX) / 2;
+      const btnH = Math.min(48, Math.max(34, Math.floor((availableH - gapY) / 2)));
+
+      optionRects = [];
+      const optFont = W < 400 ? '500 10.5px sans-serif' : '500 11.5px sans-serif';
+      const optLineH = W < 400 ? 12 : 14;
 
       s.options.forEach((opt, i) => {
-        const x = startX + (i % 2) * (btnW + gap);
-        const y = startY + Math.floor(i / 2) * (btnH + 10);
-        ctx.fillStyle = '#1e293b';
-        ctx.strokeStyle = '#334155';
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const bx = cardX + col * (btnW + gapX);
+        const by = optionsStartY + row * (btnH + gapY);
+        optionRects.push({ x: bx, y: by, w: btnW, h: btnH });
+
+        // Cores de estado (Normal vs Feedback de clique)
+        let bgColor = '#1e293b';
+        let strokeColor = '#334155';
+        let textColor = '#f1f5f9';
+
+        if (feedback) {
+          if (i === s.correct) {
+            bgColor = '#064e3b';
+            strokeColor = '#10b981';
+            textColor = '#ecfdf5';
+          } else if (i === feedback.clickedIdx && !feedback.isCorrect) {
+            bgColor = '#7f1d1d';
+            strokeColor = '#ef4444';
+            textColor = '#fef2f2';
+          }
+        }
+
+        // Desenha o botão
+        ctx.fillStyle = bgColor;
+        ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.roundRect(x, y, btnW, btnH, 12);
+        ctx.roundRect(bx, by, btnW, btnH, 8);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px sans-serif';
+        // Texto da Opção com Quebra de Linha
+        const optLines = wrapText(opt, btnW - 14, optFont);
+        const optTextH = optLines.length * optLineH;
+        const optStartY = by + (btnH - optTextH) / 2 + optLineH / 2;
+
+        ctx.fillStyle = textColor;
+        ctx.font = optFont;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(opt, x + btnW / 2, y + btnH / 2);
+        optLines.forEach((line, lIdx) => {
+          ctx.fillText(line, bx + btnW / 2, optStartY + lIdx * optLineH);
+        });
       });
 
-      this.gameInstruction.set('Analise o sentimento e escolha a melhor atitude empática');
+      this.gameInstruction.set('Leia a situação e escolha a atitude com maior maturidade socioemocional');
     };
 
     this.setCanvasHandler(canvas, (mx, my) => {
       if (isTransitioning) return;
       const s = scenarios[currentIdx];
       if (!s) return;
-      s.options.forEach((_, i) => {
-        const x = startX + (i % 2) * (btnW + gap);
-        const y = startY + Math.floor(i / 2) * (btnH + 10);
-        if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
+
+      optionRects.forEach((rect, i) => {
+        if (mx >= rect.x && mx <= rect.x + rect.w && my >= rect.y && my <= rect.y + rect.h) {
           isTransitioning = true;
           const correct = i === s.correct;
           this.recordAttempt(correct);
           if (correct) {
             this.gameScore.update(score => score + 15);
           }
-          currentIdx++;
-          setTimeout(drawScenario, 300);
+
+          feedback = { clickedIdx: i, isCorrect: correct };
+          drawScenario();
+
+          setTimeout(() => {
+            currentIdx++;
+            feedback = null;
+            isTransitioning = false;
+            drawScenario();
+          }, 600);
         }
       });
     });
