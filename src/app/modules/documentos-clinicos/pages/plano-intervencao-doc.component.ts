@@ -6,12 +6,13 @@ import { ApiService } from '@core/services/api.service';
 import { AuthService } from '@core/services/auth.service';
 import { ToastService } from '@shared/components/toast.component';
 import { ClinicalDocEditorComponent } from '@shared/components/clinical-doc-editor/clinical-doc-editor.component';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 import { DOC_TEMPLATES, replaceDocPlaceholders } from '@core/data/doc-templates.data';
 
 @Component({
   selector: 'app-plano-intervencao-doc',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ClinicalDocEditorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ClinicalDocEditorComponent, ConfirmModalComponent],
   template: `
     <div class="space-y-6 animate-in">
       <!-- Header -->
@@ -167,6 +168,16 @@ import { DOC_TEMPLATES, replaceDocPlaceholders } from '@core/data/doc-templates.
           </div>
         }
       </div>
+      <!-- Modal de Confirmação Padrão -->
+      <app-confirm-modal
+        [isOpen]="showConfirmModal()"
+        [title]="confirmTitle()"
+        [message]="confirmMessage()"
+        [confirmText]="confirmButtonText()"
+        [dangerMode]="confirmDanger()"
+        (closed)="onModalClosed()"
+        (confirmed)="onModalConfirmed()">
+      </app-confirm-modal>
     </div>
   `
 })
@@ -184,6 +195,14 @@ export class PlanoIntervencaoDocComponent implements OnInit {
   showFinancialDetails = signal(false);
 
   documentContent = '';
+
+  // Confirmation Modal state
+  showConfirmModal = signal(false);
+  confirmTitle = signal('Confirmar ação');
+  confirmMessage = signal('Tem certeza que deseja continuar?');
+  confirmButtonText = signal('Confirmar');
+  confirmDanger = signal(false);
+  pendingAction: (() => void) | null = null;
 
   clinicName = computed(() => this.auth.tenant()?.name || 'EduPsych Pro');
   clinicLogo = computed(() => this.auth.tenant()?.logoUrl || '');
@@ -218,9 +237,21 @@ export class PlanoIntervencaoDocComponent implements OnInit {
   loadTemplate(templateId: string) {
     const tpl = DOC_TEMPLATES.find(t => t.id === templateId);
     if (!tpl) return;
-    if (this.documentContent && !confirm(`Deseja carregar o modelo "${tpl.name}"? O conteúdo atual será substituído.`)) {
+
+    if (this.documentContent && this.documentContent.trim().length > 50) {
+      this.confirmTitle.set('Substituir Conteúdo do Plano?');
+      this.confirmMessage.set(`O plano atual já possui anotações preenchidas. Deseja carregar o modelo "${tpl.name}" e substituir o conteúdo?`);
+      this.confirmButtonText.set('Carregar Modelo');
+      this.confirmDanger.set(false);
+      this.pendingAction = () => this.doLoadTemplate(tpl);
+      this.showConfirmModal.set(true);
       return;
     }
+
+    this.doLoadTemplate(tpl);
+  }
+
+  private doLoadTemplate(tpl: any) {
     const p = this.selectedPatient();
     this.documentContent = replaceDocPlaceholders(tpl.content, p);
     this.toast.info(`Modelo "${tpl.name}" carregado no editor.`);
@@ -287,7 +318,15 @@ export class PlanoIntervencaoDocComponent implements OnInit {
   }
 
   deleteRecord(r: any) {
-    if (!confirm('Excluir este plano de intervenção?')) return;
+    this.confirmTitle.set('Excluir Plano de Intervenção?');
+    this.confirmMessage.set('Tem certeza que deseja excluir este plano de intervenção? Esta ação não pode ser desfeita.');
+    this.confirmButtonText.set('Excluir');
+    this.confirmDanger.set(true);
+    this.pendingAction = () => this.doDeleteRecord(r);
+    this.showConfirmModal.set(true);
+  }
+
+  private doDeleteRecord(r: any) {
     this.api.delete(`/intervention-documents/${r.id}`).subscribe({
       next: () => {
         this.toast.success('Plano excluído');
@@ -295,6 +334,19 @@ export class PlanoIntervencaoDocComponent implements OnInit {
       },
       error: () => this.toast.error('Erro ao excluir plano')
     });
+  }
+
+  onModalConfirmed() {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
+    }
+    this.showConfirmModal.set(false);
+  }
+
+  onModalClosed() {
+    this.pendingAction = null;
+    this.showConfirmModal.set(false);
   }
 
   getPatientName(): string {

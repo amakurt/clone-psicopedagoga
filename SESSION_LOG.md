@@ -39,7 +39,12 @@
     - Termo de Sigilo, Privacidade e Tratamento de Dados (LGPD)
   - Na aba **Proposta Comercial**, o profissional pode gerar a proposta e abri-la no editor A4 timbrado, personalizar as condições e baixar o PDF assinado.
 
-#### 4. Validação Técnica
+#### 4. Modal Padrão de Confirmação (`ConfirmModalComponent`)
+- **Fim dos alertas e diálogos crus nativos do navegador (`confirm()`)**:
+  - `src/app/modules/encaminhamentos/pages/encaminhamento-form.component.ts`: Integrado o [`ConfirmModalComponent`](file:///Users/amauri/clone-psicopedagoga/src/app/shared/components/confirm-modal.component.ts) estilizado (backdrop blur, ícone de alerta/perigo, botões primários) para substituição de modelos e exclusão de encaminhamentos.
+  - `src/app/modules/planos/pages/plano-form.component.ts` e `src/app/modules/documentos-clinicos/pages/plano-intervencao-doc.component.ts`: Diálogo padrão aplicado ao carregar modelos rápidos de PEI/PIT e excluir registros.
+
+#### 5. Validação Técnica
 - **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (código 0, sem erros).
 - **Servidores Ativos**: Frontend (porta 4200) e Backend (porta 3000) ativos e respondendo.
 

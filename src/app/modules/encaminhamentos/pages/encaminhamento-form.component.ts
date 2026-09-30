@@ -7,12 +7,13 @@ import { ApiService } from '@core/services/api.service';
 import { AuthService } from '@core/services/auth.service';
 import { ToastService } from '@shared/components/toast.component';
 import { ClinicalDocEditorComponent } from '@shared/components/clinical-doc-editor/clinical-doc-editor.component';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 import { DOC_TEMPLATES, replaceDocPlaceholders } from '@core/data/doc-templates.data';
 
 @Component({
   selector: 'app-encaminhamento-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ClinicalDocEditorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ClinicalDocEditorComponent, ConfirmModalComponent],
   template: `
     <div class="space-y-6 animate-in">
       <!-- Top Bar -->
@@ -181,6 +182,17 @@ import { DOC_TEMPLATES, replaceDocPlaceholders } from '@core/data/doc-templates.
           </div>
         }
       </div>
+
+      <!-- Modal de Confirmação Padrão do Sistema -->
+      <app-confirm-modal
+        [isOpen]="showConfirmModal()"
+        [title]="confirmTitle()"
+        [message]="confirmMessage()"
+        [confirmText]="confirmButtonText()"
+        [dangerMode]="confirmDanger()"
+        (closed)="onModalClosed()"
+        (confirmed)="onModalConfirmed()">
+      </app-confirm-modal>
     </div>
   `
 })
@@ -204,6 +216,14 @@ export class EncaminhamentoFormComponent implements OnInit {
   clinicLogo = computed(() => this.auth.tenant()?.logoUrl || '');
 
   documentContent = '';
+
+  // Confirmation Modal state
+  showConfirmModal = signal(false);
+  confirmTitle = signal('Confirmar ação');
+  confirmMessage = signal('Tem certeza que deseja continuar?');
+  confirmButtonText = signal('Confirmar');
+  confirmDanger = signal(false);
+  pendingAction: (() => void) | null = null;
 
   form: any = {
     pacienteId: '',
@@ -238,7 +258,7 @@ export class EncaminhamentoFormComponent implements OnInit {
         this.loadRecords();
       });
     } else {
-      this.applyReferralTemplate('neuropediatria');
+      this.doApplyReferralTemplate('neuropediatria');
     }
   }
 
@@ -277,6 +297,21 @@ export class EncaminhamentoFormComponent implements OnInit {
   }
 
   applyReferralTemplate(type: 'neuropediatria' | 'fonoaudiologia' | 'terapia_ocupacional' | 'psiquiatria' | 'escola') {
+    // If editor has content already, prompt using the standard ConfirmModalComponent
+    if (this.documentContent && this.documentContent.trim().length > 50) {
+      this.confirmTitle.set('Substituir Conteúdo do Documento?');
+      this.confirmMessage.set('O encaminhamento já possui texto preenchido. Deseja carregar o modelo selecionado e substituir o conteúdo atual?');
+      this.confirmButtonText.set('Substituir Modelo');
+      this.confirmDanger.set(false);
+      this.pendingAction = () => this.doApplyReferralTemplate(type);
+      this.showConfirmModal.set(true);
+      return;
+    }
+
+    this.doApplyReferralTemplate(type);
+  }
+
+  private doApplyReferralTemplate(type: 'neuropediatria' | 'fonoaudiologia' | 'terapia_ocupacional' | 'psiquiatria' | 'escola') {
     const templates: Record<string, string> = {
       neuropediatria: `
         <h2>ENCAMINHAMENTO CLÍNICO INTERDISCIPLINAR</h2>
@@ -378,14 +413,10 @@ export class EncaminhamentoFormComponent implements OnInit {
     const templateContent = templates[type];
     if (!templateContent) return;
 
-    if (this.documentContent && !confirm('Deseja substituir o conteúdo atual pelo modelo selecionado?')) {
-      return;
-    }
-
     const p = this.selectedPatient();
     this.documentContent = replaceDocPlaceholders(templateContent, p);
     this.form.motivo = this.documentContent;
-    this.toast.info('Modelo de encaminhamento carregado.');
+    this.toast.info('Modelo de encaminhamento carregado no editor.');
   }
 
   loadRecords() {
@@ -423,11 +454,19 @@ export class EncaminhamentoFormComponent implements OnInit {
       resposta: '',
       status: 'PENDENTE'
     };
-    this.applyReferralTemplate('neuropediatria');
+    this.doApplyReferralTemplate('neuropediatria');
   }
 
   deleteRecord(r: any) {
-    if (!confirm('Excluir este encaminhamento?')) return;
+    this.confirmTitle.set('Excluir Encaminhamento?');
+    this.confirmMessage.set(`Tem certeza que deseja excluir o encaminhamento de ${r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR') : '—'}? Esta ação não poderá ser desfeita.`);
+    this.confirmButtonText.set('Excluir');
+    this.confirmDanger.set(true);
+    this.pendingAction = () => this.doDeleteRecord(r);
+    this.showConfirmModal.set(true);
+  }
+
+  private doDeleteRecord(r: any) {
     this.service.delete(r.id).subscribe({
       next: () => {
         this.toast.success('Encaminhamento excluído com sucesso');
@@ -435,6 +474,19 @@ export class EncaminhamentoFormComponent implements OnInit {
       },
       error: () => this.toast.error('Erro ao excluir encaminhamento')
     });
+  }
+
+  onModalConfirmed() {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
+    }
+    this.showConfirmModal.set(false);
+  }
+
+  onModalClosed() {
+    this.pendingAction = null;
+    this.showConfirmModal.set(false);
   }
 
   stripHtml(html: string): string {
