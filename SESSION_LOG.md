@@ -1931,3 +1931,11 @@ npm run start
     - **Instruções Dinâmicas:** Exibe *"👀 Siga a estrela com os olhos..."* durante o movimento. Caso tocada antes de parar, fornece aviso amigável sem penalizar.
     - **Parada e Alerta Sonoro:** Ao atingir o destino, a estrela desacelera suavemente até parar por completo, emite um chime suave de notificação e exibe anéis de pulso concêntricos.
     - **Toque com Recompensa:** O usuário toca na estrela parada, disparando o som de acerto, +15 pontos e explosão dourada antes de iniciar o próximo arco de perseguição ocular (8 rodadas clínicas).
+- **Distinção entre Memória de Cores (ID 7) e Sequência Numérica (ID 8):**
+  - **Problema identificado:** Ambos os jogos estavam atribuídos ao `type: 'sequence'`, executando o mesmo motor "Simon Says" musical de pads coloridos (`setupSequenceGame`).
+  - **Solução implementada:**
+    - Criação do motor cognitivo exclusivo `setupNumberSequenceGame` para o ID 8 com `type: 'number_sequence'`.
+    - **Desafio de Sentido Numérico e Raciocínio Indutivo:** Apresenta uma progressão aritmética de 5 cartas (+1, +2, -1, +5, +3, -2) com uma incógnita `?` central pulsante.
+    - **Interatividade & Opções:** 4 cartas com alternativas numéricas na base da tela para escolha rápida.
+    - **Feedback Pedagógico e Comemoração:** Ao acertar, a incógnita se transforma em verde esmeralda com o número correto revelado, emite confetes cintilantes, toca o jingle de vitória e explica o padrão matemático em tela.
+

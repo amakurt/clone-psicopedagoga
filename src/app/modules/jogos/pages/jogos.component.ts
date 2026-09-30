@@ -23,7 +23,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 5, name: 'Inibir Resposta', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Toque apenas nos quadrados — nunca nos círculos', type: 'tap' },
   { id: 6, name: 'Rastreamento Visual', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Siga a estrela com o olhar e toque nela quando parar', type: 'tracking' },
   { id: 7, name: 'Memória de Cores', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Lembre-se das cores mostradas e repita a sequência', type: 'sequence' },
-  { id: 8, name: 'Sequência Numérica', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Complete a sequência de números na ordem correta', type: 'sequence' },
+  { id: 8, name: 'Sequência Numérica', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Complete a sequência de números na ordem correta', type: 'number_sequence' },
   { id: 9, name: 'Memória de Posições', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Lembre-se de onde cada emoji estava escondido', type: 'memory' },
   { id: 10, name: 'Caça Palavras', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Encontre as letras que formam a palavra escondida', type: 'attention' },
 
@@ -1154,7 +1154,14 @@ export class JogosComponent implements OnInit, OnDestroy {
     switch (jogo.type) {
       case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'math': this.setupMathGame(canvas, logicalW, logicalH); break;
-      case 'sequence': this.setupSequenceGame(canvas, logicalW, logicalH); break;
+      case 'sequence': 
+        if (jogo.id === 8) {
+          this.setupNumberSequenceGame(canvas, logicalW, logicalH);
+        } else {
+          this.setupSequenceGame(canvas, logicalW, logicalH);
+        }
+        break;
+      case 'number_sequence': this.setupNumberSequenceGame(canvas, logicalW, logicalH); break;
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
       case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'social': this.setupSocialGame(canvas, logicalW, logicalH, jogo.id); break;
@@ -1755,6 +1762,365 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.recordAttempt(true);
         this.gameScore.update(s => s + 40);
         setTimeout(() => this.finishGame(), 500);
+      }
+    });
+  }
+
+  // 5b. SEQUÊNCIA NUMÉRICA (RACIOCÍNIO LÓGICO E SENTIDO NUMÉRICO)
+  setupNumberSequenceGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const totalRounds = 6;
+    let currentRound = 0;
+    let isTransitioning = false;
+    let wrongOptionIdx: number | null = null;
+    let animFrameId: number | null = null;
+    let stepTimer: any = null;
+
+    interface RoundData {
+      sequence: (number | '?')[];
+      originalSequence: number[];
+      missingIdx: number;
+      answer: number;
+      options: number[];
+      ruleName: string;
+    }
+
+    const generateRounds = (): RoundData[] => {
+      const patterns = [
+        { type: '+1', step: 1, name: 'Somando +1' },
+        { type: '+2', step: 2, name: 'De 2 em 2 (+2)' },
+        { type: '-1', step: -1, name: 'Contagem Regressiva (-1)' },
+        { type: '+5', step: 5, name: 'De 5 em 5 (+5)' },
+        { type: '+3', step: 3, name: 'De 3 em 3 (+3)' },
+        { type: '-2', step: -2, name: 'Decrescente de 2 em 2 (-2)' }
+      ];
+
+      return patterns.map(p => {
+        let start = 1;
+        if (p.type === '+1') start = Math.floor(Math.random() * 10) + 1;
+        else if (p.type === '+2') start = (Math.floor(Math.random() * 5) + 1) * 2;
+        else if (p.type === '-1') start = Math.floor(Math.random() * 8) + 10;
+        else if (p.type === '+5') start = (Math.floor(Math.random() * 3) + 1) * 5;
+        else if (p.type === '+3') start = (Math.floor(Math.random() * 4) + 1) * 3;
+        else if (p.type === '-2') start = (Math.floor(Math.random() * 5) + 8) * 2;
+
+        const original = [start, start + p.step, start + p.step * 2, start + p.step * 3, start + p.step * 4];
+        const missingIdx = Math.floor(Math.random() * 3) + 1;
+        const answer = original[missingIdx];
+        const displaySeq: (number | '?')[] = [...original];
+        displaySeq[missingIdx] = '?';
+
+        const distractors = new Set<number>();
+        const candidates = [
+          answer + 1,
+          answer - 1,
+          answer + Math.abs(p.step),
+          answer - Math.abs(p.step),
+          answer + 2,
+          answer - 2,
+          answer + 3
+        ];
+
+        for (const c of candidates) {
+          if (c > 0 && c !== answer) {
+            distractors.add(c);
+            if (distractors.size === 3) break;
+          }
+        }
+
+        let offset = 4;
+        while (distractors.size < 3) {
+          const fallback = answer + offset;
+          if (fallback > 0 && fallback !== answer) distractors.add(fallback);
+          offset++;
+        }
+
+        const options = [answer, ...Array.from(distractors)];
+        for (let i = options.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [options[i], options[j]] = [options[j], options[i]];
+        }
+
+        return {
+          sequence: displaySeq,
+          originalSequence: original,
+          missingIdx,
+          answer,
+          options,
+          ruleName: p.name
+        };
+      });
+    };
+
+    const rounds = generateRounds();
+    let currentData = rounds[0];
+    let isCorrectRevealed = false;
+
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      alpha: number;
+      color: string;
+      size: number;
+    }
+    let particles: Particle[] = [];
+
+    const cleanup = () => {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (stepTimer) {
+        clearTimeout(stepTimer);
+        stepTimer = null;
+      }
+    };
+
+    const cardW = Math.min(64, (W - 50) / 5);
+    const cardH = Math.min(74, H * 0.28);
+    const cardGap = Math.max(6, (W - (cardW * 5)) / 6);
+    const cardStartX = (W - (cardW * 5 + cardGap * 4)) / 2;
+    const cardY = H * 0.23;
+
+    const optW = Math.min(84, (W - 50) / 4);
+    const optH = 46;
+    const optGap = Math.max(8, (W - (optW * 4)) / 5);
+    const optStartX = (W - (optW * 4 + optGap * 3)) / 2;
+    const optY = H * 0.65;
+
+    const spawnConfetti = (centerX: number, centerY: number) => {
+      const colors = ['#38bdf8', '#facc15', '#10b981', '#ffffff', '#fb923c'];
+      particles = [];
+      for (let i = 0; i < 28; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 4 + 2;
+        particles.push({
+          x: centerX,
+          y: centerY,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1,
+          alpha: 1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 4 + 2
+        });
+      }
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Badge superior de rodada
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      const badgeW = 140;
+      const badgeH = 24;
+      ctx.beginPath();
+      ctx.roundRect((W - badgeW) / 2, 10, badgeW, badgeH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`RODADA ${currentRound + 1} DE ${totalRounds}`, W / 2, 22);
+
+      // Instrução no topo
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(
+        isCorrectRevealed ? `✨ Muito bem! Padrão: ${currentData.ruleName}` : 'Qual número completa a sequência?',
+        W / 2,
+        cardY - 18
+      );
+
+      // 2. Fileira de 5 Cartas da Sequência
+      for (let i = 0; i < 5; i++) {
+        const cx = cardStartX + i * (cardW + cardGap);
+        const isMissing = i === currentData.missingIdx;
+
+        ctx.save();
+
+        if (isMissing) {
+          if (isCorrectRevealed) {
+            ctx.fillStyle = '#064e3b';
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
+            ctx.shadowBlur = 12;
+          } else {
+            const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 250);
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = `rgba(245, 158, 11, ${0.6 + pulse * 0.4})`;
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = 'rgba(245, 158, 11, 0.35)';
+            ctx.shadowBlur = 8 + pulse * 6;
+          }
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.5;
+        }
+
+        ctx.beginPath();
+        ctx.roundRect(cx, cardY, cardW, cardH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (isMissing) {
+          if (isCorrectRevealed) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.fillText(String(currentData.answer), cx + cardW / 2, cardY + cardH / 2);
+          } else {
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.fillText('?', cx + cardW / 2, cardY + cardH / 2);
+          }
+        } else {
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = 'bold 22px sans-serif';
+          ctx.fillText(String(currentData.sequence[i]), cx + cardW / 2, cardY + cardH / 2);
+        }
+
+        if (i < 4) {
+          const arrowX = cx + cardW + cardGap / 2;
+          ctx.fillStyle = '#64748b';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillText('→', arrowX, cardY + cardH / 2);
+        }
+      }
+
+      // 3. Área de Opções de Resposta
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('TOQUE NO NÚMERO CORRETO:', W / 2, optY - 18);
+
+      for (let i = 0; i < currentData.options.length; i++) {
+        const ox = optStartX + i * (optW + optGap);
+        const val = currentData.options[i];
+        const isWrong = wrongOptionIdx === i;
+
+        ctx.save();
+        if (isWrong) {
+          ctx.fillStyle = '#7f1d1d';
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2.5;
+        } else if (isCorrectRevealed && val === currentData.answer) {
+          ctx.fillStyle = '#064e3b';
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2.5;
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#0284c7';
+          ctx.lineWidth = 1.8;
+        }
+
+        ctx.beginPath();
+        ctx.roundRect(ox, optY, optW, optH, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(val), ox + optW / 2, optY + optH / 2);
+      }
+
+      // 4. Renderizar partículas se houver
+      if (particles.length > 0) {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.alpha -= 0.025;
+
+          if (p.alpha <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+      }
+
+      animFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+    this.gameInstruction.set('Descubra o padrão e complete a sequência numérica');
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (isTransitioning) return;
+
+      for (let i = 0; i < currentData.options.length; i++) {
+        const ox = optStartX + i * (optW + optGap);
+        if (mx >= ox && mx <= ox + optW && my >= optY && my <= optY + optH) {
+          const chosen = currentData.options[i];
+
+          if (chosen === currentData.answer) {
+            isTransitioning = true;
+            isCorrectRevealed = true;
+            wrongOptionIdx = null;
+
+            this.sound.playSuccess();
+            this.recordAttempt(true, true);
+            this.gameScore.update(s => s + 20);
+
+            const targetCardX = cardStartX + currentData.missingIdx * (cardW + cardGap) + cardW / 2;
+            const targetCardY = cardY + cardH / 2;
+            spawnConfetti(targetCardX, targetCardY);
+
+            this.gameInstruction.set(`⭐ Perfeito! O padrão é ${currentData.ruleName}`);
+
+            stepTimer = setTimeout(() => {
+              currentRound++;
+              if (currentRound >= totalRounds) {
+                cleanup();
+                this.sound.playVictory();
+                this.finishGame();
+              } else {
+                currentData = rounds[currentRound];
+                isCorrectRevealed = false;
+                isTransitioning = false;
+                this.gameInstruction.set('Qual número completa a sequência?');
+              }
+            }, 1000);
+
+          } else {
+            wrongOptionIdx = i;
+            this.sound.playError();
+            this.recordAttempt(false);
+            this.gameInstruction.set(`Tente novamente! Olhe a diferença entre os números.`);
+
+            setTimeout(() => {
+              if (wrongOptionIdx === i) wrongOptionIdx = null;
+            }, 500);
+          }
+          break;
+        }
       }
     });
   }
