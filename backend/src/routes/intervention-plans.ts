@@ -10,7 +10,7 @@ router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 const interventionPlanSchema = z.object({
   pacienteId: z.string().min(1),
-  professionalId: z.string().min(1),
+  professionalId: z.string().optional(),
   date: z.string().min(1),
   step1: z.string().optional(),
   step2: z.string().optional(),
@@ -42,7 +42,8 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', validate(interventionPlanSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const plan = await db.interventionPlan.create({ data: req.body });
+  const professionalId = req.body.professionalId || req.user?.id;
+  const plan = await db.interventionPlan.create({ data: { ...req.body, professionalId } });
   res.status(201).json(plan);
 });
 

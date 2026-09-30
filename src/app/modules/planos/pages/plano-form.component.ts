@@ -1,307 +1,223 @@
-import { Component, inject, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
+import { AuthService } from '@core/services/auth.service';
 import { ToastService } from '@shared/components/toast.component';
-
-declare var html2pdf: any;
+import { ClinicalDocEditorComponent } from '@shared/components/clinical-doc-editor/clinical-doc-editor.component';
+import { DOC_TEMPLATES, replaceDocPlaceholders } from '@core/data/doc-templates.data';
 
 @Component({
   selector: 'app-plano-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ClinicalDocEditorComponent],
   template: `
-    <div class="space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="space-y-6 animate-in">
+      <!-- Top Navigation & Actions Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="flex items-center gap-4">
-          <a routerLink="/app/planos" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-all shrink-0">
-            <span class="material-icons text-gray-600 dark:text-slate-400">arrow_back</span>
+          <a routerLink="/app/planos" class="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all shrink-0">
+            <span class="material-icons text-slate-600 dark:text-slate-400">arrow_back</span>
           </a>
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ isEdit ? 'Editar' : 'Novo' }} Plano de Intervenção</h1>
-            <p class="text-sm text-gray-500 dark:text-slate-400">Proposta de tratamento e orçamento</p>
+            <div class="flex items-center gap-2">
+              <h1 class="text-2xl font-black text-slate-900 dark:text-white">{{ isEdit ? 'Editar' : 'Novo' }} Plano de Intervenção</h1>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase"
+                [class]="status === 'FINALIZADO' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'">
+                {{ status }}
+              </span>
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Elaboração de PEI, PDI, metas e proposta clínica no formato A4</p>
           </div>
         </div>
-        <div class="flex gap-3 self-end sm:self-auto">
-          <button (click)="exportPdf()" [disabled]="!selectedPatientId"
-            class="px-4 py-2 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 rounded-xl font-semibold flex items-center gap-2 transition-all">
-            <span class="material-icons">picture_as_pdf</span>
-            Exportar PDF
-          </button>
+
+        <div class="flex items-center gap-3">
+          <a routerLink="/app/planos" class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+            Cancelar
+          </a>
           <button (click)="save()" [disabled]="saving() || !selectedPatientId"
-            class="px-6 py-3 bg-primary hover:bg-primary-dark text-on-primary rounded-xl font-semibold disabled:opacity-50 transition-all flex items-center gap-2">
-            <span class="material-icons">save</span>
-            {{ saving() ? 'Salvando...' : 'Salvar' }}
+            class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-xl font-bold text-sm shadow-xl shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95">
+            <span class="material-icons text-[18px]">save</span>
+            {{ saving() ? 'Salvando...' : 'Salvar Plano' }}
           </button>
         </div>
       </div>
 
-      <!-- Patient Selection -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Settings & Financial Data Bar -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div class="flex items-center gap-2">
+            <span class="material-icons text-primary text-xl">tune</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Dados do Plano & Condições</h3>
+          </div>
+          <button type="button" (click)="showFinancialDetails.set(!showFinancialDetails())"
+            class="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+            <span>{{ showFinancialDetails() ? 'Ocultar' : 'Ajustar' }} Valores e Sessões</span>
+            <span class="material-icons text-sm">{{ showFinancialDetails() ? 'expand_less' : 'expand_more' }}</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Patient Selector -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Paciente *</label>
-            <select [(ngModel)]="selectedPatientId" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-              <option value="">Selecione um paciente</option>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Paciente *</label>
+            <select [(ngModel)]="selectedPatientId" (change)="onPatientSelect()"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+              <option value="">Selecione o paciente</option>
               @for (p of patients(); track p.id) {
                 <option [value]="p.id">{{ p.name }}</option>
               }
             </select>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Data</label>
-            <input type="date" [(ngModel)]="planDate" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Status</label>
-            <select [(ngModel)]="status" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-              <option value="RASCUNHO">Rascunho</option>
-              <option value="FINALIZADO">Finalizado</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      <!-- Steps Navigation -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
-        <div class="flex border-b border-gray-200 dark:border-slate-700 overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-          @for (step of steps; track step.num) {
-            <button (click)="currentStep.set(step.num)"
-              class="flex-1 py-4 text-sm font-semibold transition-all relative"
-              [class]="currentStep() === step.num 
-                ? 'text-primary bg-primary/5' 
-                : 'text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700'">
-              <span class="flex items-center justify-center gap-2">
-                <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs"
-                  [class]="currentStep() === step.num ? 'bg-primary text-on-primary' : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-400'">
-                  {{ step.num }}
-                </span>
-                {{ step.label }}
-              </span>
-              @if (currentStep() === step.num) {
-                <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></span>
-              }
-            </button>
-          }
-        </div>
-
-        <div class="p-6">
-          <!-- Step 1: Avaliação/Anamnese -->
-          @if (currentStep() === 1) {
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Avaliação / Anamnese</h3>
-                <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">Descreva o quadro geral do paciente e motivo da intervenção</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Diagnóstico / Queixa Principal</label>
-                <textarea [(ngModel)]="step1" rows="4" 
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Descreva o diagnóstico ou queixa principal do paciente..."></textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Observações Clínicas</label>
-                <textarea [(ngModel)]="step1Notes" rows="3" 
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Informações complementares relevantes..."></textarea>
-              </div>
-            </div>
-          }
-
-          <!-- Step 2: Habilidades Desenvolvidas -->
-          @if (currentStep() === 2) {
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Habilidades Desenvolvidas</h3>
-                <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">Descreva as habilidades que serão trabalhadas na intervenção</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Habilidades Alvo</label>
-                <textarea [(ngModel)]="step2" rows="6" 
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Liste as habilidades que serão desenvolvidas:&#10;- Habilidade 1&#10;- Habilidade 2&#10;- Habilidade 3"></textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Critérios de Sucesso</label>
-                <textarea [(ngModel)]="step2Criteria" rows="3" 
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Como o progresso será avaliado..."></textarea>
-              </div>
-            </div>
-          }
-
-          <!-- Step 3: Roteiro de Atendimento -->
-          @if (currentStep() === 3) {
-            <div class="space-y-6">
-              <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Roteiro de Atendimento</h3>
-                <p class="text-sm text-gray-500 dark:text-slate-400 mb-6">Planejamento detalhado das sessões</p>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Estratégias e Atividades</label>
-                <textarea [(ngModel)]="step3" rows="6" 
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Descreva as estratégias e atividades para cada sessão..."></textarea>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Materiais Necessários</label>
-                <textarea [(ngModel)]="step3Materials" rows="3" 
-                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Lista de materiais para as sessões..."></textarea>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Financial Data -->
-      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Dados Financeiros</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Date -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Nº de Sessões</label>
-            <input type="number" [(ngModel)]="sessionCount" (ngModelChange)="calculateTotal()" min="1"
-              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Data de Emissão</label>
+            <input type="date" [(ngModel)]="planDate"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
           </div>
+
+          <!-- Status -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Valor por Sessão (R$)</label>
-            <input type="number" [(ngModel)]="sessionValue" (ngModelChange)="calculateTotal()" min="0" step="0.01"
-              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Frequência</label>
-            <select [(ngModel)]="frequency" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-              <option value="1x por semana">1x por semana</option>
-              <option value="2x por semana">2x por semana</option>
-              <option value="3x por semana">3x por semana</option>
-              <option value="Diário">Diário</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Duração da Sessão</label>
-            <select [(ngModel)]="duration" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white">
-              <option value="30 min">30 minutos</option>
-              <option value="45 min">45 minutos</option>
-              <option value="60 min">60 minutos</option>
-              <option value="90 min">90 minutos</option>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status do Documento</label>
+            <select [(ngModel)]="status"
+              class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+              <option value="RASCUNHO">Rascunho (Em Edição)</option>
+              <option value="ATIVO">Ativo (Em Aplicação)</option>
+              <option value="FINALIZADO">Finalizado (Aprovado)</option>
             </select>
           </div>
         </div>
 
-        <!-- Total Preview -->
-        <div class="mt-6 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600 dark:text-slate-400">Valor Total do Tratamento</span>
-            <span class="text-2xl font-bold text-primary">R$ {{ totalValue().toFixed(2) }}</span>
+        <!-- Collapsible Financial Details -->
+        @if (showFinancialDetails()) {
+          <div class="pt-4 border-t border-slate-100 dark:border-slate-800 animate-in">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nº de Sessões</label>
+                <input type="number" [(ngModel)]="sessionCount" min="1"
+                  class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Valor por Sessão (R$)</label>
+                <input type="number" [(ngModel)]="sessionValue" min="0" step="0.01"
+                  class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Frequência</label>
+                <select [(ngModel)]="frequency"
+                  class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+                  <option value="1x por semana">1x por semana</option>
+                  <option value="2x por semana">2x por semana</option>
+                  <option value="3x por semana">3x por semana</option>
+                  <option value="Quinzenal">Quinzenal</option>
+                  <option value="Diário">Diário</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Duração da Sessão</label>
+                <select [(ngModel)]="duration"
+                  class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-semibold ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+                  <option value="30 min">30 minutos</option>
+                  <option value="45 min">45 minutos</option>
+                  <option value="50 min">50 minutos</option>
+                  <option value="60 min">60 minutos</option>
+                  <option value="90 min">90 minutos</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Financial Summary Pill & Insertion -->
+            <div class="mt-4 p-4 bg-primary/5 rounded-2xl border border-primary/20 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span class="text-xs font-bold text-primary uppercase tracking-wider">Investimento Total do Ciclo</span>
+                <p class="text-lg font-black text-primary">
+                  R$ {{ totalValue().toFixed(2) }}
+                  <span class="text-xs font-normal text-slate-500 ml-1">({{ sessionCount }} sessões × R$ {{ sessionValue.toFixed(2) }})</span>
+                </p>
+              </div>
+              <button type="button" (click)="insertFinancialSummaryIntoDoc()"
+                class="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95">
+                <span class="material-icons text-sm">post_add</span>
+                Inserir Tabela Financeira no Documento
+              </button>
+            </div>
           </div>
-          <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">
-            {{ sessionCount }} sessões × R$ {{ (sessionValue || 0).toFixed(2) }} = R$ {{ totalValue().toFixed(2) }}
-          </p>
-        </div>
+        }
       </div>
 
-      <!-- PDF Preview Template (hidden) -->
-      <div #pdfTemplate class="hidden">
-        <div style="font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
-          <div style="text-align: center; border-bottom: 3px solid #007F80; padding-bottom: 20px; margin-bottom: 30px;">
-            <h1 style="color: #007F80; margin: 0; font-size: 24px;">PLANO DE INTERVENÇÃO</h1>
-            <p style="color: #666; margin: 5px 0 0;">EduPsych Pro - Sistema de Gestão Psicopedagógica</p>
-          </div>
-          
-          <div style="margin-bottom: 20px;">
-            <p><strong>Paciente:</strong> {{ getPatientName() }}</p>
-            <p><strong>Data:</strong> {{ planDate }}</p>
-            <p><strong>Status:</strong> {{ status }}</p>
-          </div>
-
-          <div style="margin-bottom: 20px; page-break-inside: avoid;">
-            <h2 style="color: #007F80; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">1. AVALIAÇÃO / ANAMNESE</h2>
-            <p style="white-space: pre-wrap;">{{ step1 || 'Não preenchido' }}</p>
-            @if (step1Notes) {
-              <p style="margin-top: 10px; white-space: pre-wrap;"><em>{{ step1Notes }}</em></p>
-            }
-          </div>
-
-          <div style="margin-bottom: 20px; page-break-inside: avoid;">
-            <h2 style="color: #007F80; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">2. HABILIDADES DESENVOLVIDAS</h2>
-            <p style="white-space: pre-wrap;">{{ step2 || 'Não preenchido' }}</p>
-            @if (step2Criteria) {
-              <p style="margin-top: 10px;"><strong>Critérios de Sucesso:</strong> {{ step2Criteria }}</p>
-            }
-          </div>
-
-          <div style="margin-bottom: 20px; page-break-inside: avoid;">
-            <h2 style="color: #007F80; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">3. ROTEIRO DE ATENDIMENTO</h2>
-            <p style="white-space: pre-wrap;">{{ step3 || 'Não preenchido' }}</p>
-            @if (step3Materials) {
-              <p style="margin-top: 10px;"><strong>Materiais:</strong> {{ step3Materials }}</p>
-            }
-          </div>
-
-          <div style="margin-bottom: 20px; background: #f5f5f5; padding: 15px; border-radius: 8px;">
-            <h2 style="color: #007F80; font-size: 16px; margin-top: 0;">DADOS FINANCEIROS</h2>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 5px 0;">Nº de Sessões:</td><td style="text-align: right;">{{ sessionCount }}</td></tr>
-              <tr><td style="padding: 5px 0;">Valor por Sessão:</td><td style="text-align: right;">R$ {{ (sessionValue || 0).toFixed(2) }}</td></tr>
-              <tr><td style="padding: 5px 0;">Frequência:</td><td style="text-align: right;">{{ frequency }}</td></tr>
-              <tr><td style="padding: 5px 0;">Duração:</td><td style="text-align: right;">{{ duration }}</td></tr>
-              <tr style="border-top: 2px solid #007F80;"><td style="padding: 10px 0; font-weight: bold; font-size: 16px;">VALOR TOTAL:</td><td style="text-align: right; font-weight: bold; font-size: 16px; color: #007F80;">R$ {{ totalValue().toFixed(2) }}</td></tr>
-            </table>
-          </div>
-
-          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #999; font-size: 12px;">
-            <p>Documento gerado por EduPsych Pro</p>
-          </div>
-        </div>
+      <!-- Quick Template Shortcuts for Plans -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+          <span class="material-icons text-sm">auto_stories</span> Modelos Rápidos:
+        </span>
+        <button type="button" (click)="applyQuickTemplate('i1')"
+          class="px-3.5 py-1.5 bg-white dark:bg-slate-900 hover:bg-primary/5 hover:border-primary/40 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all shrink-0">
+          📋 PEI - Plano Educacional Individualizado
+        </button>
+        <button type="button" (click)="applyQuickTemplate('i2')"
+          class="px-3.5 py-1.5 bg-white dark:bg-slate-900 hover:bg-primary/5 hover:border-primary/40 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all shrink-0">
+          🎯 PIT - Plano de Intervenção Terapêutica
+        </button>
+        <button type="button" (click)="applyQuickTemplate('i4')"
+          class="px-3.5 py-1.5 bg-white dark:bg-slate-900 hover:bg-primary/5 hover:border-primary/40 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all shrink-0">
+          🧸 Plano de Estimulação Precoce
+        </button>
+        <button type="button" (click)="applyQuickTemplate('e2')"
+          class="px-3.5 py-1.5 bg-white dark:bg-slate-900 hover:bg-primary/5 hover:border-primary/40 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all shrink-0">
+          🏫 Parecer de Acomodação Curricular
+        </button>
       </div>
+
+      <!-- Clinical A4 Document Editor -->
+      <app-clinical-doc-editor
+        [content]="documentContent"
+        [paciente]="selectedPatient()"
+        [clinicName]="clinicName()"
+        [clinicLogo]="clinicLogo()"
+        [professionalName]="professionalName()"
+        (contentChange)="onContentChange($event)">
+      </app-clinical-doc-editor>
     </div>
-  `,
-  styles: [`
-    :host { display: block; }
-    .hidden { position: absolute; left: -9999px; top: -9999px; }
-  `]
+  `
 })
 export class PlanoFormComponent implements OnInit {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
 
-  @ViewChild('pdfTemplate') pdfTemplate!: ElementRef;
-
   patients = signal<any[]>([]);
+  selectedPatient = signal<any>(null);
+  selectedPatientId = '';
   isEdit = false;
   planId = '';
   saving = signal(false);
-  currentStep = signal(1);
+  showFinancialDetails = signal(false);
 
-  selectedPatientId = '';
   planDate = new Date().toISOString().split('T')[0];
   status = 'RASCUNHO';
-
-  step1 = '';
-  step1Notes = '';
-  step2 = '';
-  step2Criteria = '';
-  step3 = '';
-  step3Materials = '';
+  documentContent = '';
 
   sessionCount = 12;
-  sessionValue = 0;
+  sessionValue = 150;
   frequency = '2x por semana';
   duration = '50 min';
 
-  steps = [
-    { num: 1, label: 'Avaliação' },
-    { num: 2, label: 'Habilidades' },
-    { num: 3, label: 'Roteiro' }
-  ];
+  clinicName = computed(() => this.auth.tenant()?.name || 'EduPsych Pro');
+  clinicLogo = computed(() => this.auth.tenant()?.logoUrl || '');
+  professionalName = computed(() => this.auth.user()?.name || 'Neuropsicopedagogo(a)');
 
   ngOnInit() {
-    this.api.get('/pacientes').subscribe((res: any) => this.patients.set(res.data || []));
-    
+    this.api.get('/pacientes').subscribe((res: any) => {
+      this.patients.set(res.data || []);
+      if (this.selectedPatientId) {
+        this.updateSelectedPatient();
+      }
+    });
+
     this.planId = this.route.snapshot.paramMap.get('id') || '';
     this.isEdit = !!this.planId;
 
@@ -310,41 +226,123 @@ export class PlanoFormComponent implements OnInit {
         this.selectedPatientId = res.pacienteId || '';
         this.planDate = res.date || '';
         this.status = res.status || 'RASCUNHO';
-        this.step1 = res.step1 || '';
-        this.step2 = res.step2 || '';
-        this.step3 = res.step3 || '';
-        this.sessionCount = res.sessionCount || 0;
-        this.sessionValue = parseFloat(res.sessionValue) || 0;
+        this.sessionCount = res.sessionCount || 12;
+        this.sessionValue = parseFloat(res.sessionValue) || 150;
         this.frequency = res.frequency || '2x por semana';
         this.duration = res.duration || '50 min';
+
+        // Load document content: either step1 has full HTML or reconstruct from steps
+        if (res.step1 && res.step1.includes('<')) {
+          this.documentContent = res.step1;
+        } else if (res.step1 || res.step2 || res.step3) {
+          this.documentContent = `
+            <h2>PLANO DE INTERVENÇÃO CLÍNICA</h2>
+            <br>
+            <p><strong>Paciente:</strong> {nome_paciente} | <strong>Data:</strong> ${this.planDate}</p>
+            <br>
+            <h3>1. AVALIAÇÃO / ANAMNESE</h3>
+            <p>${res.step1 || 'Em avaliação.'}</p>
+            <br>
+            <h3>2. HABILIDADES DESENVOLVIDAS & ALVO</h3>
+            <p>${res.step2 || 'Em desenvolvimento.'}</p>
+            <br>
+            <h3>3. ROTEIRO DE ATENDIMENTO & ESTRATÉGIAS</h3>
+            <p>${res.step3 || 'Sessões estruturadas semanais.'}</p>
+          `;
+        } else {
+          this.loadDefaultTemplate();
+        }
+
+        this.updateSelectedPatient();
       });
+    } else {
+      this.loadDefaultTemplate();
     }
   }
 
-  calculateTotal() {
-    // totalValue is computed dynamically
+  loadDefaultTemplate() {
+    const tpl = DOC_TEMPLATES.find(t => t.id === 'i2') || DOC_TEMPLATES.find(t => t.id === 'i1');
+    if (tpl) {
+      this.documentContent = tpl.content;
+    }
+  }
+
+  applyQuickTemplate(templateId: string) {
+    const tpl = DOC_TEMPLATES.find(t => t.id === templateId);
+    if (!tpl) return;
+    if (this.documentContent && !confirm(`Deseja carregar o modelo "${tpl.name}"? O conteúdo atual será substituído.`)) {
+      return;
+    }
+    const p = this.selectedPatient();
+    this.documentContent = replaceDocPlaceholders(tpl.content, p);
+    this.toast.info(`Modelo "${tpl.name}" carregado no editor.`);
+  }
+
+  onPatientSelect() {
+    this.updateSelectedPatient();
+    // Update placeholders if content has tags
+    if (this.selectedPatient()) {
+      this.documentContent = replaceDocPlaceholders(this.documentContent, this.selectedPatient());
+    }
+  }
+
+  private updateSelectedPatient() {
+    const found = this.patients().find(p => p.id === this.selectedPatientId);
+    this.selectedPatient.set(found || null);
   }
 
   totalValue(): number {
     return (this.sessionCount || 0) * (this.sessionValue || 0);
   }
 
-  getPatientName(): string {
-    const p = this.patients().find((p: any) => p.id === this.selectedPatientId);
-    return p?.name || 'Não selecionado';
+  onContentChange(newHtml: string) {
+    this.documentContent = newHtml;
+  }
+
+  insertFinancialSummaryIntoDoc() {
+    const tableHtml = `
+      <div style="margin: 16px 0; padding: 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+        <h4 style="margin: 0 0 8px 0; color: #007F80; font-size: 14px;">PROPOSTA E CONDIÇÕES DE ATENDIMENTO</h4>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+          <tr>
+            <td style="padding: 4px 0; color: #475569;">Ciclo Inicial:</td>
+            <td style="padding: 4px 0; font-weight: bold; text-align: right;">${this.sessionCount} sessões</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; color: #475569;">Frequência & Duração:</td>
+            <td style="padding: 4px 0; font-weight: bold; text-align: right;">${this.frequency} (${this.duration})</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; color: #475569;">Valor Unitário por Sessão:</td>
+            <td style="padding: 4px 0; font-weight: bold; text-align: right;">R$ ${this.sessionValue.toFixed(2)}</td>
+          </tr>
+          <tr style="border-top: 1px solid #cbd5e1;">
+            <td style="padding: 8px 0 0 0; font-weight: bold; color: #0f172a;">VALOR TOTAL DO INVESTIMENTO:</td>
+            <td style="padding: 8px 0 0 0; font-weight: 900; color: #007F80; font-size: 14px; text-align: right;">R$ ${this.totalValue().toFixed(2)}</td>
+          </tr>
+        </table>
+      </div>
+      <p></p>
+    `;
+    this.documentContent += tableHtml;
+    this.toast.success('Condições financeiras inseridas no documento.');
   }
 
   save() {
-    if (!this.selectedPatientId) return;
+    if (!this.selectedPatientId) {
+      this.toast.warning('Selecione um paciente para o plano');
+      return;
+    }
+
     this.saving.set(true);
 
-    const data = {
+    const payload = {
       pacienteId: this.selectedPatientId,
-      professionalId: '',
+      professionalId: this.auth.user()?.id || '',
       date: this.planDate,
-      step1: this.step1,
-      step2: this.step2,
-      step3: this.step3,
+      step1: this.documentContent,
+      step2: '',
+      step3: '',
       sessionCount: this.sessionCount,
       sessionValue: this.sessionValue.toString(),
       totalValue: this.totalValue().toString(),
@@ -354,33 +352,19 @@ export class PlanoFormComponent implements OnInit {
     };
 
     const req = this.isEdit
-      ? this.api.put(`/intervention-plans/${this.planId}`, data)
-      : this.api.post('/intervention-plans', data);
+      ? this.api.put(`/intervention-plans/${this.planId}`, payload)
+      : this.api.post('/intervention-plans', payload);
 
     req.subscribe({
       next: () => {
         this.saving.set(false);
+        this.toast.success('Plano de intervenção salvo com sucesso');
         this.router.navigate(['/app/planos']);
       },
       error: () => {
         this.saving.set(false);
-        this.toast.error('Erro ao salvar plano');
+        this.toast.error('Erro ao salvar plano de intervenção');
       }
     });
-  }
-
-  exportPdf() {
-    const element = this.pdfTemplate?.nativeElement;
-    if (!element) return;
-
-    const opt = {
-      margin: 10,
-      filename: `plano_intervencao_${this.getPatientName().replace(/\s+/g, '_')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save();
   }
 }

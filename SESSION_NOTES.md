@@ -47,6 +47,18 @@
   - **Página 1:** Cabeçalho oficial, dados do paciente, título do laudo e **Tópicos 1 a 7** (`Identificação`, `Motivo`, `Histórico`, `Observações Clínicas`, `Instrumentos Utilizados`, `Resultados e Síntese`, `Conclusão Diagnóstica`).
   - **Página 2:** **Tópico 8** (`Plano de Intervenção e Recomendações`) e Rodapé oficial com linha de assinatura profissional e selo de assinatura digital auditável.
 
+### E. Expansão do Editor Clínico A4 para Planos, Encaminhamentos e Contratos
+- **Planos de Intervenção (`src/app/modules/planos/pages/plano-form.component.ts` e `documentos-clinicos/pages/plano-intervencao-doc.component.ts`)**:
+  - Integração do `ClinicalDocEditorComponent` substituindo textareas genéricos.
+  - Modelos rápidos de PEI (Plano Educacional Individualizado), PIT (Plano de Intervenção Terapêutica) e Estimulação Precoce.
+  - Seção retrátil de honorários, número de sessões e botão para inserção da tabela financeira oficial no documento.
+  - Correção na rota backend `backend/src/routes/intervention-plans.ts` para fallback do `professionalId`.
+- **Encaminhamentos Clínicos (`src/app/modules/encaminhamentos/pages/encaminhamento-form.component.ts`)**:
+  - Editor A4 com modelos completos de encaminhamento para Neuropediatria, Fonoaudiologia, Terapia Ocupacional, Psiquiatria Infantil e Equipe Escolar.
+  - Timbrado oficial com logotipo da clínica e bloco de assinatura profissional.
+- **Acordos & Contratos Terapêuticos (`src/app/modules/acordos/pages/acordos.component.ts`)**:
+  - Visualização e edição de contratos (Serviços Clínicos, TCLE, Parceria Escolar, Termo LGPD) e propostas comerciais diretamente no editor clínico A4 com download de PDF timbrado.
+
 ---
 
 ## 🚀 2. Como Rodar no Computador do Trabalho

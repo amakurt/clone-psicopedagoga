@@ -1,6 +1,47 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 29 de Setembro de 2026
+## Última Atualização: 30 de Setembro de 2026
+
+---
+
+## Sessão 48 - 30/09/2026 — Expansão do Editor Clínico A4 com Papel Timbrado e 37 Modelos para Planos (PEI/PDI), Encaminhamentos e Contratos
+
+### O que foi feito
+
+#### 1. Planos de Intervenção (PEI / PDI / PIT)
+- **`src/app/modules/planos/pages/plano-form.component.ts`**:
+  - Integração do componente [`ClinicalDocEditorComponent`](file:///Users/amauri/clone-psicopedagoga/src/app/shared/components/clinical-doc-editor/clinical-doc-editor.component.ts) em substituição aos textareas simples.
+  - Suporte a modelos prévios de PEI (Plano Educacional Individualizado), PIT (Plano de Intervenção Terapêutica) e Estimulação Precoce.
+  - Integração das condições financeiras (sessões, valor e frequência) com botão para embutir tabela oficial de orçamento diretamente no documento A4.
+  - Autopreenchimento reativo das variáveis `{nome_paciente}`, `{idade}`, `{escola}`, etc.
+- **`src/app/modules/documentos-clinicos/pages/plano-intervencao-doc.component.ts`**:
+  - Atualizado para utilizar o novo editor clínico A4, exportando PDF timbrado com quebras de página controladas e layout profissional.
+- **Backend (`backend/src/routes/intervention-plans.ts`)**:
+  - Schema de validação Zod ajustado para tornar `professionalId` opcional com fallback seguro para `req.user.id`.
+
+#### 2. Encaminhamentos Clínicos Especializados
+- **`src/app/modules/encaminhamentos/pages/encaminhamento-form.component.ts`**:
+  - Integração de modelos de encaminhamento interdisciplinar direto no editor A4:
+    - 🧠 Neuropediatria / Neurologia (Investigação TEA / TDAH / Rastreio)
+    - 🗣️ Fonoaudiologia (Processamento Auditivo / Linguagem / Fala)
+    - 🎨 Terapia Ocupacional (Integração Sensorial / Práxis Fina)
+    - 🩺 Psiquiatria da Infância e Adolescência
+    - 🏫 Comunicação com Coordenação e Equipe Pedagógica Escolar
+  - Exportação direta para PDF A4 timbrado oficial para os pais entregarem aos médicos e especialistas.
+
+#### 3. Acordos, Contratos e Propostas Comerciais
+- **`src/app/modules/acordos/pages/acordos.component.ts`**:
+  - Integração do [`ClinicalDocEditorComponent`](file:///Users/amauri/clone-psicopedagoga/src/app/shared/components/clinical-doc-editor/clinical-doc-editor.component.ts) aos contratos e propostas.
+  - Modelos em HTML estruturado com cláusulas de objeto, frequência, honorários, faltas e sigilo:
+    - Contrato de Prestação de Serviços Clínicos
+    - Termo de Consentimento Livre e Esclarecido (TCLE)
+    - Contrato de Assessoria Psicopedagógica Escolar
+    - Termo de Sigilo, Privacidade e Tratamento de Dados (LGPD)
+  - Na aba **Proposta Comercial**, o profissional pode gerar a proposta e abri-la no editor A4 timbrado, personalizar as condições e baixar o PDF assinado.
+
+#### 4. Validação Técnica
+- **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (código 0, sem erros).
+- **Servidores Ativos**: Frontend (porta 4200) e Backend (porta 3000) ativos e respondendo.
 
 ---
 
