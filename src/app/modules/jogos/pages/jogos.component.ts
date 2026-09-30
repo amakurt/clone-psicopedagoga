@@ -32,7 +32,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 13, name: 'Memória de Números', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Lembre-se dos números e encontre os pares', type: 'memory' },
   { id: 14, name: 'Memória de Formas', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Encontre as formas geométricas iguais', type: 'memory' },
   { id: 15, name: 'Super Memória', category: 'Memória', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Grade 4x4 com 8 pares — desafio máximo', type: 'memory' },
-  { id: 16, name: 'Memória de Sequências', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Repita sequências de cores cada vez maiores', type: 'sequence' },
+  { id: 16, name: 'Blocos de Corsi (Sequências)', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Memorize a ordem dos blocos espaciais que acendem', type: 'corsi' },
   { id: 17, name: 'Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados? Toque nos que lembra', type: 'tap' },
   { id: 18, name: 'Memória Visual', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Veja a imagem e encontre ela entre as opções', type: 'tap' },
   { id: 19, name: 'Pares de Emojis', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de emojis iguais', type: 'memory' },
@@ -1157,11 +1157,14 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'sequence': 
         if (jogo.id === 8) {
           this.setupNumberSequenceGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 16) {
+          this.setupCorsiGame(canvas, logicalW, logicalH);
         } else {
           this.setupSequenceGame(canvas, logicalW, logicalH);
         }
         break;
       case 'number_sequence': this.setupNumberSequenceGame(canvas, logicalW, logicalH); break;
+      case 'corsi': this.setupCorsiGame(canvas, logicalW, logicalH); break;
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
       case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'social': this.setupSocialGame(canvas, logicalW, logicalH, jogo.id); break;
@@ -2330,6 +2333,370 @@ export class JogosComponent implements OnInit, OnDestroy {
             setTimeout(() => {
               if (wrongOptionIdx === i) wrongOptionIdx = null;
             }, 500);
+          }
+          break;
+        }
+      }
+    });
+  }
+
+  // 5c. MEMÓRIA VISUOESPACIAL DE SEQUÊNCIAS (TESTE DOS BLOCOS DE CORSI)
+  setupCorsiGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    // 9 blocos com distribuição espacial assimétrica padronizada (paradigma Corsi)
+    const blockNormPositions = [
+      { nx: 0.20, ny: 0.25 }, // Bloco 0 (superior esquerdo)
+      { nx: 0.52, ny: 0.18 }, // Bloco 1 (superior centro-alto)
+      { nx: 0.82, ny: 0.24 }, // Bloco 2 (superior direito)
+      { nx: 0.34, ny: 0.45 }, // Bloco 3 (médio esquerdo)
+      { nx: 0.68, ny: 0.42 }, // Bloco 4 (médio centro-direito)
+      { nx: 0.16, ny: 0.70 }, // Bloco 5 (inferior esquerdo)
+      { nx: 0.50, ny: 0.66 }, // Bloco 6 (inferior centro)
+      { nx: 0.84, ny: 0.65 }, // Bloco 7 (inferior direito)
+      { nx: 0.36, ny: 0.84 }  // Bloco 8 (base inferior)
+    ];
+
+    const blockNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33];
+    const numBlocks = 9;
+
+    // Progressão clínica de Span (amplitude visuoespacial de 2 a 6 itens)
+    const spanLevels = [2, 3, 4, 5, 6];
+    const totalLevels = spanLevels.length;
+    let currentLevel = 0;
+    let sequence: number[] = [];
+    let userSeq: number[] = [];
+    let isShowing = true;
+    let isTransitioning = false;
+    let activeBlockIdx = -1;
+    let errorBlockIdx: number | null = null;
+    let playbackInterval: any = null;
+    let animFrameId: number | null = null;
+    let activeTimeout: any = null;
+    let attemptsOnCurrentLevel = 0;
+
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      alpha: number;
+      color: string;
+      size: number;
+    }
+    let particles: Particle[] = [];
+
+    const cleanup = () => {
+      if (playbackInterval) {
+        clearInterval(playbackInterval);
+        playbackInterval = null;
+      }
+      if (activeTimeout) {
+        clearTimeout(activeTimeout);
+        activeTimeout = null;
+      }
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    };
+
+    const blockSize = Math.min(52, Math.max(38, Math.min(W * 0.12, H * 0.17)));
+
+    const spawnSparkles = (cx: number, cy: number) => {
+      const colors = ['#38bdf8', '#facc15', '#10b981', '#ffffff', '#fb923c'];
+      for (let i = 0; i < 26; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 4 + 1.8;
+        particles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 0.8,
+          alpha: 1,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 4 + 2
+        });
+      }
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Badge Superior de Nível e Span
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      const badgeW = 200;
+      const badgeH = 26;
+      ctx.beginPath();
+      ctx.roundRect((W - badgeW) / 2, 8, badgeW, badgeH, 13);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`NÍVEL ${currentLevel + 1} DE ${totalLevels} · SPAN: ${sequence.length} BLOCOS`, W / 2, 21);
+
+      // 2. Indicadores de sequência
+      const dotR = 4;
+      const dotGap = 6;
+      const totalDotW = sequence.length * (dotR * 2 + dotGap) - dotGap;
+      const dotStartX = (W - totalDotW) / 2;
+      const dotY = 46;
+
+      for (let s = 0; s < sequence.length; s++) {
+        const dx = dotStartX + s * (dotR * 2 + dotGap) + dotR;
+        ctx.beginPath();
+        ctx.arc(dx, dotY, dotR, 0, Math.PI * 2);
+
+        if (s < userSeq.length) {
+          ctx.fillStyle = '#10b981';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        } else if (isShowing && s === activeBlockIdx) {
+          ctx.fillStyle = '#38bdf8';
+          ctx.fill();
+        } else {
+          ctx.fillStyle = '#334155';
+          ctx.fill();
+        }
+      }
+
+      // 3. Desenho dos 9 Blocos de Corsi
+      for (let i = 0; i < numBlocks; i++) {
+        const pos = blockNormPositions[i];
+        const bx = Math.round(W * pos.nx - blockSize / 2);
+        const by = Math.round(H * pos.ny - blockSize / 2 + 10);
+
+        const isActive = activeBlockIdx === i;
+        const isError = errorBlockIdx === i;
+        const wasTappedInSeq = !isShowing && userSeq.includes(i);
+
+        ctx.save();
+        if (isError) {
+          ctx.fillStyle = '#7f1d1d';
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = 'rgba(239, 68, 68, 0.7)';
+          ctx.shadowBlur = 15;
+        } else if (isActive) {
+          ctx.fillStyle = '#0284c7';
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3.5;
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.85)';
+          ctx.shadowBlur = 20;
+        } else if (wasTappedInSeq) {
+          ctx.fillStyle = '#064e3b';
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = 'rgba(16, 185, 129, 0.5)';
+          ctx.shadowBlur = 10;
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 1.8;
+        }
+
+        ctx.beginPath();
+        ctx.roundRect(bx, by, blockSize, blockSize, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (isActive) {
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(bx + blockSize / 2, by + blockSize / 2, 7, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (wasTappedInSeq) {
+          const tapOrder = userSeq.indexOf(i) + 1;
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 15px sans-serif';
+          ctx.fillText(String(tapOrder), bx + blockSize / 2, by + blockSize / 2);
+        } else {
+          ctx.fillStyle = '#64748b';
+          ctx.beginPath();
+          ctx.arc(bx + blockSize / 2, by + blockSize / 2, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // 4. Renderizar partículas
+      if (particles.length > 0) {
+        for (let pIdx = particles.length - 1; pIdx >= 0; pIdx--) {
+          const p = particles[pIdx];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.alpha -= 0.025;
+
+          if (p.alpha <= 0) {
+            particles.splice(pIdx, 1);
+            continue;
+          }
+
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+      }
+
+      animFrameId = requestAnimationFrame(draw);
+    };
+
+    const startLevel = (level: number) => {
+      currentLevel = level;
+      userSeq = [];
+      isShowing = true;
+      isTransitioning = false;
+      activeBlockIdx = -1;
+      errorBlockIdx = null;
+
+      const span = spanLevels[level];
+      sequence = [];
+      for (let i = 0; i < span; i++) {
+        let nextBlock = Math.floor(Math.random() * numBlocks);
+        if (i > 0 && sequence[i - 1] === nextBlock) {
+          nextBlock = (nextBlock + 1) % numBlocks;
+        }
+        sequence.push(nextBlock);
+      }
+
+      this.gameInstruction.set(`👀 Nível ${level + 1}: Observe a sequência dos ${span} blocos...`);
+
+      activeTimeout = setTimeout(() => {
+        playPlayback();
+      }, 750);
+    };
+
+    const playPlayback = () => {
+      isShowing = true;
+      userSeq = [];
+      activeBlockIdx = -1;
+      errorBlockIdx = null;
+      let step = 0;
+
+      if (playbackInterval) clearInterval(playbackInterval);
+
+      playbackInterval = setInterval(() => {
+        if (step >= sequence.length) {
+          clearInterval(playbackInterval);
+          playbackInterval = null;
+          isShowing = false;
+          activeBlockIdx = -1;
+          this.gameInstruction.set(`👉 Sua vez! Toque nos blocos na mesma ordem (0/${sequence.length})`);
+          return;
+        }
+
+        const currentBlock = sequence[step];
+        activeBlockIdx = currentBlock;
+        this.sound.playMusicalNote(blockNotes[currentBlock]);
+
+        activeTimeout = setTimeout(() => {
+          if (activeBlockIdx === currentBlock) activeBlockIdx = -1;
+        }, 440);
+
+        step++;
+      }, 720);
+    };
+
+    draw();
+    startLevel(0);
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (isShowing || isTransitioning) return;
+
+      for (let i = 0; i < numBlocks; i++) {
+        const pos = blockNormPositions[i];
+        const bx = Math.round(W * pos.nx - blockSize / 2);
+        const by = Math.round(H * pos.ny - blockSize / 2 + 10);
+
+        const hitPadding = 12;
+        if (
+          mx >= bx - hitPadding &&
+          mx <= bx + blockSize + hitPadding &&
+          my >= by - hitPadding &&
+          my <= by + blockSize + hitPadding
+        ) {
+          if (userSeq.length > 0 && userSeq[userSeq.length - 1] === i) return;
+
+          userSeq.push(i);
+          activeBlockIdx = i;
+          this.sound.playMusicalNote(blockNotes[i]);
+
+          setTimeout(() => {
+            if (activeBlockIdx === i) activeBlockIdx = -1;
+          }, 240);
+
+          const currStep = userSeq.length - 1;
+          const isCorrectSoFar = userSeq[currStep] === sequence[currStep];
+
+          if (!isCorrectSoFar) {
+            errorBlockIdx = i;
+            this.sound.playError();
+            this.recordAttempt(false);
+            attemptsOnCurrentLevel++;
+
+            if (attemptsOnCurrentLevel < 2) {
+              this.gameInstruction.set(`Ops! Vamos rever a sequência dos blocos...`);
+              isShowing = true;
+              activeTimeout = setTimeout(() => {
+                playPlayback();
+              }, 900);
+            } else {
+              this.gameInstruction.set(`Não se preocupe! Próximo nível...`);
+              isTransitioning = true;
+              activeTimeout = setTimeout(() => {
+                attemptsOnCurrentLevel = 0;
+                if (currentLevel + 1 < totalLevels) {
+                  startLevel(currentLevel + 1);
+                } else {
+                  cleanup();
+                  this.finishGame();
+                }
+              }, 1100);
+            }
+            return;
+          }
+
+          this.gameInstruction.set(`👉 Muito bem! (${userSeq.length}/${sequence.length})`);
+
+          if (userSeq.length === sequence.length) {
+            isTransitioning = true;
+            this.sound.playSuccess();
+            this.recordAttempt(true, true);
+            this.gameScore.update(s => s + 25);
+            attemptsOnCurrentLevel = 0;
+
+            const finalPos = blockNormPositions[i];
+            spawnSparkles(W * finalPos.nx, H * finalPos.ny + 10);
+
+            if (currentLevel + 1 < totalLevels) {
+              this.gameInstruction.set(`⭐ Excelente! Span de ${sequence.length} blocos alcançado!`);
+              activeTimeout = setTimeout(() => {
+                startLevel(currentLevel + 1);
+              }, 1200);
+            } else {
+              this.gameInstruction.set(`🎉 Fantástico! Você dominou o Teste de Corsi completo!`);
+              activeTimeout = setTimeout(() => {
+                cleanup();
+                this.sound.playVictory();
+                this.finishGame();
+              }, 1400);
+            }
           }
           break;
         }

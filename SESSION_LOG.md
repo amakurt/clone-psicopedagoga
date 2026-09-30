@@ -1952,4 +1952,12 @@ npm run start
     - ID 13 (*Memória de Números*): Números (`1️⃣, 2️⃣, 3️⃣, 4️⃣, 5️⃣, 6️⃣, 7️⃣, 8️⃣`).
     - ID 14 (*Memória de Formas*): Formas geométricas contrastantes (`⭐, 🔷, 🔶, 🔺, ⬛, ⚪, 🔻, 💎`).
     - ID 15 (*Super Memória*): Símbolos e tesouros de alta distinção (`🚀, 🌟, 👑, 💎, 🏆, 🎯, 🎈, 🍀`).
+- **Transformação de Memória de Sequências no Teste dos Blocos de Corsi (ID 16):**
+  - **Problema identificado:** O jogo ID 16 era idêntico ao jogo ID 7 (Memória de Cores), compartilhando o mesmo motor de sequência linear.
+  - **Solução implementada:**
+    - Transformação do ID 16 no clássico **Teste dos Blocos de Corsi** (*Corsi Block-Tapping Test*), padrão-ouro da neuropsicologia para avaliação da memória de trabalho visuoespacial.
+    - **Distribuição Espacial Assimétrica:** 9 blocos distribuídos organicamente no plano da tela.
+    - **Progressão Clínica de Span:** 5 níveis escalonando a amplitude de retenção de 2 a 6 blocos consecutivos.
+    - **Feedback Multimodal:** Cada bloco possui frequência harmônica exclusiva na escala maior; acendimento com halo luminoso e toques numerados em tempo real.
+    - **Tolerância a Erro e Recompensas:** Re-demonstração da sequência caso haja deslize na 1ª tentativa, celebração com confetes e registro de acertos e pontuação.
 
