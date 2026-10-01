@@ -68,7 +68,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 46, name: 'Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva problemas escritos com operações simples', type: 'math' },
   { id: 47, name: 'Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
   { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'tap' },
-  { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'tap' },
+  { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'shapes' },
   { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Misto: somas, subtrações e multiplicações difíceis', type: 'math' },
 
   { id: 51, name: 'Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Reconheça a expressão do rosto: feliz, triste, bravo, assustado ou surpreso', type: 'social' },
@@ -1151,7 +1151,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const container = canvas.parentElement;
     const containerWidth = container ? container.clientWidth - 24 : 468;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math';
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes';
     const maxAvailableH = window.innerHeight 
       ? Math.max(220, window.innerHeight - (isExpandedGame ? 180 : 220)) 
       : (isExpandedGame ? 440 : 300);
@@ -1184,6 +1184,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     switch (jogo.type) {
       case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'math': this.setupMathGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'shapes': this.setupShapesGame(canvas, logicalW, logicalH); break;
       case 'sequence': 
         if (jogo.id === 8) {
           this.setupNumberSequenceGame(canvas, logicalW, logicalH);
@@ -1216,6 +1217,8 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.setupObjectRecallGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 18) {
           this.setupVisualMatchingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 49) {
+          this.setupShapesGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 54) {
           this.setupBreathingGame(canvas, logicalW, logicalH);
         } else {
@@ -1689,6 +1692,332 @@ export class JogosComponent implements OnInit, OnDestroy {
               input += btn;
               draw();
             }
+          }
+        }
+      });
+    });
+  }
+
+  // 3.1 FORMAS GEOMÉTRICAS (JOGO 49)
+  setupShapesGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface GeometricShape {
+      id: string;
+      name: string;
+      color: string;
+      borderColor: string;
+      lightColor: string;
+      draw: (c: CanvasRenderingContext2D, cx: number, cy: number, size: number) => void;
+    }
+
+    const ALL_SHAPES: GeometricShape[] = [
+      {
+        id: 'circulo',
+        name: 'Círculo',
+        color: '#ef4444',
+        borderColor: '#f87171',
+        lightColor: 'rgba(239, 68, 68, 0.18)',
+        draw: (c, cx, cy, size) => {
+          const r = size * 0.40;
+          c.beginPath();
+          c.arc(cx, cy, r, 0, Math.PI * 2);
+          c.fillStyle = '#ef4444';
+          c.fill();
+          c.lineWidth = 3;
+          c.strokeStyle = '#fca5a5';
+          c.stroke();
+        }
+      },
+      {
+        id: 'quadrado',
+        name: 'Quadrado',
+        color: '#3b82f6',
+        borderColor: '#60a5fa',
+        lightColor: 'rgba(59, 130, 246, 0.18)',
+        draw: (c, cx, cy, size) => {
+          const s = size * 0.68;
+          c.beginPath();
+          c.roundRect(cx - s / 2, cy - s / 2, s, s, 8);
+          c.fillStyle = '#3b82f6';
+          c.fill();
+          c.lineWidth = 3;
+          c.strokeStyle = '#93c5fd';
+          c.stroke();
+        }
+      },
+      {
+        id: 'triangulo',
+        name: 'Triângulo',
+        color: '#f59e0b',
+        borderColor: '#fbbf24',
+        lightColor: 'rgba(245, 158, 11, 0.18)',
+        draw: (c, cx, cy, size) => {
+          const s = size * 0.74;
+          c.beginPath();
+          c.moveTo(cx, cy - s * 0.52);
+          c.lineTo(cx + s * 0.48, cy + s * 0.40);
+          c.lineTo(cx - s * 0.48, cy + s * 0.40);
+          c.closePath();
+          c.fillStyle = '#f59e0b';
+          c.fill();
+          c.lineWidth = 3;
+          c.strokeStyle = '#fde68a';
+          c.stroke();
+        }
+      },
+      {
+        id: 'retangulo',
+        name: 'Retângulo',
+        color: '#10b981',
+        borderColor: '#34d399',
+        lightColor: 'rgba(16, 185, 129, 0.18)',
+        draw: (c, cx, cy, size) => {
+          const rw = size * 0.82;
+          const rh = size * 0.48;
+          c.beginPath();
+          c.roundRect(cx - rw / 2, cy - rh / 2, rw, rh, 8);
+          c.fillStyle = '#10b981';
+          c.fill();
+          c.lineWidth = 3;
+          c.strokeStyle = '#a7f3d0';
+          c.stroke();
+        }
+      },
+      {
+        id: 'estrela',
+        name: 'Estrela',
+        color: '#eab308',
+        borderColor: '#fde047',
+        lightColor: 'rgba(234, 179, 8, 0.18)',
+        draw: (c, cx, cy, size) => {
+          const spikes = 5;
+          const outerR = size * 0.44;
+          const innerR = size * 0.21;
+          let rot = (Math.PI / 2) * 3;
+          let x = cx;
+          let y = cy;
+          const step = Math.PI / spikes;
+          c.beginPath();
+          c.moveTo(cx, cy - outerR);
+          for (let i = 0; i < spikes; i++) {
+            x = cx + Math.cos(rot) * outerR;
+            y = cy + Math.sin(rot) * outerR;
+            c.lineTo(x, y);
+            rot += step;
+            x = cx + Math.cos(rot) * innerR;
+            y = cy + Math.sin(rot) * innerR;
+            c.lineTo(x, y);
+            rot += step;
+          }
+          c.lineTo(cx, cy - outerR);
+          c.closePath();
+          c.fillStyle = '#eab308';
+          c.fill();
+          c.lineWidth = 3;
+          c.strokeStyle = '#fef08a';
+          c.stroke();
+        }
+      },
+      {
+        id: 'losango',
+        name: 'Losango',
+        color: '#ec4899',
+        borderColor: '#f472b6',
+        lightColor: 'rgba(236, 72, 153, 0.18)',
+        draw: (c, cx, cy, size) => {
+          const dw = size * 0.66;
+          const dh = size * 0.78;
+          c.beginPath();
+          c.moveTo(cx, cy - dh / 2);
+          c.lineTo(cx + dw / 2, cy);
+          c.lineTo(cx, cy + dh / 2);
+          c.lineTo(cx - dw / 2, cy);
+          c.closePath();
+          c.fillStyle = '#ec4899';
+          c.fill();
+          c.lineWidth = 3;
+          c.strokeStyle = '#fbcfe8';
+          c.stroke();
+        }
+      }
+    ];
+
+    let currentRound = 0;
+    const totalRounds = 10;
+    let targetShape: GeometricShape = ALL_SHAPES[0];
+    let currentOptions: GeometricShape[] = [];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+
+    // Layout Responsivo (Grid 2x2 de Cartões)
+    const headerH = Math.min(68, Math.max(48, Math.floor(H * 0.18)));
+    const headerY = Math.max(6, Math.floor(H * 0.02));
+    const headerW = Math.min(480, W - 24);
+    const headerX = Math.floor((W - headerW) / 2);
+
+    const gridY = headerY + headerH + Math.max(8, Math.floor(H * 0.025));
+    const bottomGap = Math.max(8, Math.floor(H * 0.025));
+    const availGridH = H - gridY - bottomGap;
+
+    const gridW = Math.min(480, W - 24);
+    const gridX = Math.floor((W - gridW) / 2);
+
+    const cardGap = Math.min(12, Math.max(8, Math.floor(W * 0.02)));
+    const cardW = Math.floor((gridW - cardGap) / 2);
+    const cardH = Math.min(130, Math.max(78, Math.floor((availGridH - cardGap) / 2)));
+    const actualGridH = cardH * 2 + cardGap;
+    const actualGridY = gridY + Math.max(0, Math.floor((availGridH - actualGridH) / 2));
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      // Escolher forma alvo
+      const targetIdx = Math.floor(Math.random() * ALL_SHAPES.length);
+      targetShape = ALL_SHAPES[targetIdx];
+
+      // Escolher 3 distratores distintos
+      const distractors = ALL_SHAPES.filter(s => s.id !== targetShape.id);
+      for (let i = distractors.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [distractors[i], distractors[j]] = [distractors[j], distractors[i]];
+      }
+
+      currentOptions = [targetShape, distractors[0], distractors[1], distractors[2]];
+      // Embaralhar opções nas 4 posições da grade
+      for (let i = currentOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentOptions[i], currentOptions[j]] = [currentOptions[j], currentOptions[i]];
+      }
+
+      this.gameInstruction.set(`Rodada ${currentRound}/${totalRounds}: Toque no(a) ${targetShape.name.toUpperCase()}`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Header Card (Painel da Pergunta)
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(headerX, headerY, headerW, headerH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Mini badge da forma alvo no cabeçalho
+      const badgeSize = Math.floor(headerH * 0.58);
+      const badgeX = headerX + 16 + badgeSize / 2;
+      const badgeY = headerY + headerH / 2;
+      targetShape.draw(ctx, badgeX, badgeY, badgeSize);
+
+      // Texto de Instrução
+      ctx.fillStyle = '#94a3b8';
+      const promptLabelSz = Math.min(13, Math.max(10, Math.floor(headerH * 0.22)));
+      ctx.font = `600 ${promptLabelSz}px 'Outfit', sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`DESAFIO GEOMÉTRICO • RODADA ${currentRound}/${totalRounds}`, headerX + 28 + badgeSize, headerY + 10);
+
+      ctx.fillStyle = '#f8fafc';
+      const promptTitleSz = Math.min(18, Math.max(14, Math.floor(headerH * 0.32)));
+      ctx.font = `bold ${promptTitleSz}px 'Outfit', sans-serif`;
+      ctx.fillText(`Encontre o(a): ${targetShape.name.toUpperCase()}`, headerX + 28 + badgeSize, headerY + 12 + promptLabelSz + 4);
+      ctx.restore();
+
+      // 2. Grid 2x2 com as 4 opções
+      currentOptions.forEach((shape, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const cx = gridX + col * (cardW + cardGap);
+        const cy = actualGridY + row * (cardH + cardGap);
+
+        ctx.save();
+        const isClicked = feedbackIndex === i;
+        const isSuccess = isClicked && feedbackStatus === 'success';
+        const isError = isClicked && feedbackStatus === 'error';
+
+        // Fundo do cartão
+        if (isSuccess) {
+          ctx.fillStyle = '#064e3b';
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2.5;
+        } else if (isError) {
+          ctx.fillStyle = '#450a0a';
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2.5;
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.5;
+        }
+
+        ctx.beginPath();
+        ctx.roundRect(cx, cy, cardW, cardH, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        // Desenhar forma geométrica vetorial no centro do cartão
+        const shapeAreaH = cardH * 0.62;
+        const shapeCenterX = cx + cardW / 2;
+        const shapeCenterY = cy + shapeAreaH * 0.52 + 4;
+        const shapeSize = Math.min(shapeAreaH * 0.88, cardW * 0.52);
+
+        shape.draw(ctx, shapeCenterX, shapeCenterY, shapeSize);
+
+        // Nome da forma geométrica no rodapé do cartão
+        ctx.fillStyle = isSuccess ? '#34d399' : isError ? '#f87171' : '#f1f5f9';
+        const labelFontSz = Math.min(15, Math.max(12, Math.floor(cardH * 0.17)));
+        ctx.font = `bold ${labelFontSz}px 'Outfit', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(shape.name, cx + cardW / 2, cy + cardH - 14);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((shape, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const cx = gridX + col * (cardW + cardGap);
+        const cy = actualGridY + row * (cardH + cardGap);
+
+        if (mx >= cx && mx <= cx + cardW && my >= cy && my <= cy + cardH) {
+          feedbackIndex = i;
+          const isCorrect = shape.id === targetShape.id;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 15);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 450);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              draw();
+            }, 600);
           }
         }
       });
