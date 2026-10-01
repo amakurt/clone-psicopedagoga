@@ -1,6 +1,32 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 30 de Setembro de 2026
+## Última Atualização: 01 de Outubro de 2026
+
+---
+
+## Sessão 51 - 01/10/2026 — Ampliação de Tipografia, Canvas Estendido e Layout de Cards Full-Width no Jogo "Autoconhecimento" e Jogos Socioemocionais
+
+### O que foi feito
+
+#### 1. Ampliação da Tipografia e Legibilidade de Leitura Clínica
+- **Causa Raiz Identificada**:
+  - No jogo 60 (*Autoconhecimento*) e motores socioemocionais, os textos utilizavam fontes reduzidas (`10.5px / 11.5px` para alternativas e `12px / 13px` para situação) para caberem em uma proporção estrita de altura (`0.6` de largura = apenas 300px no desktop e ~200px no celular).
+  - Em telas de crianças ou terapeutas, letras abaixo de 12px em sentenças longas causavam fadiga visual e dificultavam a compreensão.
+- **Solução Implementada em `src/app/modules/jogos/pages/jogos.component.ts`**:
+  - **Ampliação do Canvas e Proporção Inteligente (`setupCanvas`)**:
+    - Canvas expandido de `max-w-[500px]` para `w-full max-w-[580px]`.
+    - Jogos de texto e reflexão (`type === 'social'`) agora contam com proporção vertical estendida (`0.74` vs `0.60`), elevando a altura útil do Canvas de ~300px para ~415px no desktop e adaptável no mobile.
+  - **Tipografia Nobre e Confortável**:
+    - **Situação / Dilema**: Ampliada para `15.5px` (desktop) e `14px` (mobile), peso `600`, entrelinha de `22px` e cor `#ffffff` com alto contraste.
+    - **Opções de Resposta**: Ampliadas para `14px` (desktop) e `12.5px` (mobile), peso `600` e entrelinha de `18px`.
+  - **Layout em Cards Verticais Full-Width (Estilo Quiz Moderno)**:
+    - Quando o espaço vertical é adequado (`availableH >= 170px`), as 4 alternativas deixam de ser espremidas em 2 colunas e passam a ocupar a largura total do card (`btnW = cardW`).
+    - Cada alternativa conta com um badge circular elegante (`A`, `B`, `C`, `D`) e texto alinhado à esquerda com quebra dinâmica de linha e centralização vertical.
+    - Mantido fallback responsivo para grade 2x2 caso a altura do dispositivo seja extremamente reduzida (ex: smartphones em modo paisagem com pouca área vertical).
+
+#### 2. Validação Técnica
+- **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (Código 0, 0 erros).
+- **Servidor Dev**: Hot-reload ativo e respondendo em `http://localhost:4200`.
 
 ---
 

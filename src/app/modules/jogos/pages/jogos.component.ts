@@ -507,7 +507,7 @@ class ClinicalSoundSynthesizer {
 
                 <!-- Canvas Ativo -->
                 <div [class.hidden]="!gameStarted()" class="flex flex-col items-center">
-                  <canvas #gameCanvas class="rounded-xl shadow-2xl max-w-[500px] cursor-pointer" style="touch-action: none; -webkit-user-select: none; user-select: none;"></canvas>
+                  <canvas #gameCanvas class="rounded-2xl shadow-2xl w-full max-w-[580px] cursor-pointer" style="touch-action: none; -webkit-user-select: none; user-select: none;"></canvas>
                   <p class="text-xs sm:text-sm font-semibold text-slate-300 mt-3 text-center px-2 min-h-[20px] flex items-center gap-1.5">
                     <span class="material-icons text-sm text-teal-400">info</span>
                     {{ gameInstruction() }}
@@ -1124,12 +1124,18 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     const container = canvas.parentElement;
     const containerWidth = container ? container.clientWidth - 24 : 468;
-    const maxAvailableH = window.innerHeight ? Math.max(180, window.innerHeight - 220) : 300;
-    let logicalW = Math.min(500, containerWidth);
-    let logicalH = Math.round(logicalW * 0.6);
+    const jogo = this.currentGame();
+    const isSocialOrText = jogo?.type === 'social';
+    const maxAvailableH = window.innerHeight 
+      ? Math.max(220, window.innerHeight - (isSocialOrText ? 180 : 220)) 
+      : (isSocialOrText ? 440 : 300);
+
+    let logicalW = Math.min(isSocialOrText ? 580 : 500, containerWidth);
+    const targetAspect = isSocialOrText ? 0.74 : 0.6;
+    let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
-      logicalW = Math.round(logicalH / 0.6);
+      logicalW = Math.min(logicalW, Math.round(logicalH / targetAspect));
     }
     const dpr = window.devicePixelRatio || 1;
 
@@ -1148,8 +1154,6 @@ export class JogosComponent implements OnInit, OnDestroy {
     this.gameData.dpr = dpr;
 
     this.removeCanvasListeners();
-
-    const jogo = this.currentGame();
     if (!jogo || !this.canvasCtx) return;
     switch (jogo.type) {
       case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
@@ -3569,38 +3573,40 @@ export class JogosComponent implements OnInit, OnDestroy {
       const s = scenarios[currentIdx];
       ctx.clearRect(0, 0, W, H);
 
+      const isCompact = W < 420;
+
       // 1. Cabeçalho / Indicador de Progresso
       const progressText = `Cenário ${currentIdx + 1} de ${scenarios.length}`;
       ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 11px sans-serif';
+      ctx.font = isCompact ? 'bold 11.5px sans-serif' : 'bold 12.5px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(progressText, W / 2, 8);
+      ctx.fillText(progressText, W / 2, 7);
 
-      // 2. Card da Situação (Responsivo e com Quebra de Linha)
+      // 2. Card da Situação (Tipografia Ampla e Alto Contraste)
       const cardX = 14;
       const cardW = W - 28;
-      const cardY = 26;
+      const cardY = 25;
 
-      const sitFont = W < 400 ? 'bold 12px sans-serif' : 'bold 13px sans-serif';
-      const sitLineH = W < 400 ? 16 : 18;
-      const sitLines = wrapText(s.situation, cardW - 24, sitFont);
+      const sitFont = isCompact ? '600 14px system-ui, -apple-system, sans-serif' : '600 15.5px system-ui, -apple-system, sans-serif';
+      const sitLineH = isCompact ? 19 : 22;
+      const sitLines = wrapText(s.situation, cardW - 28, sitFont);
       const sitTextH = sitLines.length * sitLineH;
 
-      // Altura do card adaptada ao texto e à altura disponível
-      const cardH = Math.min(Math.max(48, sitTextH + 16), Math.round(H * 0.35));
+      // Altura do card adaptada ao texto com padding confortável
+      const cardH = Math.min(Math.max(52, sitTextH + 20), Math.round(H * 0.36));
 
       // Fundo do Card da Situação
       ctx.fillStyle = '#1e293b';
       ctx.strokeStyle = '#334155';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.roundRect(cardX, cardY, cardW, cardH, 10);
+      ctx.roundRect(cardX, cardY, cardW, cardH, 12);
       ctx.fill();
       ctx.stroke();
 
       // Linhas da Situação dentro do Card
-      ctx.fillStyle = '#f8fafc';
+      ctx.fillStyle = '#ffffff';
       ctx.font = sitFont;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -3609,64 +3615,146 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.fillText(line, W / 2, textStartY + lIdx * sitLineH);
       });
 
-      // 3. Grid de Opções (2 colunas x 2 linhas com limites rígidos)
-      const optionsStartY = cardY + cardH + 8;
+      // 3. Grid de Opções (Layout Inteligente: 4 Linhas Full-Width para Leitura Confortável)
+      const optionsStartY = cardY + cardH + 10;
       const availableH = H - optionsStartY - 8;
-      const gapX = 10;
-      const gapY = 6;
-      const btnW = (cardW - gapX) / 2;
-      const btnH = Math.min(48, Math.max(34, Math.floor((availableH - gapY) / 2)));
-
       optionRects = [];
-      const optFont = W < 400 ? '500 10.5px sans-serif' : '500 11.5px sans-serif';
-      const optLineH = W < 400 ? 12 : 14;
 
-      s.options.forEach((opt, i) => {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const bx = cardX + col * (btnW + gapX);
-        const by = optionsStartY + row * (btnH + gapY);
-        optionRects.push({ x: bx, y: by, w: btnW, h: btnH });
+      const useVerticalList = availableH >= 170;
 
-        // Cores de estado (Normal vs Feedback de clique)
-        let bgColor = '#1e293b';
-        let strokeColor = '#334155';
-        let textColor = '#f1f5f9';
+      if (useVerticalList) {
+        // Modo 4 Linhas Completas (Empilhadas) - Altíssima Legibilidade e Espaço
+        const gapY = Math.min(8, Math.max(4, Math.floor((availableH - 160) / 4)));
+        const btnW = cardW;
+        const btnH = Math.min(52, Math.max(38, Math.floor((availableH - 3 * gapY) / 4)));
+        const optFont = isCompact ? '600 12.5px system-ui, -apple-system, sans-serif' : '600 14px system-ui, -apple-system, sans-serif';
+        const optLineH = isCompact ? 16 : 18;
 
-        if (feedback) {
-          if (i === s.correct) {
-            bgColor = '#064e3b';
-            strokeColor = '#10b981';
-            textColor = '#ecfdf5';
-          } else if (i === feedback.clickedIdx && !feedback.isCorrect) {
-            bgColor = '#7f1d1d';
-            strokeColor = '#ef4444';
-            textColor = '#fef2f2';
+        s.options.forEach((opt, i) => {
+          const bx = cardX;
+          const by = optionsStartY + i * (btnH + gapY);
+          optionRects.push({ x: bx, y: by, w: btnW, h: btnH });
+
+          let bgColor = '#1e293b';
+          let strokeColor = '#334155';
+          let textColor = '#f8fafc';
+          let badgeBg = '#0f172a';
+          let badgeBorder = '#475569';
+          let badgeText = '#38bdf8';
+
+          if (feedback) {
+            if (i === s.correct) {
+              bgColor = '#064e3b';
+              strokeColor = '#10b981';
+              textColor = '#ecfdf5';
+              badgeBg = '#065f46';
+              badgeBorder = '#34d399';
+              badgeText = '#ffffff';
+            } else if (i === feedback.clickedIdx && !feedback.isCorrect) {
+              bgColor = '#7f1d1d';
+              strokeColor = '#ef4444';
+              textColor = '#fef2f2';
+              badgeBg = '#991b1b';
+              badgeBorder = '#f87171';
+              badgeText = '#ffffff';
+            }
           }
-        }
 
-        // Desenha o botão
-        ctx.fillStyle = bgColor;
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.roundRect(bx, by, btnW, btnH, 8);
-        ctx.fill();
-        ctx.stroke();
+          // Card do Botão
+          ctx.fillStyle = bgColor;
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(bx, by, btnW, btnH, 10);
+          ctx.fill();
+          ctx.stroke();
 
-        // Texto da Opção com Quebra de Linha
-        const optLines = wrapText(opt, btnW - 14, optFont);
-        const optTextH = optLines.length * optLineH;
-        const optStartY = by + (btnH - optTextH) / 2 + optLineH / 2;
+          // Badge de Letra (A, B, C, D)
+          const badgeRadius = isCompact ? 11 : 12;
+          const badgeCenterX = bx + (isCompact ? 18 : 22);
+          const badgeCenterY = by + btnH / 2;
+          ctx.fillStyle = badgeBg;
+          ctx.strokeStyle = badgeBorder;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(badgeCenterX, badgeCenterY, badgeRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
 
-        ctx.fillStyle = textColor;
-        ctx.font = optFont;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        optLines.forEach((line, lIdx) => {
-          ctx.fillText(line, bx + btnW / 2, optStartY + lIdx * optLineH);
+          ctx.fillStyle = badgeText;
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String.fromCharCode(65 + i), badgeCenterX, badgeCenterY + 0.5);
+
+          // Texto da Opção com Quebra de Linha Alinhado à Esquerda
+          const textStartX = bx + (isCompact ? 36 : 42);
+          const maxTextW = btnW - (isCompact ? 46 : 52);
+          const optLines = wrapText(opt, maxTextW, optFont);
+          const optTextH = optLines.length * optLineH;
+          const optStartY = by + (btnH - optTextH) / 2 + optLineH / 2;
+
+          ctx.fillStyle = textColor;
+          ctx.font = optFont;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          optLines.forEach((line, lIdx) => {
+            ctx.fillText(line, textStartX, optStartY + lIdx * optLineH);
+          });
         });
-      });
+      } else {
+        // Modo 2x2 para telas com altura muito restrita (paisagem móvel)
+        const gapX = 10;
+        const gapY = 6;
+        const btnW = (cardW - gapX) / 2;
+        const btnH = Math.min(48, Math.max(34, Math.floor((availableH - gapY) / 2)));
+        const optFont = isCompact ? '600 11.5px system-ui, -apple-system, sans-serif' : '600 13px system-ui, -apple-system, sans-serif';
+        const optLineH = isCompact ? 14 : 16;
+
+        s.options.forEach((opt, i) => {
+          const col = i % 2;
+          const row = Math.floor(i / 2);
+          const bx = cardX + col * (btnW + gapX);
+          const by = optionsStartY + row * (btnH + gapY);
+          optionRects.push({ x: bx, y: by, w: btnW, h: btnH });
+
+          let bgColor = '#1e293b';
+          let strokeColor = '#334155';
+          let textColor = '#f8fafc';
+
+          if (feedback) {
+            if (i === s.correct) {
+              bgColor = '#064e3b';
+              strokeColor = '#10b981';
+              textColor = '#ecfdf5';
+            } else if (i === feedback.clickedIdx && !feedback.isCorrect) {
+              bgColor = '#7f1d1d';
+              strokeColor = '#ef4444';
+              textColor = '#fef2f2';
+            }
+          }
+
+          ctx.fillStyle = bgColor;
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(bx, by, btnW, btnH, 8);
+          ctx.fill();
+          ctx.stroke();
+
+          const optLines = wrapText(opt, btnW - 14, optFont);
+          const optTextH = optLines.length * optLineH;
+          const optStartY = by + (btnH - optTextH) / 2 + optLineH / 2;
+
+          ctx.fillStyle = textColor;
+          ctx.font = optFont;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          optLines.forEach((line, lIdx) => {
+            ctx.fillText(line, bx + btnW / 2, optStartY + lIdx * optLineH);
+          });
+        });
+      }
 
       this.gameInstruction.set('Leia a situação e escolha a atitude com maior maturidade socioemocional');
     };
