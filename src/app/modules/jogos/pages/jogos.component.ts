@@ -71,7 +71,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'tap' },
   { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Misto: somas, subtrações e multiplicações difíceis', type: 'math' },
 
-  { id: 51, name: 'Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Identifique se a pessoa está feliz, triste ou com raiva', type: 'social' },
+  { id: 51, name: 'Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Reconheça a expressão do rosto: feliz, triste, bravo, assustado ou surpreso', type: 'social' },
   { id: 52, name: 'Empatia', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '4-8', description: 'Como a pessoa se sente? Escolha a resposta certa', type: 'social' },
   { id: 53, name: 'Situações Sociais', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'O que fazer quando alguém está triste na escola?', type: 'social' },
   { id: 54, name: 'Respiração', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Siga o ritmo do balão: inspire ao crescer, segure e expire ao diminuir', type: 'breathing' },
@@ -1199,7 +1199,13 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'visual_matching': this.setupVisualMatchingGame(canvas, logicalW, logicalH); break;
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
       case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
-      case 'social': this.setupSocialGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'social': 
+        if (jogo.id === 51) {
+          this.setupEmotionFaceGame(canvas, logicalW, logicalH);
+        } else {
+          this.setupSocialGame(canvas, logicalW, logicalH, jogo.id);
+        }
+        break;
       case 'breathing': this.setupBreathingGame(canvas, logicalW, logicalH); break;
       case 'stroop': this.setupStroopGame(canvas, logicalW, logicalH); break;
       case 'tracking': this.setupVisualTrackingGame(canvas, logicalW, logicalH); break;
@@ -3816,6 +3822,469 @@ export class JogosComponent implements OnInit, OnDestroy {
     });
 
     drawScenario();
+  }
+
+  // 7.0 RECONHECIMENTO VISUAL DE EMOÇÕES NO ROSTO (JOGO 51)
+  setupEmotionFaceGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface EmotionItem {
+      id: string;
+      name: string;
+      emoji: string;
+      headGradTop: string;
+      headGradBottom: string;
+      eyebrows: 'happy' | 'sad' | 'angry' | 'scared' | 'surprised' | 'calm';
+      eyes: 'happy' | 'sad' | 'angry' | 'scared' | 'surprised' | 'calm';
+      mouth: 'happy' | 'sad' | 'angry' | 'scared' | 'surprised' | 'calm';
+      cheeks?: boolean;
+      tear?: boolean;
+      sweat?: boolean;
+    }
+
+    const ALL_EMOTIONS: EmotionItem[] = [
+      {
+        id: 'feliz',
+        name: 'Feliz',
+        emoji: '😄',
+        headGradTop: '#fef08a',
+        headGradBottom: '#eab308',
+        eyebrows: 'happy',
+        eyes: 'happy',
+        mouth: 'happy',
+        cheeks: true
+      },
+      {
+        id: 'triste',
+        name: 'Triste',
+        emoji: '😢',
+        headGradTop: '#bfdbfe',
+        headGradBottom: '#60a5fa',
+        eyebrows: 'sad',
+        eyes: 'sad',
+        mouth: 'sad',
+        tear: true
+      },
+      {
+        id: 'bravo',
+        name: 'Bravo',
+        emoji: '😡',
+        headGradTop: '#fecaca',
+        headGradBottom: '#ef4444',
+        eyebrows: 'angry',
+        eyes: 'angry',
+        mouth: 'angry'
+      },
+      {
+        id: 'assustado',
+        name: 'Assustado',
+        emoji: '😨',
+        headGradTop: '#e0e7ff',
+        headGradBottom: '#818cf8',
+        eyebrows: 'scared',
+        eyes: 'scared',
+        mouth: 'scared',
+        sweat: true
+      },
+      {
+        id: 'surpreso',
+        name: 'Surpreso',
+        emoji: '😲',
+        headGradTop: '#fed7aa',
+        headGradBottom: '#f97316',
+        eyebrows: 'surprised',
+        eyes: 'surprised',
+        mouth: 'surprised'
+      },
+      {
+        id: 'tranquilo',
+        name: 'Tranquilo',
+        emoji: '😌',
+        headGradTop: '#bbf7d0',
+        headGradBottom: '#22c55e',
+        eyebrows: 'calm',
+        eyes: 'calm',
+        mouth: 'calm',
+        cheeks: true
+      }
+    ];
+
+    // Embaralha as rodadas da sessão (6 rodadas clínicas)
+    const shuffledTrials = [...ALL_EMOTIONS].sort(() => Math.random() - 0.5);
+
+    // Constrói cada rodada com a emoção alvo e 3 distratores aleatórios
+    const rounds = shuffledTrials.map(target => {
+      const distractors = ALL_EMOTIONS.filter(e => e.id !== target.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      const options = [target, ...distractors].sort(() => Math.random() - 0.5);
+      const correctIdx = options.findIndex(o => o.id === target.id);
+      return { target, options, correctIdx };
+    });
+
+    let currentRound = 0;
+    let isTransitioning = false;
+    let feedback: { clickedIdx: number; isCorrect: boolean } | null = null;
+    let optionRects: Array<{ x: number; y: number; w: number; h: number }> = [];
+
+    // Desenha o rosto vetorial expressivo em alta definição
+    const drawFace = (cx: number, cy: number, r: number, emotion: EmotionItem) => {
+      ctx.save();
+
+      // 1. Cabeça com gradiente esférico tridimensional
+      const grad = ctx.createRadialGradient(cx - r * 0.28, cy - r * 0.28, r * 0.1, cx, cy, r);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, emotion.headGradTop);
+      grad.addColorStop(1, emotion.headGradBottom);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 14;
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // 2. Bochechas coradas
+      if (emotion.cheeks) {
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(cx - r * 0.46, cy + r * 0.18, r * 0.14, r * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(cx + r * 0.46, cy + r * 0.18, r * 0.14, r * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. Sobrancelhas expressivas
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+
+      const leftEbX1 = cx - r * 0.46;
+      const leftEbX2 = cx - r * 0.14;
+      const rightEbX1 = cx + r * 0.14;
+      const rightEbX2 = cx + r * 0.46;
+      const ebY = cy - r * 0.32;
+
+      ctx.beginPath();
+      if (emotion.eyebrows === 'happy') {
+        ctx.moveTo(leftEbX1, ebY + 2);
+        ctx.quadraticCurveTo((leftEbX1 + leftEbX2) / 2, ebY - 7, leftEbX2, ebY + 2);
+        ctx.moveTo(rightEbX1, ebY + 2);
+        ctx.quadraticCurveTo((rightEbX1 + rightEbX2) / 2, ebY - 7, rightEbX2, ebY + 2);
+      } else if (emotion.eyebrows === 'sad') {
+        ctx.moveTo(leftEbX1, ebY + 6);
+        ctx.lineTo(leftEbX2, ebY - 3);
+        ctx.moveTo(rightEbX1, ebY - 3);
+        ctx.lineTo(rightEbX2, ebY + 6);
+      } else if (emotion.eyebrows === 'angry') {
+        ctx.moveTo(leftEbX1, ebY - 5);
+        ctx.lineTo(leftEbX2, ebY + 5);
+        ctx.moveTo(rightEbX1, ebY + 5);
+        ctx.lineTo(rightEbX2, ebY - 5);
+      } else if (emotion.eyebrows === 'scared') {
+        ctx.moveTo(leftEbX1, ebY + 2);
+        ctx.lineTo(leftEbX2, ebY - 5);
+        ctx.moveTo(rightEbX1, ebY - 5);
+        ctx.lineTo(rightEbX2, ebY + 2);
+      } else if (emotion.eyebrows === 'surprised') {
+        ctx.moveTo(leftEbX1, ebY - 8);
+        ctx.quadraticCurveTo((leftEbX1 + leftEbX2) / 2, ebY - 15, leftEbX2, ebY - 8);
+        ctx.moveTo(rightEbX1, ebY - 8);
+        ctx.quadraticCurveTo((rightEbX1 + rightEbX2) / 2, ebY - 15, rightEbX2, ebY - 8);
+      } else {
+        ctx.moveTo(leftEbX1, ebY);
+        ctx.lineTo(leftEbX2, ebY);
+        ctx.moveTo(rightEbX1, ebY);
+        ctx.lineTo(rightEbX2, ebY);
+      }
+      ctx.stroke();
+
+      // 4. Olhos expressivos
+      const eyeY = cy - r * 0.12;
+      const leftEyeX = cx - r * 0.28;
+      const rightEyeX = cx + r * 0.28;
+
+      if (emotion.eyes === 'happy') {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(leftEyeX, eyeY + 4, r * 0.14, Math.PI * 1.15, Math.PI * 1.85);
+        ctx.moveTo(rightEyeX + r * 0.14 * Math.cos(Math.PI * 1.15), eyeY + 4 + r * 0.14 * Math.sin(Math.PI * 1.15));
+        ctx.arc(rightEyeX, eyeY + 4, r * 0.14, Math.PI * 1.15, Math.PI * 1.85);
+        ctx.stroke();
+      } else if (emotion.eyes === 'calm') {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(leftEyeX, eyeY - 2, r * 0.13, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.moveTo(rightEyeX + r * 0.13 * Math.cos(Math.PI * 0.15), eyeY - 2 + r * 0.13 * Math.sin(Math.PI * 0.15));
+        ctx.arc(rightEyeX, eyeY - 2, r * 0.13, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.stroke();
+      } else {
+        const eyeR = emotion.eyes === 'scared' || emotion.eyes === 'surprised' ? r * 0.18 : r * 0.14;
+        
+        [leftEyeX, rightEyeX].forEach(ex => {
+          ctx.beginPath();
+          ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          const pupilR = emotion.eyes === 'scared' ? eyeR * 0.35 : eyeR * 0.55;
+          ctx.beginPath();
+          ctx.arc(ex, eyeY + 1, pupilR, 0, Math.PI * 2);
+          ctx.fillStyle = '#1e293b';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(ex - pupilR * 0.35, eyeY - pupilR * 0.35, pupilR * 0.35, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        });
+      }
+
+      // 5. Boca expressiva
+      const mouthY = cy + r * 0.34;
+
+      if (emotion.mouth === 'happy') {
+        ctx.beginPath();
+        ctx.arc(cx, mouthY - 4, r * 0.34, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.closePath();
+        ctx.fillStyle = '#dc2626';
+        ctx.fill();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.rect(cx - r * 0.22, mouthY - 4, r * 0.44, r * 0.08);
+        ctx.fill();
+      } else if (emotion.mouth === 'sad') {
+        ctx.beginPath();
+        ctx.arc(cx, mouthY + r * 0.22, r * 0.26, 1.15 * Math.PI, 1.85 * Math.PI);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      } else if (emotion.mouth === 'angry') {
+        ctx.beginPath();
+        ctx.roundRect(cx - r * 0.28, mouthY - r * 0.08, r * 0.56, r * 0.18, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        for (let i = 1; i <= 3; i++) {
+          const tx = cx - r * 0.28 + (r * 0.56 * i) / 4;
+          ctx.moveTo(tx, mouthY - r * 0.08);
+          ctx.lineTo(tx, mouthY + r * 0.10);
+        }
+        ctx.moveTo(cx - r * 0.28, mouthY);
+        ctx.lineTo(cx + r * 0.28, mouthY);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      } else if (emotion.mouth === 'surprised') {
+        ctx.beginPath();
+        ctx.ellipse(cx, mouthY + 2, r * 0.15, r * 0.22, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else if (emotion.mouth === 'scared') {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.24, mouthY);
+        ctx.quadraticCurveTo(cx - r * 0.12, mouthY - 4, cx, mouthY);
+        ctx.quadraticCurveTo(cx + r * 0.12, mouthY + 4, cx + r * 0.24, mouthY);
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(cx, mouthY - r * 0.06, r * 0.22, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+      }
+
+      // 6. Lágrima
+      if (emotion.tear) {
+        const tearX = cx + r * 0.32;
+        const tearY = cy + r * 0.08;
+        ctx.beginPath();
+        ctx.arc(tearX, tearY + 8, 5, 0, Math.PI);
+        ctx.lineTo(tearX, tearY);
+        ctx.closePath();
+        ctx.fillStyle = '#38bdf8';
+        ctx.fill();
+      }
+
+      // 7. Gota de Suor Frio
+      if (emotion.sweat) {
+        const sweatX = cx + r * 0.54;
+        const sweatY = cy - r * 0.36;
+        ctx.beginPath();
+        ctx.arc(sweatX, sweatY + 7, 5, 0, Math.PI);
+        ctx.lineTo(sweatX, sweatY);
+        ctx.closePath();
+        ctx.fillStyle = '#60a5fa';
+        ctx.fill();
+      }
+
+      ctx.restore();
+    };
+
+    const drawRound = () => {
+      if (currentRound >= rounds.length) {
+        this.finishGame();
+        return;
+      }
+      const round = rounds[currentRound];
+      ctx.clearRect(0, 0, W, H);
+
+      const isCompact = W < 420;
+
+      // 1. Cabeçalho Clínico
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = isCompact ? 'bold 11.5px sans-serif' : 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`Desafio ${currentRound + 1} de ${rounds.length} · Que emoção este rosto está mostrando?`, W / 2, 7);
+
+      // 2. Card do Rosto Expressivo em Destaque
+      const cardW = Math.min(W - 28, 380);
+      const cardX = (W - cardW) / 2;
+      const cardY = 24;
+      const cardH = Math.min(150, Math.floor(H * 0.40));
+
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, cardW, cardH, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Centro do rosto dentro do card
+      const faceCx = W / 2;
+      const faceCy = cardY + cardH * 0.50;
+      const faceR = Math.min(48, Math.floor(cardH * 0.36));
+      drawFace(faceCx, faceCy, faceR, round.target);
+
+      // Badge com emoji de apoio no canto superior direito do card
+      const badgeX = cardX + cardW - 28;
+      const badgeY = cardY + 26;
+      ctx.font = '24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(round.target.emoji, badgeX, badgeY);
+
+      // 3. Grid de Opções (2 colunas x 2 linhas com Emojis Grandes e Nomes)
+      const optionsStartY = cardY + cardH + 12;
+      const availableH = H - optionsStartY - 8;
+      const gapX = 12;
+      const gapY = 8;
+      const gridW = W - 28;
+      const btnW = (gridW - gapX) / 2;
+      const btnH = Math.min(62, Math.max(48, Math.floor((availableH - gapY) / 2)));
+      const startX = 14;
+
+      optionRects = [];
+      round.options.forEach((opt, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const bx = startX + col * (btnW + gapX);
+        const by = optionsStartY + row * (btnH + gapY);
+        optionRects.push({ x: bx, y: by, w: btnW, h: btnH });
+
+        let bgColor = '#1e293b';
+        let strokeColor = '#334155';
+        let textColor = '#f8fafc';
+
+        if (feedback) {
+          if (i === round.correctIdx) {
+            bgColor = '#064e3b';
+            strokeColor = '#10b981';
+            textColor = '#ecfdf5';
+          } else if (i === feedback.clickedIdx && !feedback.isCorrect) {
+            bgColor = '#7f1d1d';
+            strokeColor = '#ef4444';
+            textColor = '#fef2f2';
+          }
+        }
+
+        // Card da Alternativa
+        ctx.fillStyle = bgColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, btnW, btnH, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        // Emoji Grande à Esquerda
+        const emojiX = bx + 28;
+        const emojiY = by + btnH / 2;
+        ctx.font = isCompact ? '24px sans-serif' : '28px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(opt.emoji, emojiX, emojiY);
+
+        // Nome da Emoção em Destaque ao Lado
+        const textX = bx + 54;
+        ctx.fillStyle = textColor;
+        ctx.font = isCompact ? 'bold 14px system-ui, -apple-system, sans-serif' : 'bold 16px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(opt.name, textX, emojiY);
+      });
+
+      this.gameInstruction.set('Olhe a expressão do rosto e toque na emoção correta');
+    };
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (isTransitioning) return;
+      const round = rounds[currentRound];
+      if (!round) return;
+
+      optionRects.forEach((rect, i) => {
+        if (mx >= rect.x && mx <= rect.x + rect.w && my >= rect.y && my <= rect.y + rect.h) {
+          isTransitioning = true;
+          const correct = i === round.correctIdx;
+          this.recordAttempt(correct);
+          if (correct) {
+            this.gameScore.update(s => s + 15);
+            this.sound.playSuccess();
+          } else {
+            this.sound.playError();
+          }
+
+          feedback = { clickedIdx: i, isCorrect: correct };
+          drawRound();
+
+          setTimeout(() => {
+            currentRound++;
+            feedback = null;
+            isTransitioning = false;
+            drawRound();
+          }, 700);
+        }
+      });
+    });
+
+    drawRound();
   }
 
   // 7.1 RESPIRAÇÃO GUIADA E AUTORREGULAÇÃO EMOCIONAL (JOGO 54)

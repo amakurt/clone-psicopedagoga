@@ -4,6 +4,40 @@
 
 ---
 
+## Sessão 53 - 01/10/2026 — Transformação do Jogo "Emoções no Rosto" (Jogo 51) em Motor 100% Visual com Rostos Vetoriais Expressivos e Cartões Ilustrados de Afeto Facial
+
+### O que foi feito
+
+#### 1. Diagnóstico Clínico e Pedagógico
+- O jogo 51 (*Emoções no Rosto*, 3-8 anos) apresentava textos descritivos longos (ex: *"A pessoa está sorrindo com os olhos brilhando e dançando. Ela está..."*) herdados do motor socioemocional padrão.
+- Na prática psicopedagógica e neuropsicológica (avaliação de Teoria da Mente, protocolos de TEA e Paul Ekman), o teste de reconhecimento facial precisa ser puramente visual, acessível a crianças em fase pré-leitora (3 a 6 anos) e pacientes no espectro autista que dependem de pistas faciais diretas (olhos, sobrancelhas e boca).
+
+#### 2. Implementação do Motor Visual de Reconhecimento de Expressões (`setupEmotionFaceGame`)
+- **Renderizador Vetorial de Rostos High-DPI (`drawFace`)**:
+  - Algoritmo no Canvas gerando cabeças esféricas com iluminação radial 3D e traços anatômicos fiéis para 6 emoções primárias:
+    - **Feliz (Alegria)**: Olhos sorridentes em arco feliz (`^ ^`), grande sorriso aberto côncavo com dentinhos e bochechas coradas em vermelho suave.
+    - **Triste (Tristeza)**: Olhos caídos, boca côncava para baixo e lágrima azul celeste escorrendo pelo rosto.
+    - **Bravo (Raiva)**: Rosto em gradiente avermelhado/coral, sobrancelhas em V anguladas para o centro e boca tensa com dentes cerrados.
+    - **Assustado (Medo)**: Olhos arregalados com pupilas contraídas, boca ondulada trêmula e gota de suor frio na têmpora.
+    - **Surpreso (Surpresa)**: Sobrancelhas levantadas bem alto, olhos curiosos e boca aberta em círculo perfeito ("O").
+    - **Tranquilo (Calma)**: Olhos serenos fechados em arco para baixo (`u u`), sobrancelhas retas relaxadas e sorriso suave pacífico.
+- **Card Central de Destaque**:
+  - Card centralizado com o rosto desenhado em escala generosa (raio de 48px, diâmetro ~100px) com badge visual de apoio no canto superior.
+- **Cartões de Opções com Dupla Codificação (Visual + Verbal)**:
+  - 4 alternativas distribuídas em grade 2x2 com botões grandes de toque fácil (`btnH = 56px`).
+  - Cada botão exibe o ícone expressivo grande (28px) à esquerda e o nome da emoção em fonte negrito de 16px à direita (ex: `😄 Feliz`, `😢 Triste`, `😡 Bravo`, `😨 Assustado`), estimulando a associação multimodal.
+- **Feedback Clínico e Gamificação**:
+  - Toque na opção correta ilumina o botão em verde esmeralda com som de sucesso imediato (`playSuccess()`) e pontuação (+15 pts).
+  - Toque incorreto realça em vermelho com som suave de desvio (`playError()`), revelando a resposta correta para aprendizado imediato da pista facial antes de transicionar (700ms).
+- **Roteamento Seguro em `setupCanvas`**:
+  - `case 'social'` detecta `jogo.id === 51` e aciona de forma transparente o novo motor `setupEmotionFaceGame`, preservando os demais jogos de dilemas éticos/sociais da categoria.
+
+#### 3. Validação Técnica
+- **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (Código 0, 0 erros).
+- **Servidor Dev**: Hot-reload ativo e respondendo em `http://localhost:4200`.
+
+---
+
 ## Sessão 52 - 01/10/2026 — Criação do Motor Clínico de Respiração Guiada, Biorregulação e Atenção Plena (Mindfulness) no Jogo "Respiração" (Jogo 54)
 
 ### O que foi feito
