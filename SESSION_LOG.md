@@ -4,6 +4,38 @@
 
 ---
 
+## Sessão 52 - 01/10/2026 — Criação do Motor Clínico de Respiração Guiada, Biorregulação e Atenção Plena (Mindfulness) no Jogo "Respiração" (Jogo 54)
+
+### O que foi feito
+
+#### 1. Diagnóstico da Causa Raiz
+- O jogo 54 (*Respiração*, categoria Socioemocional, 3-8 anos) possuía em sua descrição: *"Siga o balão: inspire quando crescer, expire quando diminuir"*.
+- Entretanto, seu tipo no catálogo estava configurado genericamente como `type: 'tap'`.
+- Por não ter um bloco de tratamento específico em `setupTapGame`, caía no fallback padrão do Jogo 2 (*Contagem Rápida*), exibindo maçãs e laranjas com a instrução *"Toque nas frutas o mais rápido que puder!"*, contradizendo totalmente a proposta terapêutica de autorregulação e relaxamento.
+
+#### 2. Implementação do Motor Terapêutico de Respiração (`setupBreathingGame`)
+- **Novo Tipo Dedicado no Catálogo**: Atualizado para `type: 'breathing'` com descrição oficial: *"Siga o ritmo do balão: inspire ao crescer, segure e expire ao diminuir"*.
+- **Ciclo Diafragmático Clínico (4 Fases Fluídas)**:
+  1. **INSPIRE (4.0s)**: Balão expande suavemente com interpolação `easeInOut` de `minR` para `maxR` em tons celestes/ciano (`#38bdf8` → `#0284c7`), com partículas suaves de ar fluindo para o centro e instrução: *"Puxe o ar suavemente pelo nariz..."*.
+  2. **SEGURE (2.5s)**: Balão mantém volume máximo com pulsação suave em verde menta luminoso (`#34d399` → `#047857`) e instrução: *"Mantenha o ar no pulmão com tranquilidade..."*.
+  3. **EXPIRE (4.0s)**: Balão esvazia suavemente até `minR` em degradê esmeralda relaxante (`#10b981` → `#065f46`), dispersando ondas concêntricas de relaxamento para fora e instrução: *"Solte o ar pela boca bem devagar..."*.
+  4. **RELAXE (1.5s)**: Pausa de bem-estar com instrução: *"Muito bem! Sinta a calma no seu corpo..."* e arpejo harmônico relaxante de sino de cristal (`playCalmChime`).
+- **Cockpit e Gamificação Positiva**:
+  - Indicador superior de 5 ciclos completos de respiração com stepper visual de bolinhas luminosas.
+  - A cada ciclo finalizado: som relaxante, `recordAttempt(true)` com precisão positiva e pontuação (+20 pontos).
+- **Interatividade & Biofeedback Tátil**:
+  - O paciente pode tocar no balão no ritmo de sua respiração para gerar ondulações táteis expansivas com som harmônico suave.
+- **Áudio Nativo (`playCalmChime`)**:
+  - Adicionado ao `ClinicalSoundSynthesizer` acorde puro senoidal relaxante (Dó 523Hz / Mi 659Hz / Dó 1046Hz) com decaimento longo suave.
+- **Limpeza de Memória Segura**:
+  - Cancelamento explícito do `animationFrameId` (`breathingAnimId`) no método `removeCanvasListeners()`, impedindo consumo residual de CPU/GPU após fechar o jogo.
+
+#### 3. Validação Técnica
+- **Angular Build**: Compilado com sucesso via `npx ng build --configuration development` (Código 0, 0 erros).
+- **Servidor Dev**: Hot-reload ativo e respondendo em `http://localhost:4200`.
+
+---
+
 ## Sessão 51 - 01/10/2026 — Ampliação de Tipografia, Canvas Estendido e Layout de Cards Full-Width no Jogo "Autoconhecimento" e Jogos Socioemocionais
 
 ### O que foi feito

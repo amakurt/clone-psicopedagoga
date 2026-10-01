@@ -74,7 +74,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 51, name: 'Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Identifique se a pessoa está feliz, triste ou com raiva', type: 'social' },
   { id: 52, name: 'Empatia', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '4-8', description: 'Como a pessoa se sente? Escolha a resposta certa', type: 'social' },
   { id: 53, name: 'Situações Sociais', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'O que fazer quando alguém está triste na escola?', type: 'social' },
-  { id: 54, name: 'Respiração', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Siga o balão: inspire quando crescer, expire quando diminuir', type: 'tap' },
+  { id: 54, name: 'Respiração', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Siga o ritmo do balão: inspire ao crescer, segure e expire ao diminuir', type: 'breathing' },
   { id: 55, name: 'Expressão de Sentimentos', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Como VOCÊ se sente agora? Toque na emoção', type: 'social' },
   { id: 56, name: 'Resolução de Conflitos', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Dois amigos brigaram pelo brinquedo — qual a solução pacífica?', type: 'social' },
   { id: 57, name: 'Cooperação', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Aprenda sobre trabalhar junto e ajudar os amigos', type: 'social' },
@@ -258,6 +258,28 @@ class ClinicalSoundSynthesizer {
       gain.connect(this.ctx!.destination);
       osc.start(noteT);
       osc.stop(noteT + 0.35);
+    });
+  }
+
+  playCalmChime() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime + 0.005;
+    const notes = [523.25, 659.25, 1046.50];
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = 'sine';
+      const noteT = t + idx * 0.08;
+      const dur = 1.1;
+      osc.frequency.setValueAtTime(freq, noteT);
+      gain.gain.setValueAtTime(0.14, noteT);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteT + dur);
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+      osc.start(noteT);
+      osc.stop(noteT + dur);
     });
   }
 
@@ -750,6 +772,10 @@ export class JogosComponent implements OnInit, OnDestroy {
   }
 
   removeCanvasListeners() {
+    if (this.gameData.breathingAnimId) {
+      cancelAnimationFrame(this.gameData.breathingAnimId);
+      this.gameData.breathingAnimId = null;
+    }
     const canvas = this.canvasRef?.nativeElement;
     if (canvas) {
       if (this.canvasPointerHandler) {
@@ -1125,7 +1151,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const container = canvas.parentElement;
     const containerWidth = container ? container.clientWidth - 24 : 468;
     const jogo = this.currentGame();
-    const isSocialOrText = jogo?.type === 'social';
+    const isSocialOrText = jogo?.type === 'social' || jogo?.type === 'breathing';
     const maxAvailableH = window.innerHeight 
       ? Math.max(220, window.innerHeight - (isSocialOrText ? 180 : 220)) 
       : (isSocialOrText ? 440 : 300);
@@ -1174,6 +1200,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
       case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'social': this.setupSocialGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'breathing': this.setupBreathingGame(canvas, logicalW, logicalH); break;
       case 'stroop': this.setupStroopGame(canvas, logicalW, logicalH); break;
       case 'tracking': this.setupVisualTrackingGame(canvas, logicalW, logicalH); break;
       case 'tap': 
@@ -1183,6 +1210,8 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.setupObjectRecallGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 18) {
           this.setupVisualMatchingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 54) {
+          this.setupBreathingGame(canvas, logicalW, logicalH);
         } else {
           this.setupTapGame(canvas, logicalW, logicalH, jogo.id);
         }
@@ -3787,6 +3816,289 @@ export class JogosComponent implements OnInit, OnDestroy {
     });
 
     drawScenario();
+  }
+
+  // 7.1 RESPIRAÇÃO GUIADA E AUTORREGULAÇÃO EMOCIONAL (JOGO 54)
+  setupBreathingGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+    const totalCycles = 5;
+    let currentCycle = 0;
+    let cyclePhase: 'inhale' | 'hold' | 'exhale' | 'rest' = 'inhale';
+    let phaseStartTime = performance.now();
+    let isFinished = false;
+
+    // Fases em milissegundos
+    const PHASE_DURATIONS = {
+      inhale: 4000,
+      hold: 2500,
+      exhale: 4000,
+      rest: 1500
+    };
+
+    const cx = W / 2;
+    const cy = H * 0.48;
+    const minR = Math.max(38, Math.min(W * 0.14, H * 0.16));
+    const maxR = Math.max(88, Math.min(W * 0.28, H * 0.32));
+
+    // Partículas flutuantes relaxantes
+    interface BreathParticle {
+      angle: number;
+      dist: number;
+      speed: number;
+      size: number;
+      alpha: number;
+    }
+    const particles: BreathParticle[] = [];
+    for (let i = 0; i < 18; i++) {
+      particles.push({
+        angle: Math.random() * Math.PI * 2,
+        dist: minR + Math.random() * (maxR - minR + 40),
+        speed: 0.4 + Math.random() * 0.6,
+        size: 1.5 + Math.random() * 2.5,
+        alpha: 0.3 + Math.random() * 0.5
+      });
+    }
+
+    // Ondas táteis expansivas geradas ao tocar na tela
+    interface TapRipple {
+      x: number;
+      y: number;
+      r: number;
+      maxR: number;
+      alpha: number;
+    }
+    const ripples: TapRipple[] = [];
+
+    // Interatividade ao tocar no balão
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (isFinished) return;
+      const dx = mx - cx;
+      const dy = my - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= maxR * 1.3) {
+        ripples.push({
+          x: mx,
+          y: my,
+          r: 10,
+          maxR: 65,
+          alpha: 0.8
+        });
+        this.sound.playClick();
+      }
+    });
+
+    const render = (now: number) => {
+      if (isFinished) return;
+
+      const elapsed = now - phaseStartTime;
+      const duration = PHASE_DURATIONS[cyclePhase];
+
+      // Transição de fases
+      if (elapsed >= duration) {
+        phaseStartTime = now;
+        if (cyclePhase === 'inhale') {
+          cyclePhase = 'hold';
+        } else if (cyclePhase === 'hold') {
+          cyclePhase = 'exhale';
+        } else if (cyclePhase === 'exhale') {
+          cyclePhase = 'rest';
+          this.sound.playCalmChime();
+          this.recordAttempt(true);
+          this.gameScore.update(s => s + 20);
+        } else if (cyclePhase === 'rest') {
+          currentCycle++;
+          if (currentCycle >= totalCycles) {
+            isFinished = true;
+            this.finishGame();
+            return;
+          }
+          cyclePhase = 'inhale';
+        }
+      }
+
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Fundo Gradiente Sutil e Noturno Relaxante
+      const bgGrad = ctx.createRadialGradient(cx, cy, 20, cx, cy, W * 0.7);
+      bgGrad.addColorStop(0, '#0f172a');
+      bgGrad.addColorStop(1, '#020617');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Cabeçalho Clínico e Indicador dos 5 Ciclos de Calma
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`EXERCÍCIO DE AUTORREGULAÇÃO · CICLO ${Math.min(currentCycle + 1, totalCycles)} DE ${totalCycles}`, W / 2, 10);
+
+      // Bolinhas de progresso dos ciclos
+      const dotSpacing = 20;
+      const dotsStartX = cx - ((totalCycles - 1) * dotSpacing) / 2;
+      for (let c = 0; c < totalCycles; c++) {
+        const dx = dotsStartX + c * dotSpacing;
+        const dy = 28;
+        ctx.beginPath();
+        ctx.arc(dx, dy, 4.5, 0, Math.PI * 2);
+        if (c < currentCycle) {
+          ctx.fillStyle = '#10b981'; // Concluído
+          ctx.fill();
+        } else if (c === currentCycle) {
+          const pulse = (Math.sin(now / 200) + 1) * 0.5;
+          ctx.fillStyle = '#38bdf8'; // Em andamento
+          ctx.fill();
+          ctx.strokeStyle = `rgba(56, 189, 248, ${0.4 + pulse * 0.6})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#334155'; // Futuro
+          ctx.fill();
+        }
+      }
+
+      // 3. Cálculo Dinâmico do Raio e da Cor da Fase
+      const phaseProgress = Math.min(1, Math.max(0, elapsed / duration));
+      let curR = minR;
+      let phaseTitle = 'INSPIRE';
+      let phaseSub = 'Puxe o ar pelo nariz bem devagar...';
+      let phaseColor = '#38bdf8';
+      let phaseColorDark = '#0284c7';
+      const secondsRemaining = Math.max(1, Math.ceil((duration - elapsed) / 1000));
+
+      if (cyclePhase === 'inhale') {
+        const ease = 0.5 - 0.5 * Math.cos(phaseProgress * Math.PI);
+        curR = minR + (maxR - minR) * ease;
+        phaseTitle = 'INSPIRE';
+        phaseSub = 'Puxe o ar suavemente pelo nariz...';
+        phaseColor = '#38bdf8';
+        phaseColorDark = '#0369a1';
+      } else if (cyclePhase === 'hold') {
+        const breathePulse = Math.sin(now / 350) * 3;
+        curR = maxR + breathePulse;
+        phaseTitle = 'SEGURE';
+        phaseSub = 'Mantenha o ar no pulmão com tranquilidade...';
+        phaseColor = '#34d399';
+        phaseColorDark = '#047857';
+      } else if (cyclePhase === 'exhale') {
+        const ease = 0.5 - 0.5 * Math.cos(phaseProgress * Math.PI);
+        curR = maxR - (maxR - minR) * ease;
+        phaseTitle = 'EXPIRE';
+        phaseSub = 'Solte o ar pela boca bem devagar...';
+        phaseColor = '#10b981';
+        phaseColorDark = '#065f46';
+      } else if (cyclePhase === 'rest') {
+        curR = minR;
+        phaseTitle = 'RELAXE';
+        phaseSub = 'Muito bem! Sinta a calma no seu corpo...';
+        phaseColor = '#a7f3d0';
+        phaseColorDark = '#14b8a6';
+      }
+
+      // 4. Efeito de Aura e Halos Translúcidos
+      const haloAlpha = 0.12 + 0.08 * Math.sin(now / 400);
+      ctx.beginPath();
+      ctx.arc(cx, cy, curR * 1.32, 0, Math.PI * 2);
+      ctx.fillStyle = phaseColor;
+      ctx.globalAlpha = haloAlpha * 0.5;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, curR * 1.16, 0, Math.PI * 2);
+      ctx.fillStyle = phaseColor;
+      ctx.globalAlpha = haloAlpha;
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+
+      // 5. Partículas de Fluxo Respiratório
+      particles.forEach(p => {
+        if (cyclePhase === 'inhale') {
+          p.dist -= p.speed * 0.9;
+          if (p.dist < minR * 0.8) p.dist = maxR * 1.4;
+        } else if (cyclePhase === 'exhale') {
+          p.dist += p.speed * 0.9;
+          if (p.dist > maxR * 1.4) p.dist = minR * 0.8;
+        } else {
+          p.angle += 0.005;
+        }
+        const px = cx + Math.cos(p.angle) * p.dist;
+        const py = cy + Math.sin(p.angle) * p.dist;
+
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = phaseColor;
+        ctx.globalAlpha = p.alpha * 0.6;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      });
+
+      // 6. Ondas Táteis (Ripples) ao Tocar no Balão
+      for (let rIdx = ripples.length - 1; rIdx >= 0; rIdx--) {
+        const rip = ripples[rIdx];
+        rip.r += 1.6;
+        rip.alpha *= 0.94;
+        if (rip.alpha <= 0.02 || rip.r >= rip.maxR) {
+          ripples.splice(rIdx, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.arc(rip.x, rip.y, rip.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${rip.alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // 7. O Balão Terapêutico Central (Gradiente Esférico High-DPI)
+      const lightOffsetX = cx - curR * 0.28;
+      const lightOffsetY = cy - curR * 0.28;
+      const ballGrad = ctx.createRadialGradient(lightOffsetX, lightOffsetY, curR * 0.1, cx, cy, curR);
+      ballGrad.addColorStop(0, '#ffffff');
+      ballGrad.addColorStop(0.25, phaseColor);
+      ballGrad.addColorStop(1, phaseColorDark);
+
+      ctx.save();
+      ctx.shadowColor = phaseColor;
+      ctx.shadowBlur = Math.min(30, curR * 0.35);
+      ctx.beginPath();
+      ctx.arc(cx, cy, curR, 0, Math.PI * 2);
+      ctx.fillStyle = ballGrad;
+      ctx.fill();
+
+      // Borda sutil de destaque luminoso
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+
+      // 8. Textos Centrais e Cronômetro
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 21px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 6;
+      ctx.fillText(phaseTitle, cx, cy - (cyclePhase === 'rest' ? 0 : 8));
+
+      if (cyclePhase !== 'rest') {
+        ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`${secondsRemaining}s`, cx, cy + 14);
+      }
+      ctx.shadowBlur = 0;
+
+      // 9. Instrução Abaixo do Balão
+      const subY = Math.min(H - 18, cy + maxR + 24);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '600 13.5px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(phaseSub, cx, subY);
+
+      this.gameInstruction.set(`Siga o balão: ${phaseTitle.toLowerCase()} quando indicado · Ciclo ${Math.min(currentCycle + 1, totalCycles)}/5`);
+
+      this.gameData.breathingAnimId = requestAnimationFrame(render);
+    };
+
+    this.gameData.breathingAnimId = requestAnimationFrame(render);
   }
 
   // 8. TAP / REAÇÃO RÁPIDA / GO-NO-GO (ATENÇÃO DIVIDIDA E INIBIÇÃO)
