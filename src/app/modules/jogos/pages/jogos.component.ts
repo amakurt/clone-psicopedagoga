@@ -1151,13 +1151,13 @@ export class JogosComponent implements OnInit, OnDestroy {
     const container = canvas.parentElement;
     const containerWidth = container ? container.clientWidth - 24 : 468;
     const jogo = this.currentGame();
-    const isSocialOrText = jogo?.type === 'social' || jogo?.type === 'breathing';
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math';
     const maxAvailableH = window.innerHeight 
-      ? Math.max(220, window.innerHeight - (isSocialOrText ? 180 : 220)) 
-      : (isSocialOrText ? 440 : 300);
+      ? Math.max(220, window.innerHeight - (isExpandedGame ? 180 : 220)) 
+      : (isExpandedGame ? 440 : 300);
 
-    let logicalW = Math.min(isSocialOrText ? 580 : 500, containerWidth);
-    const targetAspect = isSocialOrText ? 0.74 : 0.6;
+    let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
+    const targetAspect = isExpandedGame ? 0.74 : 0.6;
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -1183,7 +1183,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     if (!jogo || !this.canvasCtx) return;
     switch (jogo.type) {
       case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
-      case 'math': this.setupMathGame(canvas, logicalW, logicalH); break;
+      case 'math': this.setupMathGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'sequence': 
         if (jogo.id === 8) {
           this.setupNumberSequenceGame(canvas, logicalW, logicalH);
@@ -1432,13 +1432,20 @@ export class JogosComponent implements OnInit, OnDestroy {
   }
 
   // 3. MATEMÁTICA CLÍNICA
-  setupMathGame(canvas: HTMLCanvasElement, W: number, H: number) {
+  setupMathGame(canvas: HTMLCanvasElement, W: number, H: number, gameId?: number) {
     const ctx = this.canvasCtx!;
     let currentQ = 0;
     const totalQ = 8;
     let a = 0, b = 0, op = '+', answer = 0;
     let input = '';
-    const buttons = ['1','2','3','4','5','6','7','8','9','⌫','0','OK'];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let problemContext = '';
+
+    // Teclado em 3 linhas x 4 colunas (ergonômico e compacto verticalmente):
+    // Linha 1: 1, 2, 3, 4
+    // Linha 2: 5, 6, 7, 8
+    // Linha 3: 9, 0, ⌫, =
+    const buttons = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '⌫', '='];
 
     const newQuestion = () => {
       if (currentQ >= totalQ) {
@@ -1446,77 +1453,239 @@ export class JogosComponent implements OnInit, OnDestroy {
         return;
       }
       currentQ++;
-      a = Math.floor(Math.random() * 20) + 1;
-      b = Math.floor(Math.random() * 20) + 1;
-      op = Math.random() > 0.5 ? '+' : '-';
-      if (op === '-' && a < b) [a, b] = [b, a];
-      answer = op === '+' ? a + b : a - b;
+      feedbackStatus = 'none';
       input = '';
-      this.gameInstruction.set(`Problema ${currentQ}/${totalQ}: Resolva o cálculo`);
+
+      if (gameId === 41) {
+        // Soma Simples (1 a 15)
+        a = Math.floor(Math.random() * 12) + 1;
+        b = Math.floor(Math.random() * 10) + 1;
+        op = '+';
+        answer = a + b;
+        problemContext = 'Soma Simples';
+      } else if (gameId === 42) {
+        // Subtração (resultados positivos)
+        a = Math.floor(Math.random() * 18) + 4;
+        b = Math.floor(Math.random() * (a - 1)) + 1;
+        op = '-';
+        answer = a - b;
+        problemContext = 'Subtração';
+      } else if (gameId === 45) {
+        // Tabuada (multiplicação de 1 a 10)
+        a = Math.floor(Math.random() * 9) + 2;
+        b = Math.floor(Math.random() * 9) + 1;
+        op = '×';
+        answer = a * b;
+        problemContext = 'Tabuada';
+      } else if (gameId === 46) {
+        // Problemas matemáticos contextualizados
+        const contextType = Math.floor(Math.random() * 3);
+        if (contextType === 0) {
+          a = Math.floor(Math.random() * 10) + 3;
+          b = Math.floor(Math.random() * 8) + 2;
+          op = '+';
+          answer = a + b;
+          problemContext = `Tenho ${a} lápis e ganhei ${b}`;
+        } else if (contextType === 1) {
+          a = Math.floor(Math.random() * 15) + 5;
+          b = Math.floor(Math.random() * (a - 2)) + 1;
+          op = '-';
+          answer = a - b;
+          problemContext = `Havia ${a} balões e estouraram ${b}`;
+        } else {
+          a = Math.floor(Math.random() * 6) + 2;
+          b = Math.floor(Math.random() * 5) + 2;
+          op = '×';
+          answer = a * b;
+          problemContext = `${a} caixas com ${b} itens cada`;
+        }
+      } else {
+        // Desafio Matemático (Game 50 e padrão - misto)
+        const randOp = Math.random();
+        if (randOp < 0.35) {
+          a = Math.floor(Math.random() * 35) + 5;
+          b = Math.floor(Math.random() * 35) + 5;
+          op = '+';
+          answer = a + b;
+        } else if (randOp < 0.70) {
+          a = Math.floor(Math.random() * 50) + 15;
+          b = Math.floor(Math.random() * (a - 5)) + 3;
+          op = '-';
+          answer = a - b;
+        } else {
+          a = Math.floor(Math.random() * 9) + 2;
+          b = Math.floor(Math.random() * 9) + 2;
+          op = '×';
+          answer = a * b;
+        }
+        problemContext = 'Desafio Matemático';
+      }
+
+      this.gameInstruction.set(`Problema ${currentQ}/${totalQ}: Calcule e aperte '='`);
       draw();
     };
 
-    const bw = Math.min(68, (W - 120) / 4);
-    const bh = 42;
-    const startX = (W - (bw * 4 + 10 * 3)) / 2;
-    const startY = H * 0.50;
+    // Geometria Responsiva
+    // Visor superior
+    const dispY = Math.max(8, Math.floor(H * 0.03));
+    const dispH = Math.min(84, Math.max(50, Math.floor(H * 0.22)));
+    const dispW = Math.min(380, W - 28);
+    const dispX = Math.floor((W - dispW) / 2);
+
+    // Teclado (sempre com margem de segurança no final para nunca cortar)
+    const keypadTop = dispY + dispH + Math.max(8, Math.floor(H * 0.03));
+    const bottomMargin = Math.max(10, Math.floor(H * 0.035));
+    const availableKeypadH = H - keypadTop - bottomMargin;
+
+    const rows = 3;
+    const cols = 4;
+    const gapY = Math.min(10, Math.max(5, Math.floor((availableKeypadH - 3 * 34) / 4)));
+    const bh = Math.min(50, Math.max(34, Math.floor((availableKeypadH - (rows - 1) * gapY) / rows)));
+    const actualKeypadH = rows * bh + (rows - 1) * gapY;
+    const startY = keypadTop + Math.max(0, Math.floor((availableKeypadH - actualKeypadH) / 2));
+
+    const gapX = Math.min(12, Math.max(6, Math.floor((dispW - 4 * 46) / 3)));
+    const bw = Math.min(82, Math.max(46, Math.floor((dispW - (cols - 1) * gapX) / cols)));
+    const actualKeypadW = cols * bw + (cols - 1) * gapX;
+    const startX = Math.floor((W - actualKeypadW) / 2);
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
 
-      // Caixa do Cálculo
-      ctx.fillStyle = '#0f172a';
+      // Caixa do Visor / Cálculo
+      ctx.save();
+      ctx.fillStyle = feedbackStatus === 'success' 
+        ? '#064e3b' 
+        : feedbackStatus === 'error' 
+        ? '#450a0a' 
+        : '#0f172a';
+      ctx.strokeStyle = feedbackStatus === 'success' 
+        ? '#10b981' 
+        : feedbackStatus === 'error' 
+        ? '#ef4444' 
+        : '#334155';
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(W / 2 - 130, H * 0.08, 260, 90, 16);
+      ctx.roundRect(dispX, dispY, dispW, dispH, 14);
       ctx.fill();
+      ctx.stroke();
+
+      // Linha superior: Expressão matemática ou contexto
+      const exprY = dispY + Math.floor(dispH * 0.36);
+      const inputY = dispY + Math.floor(dispH * 0.76);
 
       ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 18px monospace';
+      const exprFontSz = Math.min(18, Math.max(12, Math.floor(dispH * 0.28)));
+      ctx.font = `bold ${exprFontSz}px 'Outfit', monospace, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(`${a} ${op} ${b} =`, W / 2, H * 0.18);
+      ctx.textBaseline = 'middle';
+      
+      const exprText = problemContext && gameId === 46
+        ? `${problemContext} → ${a} ${op} ${b} =`
+        : `${a} ${op} ${b} =`;
+      ctx.fillText(exprText, W / 2, exprY);
 
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 28px monospace';
-      ctx.fillText(input ? input : '_', W / 2, H * 0.32);
+      // Linha inferior: Resposta digitada pelo usuário
+      const inputFontSz = Math.min(30, Math.max(18, Math.floor(dispH * 0.44)));
+      ctx.font = `bold ${inputFontSz}px monospace, sans-serif`;
+      ctx.fillStyle = feedbackStatus === 'success' ? '#34d399' : feedbackStatus === 'error' ? '#f87171' : '#38bdf8';
+      ctx.fillText(input ? input : '?', W / 2, inputY);
+      ctx.restore();
 
-      // Teclado
+      // Renderizar Teclado
       buttons.forEach((btn, i) => {
-        const x = startX + (i % 4) * (bw + 10);
-        const y = startY + Math.floor(i / 4) * (bh + 8);
-        ctx.fillStyle = btn === 'OK' ? '#0d9488' : btn === '⌫' ? '#334155' : '#1e293b';
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = startX + col * (bw + gapX);
+        const y = startY + row * (bh + gapY);
+
+        ctx.save();
+        // Cores diferenciadas por tipo de tecla:
+        // '=' em destaque verde/teal brilhante
+        // '⌫' em slate escuro com texto claro
+        // Números em fundo card sofisticado
+        const isEqual = btn === '=';
+        const isBack = btn === '⌫';
+
+        if (isEqual) {
+          ctx.fillStyle = '#0d9488';
+          ctx.strokeStyle = '#14b8a6';
+        } else if (isBack) {
+          ctx.fillStyle = '#334155';
+          ctx.strokeStyle = '#475569';
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#334155';
+        }
+
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.roundRect(x, y, bw, bh, 10);
         ctx.fill();
+        ctx.stroke();
 
+        // Texto do Botão
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 15px sans-serif';
+        const btnFontSz = isEqual 
+          ? Math.min(24, Math.floor(bh * 0.54)) 
+          : isBack 
+          ? Math.min(20, Math.floor(bh * 0.46)) 
+          : Math.min(18, Math.floor(bh * 0.44));
+        ctx.font = `bold ${btnFontSz}px 'Outfit', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(btn, x + bw / 2, y + bh / 2);
+        ctx.restore();
       });
     };
 
     newQuestion();
 
+    const handleConfirm = () => {
+      if (input.length === 0 || feedbackStatus !== 'none') return;
+      const parsed = parseInt(input, 10);
+      const correct = parsed === answer;
+      this.recordAttempt(correct);
+
+      if (correct) {
+        feedbackStatus = 'success';
+        this.sound.playSuccess();
+        this.gameScore.update(s => s + 15);
+        draw();
+        this.gameData.activeTimeout = setTimeout(() => {
+          newQuestion();
+        }, 400);
+      } else {
+        feedbackStatus = 'error';
+        this.sound.playError();
+        draw();
+        this.gameData.activeTimeout = setTimeout(() => {
+          feedbackStatus = 'none';
+          input = '';
+          draw();
+        }, 600);
+      }
+    };
+
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
       buttons.forEach((btn, i) => {
-        const x = startX + (i % 4) * (bw + 10);
-        const y = startY + Math.floor(i / 4) * (bh + 8);
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = startX + col * (bw + gapX);
+        const y = startY + row * (bh + gapY);
+
         if (mx >= x && mx <= x + bw && my >= y && my <= y + bh) {
           this.sound.playClick();
+
           if (btn === '⌫') {
             input = input.slice(0, -1);
             draw();
-          } else if (btn === 'OK') {
-            if (input.length === 0) return;
-            const correct = parseInt(input) === answer;
-            this.recordAttempt(correct);
-            if (correct) {
-              this.gameScore.update(s => s + 12);
-            }
-            newQuestion();
+          } else if (btn === '=') {
+            handleConfirm();
           } else {
-            if (input.length < 3) {
+            if (input.length < 4) {
               input += btn;
               draw();
             }

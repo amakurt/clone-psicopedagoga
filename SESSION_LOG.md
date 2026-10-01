@@ -4,6 +4,45 @@
 
 ---
 
+## Sessão 54 - 01/10/2026 — Correção do Layout da Calculadora, Visibilidade Total das Teclas e Botão Igual no "Desafio Matemático" (Jogo 50) e Módulo de Jogos Matemáticos
+
+### O que foi feito
+
+#### 1. Diagnóstico do Layout e Causa Raiz
+- No jogo 50 (*Desafio Matemático*, 8-12 anos) e demais jogos matemáticos (Jogos 41, 42, 45, 46), os botões da última linha do teclado (números `9`, `0`, tecla de apagar `⌫` e o botão de confirmação) ficavam cortados ou totalmente ocultos abaixo da margem inferior do Canvas em resoluções padrão e telas de notebook.
+- O botão de confirmação possuía o rótulo textual genérico `'OK'` em vez do símbolo matemático de igualdade (`'='`), que é a convenção natural esperada em calculadoras para crianças e estudantes.
+- A geometria original utilizava altura fixa de 90px para o visor e `startY = H * 0.50`, empurrando a terceira linha do teclado para além da altura total `H`.
+
+#### 2. Redesenho Ergonômico e Geometria Responsiva (`setupMathGame`)
+- **Teclado Ergonômico 3x4**:
+  - Reorganizado em 3 linhas x 4 colunas para otimizar espaço vertical:
+    - Linha 1: `1`, `2`, `3`, `4`
+    - Linha 2: `5`, `6`, `7`, `8`
+    - Linha 3: `9`, `0`, `⌫`, `=`
+  - Todos os números de 0 a 9, a tecla de apagar (`⌫`) e o botão de igual (`=`) agora ficam 100% visíveis com margem de segurança garantida de no mínimo 14px na base do Canvas.
+- **Destaque Visual do Botão Igual (`=`)**:
+  - Tecla `=` estilizada em verde esmeralda (`#0d9488` com contorno `#14b8a6` e fonte de alto contraste) no canto inferior direito, facilitando a visualização e submissão pela criança.
+- **Visor Superior Dinâmico e Feedback Visual**:
+  - Visor redimensionado proporcionalmente (`H * 0.22`, entre 50px e 84px) com cantos arredondados e borda sutil.
+  - Feedback visual imediato: visor pulsa em verde esmeralda com som de acerto (`playSuccess()`) em respostas certas (+15 pts), e em vermelho suave com som de erro (`playError()`) em respostas incorretas antes de limpar o campo para nova tentativa.
+- **Diferenciação Pedagógica por Jogo (`gameId`)**:
+  - Jogo 41 (*Soma Simples*): Operações de adição de 1 a 20.
+  - Jogo 42 (*Subtração*): Subtrações com resultados sempre positivos.
+  - Jogo 45 (*Tabuada*): Multiplicações de 1 a 10.
+  - Jogo 46 (*Problemas*): Contextualização textual com operações aritméticas.
+  - Jogo 50 (*Desafio Matemático*): Mistura equilibrada de adição, subtração e multiplicação com números maiores.
+- **Expansão do Canvas**:
+  - `isExpandedGame` em `setupCanvas()` agora contempla jogos do tipo `'math'`, assegurando aspect ratio proporcional (0.74) e altura de até 440px.
+
+#### 3. Validação e Auditoria Visual
+- **Compilação Angular**: `npx ng build --configuration development` executada com sucesso (0 erros).
+- **Inspeção no Navegador (Browser Subagent)**:
+  - Navegado em `http://localhost:4200/app/jogos`, executado o jogo *Desafio Matemático*.
+  - Comprovada visualização de 100% dos elementos da calculadora (visor, números 0-9, tecla `⌫` e tecla `=` em verde esmeralda).
+  - Testado o clique de dígitos (`5`) e submissão com `=`, com registro e feedback corretos.
+
+---
+
 ## Sessão 53 - 01/10/2026 — Transformação do Jogo "Emoções no Rosto" (Jogo 51) em Motor 100% Visual com Rostos Vetoriais Expressivos e Cartões Ilustrados de Afeto Facial
 
 ### O que foi feito
