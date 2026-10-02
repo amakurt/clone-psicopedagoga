@@ -2190,11 +2190,11 @@ npm run start
   - **Grade 2x2 com Notação Fracionária Completa:**
     - 4 cartões com numerador superior, linha horizontal de fração e denominador inferior, acompanhados da leitura por extenso (ex.: $\frac{1}{2}$ *"Um meio"*, $\frac{3}{4}$ *"Três quartos"*, $\frac{5}{8}$ *"Cinco oitavos"*).
     - Distratores pedagógicos inteligentes (fração complementar/vazia, mesmo denominador com numerador alterado ou denominadores vizinhos).
-  - **Layout Adaptativo Side-by-Side (Fim da Sobreposição):**
-    - Identificado que o layout anterior centralizava verticalmente a pizza entre o cabeçalho superior e o grid inferior, espremendo o elemento gráfico.
-    - Implementada arquitetura de tela dividida: lado esquerdo exclusivo para a Pizza Fracionária em raio amplo (até 96px), com legenda espaçada, e lado direito para o título e os 4 botões de opções empilhados verticalmente.
-    - Em telas móveis verticais (`W < 420`), remoção do cabeçalho redundante interno para garantir proporções livres de sobreposição.
-    - Inclusão de `fractions` em `isExpandedGame` para cálculo proporcional de altura do canvas.
+  - **Layout Ancorado de Baixo para Cima (Bottom-Up) & Pílula de Fração:**
+    - **Diagnóstico:** As caixas de baixo estavam sendo empurradas para além do limite inferior do canvas devido ao cálculo top-down, e o texto por extenso espremia a fração horizontalmente.
+    - **Correção Geométrica:** Ancoragem estrita da base (`bottomPad = 12px`), calculando a grade 2x2 de baixo para cima (`gridY = H - 12 - gridH`). É matematicamente impossível as caixas de baixo sofrerem corte sob qualquer resolução.
+    - **Design dos Cartões com Pílula de Fração:** Cada cartão agora divide harmoniosamente seus elementos: à esquerda, uma pílula contrastante com a fração vertical clássica $\frac{N}{D}$; à direita, duas linhas de texto com o nome principal em destaque (ex.: *"Três Quartos"*) e subtítulo pedagógico explicativo (ex.: *"3 de 4 fatias"*), eliminando qualquer aperto ou truncamento de texto.
+    - **Espaço da Pizza:** A pizza fracionária ocupa com folga a metade superior, com legenda espaçada, sem nenhum choque com os cartões.
   - **Gamificação & Feedback Clínico:**
     - Cartão correto realça em verde esmeralda com som de arpejo (`playSuccess()`) e soma **+15 pontos**.
     - Erro emite som de alerta (`playError()`) e exibe dica amigável na barra superior instruindo a contagem das fatias antes de permitir nova tentativa.

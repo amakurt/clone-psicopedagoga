@@ -1153,11 +1153,11 @@ export class JogosComponent implements OnInit, OnDestroy {
     const jogo = this.currentGame();
     const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions';
     const maxAvailableH = window.innerHeight 
-      ? Math.max(220, window.innerHeight - (isExpandedGame ? 180 : 220)) 
-      : (isExpandedGame ? 440 : 300);
+      ? Math.max(260, window.innerHeight - (isExpandedGame ? 160 : 220)) 
+      : (isExpandedGame ? 460 : 320);
 
     let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
-    const targetAspect = isExpandedGame ? 0.74 : 0.6;
+    const targetAspect = jogo?.type === 'fractions' ? 0.82 : (isExpandedGame ? 0.74 : 0.6);
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -2100,96 +2100,96 @@ export class JogosComponent implements OnInit, OnDestroy {
     interface FractionOption {
       num: number;
       den: number;
-      label: string;
+      name: string;
+      sub: string;
       isCorrect: boolean;
     }
 
-    interface FractionTrial {
-      num: number;
-      den: number;
-      name: string;
-      options: FractionOption[];
-    }
-
-    const TRIALS_DATA: { num: number; den: number; name: string; altOptions: { num: number; den: number; label: string }[] }[] = [
+    const TRIALS_DATA: { 
+      num: number; 
+      den: number; 
+      name: string; 
+      sub: string; 
+      altOptions: { num: number; den: number; name: string; sub: string }[] 
+    }[] = [
       {
-        num: 1, den: 2, name: 'Um Meio (Metade)',
+        num: 1, den: 2, name: 'Um Meio', sub: '1 de 2 (Metade)',
         altOptions: [
-          { num: 1, den: 4, label: 'Um quarto' },
-          { num: 2, den: 2, label: 'Dois meios' },
-          { num: 1, den: 3, label: 'Um terço' }
+          { num: 1, den: 4, name: 'Um Quarto', sub: '1 de 4 fatias' },
+          { num: 2, den: 2, name: 'Dois Meios', sub: '2 de 2 (Inteiro)' },
+          { num: 1, den: 3, name: 'Um Terço', sub: '1 de 3 fatias' }
         ]
       },
       {
-        num: 1, den: 4, name: 'Um Quarto',
+        num: 1, den: 4, name: 'Um Quarto', sub: '1 de 4 fatias',
         altOptions: [
-          { num: 3, den: 4, label: 'Três quartos' },
-          { num: 1, den: 2, label: 'Um meio' },
-          { num: 2, den: 4, label: 'Dois quartos' }
+          { num: 3, den: 4, name: 'Três Quartos', sub: '3 de 4 fatias' },
+          { num: 1, den: 2, name: 'Um Meio', sub: '1 de 2 (Metade)' },
+          { num: 2, den: 4, name: 'Dois Quartos', sub: '2 de 4 fatias' }
         ]
       },
       {
-        num: 3, den: 4, name: 'Três Quartos',
+        num: 3, den: 4, name: 'Três Quartos', sub: '3 de 4 fatias',
         altOptions: [
-          { num: 1, den: 4, label: 'Um quarto' },
-          { num: 2, den: 4, label: 'Dois quartos' },
-          { num: 3, den: 8, label: 'Três oitavos' }
+          { num: 1, den: 4, name: 'Um Quarto', sub: '1 de 4 fatias' },
+          { num: 2, den: 4, name: 'Dois Quartos', sub: '2 de 4 fatias' },
+          { num: 3, den: 8, name: 'Três Oitavos', sub: '3 de 8 fatias' }
         ]
       },
       {
-        num: 1, den: 3, name: 'Um Terço',
+        num: 1, den: 3, name: 'Um Terço', sub: '1 de 3 fatias',
         altOptions: [
-          { num: 2, den: 3, label: 'Dois terços' },
-          { num: 1, den: 2, label: 'Um meio' },
-          { num: 1, den: 6, label: 'Um sexto' }
+          { num: 2, den: 3, name: 'Dois Terços', sub: '2 de 3 fatias' },
+          { num: 1, den: 2, name: 'Um Meio', sub: '1 de 2 (Metade)' },
+          { num: 1, den: 6, name: 'Um Sexto', sub: '1 de 6 fatias' }
         ]
       },
       {
-        num: 2, den: 3, name: 'Dois Terços',
+        num: 2, den: 3, name: 'Dois Terços', sub: '2 de 3 fatias',
         altOptions: [
-          { num: 1, den: 3, label: 'Um terço' },
-          { num: 3, den: 3, label: 'Três terços' },
-          { num: 2, den: 4, label: 'Dois quartos' }
+          { num: 1, den: 3, name: 'Um Terço', sub: '1 de 3 fatias' },
+          { num: 3, den: 3, name: 'Três Terços', sub: '3 de 3 (Inteiro)' },
+          { num: 2, den: 4, name: 'Dois Quartos', sub: '2 de 4 fatias' }
         ]
       },
       {
-        num: 2, den: 4, name: 'Dois Quartos',
+        num: 2, den: 4, name: 'Dois Quartos', sub: '2 de 4 fatias',
         altOptions: [
-          { num: 1, den: 4, label: 'Um quarto' },
-          { num: 3, den: 4, label: 'Três quartos' },
-          { num: 2, den: 6, label: 'Dois sextos' }
+          { num: 1, den: 4, name: 'Um Quarto', sub: '1 de 4 fatias' },
+          { num: 3, den: 4, name: 'Três Quartos', sub: '3 de 4 fatias' },
+          { num: 2, den: 6, name: 'Dois Sextos', sub: '2 de 6 fatias' }
         ]
       },
       {
-        num: 4, den: 6, name: 'Quatro Sextos',
+        num: 4, den: 6, name: 'Quatro Sextos', sub: '4 de 6 fatias',
         altOptions: [
-          { num: 2, den: 6, label: 'Dois sextos' },
-          { num: 3, den: 6, label: 'Três sextos' },
-          { num: 4, den: 8, label: 'Quatro oitavos' }
+          { num: 2, den: 6, name: 'Dois Sextos', sub: '2 de 6 fatias' },
+          { num: 3, den: 6, name: 'Três Sextos', sub: '3 de 6 fatias' },
+          { num: 4, den: 8, name: 'Quatro Oitavos', sub: '4 de 8 fatias' }
         ]
       },
       {
-        num: 3, den: 8, name: 'Três Oitavos',
+        num: 3, den: 8, name: 'Três Oitavos', sub: '3 de 8 fatias',
         altOptions: [
-          { num: 5, den: 8, label: 'Cinco oitavos' },
-          { num: 3, den: 4, label: 'Três quartos' },
-          { num: 1, den: 8, label: 'Um oitavo' }
+          { num: 5, den: 8, name: 'Cinco Oitavos', sub: '5 de 8 fatias' },
+          { num: 3, den: 4, name: 'Três Quartos', sub: '3 de 4 fatias' },
+          { num: 1, den: 8, name: 'Um Oitavo', sub: '1 de 8 fatias' }
         ]
       },
       {
-        num: 5, den: 8, name: 'Cinco Oitavos',
+        num: 5, den: 8, name: 'Cinco Oitavos', sub: '5 de 8 fatias',
         altOptions: [
-          { num: 3, den: 8, label: 'Três oitavos' },
-          { num: 7, den: 8, label: 'Sete oitavos' },
-          { num: 5, den: 6, label: 'Cinco sextos' }
+          { num: 3, den: 8, name: 'Três Oitavos', sub: '3 de 8 fatias' },
+          { num: 7, den: 8, name: 'Sete Oitavos', sub: '7 de 8 fatias' },
+          { num: 5, den: 6, name: 'Cinco Sextos', sub: '5 de 6 fatias' }
         ]
       },
       {
-        num: 3, den: 6, name: 'Três Sextos (Metade)',
+        num: 3, den: 6, name: 'Três Sextos', sub: '3 de 6 (Metade)',
         altOptions: [
-          { num: 2, den: 6, label: 'Dois sextos' },
-          { num: 4, den: 6, label: 'Quatro sextos' },
-          { num: 1, den: 6, label: 'Um sexto' }
+          { num: 2, den: 6, name: 'Dois Sextos', sub: '2 de 6 fatias' },
+          { num: 4, den: 6, name: 'Quatro Sextos', sub: '4 de 6 fatias' },
+          { num: 1, den: 6, name: 'Um Sexto', sub: '1 de 6 fatias' }
         ]
       }
     ];
@@ -2208,52 +2208,35 @@ export class JogosComponent implements OnInit, OnDestroy {
     let feedbackStatus: 'none' | 'success' | 'error' = 'none';
     let feedbackIndex = -1;
 
-    // Layout Responsivo:
-    // Se W >= 420: Lado Esquerdo = Pizza grande e desobstruída | Lado Direito = Pergunta + 4 Opções
-    // Se W < 420 (Mobile vertical): Topo = Pizza | Base = 4 Opções em 2x2
-    const isWide = W >= 420;
+    // GEOMETRIA GARANTIDA E ANCORADA DE BAIXO PARA CIMA (BOTTOM-UP)
+    // As caixas de baixo NUNCA são cortadas porque são calculadas a partir da base do canvas.
+    const bottomPad = 12;
+    const cardGap = 10;
+    const cardH = Math.min(56, Math.max(46, Math.floor(H * 0.155)));
+    const gridH = cardH * 2 + cardGap;
+    const gridY = H - bottomPad - gridH;
 
-    const leftW = isWide ? Math.floor(W * 0.48) : W;
-    const rightX = isWide ? leftW + 14 : 12;
-    const rightW = isWide ? W - rightX - 12 : W - 24;
+    const gridW = Math.min(520, W - 20);
+    const gridX = Math.floor((W - gridW) / 2);
+    const cardW = Math.floor((gridW - cardGap) / 2);
 
-    // Dimensões da Pizza (espaçosa e centralizada em seu quadrante)
-    const pizzaCx = isWide ? Math.floor(leftW / 2) : Math.floor(W / 2);
-    const pizzaCy = isWide ? Math.floor(H / 2) - 10 : Math.floor(H * 0.28);
-    const pizzaR = isWide 
-      ? Math.min(96, Math.max(54, Math.floor(Math.min((leftW - 32) / 2, (H - 58) / 2))))
-      : Math.min(64, Math.max(42, Math.floor(H * 0.18)));
-
-    const badgeY = pizzaCy + pizzaR + 18;
-
-    // Dimensões das Opções
-    const optGap = isWide ? Math.min(10, Math.max(6, Math.floor((H - 120) / 10))) : 8;
-    const optH = isWide 
-      ? Math.min(50, Math.max(38, Math.floor((H - 65 - 3 * optGap) / 4))) 
-      : Math.min(54, Math.max(42, Math.floor((H - (badgeY + 16) - 8) / 2)));
-    const optStartTop = isWide 
-      ? Math.floor((H - (4 * optH + 3 * optGap)) / 2) + 16 
-      : badgeY + 16;
-    const cardW = isWide ? rightW : Math.floor((W - 24 - optGap) / 2);
+    // Área nobre superior para a Pizza Fracionária
+    const topPad = 8;
+    const availPizzaH = gridY - topPad;
+    const pizzaCx = W / 2;
+    const pizzaCy = topPad + Math.floor(availPizzaH * 0.44);
+    const pizzaR = Math.min(76, Math.max(42, Math.floor(Math.min(availPizzaH * 0.38, (W - 32) * 0.22))));
+    const badgeY = pizzaCy + pizzaR + Math.min(18, Math.max(11, Math.floor((gridY - (pizzaCy + pizzaR)) / 2)));
 
     const getOptionBounds = (i: number) => {
-      if (isWide) {
-        return {
-          bx: rightX,
-          by: optStartTop + i * (optH + optGap),
-          bw: rightW,
-          bh: optH
-        };
-      } else {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        return {
-          bx: 12 + col * (cardW + optGap),
-          by: optStartTop + row * (optH + optGap),
-          bw: cardW,
-          bh: optH
-        };
-      }
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      return {
+        bx: gridX + col * (cardW + cardGap),
+        by: gridY + row * (cardH + cardGap),
+        bw: cardW,
+        bh: cardH
+      };
     };
 
     const newRound = () => {
@@ -2270,19 +2253,20 @@ export class JogosComponent implements OnInit, OnDestroy {
       const correctOpt: FractionOption = {
         num: currentTrial.num,
         den: currentTrial.den,
-        label: currentTrial.name,
+        name: currentTrial.name,
+        sub: currentTrial.sub,
         isCorrect: true
       };
 
       const distractorOpts: FractionOption[] = currentTrial.altOptions.map(alt => ({
         num: alt.num,
         den: alt.den,
-        label: alt.label,
+        name: alt.name,
+        sub: alt.sub,
         isCorrect: false
       }));
 
       currentOptions = [correctOpt, ...distractorOpts];
-      // Embaralhar alternativas
       for (let i = currentOptions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [currentOptions[i], currentOptions[j]] = [currentOptions[j], currentOptions[i]];
@@ -2295,31 +2279,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
 
-      // 1. Título e Instrução no Lado Direito (quando wide)
-      if (isWide) {
-        ctx.save();
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 11px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`RODADA ${currentRound} DE ${totalRounds} • FRAÇÕES VISUAIS`, rightX + rightW / 2, optStartTop - 25);
-
-        ctx.fillStyle = '#ffffff';
-        const promptSz = Math.min(15, Math.max(12, Math.floor(W * 0.026)));
-        ctx.font = `bold ${promptSz}px Outfit, sans-serif`;
-        ctx.fillText('Qual fração representa a parte colorida?', rightX + rightW / 2, optStartTop - 8);
-
-        // Divisória sutil entre lado esquerdo (pizza) e lado direito (respostas)
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(leftW + 6, 24);
-        ctx.lineTo(leftW + 6, H - 24);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // 2. Pizza Fracionária Vetorial
+      // 1. Pizza Fracionária Vetorial
       // Crosta externa assada
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
@@ -2328,7 +2288,7 @@ export class JogosComponent implements OnInit, OnDestroy {
 
       ctx.beginPath();
       ctx.arc(pizzaCx, pizzaCy, pizzaR + 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#b45309'; // borda da pizza assada
+      ctx.fillStyle = '#b45309'; // crosta assada
       ctx.fill();
 
       // Fundo das fatias vazias
@@ -2413,16 +2373,16 @@ export class JogosComponent implements OnInit, OnDestroy {
       ctx.stroke();
       ctx.restore();
 
-      // Legenda pedagógica (com espaçamento garantido abaixo da pizza)
+      // Legenda pedagógica
       ctx.save();
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = '#cbd5e1';
       ctx.font = '600 13px Outfit, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(`🍕 ${currentTrial.num} de ${currentTrial.den} fatias coloridas`, pizzaCx, badgeY);
       ctx.restore();
 
-      // 3. Cartões de Alternativas
+      // 2. Cartões de Alternativas (Grid 2x2 com Pílula de Fração + Título e Subtítulo)
       currentOptions.forEach((opt, i) => {
         const { bx, by, bw, bh } = getOptionBounds(i);
 
@@ -2444,13 +2404,28 @@ export class JogosComponent implements OnInit, OnDestroy {
 
         ctx.lineWidth = isSelected ? 2.5 : 1.5;
         ctx.beginPath();
-        ctx.roundRect(bx, by, bw, bh, 10);
+        ctx.roundRect(bx, by, bw, bh, 12);
         ctx.fill();
         ctx.stroke();
 
-        // Fração clássica (Numerador / Traço / Denominador)
-        const fracX = bx + Math.max(28, Math.floor(bw * 0.18));
-        const midY = by + bh / 2;
+        // Pílula da Fração no lado esquerdo
+        const pillW = Math.min(52, Math.max(42, Math.floor(bw * 0.22)));
+        const pillH = bh - 12;
+        const pillX = bx + 6;
+        const pillY = by + 6;
+
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' 
+          ? 'rgba(16, 185, 129, 0.35)' 
+          : isSelected && feedbackStatus === 'error'
+          ? 'rgba(239, 68, 68, 0.35)'
+          : 'rgba(15, 23, 42, 0.7)';
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+        ctx.fill();
+
+        // Fração clássica dentro da pílula
+        const fracX = pillX + pillW / 2;
+        const midY = pillY + pillH / 2;
 
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -2463,19 +2438,28 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.strokeStyle = isSelected && feedbackStatus === 'success' ? '#34d399' : '#94a3b8';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(fracX - 11, midY);
-        ctx.lineTo(fracX + 11, midY);
+        ctx.moveTo(fracX - 10, midY);
+        ctx.lineTo(fracX + 10, midY);
         ctx.stroke();
         // Denominador
-        ctx.fillText(`${opt.den}`, fracX, midY + 11);
+        ctx.fillText(`${opt.den}`, fracX, midY + 10);
 
-        // Texto por extenso
-        const textX = fracX + 22;
+        // Bloco de texto no lado direito (Nome principal + Subtítulo)
+        const textX = pillX + pillW + 10;
         const availTextW = bw - (textX - bx) - 8;
+
         ctx.textAlign = 'left';
-        ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#6ee7b7' : '#e2e8f0';
-        ctx.font = 'bold 13px Outfit, sans-serif';
-        ctx.fillText(opt.label, textX, midY, availTextW);
+        // Linha 1: Nome principal (ex.: "Três Quartos")
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#6ee7b7' : '#ffffff';
+        const nameFontSz = Math.min(14, Math.max(12, Math.floor(bw * 0.065)));
+        ctx.font = `bold ${nameFontSz}px 'Outfit', sans-serif`;
+        ctx.fillText(opt.name, textX, by + bh * 0.36, availTextW);
+
+        // Linha 2: Subtítulo (ex.: "3 de 4 fatias")
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#a7f3d0' : '#94a3b8';
+        const subFontSz = Math.min(11, Math.max(10, Math.floor(bw * 0.052)));
+        ctx.font = `500 ${subFontSz}px 'Outfit', sans-serif`;
+        ctx.fillText(opt.sub, textX, by + bh * 0.72, availTextW);
 
         ctx.restore();
       });
