@@ -2161,3 +2161,21 @@ npm run start
     - **Memória Visual (ID 18 - `setupVisualMatchingGame`):** Paradigma neuropsicológico clássico de *Delayed Match-to-Sample* (DMS). Exibe um objeto detalhado em card central com barra regressiva de 2.6s. O card é ocultado (`?`) e surgem 4 opções com distratores para identificação exata do alvo. 5 rodadas com revelação em verde esmeralda e confetes.
     - **Lembre-se dos Objetos (ID 17 - `setupObjectRecallGame`):** Teste de recordação livre e discriminação em vitrine de múltiplos itens. Exibe uma vitrine de 3 a 5 objetos cotidianos por 3.6s. Os objetos desaparecem da vitrine deixando slots vazios pontilhados. Uma bandeja inferior com 8 opções (alvos + intrusos) é apresentada para a criança tocar e recolocar todos os itens corretos na vitrine.
 
+---
+
+## Sessão 33 - 02/10/2026 — Calibração Pedagógica do Desafio Matemático (8 a 12 anos)
+
+### O que foi feito
+
+#### Calibração Psicopedagógica do Desafio Matemático (`jogos.component.ts` - Jogo 50)
+- **Diagnóstico Clínico:** Identificado que operações geradas anteriormente (somas com resultado > 75, subtrações como `64 - 49` com empréstimo mental complexo e tabuadas difíceis aleatórias) geravam sobrecarga na memória de trabalho e ansiedade matemática para o público-alvo (8 a 12 anos em contexto clínico/psicopedagógico).
+- **Implementação do Andaime Cognitivo (*Scaffolding*):**
+  - **Fase 1 (Questões 1 e 2 - Aquecimento):** Adições e subtrações com fatos fundamentais até 20 (`4 a 11 + 2 a 8` e `12 a 19 - 2 a 7`), permitindo ganho imediato de autoconfiança.
+  - **Fase 2 (Questões 3 e 4 - Tabuadas e Padrões):** Multiplicações amigáveis (tabuadas do 2, 3, 5 e 10) e somas com dezenas estruturadas.
+  - **Fase 3 (Questões 5 e 6 - Cálculo Mental):** Operações com dezenas de fácil decomposição (até 35) e tabuadas práticas do 3 e 4 sem empréstimo punitivo.
+  - **Fase 4 (Questões 7 e 8 - Desafio Final):** Desafio estimulante equilibrado (multiplicações práticas como 4×6, 5×7, 6×4, subtrações de dezenas redondas como 50 - 20, 35 - 15 e adições estruturadas).
+- **Aprimoramento de Interface & Pistas Visuais:**
+  - Inclusão do indicador da fase atual na barra de instrução superior (ex.: *"Aquecimento • Questão 1/8: Calcule e aperte '='"*, *"Tabuadas e Padrões • Questão 3/8..."*).
+  - Atualização do catálogo: dificuldade calibrada para nível 2, tempo estimado em 5 min e descrição pedagógica atualizada para *"Misto progressivo: somas, subtrações e tabuadas práticas"*.
+
+

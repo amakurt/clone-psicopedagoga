@@ -69,7 +69,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 47, name: 'Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
   { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'tap' },
   { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'shapes' },
-  { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Misto: somas, subtrações e multiplicações difíceis', type: 'math' },
+  { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '8-12', description: 'Misto progressivo: somas, subtrações e tabuadas práticas', type: 'math' },
 
   { id: 51, name: 'Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Reconheça a expressão do rosto: feliz, triste, bravo, assustado ou surpreso', type: 'social' },
   { id: 52, name: 'Empatia', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '4-8', description: 'Como a pessoa se sente? Escolha a resposta certa', type: 'social' },
@@ -1503,28 +1503,94 @@ export class JogosComponent implements OnInit, OnDestroy {
           problemContext = `${a} caixas com ${b} itens cada`;
         }
       } else {
-        // Desafio Matemático (Game 50 e padrão - misto)
-        const randOp = Math.random();
-        if (randOp < 0.35) {
-          a = Math.floor(Math.random() * 35) + 5;
-          b = Math.floor(Math.random() * 35) + 5;
-          op = '+';
-          answer = a + b;
-        } else if (randOp < 0.70) {
-          a = Math.floor(Math.random() * 50) + 15;
-          b = Math.floor(Math.random() * (a - 5)) + 3;
-          op = '-';
-          answer = a - b;
+        // Desafio Matemático (Game 50 e padrão - progressão pedagógica com andaime cognitivo)
+        // Fase 1 (Questões 1-2): Aquecimento com somas e subtrações até 20 (fatos básicos)
+        // Fase 2 (Questões 3-4): Tabuadas amigáveis (2, 3, 5, 10) e padrões numéricos
+        // Fase 3 (Questões 5-6): Cálculo mental com dezenas acessíveis até 35
+        // Fase 4 (Questões 7-8): Desafio estimulante equilibrado (sem sobrecarga de memória)
+        if (currentQ <= 2) {
+          problemContext = 'Aquecimento';
+          if (currentQ === 1 || Math.random() < 0.5) {
+            a = Math.floor(Math.random() * 8) + 4; // 4 a 11
+            b = Math.floor(Math.random() * 7) + 2; // 2 a 8
+            op = '+';
+            answer = a + b;
+          } else {
+            a = Math.floor(Math.random() * 8) + 12; // 12 a 19
+            b = Math.floor(Math.random() * 6) + 2;  // 2 a 7
+            op = '-';
+            answer = a - b;
+          }
+        } else if (currentQ <= 4) {
+          problemContext = 'Tabuadas e Padrões';
+          const easyTables = [2, 3, 5, 10];
+          const chosenTable = easyTables[Math.floor(Math.random() * easyTables.length)];
+          const mult = Math.floor(Math.random() * 7) + 2; // 2 a 8
+          if (Math.random() < 0.75) {
+            a = chosenTable;
+            b = mult;
+            op = '×';
+            answer = a * b;
+          } else {
+            a = chosenTable * 2;
+            b = Math.floor(Math.random() * 8) + 1;
+            op = '+';
+            answer = a + b;
+          }
+        } else if (currentQ <= 6) {
+          problemContext = 'Cálculo Mental';
+          const type = Math.random();
+          if (type < 0.45) {
+            // Somas amigáveis até 35
+            a = Math.floor(Math.random() * 10) + 12; // 12 a 21
+            b = Math.floor(Math.random() * 8) + 3;   // 3 a 10
+            op = '+';
+            answer = a + b;
+          } else if (type < 0.75) {
+            // Subtração sem empréstimo confuso
+            a = Math.floor(Math.random() * 12) + 20; // 20 a 31
+            b = Math.floor(Math.random() * 8) + 4;   // 4 a 11
+            op = '-';
+            answer = a - b;
+          } else {
+            // Tabuadas do 3 ou 4
+            a = Math.random() < 0.5 ? 3 : 4;
+            b = Math.floor(Math.random() * 5) + 3; // 3 a 7
+            op = '×';
+            answer = a * b;
+          }
         } else {
-          a = Math.floor(Math.random() * 9) + 2;
-          b = Math.floor(Math.random() * 9) + 2;
-          op = '×';
-          answer = a * b;
+          problemContext = 'Desafio Final';
+          const type = Math.random();
+          if (type < 0.5) {
+            // Multiplicação estimulante e acessível (ex: 4x6, 5x7, 6x4, 3x8)
+            const baseA = [3, 4, 5, 6][Math.floor(Math.random() * 4)];
+            const baseB = Math.floor(Math.random() * 5) + 3; // 3 a 7
+            a = baseA;
+            b = baseB;
+            op = '×';
+            answer = a * b;
+          } else if (type < 0.8) {
+            // Subtração de dezenas redondas
+            a = [25, 30, 35, 40, 50][Math.floor(Math.random() * 5)];
+            b = [5, 10, 15, 20][Math.floor(Math.random() * 4)];
+            op = '-';
+            answer = a - b;
+          } else {
+            // Adição estruturada de dezenas
+            a = Math.floor(Math.random() * 8) + 14; // 14 a 21
+            b = Math.floor(Math.random() * 8) + 11; // 11 a 18
+            op = '+';
+            answer = a + b;
+          }
         }
-        problemContext = 'Desafio Matemático';
       }
 
-      this.gameInstruction.set(`Problema ${currentQ}/${totalQ}: Calcule e aperte '='`);
+      this.gameInstruction.set(
+        problemContext
+          ? `${problemContext} • Questão ${currentQ}/${totalQ}: Calcule e aperte '='`
+          : `Problema ${currentQ}/${totalQ}: Calcule e aperte '='`
+      );
       draw();
     };
 
