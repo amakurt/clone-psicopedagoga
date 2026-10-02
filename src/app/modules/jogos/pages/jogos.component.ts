@@ -65,7 +65,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 43, name: 'Comparação', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Maior, menor ou igual? Toque no símbolo correto', type: 'compare' },
   { id: 44, name: 'Contagem de Objetos', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Conte quantos frutos aparecem na tela', type: 'tap' },
   { id: 45, name: 'Tabuada', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Pratique multiplicações de 1 a 10', type: 'math' },
-  { id: 46, name: 'Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva problemas escritos com operações simples', type: 'math' },
+  { id: 46, name: 'Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva historinhas e desafios matemáticos do cotidiano', type: 'problems' },
   { id: 47, name: 'Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
   { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'fractions' },
   { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'shapes' },
@@ -528,7 +528,7 @@ class ClinicalSoundSynthesizer {
                 }
 
                 <!-- Canvas Ativo -->
-                <div [class.hidden]="!gameStarted()" class="flex flex-col items-center">
+                <div [class.hidden]="!gameStarted()" class="w-full flex flex-col items-center">
                   <canvas #gameCanvas class="rounded-2xl shadow-2xl w-full max-w-[580px] cursor-pointer" style="touch-action: none; -webkit-user-select: none; user-select: none;"></canvas>
                   <p class="text-xs sm:text-sm font-semibold text-slate-300 mt-3 text-center px-2 min-h-[20px] flex items-center gap-1.5">
                     <span class="material-icons text-sm text-teal-400">info</span>
@@ -1149,15 +1149,17 @@ export class JogosComponent implements OnInit, OnDestroy {
     if (!canvas) return;
 
     const container = canvas.parentElement;
-    const containerWidth = container ? container.clientWidth - 24 : 468;
+    const parentContainer = container?.parentElement;
+    const measuredW = Math.max(container?.clientWidth || 0, (parentContainer?.clientWidth || 0) - 32);
+    const containerWidth = measuredW > 320 ? measuredW : 560;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions';
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems';
     const maxAvailableH = window.innerHeight 
-      ? Math.max(260, window.innerHeight - (isExpandedGame ? 160 : 220)) 
+      ? Math.max(340, window.innerHeight - (isExpandedGame ? 160 : 220)) 
       : (isExpandedGame ? 460 : 320);
 
     let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
-    const targetAspect = jogo?.type === 'fractions' ? 0.82 : (isExpandedGame ? 0.74 : 0.6);
+    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems') ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -1183,7 +1185,14 @@ export class JogosComponent implements OnInit, OnDestroy {
     if (!jogo || !this.canvasCtx) return;
     switch (jogo.type) {
       case 'memory': this.setupMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
-      case 'math': this.setupMathGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'math': 
+        if (jogo.id === 46) {
+          this.setupProblemsGame(canvas, logicalW, logicalH);
+        } else {
+          this.setupMathGame(canvas, logicalW, logicalH, jogo.id);
+        }
+        break;
+      case 'problems': this.setupProblemsGame(canvas, logicalW, logicalH); break;
       case 'shapes': this.setupShapesGame(canvas, logicalW, logicalH); break;
       case 'sequence': 
         if (jogo.id === 8) {
@@ -1218,6 +1227,8 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.setupObjectRecallGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 18) {
           this.setupVisualMatchingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 46) {
+          this.setupProblemsGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 48) {
           this.setupFractionsGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 49) {
@@ -2495,6 +2506,408 @@ export class JogosComponent implements OnInit, OnDestroy {
               feedbackStatus = 'none';
               feedbackIndex = -1;
               this.gameInstruction.set(`Rodada ${currentRound}/${totalRounds}: Qual fração representa a parte colorida da pizza?`);
+              draw();
+            }, 750);
+          }
+        }
+      });
+    });
+  }
+
+  // 3.1 PROBLEMAS MATEMÁTICOS CONTEXTUALIZADOS (HISTORINHAS ACESSÍVEIS PARA 6-10 ANOS)
+  setupProblemsGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface ProblemTrial {
+      emoji: string;
+      theme: string;
+      line1: string;
+      line2: string;
+      equation: string;
+      unit: string;
+      correctVal: number;
+      distractors: number[];
+    }
+
+    const PROBLEMS_DATA: ProblemTrial[] = [
+      {
+        emoji: '🍎',
+        theme: 'Cesta de Maçãs',
+        line1: 'Lucas colheu 5 maçãs no pomar.',
+        line2: 'Ganhou mais 3 da mamãe. Quantas tem agora?',
+        equation: '5 + 3 = ?',
+        unit: 'maçãs',
+        correctVal: 8,
+        distractors: [7, 9, 6]
+      },
+      {
+        emoji: '🎈',
+        theme: 'Festa de Balões',
+        line1: 'Havia 9 balões coloridos na sala.',
+        line2: '4 balões estouraram. Quantos sobraram?',
+        equation: '9 - 4 = ?',
+        unit: 'balões',
+        correctVal: 5,
+        distractors: [6, 4, 7]
+      },
+      {
+        emoji: '✏️',
+        theme: 'Estojo Escolar',
+        line1: 'Ana tinha 6 lápis de cor no estojo.',
+        line2: 'Ganhou mais 6 de presente. Quantos tem?',
+        equation: '6 + 6 = ?',
+        unit: 'lápis',
+        correctVal: 12,
+        distractors: [10, 11, 14]
+      },
+      {
+        emoji: '🚗',
+        theme: 'Garagem de Brinquedo',
+        line1: 'Pedro tinha 10 carrinhos na pista.',
+        line2: 'Guardou 3 na caixa. Quantos ficaram?',
+        equation: '10 - 3 = ?',
+        unit: 'carrinhos',
+        correctVal: 7,
+        distractors: [8, 6, 9]
+      },
+      {
+        emoji: '🍪',
+        theme: 'Biscoitos da Vovó',
+        line1: 'A vovó assou 8 biscoitos quentinhos.',
+        line2: 'Comemos 5 no café. Quantos sobraram?',
+        equation: '8 - 5 = ?',
+        unit: 'biscoitos',
+        correctVal: 3,
+        distractors: [4, 2, 5]
+      },
+      {
+        emoji: '🐦',
+        theme: 'Passarinhos no Galho',
+        line1: 'Havia 4 passarinhos no galho da árvore.',
+        line2: 'Chegaram mais 5 amigos. Quantos estão lá?',
+        equation: '4 + 5 = ?',
+        unit: 'passarinhos',
+        correctVal: 9,
+        distractors: [8, 10, 7]
+      },
+      {
+        emoji: '🍬',
+        theme: 'Caixas de Doces',
+        line1: 'Sofia tem 2 caixinhas de bombons.',
+        line2: 'Cada caixinha tem 4 bombons. Quantos no total?',
+        equation: '2 × 4 = ?',
+        unit: 'bombons',
+        correctVal: 8,
+        distractors: [6, 9, 10]
+      },
+      {
+        emoji: '⚽',
+        theme: 'Gols do Recreio',
+        line1: 'O time fez 7 gols no primeiro tempo.',
+        line2: 'No segundo tempo fez mais 4. Quantos ao todo?',
+        equation: '7 + 4 = ?',
+        unit: 'gols',
+        correctVal: 11,
+        distractors: [10, 12, 13]
+      },
+      {
+        emoji: '⭐',
+        theme: 'Álbum de Figurinhas',
+        line1: 'Léo tinha 12 figurinhas repetidas.',
+        line2: 'Ele deu 5 para um colega. Quantas restaram?',
+        equation: '12 - 5 = ?',
+        unit: 'figurinhas',
+        correctVal: 7,
+        distractors: [8, 6, 9]
+      },
+      {
+        emoji: '🧁',
+        theme: 'Bandeja de Bolinhos',
+        line1: 'Mamãe arrumou 3 pratos na mesa.',
+        line2: 'Colocou 3 bolinhos em cada prato. Quantos são?',
+        equation: '3 × 3 = ?',
+        unit: 'bolinhos',
+        correctVal: 9,
+        distractors: [6, 8, 12]
+      }
+    ];
+
+    // Embaralhar banco de desafios
+    const pool = [...PROBLEMS_DATA];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    let currentRound = 0;
+    const totalRounds = 8;
+    let currentTrial = pool[0];
+    let currentOptions: { val: number; label: string; isCorrect: boolean }[] = [];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+
+    // GEOMETRIA GARANTIDA E ANCORADA DE BAIXO PARA CIMA (BOTTOM-UP)
+    const bottomPad = 12;
+    const cardGap = 10;
+    const cardH = Math.min(56, Math.max(46, Math.floor(H * 0.155)));
+    const gridH = cardH * 2 + cardGap;
+    const gridY = H - bottomPad - gridH;
+
+    const gridW = Math.min(520, W - 20);
+    const gridX = Math.floor((W - gridW) / 2);
+    const cardW = Math.floor((gridW - cardGap) / 2);
+
+    // Área do Card da História no Topo (aproveita todo o espaço superior sem sobreposições)
+    const topPad = 8;
+    const storyCardX = gridX;
+    const storyCardY = topPad;
+    const storyCardW = gridW;
+    const storyCardH = gridY - topPad - 10;
+
+    const getOptionBounds = (i: number) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      return {
+        bx: gridX + col * (cardW + cardGap),
+        by: gridY + row * (cardH + cardGap),
+        bw: cardW,
+        bh: cardH
+      };
+    };
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      currentTrial = pool[(currentRound - 1) % pool.length];
+
+      const opts: { val: number; label: string; isCorrect: boolean }[] = [
+        {
+          val: currentTrial.correctVal,
+          label: `${currentTrial.correctVal} ${currentTrial.unit}`,
+          isCorrect: true
+        },
+        ...currentTrial.distractors.map(d => ({
+          val: d,
+          label: `${d} ${currentTrial.unit}`,
+          isCorrect: false
+        }))
+      ];
+
+      // Embaralhar alternativas
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      currentOptions = opts;
+
+      this.gameInstruction.set(`Problema ${currentRound}/${totalRounds}: Leia a historinha e toque na resposta certa!`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Cartão da Historinha (Topo)
+      ctx.save();
+      const cardGrad = ctx.createLinearGradient(storyCardX, storyCardY, storyCardX, storyCardY + storyCardH);
+      cardGrad.addColorStop(0, '#1e293b');
+      cardGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = cardGrad;
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(storyCardX, storyCardY, storyCardW, storyCardH, 14);
+      ctx.fill();
+      ctx.stroke();
+
+      // Topo do card: Emoji + Tema + Badge de Rodada
+      const headerY = storyCardY + 22;
+
+      // Emoji
+      ctx.font = '20px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.emoji, storyCardX + 14, headerY);
+
+      // Badge de Rodada (Direita)
+      const badgeText = `Problema ${currentRound}/${totalRounds}`;
+      ctx.font = '600 11px "Outfit", sans-serif';
+      const badgeW = ctx.measureText(badgeText).width + 16;
+      const badgeH = 20;
+      const badgeX = storyCardX + storyCardW - 14 - badgeW;
+      const badgeY = headerY - badgeH / 2;
+
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#7dd3fc';
+      ctx.textAlign = 'center';
+      ctx.fillText(badgeText, badgeX + badgeW / 2, headerY);
+
+      // Tema (com largura máxima para nunca colidir com a badge)
+      const maxThemeW = Math.max(50, badgeX - (storyCardX + 44) - 10);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 13px "Outfit", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(currentTrial.theme, storyCardX + 42, headerY, maxThemeW);
+
+      // Linha Divisória
+      const divY = storyCardY + 44;
+      ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(storyCardX + 14, divY);
+      ctx.lineTo(storyCardX + storyCardW - 14, divY);
+      ctx.stroke();
+
+      // Pílula da Equação / Dica Simbólica (Base do Card da História)
+      const eqH = 26;
+      const eqW = Math.min(140, Math.max(100, Math.floor(storyCardW * 0.26)));
+      const eqX = storyCardX + (storyCardW - eqW) / 2;
+      const eqY = storyCardY + storyCardH - eqH - 10;
+
+      // Texto da Historinha (Linha 1 e Linha 2 com centralização vertical no espaço livre)
+      const storyAreaTop = divY + 6;
+      const storyAreaBottom = eqY - 6;
+      const storyCenterY = storyAreaTop + (storyAreaBottom - storyAreaTop) / 2;
+      const lineSpacing = Math.min(26, Math.max(20, Math.floor((storyAreaBottom - storyAreaTop) * 0.34)));
+      const line1Y = storyCenterY - lineSpacing / 2;
+      const line2Y = storyCenterY + lineSpacing / 2;
+      const storyFontSz = Math.min(15, Math.max(12, Math.floor(storyCardW * 0.035)));
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = `600 ${storyFontSz}px 'Outfit', sans-serif`;
+      ctx.fillText(currentTrial.line1, storyCardX + storyCardW / 2, line1Y, storyCardW - 28);
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = `500 ${storyFontSz}px 'Outfit', sans-serif`;
+      ctx.fillText(currentTrial.line2, storyCardX + storyCardW / 2, line2Y, storyCardW - 28);
+
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.15)';
+      ctx.strokeStyle = 'rgba(96, 165, 250, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(eqX, eqY, eqW, eqH, 13);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#60a5fa';
+      ctx.font = 'bold 13px "Outfit", monospace, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.equation, eqX + eqW / 2, eqY + eqH / 2);
+      ctx.restore();
+
+      // 2. Cartões de Alternativas (Grid 2x2 Ancorado de Baixo para Cima)
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+
+        ctx.save();
+        const isSelected = feedbackIndex === i;
+
+        if (isSelected) {
+          if (feedbackStatus === 'success') {
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.28)';
+            ctx.strokeStyle = '#10b981';
+          } else {
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+            ctx.strokeStyle = '#ef4444';
+          }
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#334155';
+        }
+
+        ctx.lineWidth = isSelected ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        // Pílula do Número no Lado Esquerdo
+        const pillW = Math.min(46, Math.max(34, Math.floor(bw * 0.2)));
+        const pillH = bh - 12;
+        const pillX = bx + 6;
+        const pillY = by + 6;
+
+        ctx.fillStyle = isSelected && feedbackStatus === 'success'
+          ? 'rgba(16, 185, 129, 0.35)'
+          : isSelected && feedbackStatus === 'error'
+          ? 'rgba(239, 68, 68, 0.35)'
+          : 'rgba(51, 65, 85, 0.5)';
+        ctx.strokeStyle = isSelected && feedbackStatus === 'success'
+          ? '#34d399'
+          : isSelected && feedbackStatus === 'error'
+          ? '#f87171'
+          : 'rgba(71, 85, 105, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#6ee7b7' : '#ffffff';
+        ctx.font = 'bold 15px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${opt.val}`, pillX + pillW / 2, pillY + pillH / 2);
+
+        // Bloco de Texto no Lado Direito (Ex: "8 maçãs")
+        const textX = pillX + pillW + 10;
+        const availTextW = bw - (textX - bx) - 8;
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#6ee7b7' : '#f1f5f9';
+        const optFontSz = Math.min(14, Math.max(11, Math.floor(bw * 0.062)));
+        ctx.font = `bold ${optFontSz}px 'Outfit', sans-serif`;
+        ctx.fillText(opt.label, textX, by + bh / 2, availTextW);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          feedbackIndex = i;
+          const isCorrect = opt.isCorrect;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 15);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 480);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`Dica: Veja a continha ${currentTrial.equation.replace('?', '...')} e tente outra opção!`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              this.gameInstruction.set(`Problema ${currentRound}/${totalRounds}: Leia a historinha e toque na resposta certa!`);
               draw();
             }, 750);
           }

@@ -1,6 +1,38 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 01 de Outubro de 2026
+## Última Atualização: 02 de Outubro de 2026
+
+---
+
+## Sessão 56 - 02/10/2026 — Criação da Engine de Historinhas e Resolução de Problemas Cotidianos no Jogo "Problemas" (Jogo 46) e Calibração de Dificuldade para 6 a 10 Anos
+
+### O que foi feito
+
+#### 1. Diagnóstico do Problema e Causa Raiz
+- **Transbordamento de Texto (Overflow)**: O jogo 46 (*Problemas*, categoria Matemática, 6 a 10 anos) usava a engine genérica de calculadora (`setupMathGame`), que tentava renderizar todo o texto do problema mais a expressão matemática em uma única linha no visor da calculadora (`Tenho 10 lápis e ganhei 8 → 10 + 8 =`), fazendo o texto vazar para fora da caixa do visor e das bordas do canvas.
+- **Inadequação Cognitiva e Motora**: Forçar crianças de 6 a 10 anos (muitas com TDAH, dislexia ou discalculia) a ler um texto truncado e digitar dígitos manualmente em um teclado de calculadora numérico com 12 teclas gerava sobrecarga de memória de trabalho e frustração.
+- **Dimensões e Contêiner**: A `div` externa que envelopava o canvas não possuía a classe `w-full`, provocando colapso do contêiner e compressão da área útil de desenho.
+
+#### 2. Criação da Engine Dedicada de Resolução de Problemas (`setupProblemsGame`)
+- **Tipo Dedicado no Catálogo**: Atualizado o tipo do jogo 46 para `type: 'problems'`, com roteamento direto e fallback sob `case 'math'` e `case 'tap'`.
+- **Card de Historinha Superior com Hierarquia Visual Impecável**:
+  - **Cabeçalho**: Emoji temático em destaque (`🍎`, `🎈`, `✏️`, `🚗`, `🍪`, `🐦`, `🍬`, `⚽`, `⭐`, `🧁`), título contextual do problema e badge de progresso (`Problema 1/8`) em extremidades opostas, com larguras máximas dinâmicas impedindo qualquer colisão.
+  - **Narrativa em Duas Linhas Arejadas**: Texto dividido em Linha 1 (situação inicial) e Linha 2 (evento e pergunta), centralizado com fontes confortáveis (`Outfit`) e margens seguras.
+  - **Pílula de Mediação Semiótica**: Emblema de equação matemática centralizado na base do card (`5 + 3 = ?`, `2 × 4 = ?`), conectando o texto verbal à representação aritmética concreta.
+- **Grade 2x2 de Cartões de Resposta Ancorada de Baixo para Cima (Bottom-Up)**:
+  - 4 opções de resposta em cartões generosos, fáceis de tocar (touch-friendly).
+  - Pílula numérica em destaque à esquerda (`8`) e rótulo contextual à direita (`8 maçãs`), reforçando que números representam grandezas reais.
+  - Geometria calculada a partir da base do canvas (`bottomPad = 12px`), eliminando qualquer risco de corte inferior.
+- **Banco de Problemas Cotidianos Calibrados para 6 a 10 Anos**:
+  - Situações simples e concretas (carrinhos na pista, biscoitos da vovó, balões de festa, bombons em caixinhas).
+  - Operações acessíveis dentro do universo numérico de 1 a 20 (somas, subtrações e multiplicações básicas por 2 e 3).
+- **Gamificação e Feedback Imediato**:
+  - Acerto: Realce verde esmeralda (`#10b981`), som harmônico de sucesso, pontuação de +15 pontos e transição automática.
+  - Erro: Realce em vermelho, aviso sonoro suave e dica pedagógica no rodapé com a continha para apoio cognitivo.
+
+#### 3. Validação Técnica
+- **Angular Build**: Compilado com sucesso absoluto (`Application bundle generation complete`, 0 erros).
+- **Testes Visuais e Interativos E2E**: Testado no navegador em `http://localhost:4200/app/jogos` através de subagente browser com login autêntico (`admin@test.com`), validando renderização de tela cheia, ausência total de sobreposição e fluxo de rodadas.
 
 ---
 
