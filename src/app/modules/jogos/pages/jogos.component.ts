@@ -63,7 +63,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 41, name: 'Soma Simples', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Resolva somas de números de 1 a 20', type: 'math' },
   { id: 42, name: 'Subtração', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '5-8', description: 'Resolva subtrações simples com resultados positivos', type: 'math' },
   { id: 43, name: 'Comparação', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Maior, menor ou igual? Toque no símbolo correto', type: 'compare' },
-  { id: 44, name: 'Contagem de Objetos', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Conte quantos frutos aparecem na tela', type: 'tap' },
+  { id: 44, name: 'Contagem de Objetos', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Conte os objetos na tela e toque no número correto', type: 'counting' },
   { id: 45, name: 'Tabuada', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Pratique multiplicações de 1 a 10', type: 'math' },
   { id: 46, name: 'Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva historinhas e desafios matemáticos do cotidiano', type: 'problems' },
   { id: 47, name: 'Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
@@ -1153,13 +1153,13 @@ export class JogosComponent implements OnInit, OnDestroy {
     const measuredW = Math.max(container?.clientWidth || 0, (parentContainer?.clientWidth || 0) - 32);
     const containerWidth = measuredW > 320 ? measuredW : 560;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems';
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting';
     const maxAvailableH = window.innerHeight 
       ? Math.max(340, window.innerHeight - (isExpandedGame ? 160 : 220)) 
       : (isExpandedGame ? 460 : 320);
 
     let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
-    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems') ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
+    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting') ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -1188,11 +1188,14 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'math': 
         if (jogo.id === 46) {
           this.setupProblemsGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 44) {
+          this.setupObjectCountingGame(canvas, logicalW, logicalH);
         } else {
           this.setupMathGame(canvas, logicalW, logicalH, jogo.id);
         }
         break;
       case 'problems': this.setupProblemsGame(canvas, logicalW, logicalH); break;
+      case 'counting': this.setupObjectCountingGame(canvas, logicalW, logicalH); break;
       case 'shapes': this.setupShapesGame(canvas, logicalW, logicalH); break;
       case 'sequence': 
         if (jogo.id === 8) {
@@ -1227,6 +1230,8 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.setupObjectRecallGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 18) {
           this.setupVisualMatchingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 44) {
+          this.setupObjectCountingGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 46) {
           this.setupProblemsGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 48) {
@@ -2908,6 +2913,422 @@ export class JogosComponent implements OnInit, OnDestroy {
               feedbackStatus = 'none';
               feedbackIndex = -1;
               this.gameInstruction.set(`Problema ${currentRound}/${totalRounds}: Leia a historinha e toque na resposta certa!`);
+              draw();
+            }, 750);
+          }
+        }
+      });
+    });
+  }
+
+  // 3.2 CONTAGEM DE OBJETOS COM SUPORTE SEMIÓTICO E CORRESPONDÊNCIA BIUNÍVOCA (3 A 6 ANOS)
+  setupObjectCountingGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface CountingItem {
+      x: number;
+      y: number;
+      r: number;
+      counted: boolean;
+      countOrder?: number;
+    }
+
+    interface CountingTrial {
+      emoji: string;
+      theme: string;
+      question: string;
+      unit: string;
+      targetCount: number;
+      options: number[];
+    }
+
+    const COUNTING_DATA: CountingTrial[] = [
+      {
+        emoji: '🦆',
+        theme: 'Patinhos',
+        question: 'Quantos patinhos você vê na lagoa?',
+        unit: 'patinhos',
+        targetCount: 2,
+        options: [2, 1, 3, 4]
+      },
+      {
+        emoji: '🍎',
+        theme: 'Maçãs',
+        question: 'Quantas maçãs vermelhas na fruteira?',
+        unit: 'maçãs',
+        targetCount: 3,
+        options: [3, 2, 4, 1]
+      },
+      {
+        emoji: '⭐',
+        theme: 'Estrelas',
+        question: 'Quantas estrelinhas estão brilhando?',
+        unit: 'estrelas',
+        targetCount: 4,
+        options: [4, 3, 5, 2]
+      },
+      {
+        emoji: '🚗',
+        theme: 'Carrinhos',
+        question: 'Quantos carrinhos têm na pista?',
+        unit: 'carrinhos',
+        targetCount: 3,
+        options: [3, 4, 2, 5]
+      },
+      {
+        emoji: '🦋',
+        theme: 'Borboletas',
+        question: 'Quantas borboletas voando no jardim?',
+        unit: 'borboletas',
+        targetCount: 5,
+        options: [5, 4, 6, 3]
+      },
+      {
+        emoji: '🎈',
+        theme: 'Balões',
+        question: 'Quantos balões coloridos na festa?',
+        unit: 'balões',
+        targetCount: 4,
+        options: [4, 5, 3, 6]
+      },
+      {
+        emoji: '🐶',
+        theme: 'Cachorrinhos',
+        question: 'Quantos cachorrinhos no parque?',
+        unit: 'cachorrinhos',
+        targetCount: 5,
+        options: [5, 6, 4, 7]
+      },
+      {
+        emoji: '🍪',
+        theme: 'Biscoitos',
+        question: 'Quantos biscoitos têm no pratinho?',
+        unit: 'biscoitos',
+        targetCount: 6,
+        options: [6, 5, 7, 4]
+      },
+      {
+        emoji: '🐠',
+        theme: 'Peixinhos',
+        question: 'Quantos peixinhos nadando no aquário?',
+        unit: 'peixinhos',
+        targetCount: 5,
+        options: [5, 4, 6, 3]
+      },
+      {
+        emoji: '🌸',
+        theme: 'Florzinhas',
+        question: 'Quantas florzinhas você pode contar?',
+        unit: 'florzinhas',
+        targetCount: 7,
+        options: [7, 6, 8, 5]
+      }
+    ];
+
+    // Configurações simétricas de posições relativas (rx, ry) para cada quantidade N (1 a 8)
+    const SLOT_CONFIGS: Record<number, [number, number][]> = {
+      1: [[0.5, 0.5]],
+      2: [[0.34, 0.5], [0.66, 0.5]],
+      3: [[0.24, 0.5], [0.5, 0.5], [0.76, 0.5]],
+      4: [[0.34, 0.34], [0.66, 0.34], [0.34, 0.66], [0.66, 0.66]],
+      5: [[0.26, 0.32], [0.74, 0.32], [0.5, 0.5], [0.26, 0.68], [0.74, 0.68]],
+      6: [[0.24, 0.34], [0.5, 0.34], [0.76, 0.34], [0.24, 0.66], [0.5, 0.66], [0.76, 0.66]],
+      7: [[0.22, 0.32], [0.5, 0.32], [0.78, 0.32], [0.5, 0.5], [0.22, 0.68], [0.5, 0.68], [0.78, 0.68]],
+      8: [[0.2, 0.34], [0.4, 0.34], [0.6, 0.34], [0.8, 0.34], [0.2, 0.66], [0.4, 0.66], [0.6, 0.66], [0.8, 0.66]]
+    };
+
+    // Embaralhar desafios
+    const pool = [...COUNTING_DATA];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    let currentRound = 0;
+    const totalRounds = 8;
+    let currentTrial = pool[0];
+    let items: CountingItem[] = [];
+    let currentOptions: number[] = [];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+    let countedCount = 0;
+
+    // GEOMETRIA RESPONSIVA BOTTOM-UP
+    const bottomPad = 12;
+    const btnH = Math.min(56, Math.max(46, Math.floor(H * 0.145)));
+    const btnGap = 10;
+    const gridW = Math.min(520, W - 20);
+    const gridX = Math.floor((W - gridW) / 2);
+    const btnW = Math.floor((gridW - 3 * btnGap) / 4);
+    const btnY = H - bottomPad - btnH;
+
+    // Header superior
+    const topPad = 8;
+    const headerH = 34;
+
+    // Bandeja de contagem / Vitrine no centro
+    const showcaseX = gridX;
+    const showcaseY = topPad + headerH + 6;
+    const showcaseW = gridW;
+    const showcaseH = btnY - showcaseY - 10;
+
+    const getBtnBounds = (i: number) => ({
+      bx: gridX + i * (btnW + btnGap),
+      by: btnY,
+      bw: btnW,
+      bh: btnH
+    });
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+      countedCount = 0;
+
+      currentTrial = pool[(currentRound - 1) % pool.length];
+
+      // Embaralhar alternativas
+      const opts = [...currentTrial.options];
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      currentOptions = opts;
+
+      // Calcular coordenadas dos objetos
+      const slots = SLOT_CONFIGS[currentTrial.targetCount] || SLOT_CONFIGS[4];
+      const itemR = Math.min(36, Math.max(26, Math.floor(showcaseH * 0.155)));
+      items = slots.map(slot => ({
+        x: showcaseX + Math.floor(slot[0] * showcaseW),
+        y: showcaseY + Math.floor(slot[1] * showcaseH),
+        r: itemR,
+        counted: false
+      }));
+
+      this.gameInstruction.set(`Rodada ${currentRound}/${totalRounds}: Toque nos itens para contar e escolha o número certo!`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Header Superior
+      ctx.save();
+      const headerY = topPad + headerH / 2;
+
+      // Emoji e Pergunta
+      ctx.font = '20px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.emoji, showcaseX + 4, headerY);
+
+      // Badge de Rodada (Direita)
+      const badgeText = `Rodada ${currentRound}/${totalRounds}`;
+      ctx.font = '600 11px "Outfit", sans-serif';
+      const badgeW = ctx.measureText(badgeText).width + 16;
+      const badgeH = 20;
+      const badgeX = showcaseX + showcaseW - badgeW;
+      const badgeY = headerY - badgeH / 2;
+
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#7dd3fc';
+      ctx.textAlign = 'center';
+      ctx.fillText(badgeText, badgeX + badgeW / 2, headerY);
+
+      // Pergunta
+      const maxQWidth = badgeX - (showcaseX + 34) - 10;
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 14px "Outfit", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(currentTrial.question, showcaseX + 32, headerY, maxQWidth);
+      ctx.restore();
+
+      // 2. Vitrine de Objetos (Showcase Tray)
+      ctx.save();
+      const trayGrad = ctx.createLinearGradient(showcaseX, showcaseY, showcaseX, showcaseY + showcaseH);
+      trayGrad.addColorStop(0, '#1e293b');
+      trayGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = trayGrad;
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(showcaseX, showcaseY, showcaseW, showcaseH, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Dica sutil no topo da bandeja se nenhum item foi tocado ainda
+      if (countedCount === 0) {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '500 11px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Toque nos objetos para contar um por um!', showcaseX + showcaseW / 2, showcaseY + 16);
+      } else {
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 12px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Contados: ${countedCount} de ${currentTrial.targetCount} ${currentTrial.unit}`, showcaseX + showcaseW / 2, showcaseY + 16);
+      }
+
+      // Renderizar cada objeto
+      const emojiFontSz = Math.min(42, Math.max(28, Math.floor(items[0]?.r * 1.35 || 32)));
+      items.forEach(item => {
+        // Halo de fundo
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+
+        if (item.counted) {
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+        } else {
+          ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+          ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+          ctx.lineWidth = 1.2;
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        // Emoji do Objeto
+        ctx.font = `${emojiFontSz}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(currentTrial.emoji, item.x, item.y + 2);
+
+        // Badge de contagem (se já foi tocado)
+        if (item.counted && item.countOrder !== undefined) {
+          const badgeR = 11;
+          const bx = item.x + item.r * 0.65;
+          const by = item.y - item.r * 0.65;
+
+          ctx.beginPath();
+          ctx.arc(bx, by, badgeR, 0, Math.PI * 2);
+          ctx.fillStyle = '#0284c7';
+          ctx.fill();
+          ctx.strokeStyle = '#bae6fd';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 11px "Outfit", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${item.countOrder}`, bx, by + 0.5);
+        }
+        ctx.restore();
+      });
+      ctx.restore();
+
+      // 3. Barra de Botões com Alternativas (Bottom-Up)
+      currentOptions.forEach((val, i) => {
+        const { bx, by, bw, bh } = getBtnBounds(i);
+
+        ctx.save();
+        const isSelected = feedbackIndex === i;
+
+        if (isSelected) {
+          if (feedbackStatus === 'success') {
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.28)';
+            ctx.strokeStyle = '#10b981';
+          } else {
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+            ctx.strokeStyle = '#ef4444';
+          }
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#334155';
+        }
+
+        ctx.lineWidth = isSelected ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        // Número da opção
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' 
+          ? '#6ee7b7' 
+          : isSelected && feedbackStatus === 'error'
+          ? '#f87171'
+          : '#ffffff';
+        const numFontSz = Math.min(26, Math.max(20, Math.floor(bh * 0.44)));
+        ctx.font = `bold ${numFontSz}px 'Outfit', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${val}`, bx + bw / 2, by + bh / 2);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
+      // 1. Verificar toque em objetos na vitrine (correspondência 1-para-1)
+      for (const item of items) {
+        const dist = Math.hypot(mx - item.x, my - item.y);
+        if (dist <= item.r + 4) {
+          if (!item.counted) {
+            item.counted = true;
+            countedCount++;
+            item.countOrder = countedCount;
+            this.sound.playCountdown(440 + countedCount * 60);
+
+            if (countedCount === currentTrial.targetCount) {
+              this.gameInstruction.set(`Excelente! Você contou todos os ${currentTrial.targetCount}! Agora toque no número ${currentTrial.targetCount} embaixo!`);
+            } else {
+              this.gameInstruction.set(`Contou ${countedCount}! Continue contando até terminar...`);
+            }
+            draw();
+          }
+          return;
+        }
+      }
+
+      // 2. Verificar clique nos botões numéricos de resposta
+      currentOptions.forEach((val, i) => {
+        const { bx, by, bw, bh } = getBtnBounds(i);
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          feedbackIndex = i;
+          const isCorrect = val === currentTrial.targetCount;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 15);
+            items.forEach((it, idx) => {
+              it.counted = true;
+              it.countOrder = idx + 1;
+            });
+            this.gameInstruction.set(`Parabéns! São exatamente ${currentTrial.targetCount} ${currentTrial.unit}! 🎉`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 520);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`Dica: Conte um por um tocando nos objetos com o dedo!`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              this.gameInstruction.set(`Rodada ${currentRound}/${totalRounds}: Toque nos itens para contar e escolha o número certo!`);
               draw();
             }, 750);
           }
@@ -6047,17 +6468,6 @@ export class JogosComponent implements OnInit, OnDestroy {
           trials,
           instruction: 'Toque na estrela quando ela surgir!',
           durationMs: 2500
-        };
-      }
-
-      if (gameId === 44) {
-        // Reação Rápida
-        const fruits = ['🍎', '🍌', '🍇', '🍊'];
-        const trials: TapItemTrial[] = Array.from({ length: 10 }, (_, i) => ({ symbol: fruits[i % fruits.length], isTarget: true }));
-        return {
-          trials,
-          instruction: 'Toque no item antes que ele desapareça!',
-          durationMs: 1500
         };
       }
 
