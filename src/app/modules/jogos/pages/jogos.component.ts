@@ -67,7 +67,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 45, name: 'Tabuada', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Pratique multiplicações de 1 a 10', type: 'math' },
   { id: 46, name: 'Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva problemas escritos com operações simples', type: 'math' },
   { id: 47, name: 'Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
-  { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'tap' },
+  { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'fractions' },
   { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'shapes' },
   { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '8-12', description: 'Misto progressivo: somas, subtrações e tabuadas práticas', type: 'math' },
 
@@ -1210,6 +1210,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'breathing': this.setupBreathingGame(canvas, logicalW, logicalH); break;
       case 'stroop': this.setupStroopGame(canvas, logicalW, logicalH); break;
       case 'tracking': this.setupVisualTrackingGame(canvas, logicalW, logicalH); break;
+      case 'fractions': this.setupFractionsGame(canvas, logicalW, logicalH); break;
       case 'tap': 
         if (jogo.id === 6) {
           this.setupVisualTrackingGame(canvas, logicalW, logicalH);
@@ -1217,6 +1218,8 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.setupObjectRecallGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 18) {
           this.setupVisualMatchingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 48) {
+          this.setupFractionsGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 49) {
           this.setupShapesGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 54) {
@@ -2084,6 +2087,411 @@ export class JogosComponent implements OnInit, OnDestroy {
               feedbackIndex = -1;
               draw();
             }, 600);
+          }
+        }
+      });
+    });
+  }
+
+  // 3.2 FRAÇÕES VISUAIS (JOGO 48 - DISCO/PIZZA FRACIONÁRIA)
+  setupFractionsGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface FractionOption {
+      num: number;
+      den: number;
+      label: string;
+      isCorrect: boolean;
+    }
+
+    interface FractionTrial {
+      num: number;
+      den: number;
+      name: string;
+      options: FractionOption[];
+    }
+
+    const TRIALS_DATA: { num: number; den: number; name: string; altOptions: { num: number; den: number; label: string }[] }[] = [
+      {
+        num: 1, den: 2, name: 'Um Meio (Metade)',
+        altOptions: [
+          { num: 1, den: 4, label: 'Um quarto' },
+          { num: 2, den: 2, label: 'Dois meios' },
+          { num: 1, den: 3, label: 'Um terço' }
+        ]
+      },
+      {
+        num: 1, den: 4, name: 'Um Quarto',
+        altOptions: [
+          { num: 3, den: 4, label: 'Três quartos' },
+          { num: 1, den: 2, label: 'Um meio' },
+          { num: 2, den: 4, label: 'Dois quartos' }
+        ]
+      },
+      {
+        num: 3, den: 4, name: 'Três Quartos',
+        altOptions: [
+          { num: 1, den: 4, label: 'Um quarto' },
+          { num: 2, den: 4, label: 'Dois quartos' },
+          { num: 3, den: 8, label: 'Três oitavos' }
+        ]
+      },
+      {
+        num: 1, den: 3, name: 'Um Terço',
+        altOptions: [
+          { num: 2, den: 3, label: 'Dois terços' },
+          { num: 1, den: 2, label: 'Um meio' },
+          { num: 1, den: 6, label: 'Um sexto' }
+        ]
+      },
+      {
+        num: 2, den: 3, name: 'Dois Terços',
+        altOptions: [
+          { num: 1, den: 3, label: 'Um terço' },
+          { num: 3, den: 3, label: 'Três terços' },
+          { num: 2, den: 4, label: 'Dois quartos' }
+        ]
+      },
+      {
+        num: 2, den: 4, name: 'Dois Quartos',
+        altOptions: [
+          { num: 1, den: 4, label: 'Um quarto' },
+          { num: 3, den: 4, label: 'Três quartos' },
+          { num: 2, den: 6, label: 'Dois sextos' }
+        ]
+      },
+      {
+        num: 4, den: 6, name: 'Quatro Sextos',
+        altOptions: [
+          { num: 2, den: 6, label: 'Dois sextos' },
+          { num: 3, den: 6, label: 'Três sextos' },
+          { num: 4, den: 8, label: 'Quatro oitavos' }
+        ]
+      },
+      {
+        num: 3, den: 8, name: 'Três Oitavos',
+        altOptions: [
+          { num: 5, den: 8, label: 'Cinco oitavos' },
+          { num: 3, den: 4, label: 'Três quartos' },
+          { num: 1, den: 8, label: 'Um oitavo' }
+        ]
+      },
+      {
+        num: 5, den: 8, name: 'Cinco Oitavos',
+        altOptions: [
+          { num: 3, den: 8, label: 'Três oitavos' },
+          { num: 7, den: 8, label: 'Sete oitavos' },
+          { num: 5, den: 6, label: 'Cinco sextos' }
+        ]
+      },
+      {
+        num: 3, den: 6, name: 'Três Sextos (Metade)',
+        altOptions: [
+          { num: 2, den: 6, label: 'Dois sextos' },
+          { num: 4, den: 6, label: 'Quatro sextos' },
+          { num: 1, den: 6, label: 'Um sexto' }
+        ]
+      }
+    ];
+
+    // Embaralhar banco de desafios
+    const pool = [...TRIALS_DATA];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    let currentRound = 0;
+    const totalRounds = 8;
+    let currentTrial = pool[0];
+    let currentOptions: FractionOption[] = [];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+
+    // Layout Responsivo
+    const headerY = Math.max(6, Math.floor(H * 0.02));
+    const headerH = Math.min(50, Math.max(38, Math.floor(H * 0.12)));
+    const headerW = Math.min(480, W - 24);
+    const headerX = Math.floor((W - headerW) / 2);
+
+    const cardGap = Math.min(10, Math.max(6, Math.floor(W * 0.02)));
+    const gridW = Math.min(480, W - 24);
+    const gridX = Math.floor((W - gridW) / 2);
+    const cardW = Math.floor((gridW - cardGap) / 2);
+    const cardH = Math.min(62, Math.max(46, Math.floor(H * 0.15)));
+    const gridH = cardH * 2 + cardGap;
+    const gridY = H - gridH - Math.max(8, Math.floor(H * 0.025));
+
+    // Área da Pizza
+    const pizzaAreaTop = headerY + headerH + 6;
+    const pizzaAreaH = gridY - pizzaAreaTop - 6;
+    const pizzaCx = W / 2;
+    const pizzaCy = pizzaAreaTop + pizzaAreaH / 2;
+    const pizzaR = Math.min(84, Math.max(48, Math.floor(Math.min(pizzaAreaH * 0.44, W * 0.24))));
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      currentTrial = pool[(currentRound - 1) % pool.length];
+
+      const correctOpt: FractionOption = {
+        num: currentTrial.num,
+        den: currentTrial.den,
+        label: currentTrial.name,
+        isCorrect: true
+      };
+
+      const distractorOpts: FractionOption[] = currentTrial.altOptions.map(alt => ({
+        num: alt.num,
+        den: alt.den,
+        label: alt.label,
+        isCorrect: false
+      }));
+
+      currentOptions = [correctOpt, ...distractorOpts];
+      // Embaralhar alternativas
+      for (let i = currentOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [currentOptions[i], currentOptions[j]] = [currentOptions[j], currentOptions[i]];
+      }
+
+      this.gameInstruction.set(`Rodada ${currentRound}/${totalRounds}: Qual fração representa a parte colorida da pizza?`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. Header Card (Painel de Instrução)
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(headerX, headerY, headerW, headerH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`RODADA ${currentRound} DE ${totalRounds} • FRAÇÕES VISUAIS`, W / 2, headerY + 7);
+
+      ctx.fillStyle = '#ffffff';
+      const promptFontSz = Math.min(15, Math.max(12, Math.floor(headerH * 0.36)));
+      ctx.font = `bold ${promptFontSz}px 'Outfit', sans-serif`;
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Qual fração representa a parte colorida?', W / 2, headerY + headerH - 8);
+      ctx.restore();
+
+      // 2. Pizza Fracionária Vetorial
+      // Crosta externa
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 4;
+
+      ctx.beginPath();
+      ctx.arc(pizzaCx, pizzaCy, pizzaR + 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#b45309'; // borda da pizza assada
+      ctx.fill();
+
+      // Fundo das fatias vazias
+      ctx.shadowColor = 'transparent';
+      ctx.beginPath();
+      ctx.arc(pizzaCx, pizzaCy, pizzaR, 0, Math.PI * 2);
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      ctx.restore();
+
+      // Fatias
+      const step = (Math.PI * 2) / currentTrial.den;
+      const baseAngle = -Math.PI / 2;
+
+      for (let i = 0; i < currentTrial.den; i++) {
+        const startA = baseAngle + i * step;
+        const endA = startA + step;
+        const isColored = i < currentTrial.num;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(pizzaCx, pizzaCy);
+        ctx.arc(pizzaCx, pizzaCy, pizzaR, startA, endA);
+        ctx.closePath();
+
+        if (isColored) {
+          // Queijo dourado e orégano/tomatinhos
+          const grad = ctx.createRadialGradient(pizzaCx, pizzaCy, pizzaR * 0.15, pizzaCx, pizzaCy, pizzaR);
+          grad.addColorStop(0, '#fef08a');
+          grad.addColorStop(0.45, '#f59e0b');
+          grad.addColorStop(1, '#d97706');
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          // Detalhe de tomate da pizza
+          const midAngle = startA + step / 2;
+          const toppingDist = pizzaR * 0.60;
+          const tx = pizzaCx + Math.cos(midAngle) * toppingDist;
+          const ty = pizzaCy + Math.sin(midAngle) * toppingDist;
+
+          ctx.beginPath();
+          ctx.arc(tx, ty, Math.max(3, pizzaR * 0.08), 0, Math.PI * 2);
+          ctx.fillStyle = '#ef4444';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(tx - 1, ty - 1, Math.max(1, pizzaR * 0.03), 0, Math.PI * 2);
+          ctx.fillStyle = '#fca5a5';
+          ctx.fill();
+        } else {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Linhas divisórias radiais
+      ctx.save();
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2.5;
+      for (let i = 0; i < currentTrial.den; i++) {
+        const ang = baseAngle + i * step;
+        ctx.beginPath();
+        ctx.moveTo(pizzaCx, pizzaCy);
+        ctx.lineTo(pizzaCx + Math.cos(ang) * (pizzaR + 6), pizzaCy + Math.sin(ang) * (pizzaR + 6));
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Centro da pizza (pino central)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pizzaCx, pizzaCy, Math.max(8, pizzaR * 0.14), 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.stroke();
+      ctx.restore();
+
+      // Legenda pedagógica
+      ctx.save();
+      const badgeY = pizzaCy + pizzaR + Math.min(20, Math.max(12, (gridY - (pizzaCy + pizzaR)) / 2));
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 13px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`🍕 ${currentTrial.num} de ${currentTrial.den} fatias coloridas`, pizzaCx, badgeY);
+      ctx.restore();
+
+      // 3. Grid 2x2 de Cartões de Alternativas
+      currentOptions.forEach((opt, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const bx = gridX + col * (cardW + cardGap);
+        const by = gridY + row * (cardH + cardGap);
+
+        ctx.save();
+        const isSelected = feedbackIndex === i;
+
+        if (isSelected) {
+          if (feedbackStatus === 'success') {
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.28)';
+            ctx.strokeStyle = '#10b981';
+          } else {
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+            ctx.strokeStyle = '#ef4444';
+          }
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#334155';
+        }
+
+        ctx.lineWidth = isSelected ? 2.5 : 1.5;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, cardW, cardH, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        // Fração clássica (Numerador / Traço / Denominador)
+        const fracX = bx + Math.max(26, Math.floor(cardW * 0.20));
+        const midY = by + cardH / 2;
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#34d399' : '#ffffff';
+        ctx.font = 'bold 15px Outfit, monospace, sans-serif';
+
+        // Numerador
+        ctx.fillText(`${opt.num}`, fracX, midY - 10);
+        // Linha de fração
+        ctx.strokeStyle = isSelected && feedbackStatus === 'success' ? '#34d399' : '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(fracX - 11, midY);
+        ctx.lineTo(fracX + 11, midY);
+        ctx.stroke();
+        // Denominador
+        ctx.fillText(`${opt.den}`, fracX, midY + 11);
+
+        // Texto por extenso
+        const textX = fracX + 22;
+        const availTextW = cardW - (textX - bx) - 8;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#6ee7b7' : '#e2e8f0';
+        ctx.font = 'bold 13px Outfit, sans-serif';
+        ctx.fillText(opt.label, textX, midY, availTextW);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((opt, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const bx = gridX + col * (cardW + cardGap);
+        const by = gridY + row * (cardH + cardGap);
+
+        if (mx >= bx && mx <= bx + cardW && my >= by && my <= by + cardH) {
+          feedbackIndex = i;
+          const isCorrect = opt.isCorrect;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 15);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 480);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`Dica: Conte as fatias pintadas (${currentTrial.num}) sobre o total de fatias (${currentTrial.den})!`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              this.gameInstruction.set(`Rodada ${currentRound}/${totalRounds}: Qual fração representa a parte colorida da pizza?`);
+              draw();
+            }, 750);
           }
         }
       });

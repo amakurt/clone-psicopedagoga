@@ -2178,4 +2178,21 @@ npm run start
   - Inclusão do indicador da fase atual na barra de instrução superior (ex.: *"Aquecimento • Questão 1/8: Calcule e aperte '='"*, *"Tabuadas e Padrões • Questão 3/8..."*).
   - Atualização do catálogo: dificuldade calibrada para nível 2, tempo estimado em 5 min e descrição pedagógica atualizada para *"Misto progressivo: somas, subtrações e tabuadas práticas"*.
 
+#### Implementação do Motor de Frações Visuais (`jogos.component.ts` - Jogo 48)
+- **Problema identificado:** O jogo *Frações Visuais* (ID 48) estava classificado com `type: 'tap'` sem tratamento específico no `setupTapGame`, caindo por padrão no jogo genérico de toque em frutas do Jogo 2 (*Contagem Rápida*), exibindo frutas dentro de círculos em contradição direta com o título e a proposta do jogo.
+- **Solução implementada:**
+  - **Novo Tipo & Roteamento (`setupFractionsGame`):** Catalogado com `type: 'fractions'` e roteamento dedicado no motor de canvas (com fallback seguro em `type: 'tap'`).
+  - **Pizza/Disco Fracionário Vetorial Realista:**
+    - Renderização trigonométrica nativa no Canvas HTML5 com raio adaptativo, borda dourada de crosta assada e disco interno.
+    - $D$ fatias angulares ($2, 3, 4, 6, 8$) cortadas por linhas radiais de alta precisão.
+    - As $N$ fatias selecionadas são desenhadas com gradiente dourado de queijo derretido, molho e pedacinhos de tomate estilizados, enquanto as fatias restantes permanecem em tom ardósia translúcido para fácil contagem.
+    - Pino circular central de arremate e legenda pedagógica (*"🍕 N de D fatias coloridas"*).
+  - **Grade 2x2 com Notação Fracionária Completa:**
+    - 4 cartões com numerador superior, linha horizontal de fração e denominador inferior, acompanhados da leitura por extenso (ex.: $\frac{1}{2}$ *"Um meio"*, $\frac{3}{4}$ *"Três quartos"*, $\frac{5}{8}$ *"Cinco oitavos"*).
+    - Distratores pedagógicos inteligentes (fração complementar/vazia, mesmo denominador com numerador alterado ou denominadores vizinhos).
+  - **Gamificação & Feedback Clínico:**
+    - Cartão correto realça em verde esmeralda com som de arpejo (`playSuccess()`) e soma **+15 pontos**.
+    - Erro emite som de alerta (`playError()`) e exibe dica amigável na barra superior instruindo a contagem das fatias antes de permitir nova tentativa.
+
+
 
