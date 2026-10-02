@@ -2190,6 +2190,11 @@ npm run start
   - **Grade 2x2 com Notação Fracionária Completa:**
     - 4 cartões com numerador superior, linha horizontal de fração e denominador inferior, acompanhados da leitura por extenso (ex.: $\frac{1}{2}$ *"Um meio"*, $\frac{3}{4}$ *"Três quartos"*, $\frac{5}{8}$ *"Cinco oitavos"*).
     - Distratores pedagógicos inteligentes (fração complementar/vazia, mesmo denominador com numerador alterado ou denominadores vizinhos).
+  - **Layout Adaptativo Side-by-Side (Fim da Sobreposição):**
+    - Identificado que o layout anterior centralizava verticalmente a pizza entre o cabeçalho superior e o grid inferior, espremendo o elemento gráfico.
+    - Implementada arquitetura de tela dividida: lado esquerdo exclusivo para a Pizza Fracionária em raio amplo (até 96px), com legenda espaçada, e lado direito para o título e os 4 botões de opções empilhados verticalmente.
+    - Em telas móveis verticais (`W < 420`), remoção do cabeçalho redundante interno para garantir proporções livres de sobreposição.
+    - Inclusão de `fractions` em `isExpandedGame` para cálculo proporcional de altura do canvas.
   - **Gamificação & Feedback Clínico:**
     - Cartão correto realça em verde esmeralda com som de arpejo (`playSuccess()`) e soma **+15 pontos**.
     - Erro emite som de alerta (`playError()`) e exibe dica amigável na barra superior instruindo a contagem das fatias antes de permitir nova tentativa.

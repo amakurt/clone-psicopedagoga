@@ -1151,7 +1151,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const container = canvas.parentElement;
     const containerWidth = container ? container.clientWidth - 24 : 468;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes';
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions';
     const maxAvailableH = window.innerHeight 
       ? Math.max(220, window.innerHeight - (isExpandedGame ? 180 : 220)) 
       : (isExpandedGame ? 440 : 300);
@@ -2208,26 +2208,53 @@ export class JogosComponent implements OnInit, OnDestroy {
     let feedbackStatus: 'none' | 'success' | 'error' = 'none';
     let feedbackIndex = -1;
 
-    // Layout Responsivo
-    const headerY = Math.max(6, Math.floor(H * 0.02));
-    const headerH = Math.min(50, Math.max(38, Math.floor(H * 0.12)));
-    const headerW = Math.min(480, W - 24);
-    const headerX = Math.floor((W - headerW) / 2);
+    // Layout Responsivo:
+    // Se W >= 420: Lado Esquerdo = Pizza grande e desobstruída | Lado Direito = Pergunta + 4 Opções
+    // Se W < 420 (Mobile vertical): Topo = Pizza | Base = 4 Opções em 2x2
+    const isWide = W >= 420;
 
-    const cardGap = Math.min(10, Math.max(6, Math.floor(W * 0.02)));
-    const gridW = Math.min(480, W - 24);
-    const gridX = Math.floor((W - gridW) / 2);
-    const cardW = Math.floor((gridW - cardGap) / 2);
-    const cardH = Math.min(62, Math.max(46, Math.floor(H * 0.15)));
-    const gridH = cardH * 2 + cardGap;
-    const gridY = H - gridH - Math.max(8, Math.floor(H * 0.025));
+    const leftW = isWide ? Math.floor(W * 0.48) : W;
+    const rightX = isWide ? leftW + 14 : 12;
+    const rightW = isWide ? W - rightX - 12 : W - 24;
 
-    // Área da Pizza
-    const pizzaAreaTop = headerY + headerH + 6;
-    const pizzaAreaH = gridY - pizzaAreaTop - 6;
-    const pizzaCx = W / 2;
-    const pizzaCy = pizzaAreaTop + pizzaAreaH / 2;
-    const pizzaR = Math.min(84, Math.max(48, Math.floor(Math.min(pizzaAreaH * 0.44, W * 0.24))));
+    // Dimensões da Pizza (espaçosa e centralizada em seu quadrante)
+    const pizzaCx = isWide ? Math.floor(leftW / 2) : Math.floor(W / 2);
+    const pizzaCy = isWide ? Math.floor(H / 2) - 10 : Math.floor(H * 0.28);
+    const pizzaR = isWide 
+      ? Math.min(96, Math.max(54, Math.floor(Math.min((leftW - 32) / 2, (H - 58) / 2))))
+      : Math.min(64, Math.max(42, Math.floor(H * 0.18)));
+
+    const badgeY = pizzaCy + pizzaR + 18;
+
+    // Dimensões das Opções
+    const optGap = isWide ? Math.min(10, Math.max(6, Math.floor((H - 120) / 10))) : 8;
+    const optH = isWide 
+      ? Math.min(50, Math.max(38, Math.floor((H - 65 - 3 * optGap) / 4))) 
+      : Math.min(54, Math.max(42, Math.floor((H - (badgeY + 16) - 8) / 2)));
+    const optStartTop = isWide 
+      ? Math.floor((H - (4 * optH + 3 * optGap)) / 2) + 16 
+      : badgeY + 16;
+    const cardW = isWide ? rightW : Math.floor((W - 24 - optGap) / 2);
+
+    const getOptionBounds = (i: number) => {
+      if (isWide) {
+        return {
+          bx: rightX,
+          by: optStartTop + i * (optH + optGap),
+          bw: rightW,
+          bh: optH
+        };
+      } else {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        return {
+          bx: 12 + col * (cardW + optGap),
+          by: optStartTop + row * (optH + optGap),
+          bw: cardW,
+          bh: optH
+        };
+      }
+    };
 
     const newRound = () => {
       if (currentRound >= totalRounds) {
@@ -2268,31 +2295,32 @@ export class JogosComponent implements OnInit, OnDestroy {
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
 
-      // 1. Header Card (Painel de Instrução)
-      ctx.save();
-      ctx.fillStyle = '#0f172a';
-      ctx.strokeStyle = '#334155';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(headerX, headerY, headerW, headerH, 12);
-      ctx.fill();
-      ctx.stroke();
+      // 1. Título e Instrução no Lado Direito (quando wide)
+      if (isWide) {
+        ctx.save();
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`RODADA ${currentRound} DE ${totalRounds} • FRAÇÕES VISUAIS`, rightX + rightW / 2, optStartTop - 25);
 
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 11px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillText(`RODADA ${currentRound} DE ${totalRounds} • FRAÇÕES VISUAIS`, W / 2, headerY + 7);
+        ctx.fillStyle = '#ffffff';
+        const promptSz = Math.min(15, Math.max(12, Math.floor(W * 0.026)));
+        ctx.font = `bold ${promptSz}px Outfit, sans-serif`;
+        ctx.fillText('Qual fração representa a parte colorida?', rightX + rightW / 2, optStartTop - 8);
 
-      ctx.fillStyle = '#ffffff';
-      const promptFontSz = Math.min(15, Math.max(12, Math.floor(headerH * 0.36)));
-      ctx.font = `bold ${promptFontSz}px 'Outfit', sans-serif`;
-      ctx.textBaseline = 'bottom';
-      ctx.fillText('Qual fração representa a parte colorida?', W / 2, headerY + headerH - 8);
-      ctx.restore();
+        // Divisória sutil entre lado esquerdo (pizza) e lado direito (respostas)
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(leftW + 6, 24);
+        ctx.lineTo(leftW + 6, H - 24);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // 2. Pizza Fracionária Vetorial
-      // Crosta externa
+      // Crosta externa assada
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
       ctx.shadowBlur = 12;
@@ -2327,7 +2355,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.closePath();
 
         if (isColored) {
-          // Queijo dourado e orégano/tomatinhos
+          // Queijo dourado e textura de recheio
           const grad = ctx.createRadialGradient(pizzaCx, pizzaCy, pizzaR * 0.15, pizzaCx, pizzaCy, pizzaR);
           grad.addColorStop(0, '#fef08a');
           grad.addColorStop(0.45, '#f59e0b');
@@ -2385,9 +2413,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       ctx.stroke();
       ctx.restore();
 
-      // Legenda pedagógica
+      // Legenda pedagógica (com espaçamento garantido abaixo da pizza)
       ctx.save();
-      const badgeY = pizzaCy + pizzaR + Math.min(20, Math.max(12, (gridY - (pizzaCy + pizzaR)) / 2));
       ctx.fillStyle = '#94a3b8';
       ctx.font = '600 13px Outfit, sans-serif';
       ctx.textAlign = 'center';
@@ -2395,12 +2422,9 @@ export class JogosComponent implements OnInit, OnDestroy {
       ctx.fillText(`🍕 ${currentTrial.num} de ${currentTrial.den} fatias coloridas`, pizzaCx, badgeY);
       ctx.restore();
 
-      // 3. Grid 2x2 de Cartões de Alternativas
+      // 3. Cartões de Alternativas
       currentOptions.forEach((opt, i) => {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const bx = gridX + col * (cardW + cardGap);
-        const by = gridY + row * (cardH + cardGap);
+        const { bx, by, bw, bh } = getOptionBounds(i);
 
         ctx.save();
         const isSelected = feedbackIndex === i;
@@ -2420,13 +2444,13 @@ export class JogosComponent implements OnInit, OnDestroy {
 
         ctx.lineWidth = isSelected ? 2.5 : 1.5;
         ctx.beginPath();
-        ctx.roundRect(bx, by, cardW, cardH, 12);
+        ctx.roundRect(bx, by, bw, bh, 10);
         ctx.fill();
         ctx.stroke();
 
         // Fração clássica (Numerador / Traço / Denominador)
-        const fracX = bx + Math.max(26, Math.floor(cardW * 0.20));
-        const midY = by + cardH / 2;
+        const fracX = bx + Math.max(28, Math.floor(bw * 0.18));
+        const midY = by + bh / 2;
 
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -2434,7 +2458,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.font = 'bold 15px Outfit, monospace, sans-serif';
 
         // Numerador
-        ctx.fillText(`${opt.num}`, fracX, midY - 10);
+        ctx.fillText(`${opt.num}`, fracX, midY - 9);
         // Linha de fração
         ctx.strokeStyle = isSelected && feedbackStatus === 'success' ? '#34d399' : '#94a3b8';
         ctx.lineWidth = 2;
@@ -2447,7 +2471,7 @@ export class JogosComponent implements OnInit, OnDestroy {
 
         // Texto por extenso
         const textX = fracX + 22;
-        const availTextW = cardW - (textX - bx) - 8;
+        const availTextW = bw - (textX - bx) - 8;
         ctx.textAlign = 'left';
         ctx.fillStyle = isSelected && feedbackStatus === 'success' ? '#6ee7b7' : '#e2e8f0';
         ctx.font = 'bold 13px Outfit, sans-serif';
@@ -2463,12 +2487,9 @@ export class JogosComponent implements OnInit, OnDestroy {
       if (feedbackStatus !== 'none') return;
 
       currentOptions.forEach((opt, i) => {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const bx = gridX + col * (cardW + cardGap);
-        const by = gridY + row * (cardH + cardGap);
+        const { bx, by, bw, bh } = getOptionBounds(i);
 
-        if (mx >= bx && mx <= bx + cardW && my >= by && my <= by + cardH) {
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
           feedbackIndex = i;
           const isCorrect = opt.isCorrect;
           this.recordAttempt(isCorrect);
