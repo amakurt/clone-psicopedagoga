@@ -4,6 +4,46 @@
 
 ---
 
+## Sessão 58 - 02/10/2026 — Criação da Engine de Consciência Fonológica Completa para o Jogo "Fonologia Avançada" (Jogo 40 - 6 a 10 Anos)
+
+### O que foi feito
+
+#### 1. Diagnóstico do Problema
+- O jogo 40 (*Fonologia Avançada*, categoria Consciência Fonológica, 6 a 10 anos, dificuldade 3) possuía na descrição do catálogo: *"Misto: rimas, sílabas e sons — desafio completo"*.
+- No entanto, a implementação anterior (`setupPhonologyGame`) continha apenas um exercício simplório de preencher letras faltantes em 3 palavras estáticas (`P_TO`, `M_R`, `C_S_`), sem rimas, contagem de sílabas, aliteração (sons iniciais), sons finais (últimos sons) ou manipulação fonêmica. Além disso, a opção A era sempre a resposta correta por falta de embaralhamento dinâmico.
+
+#### 2. Criação da Engine Dedicada `setupAdvancedPhonologyGame`
+- **Roteamento Exclusivo e Proporção Otimizada**:
+  - Roteamento específico no switch `case 'phonology'` (`if (jogo.id === 40) this.setupAdvancedPhonologyGame(...)`).
+  - Inclusão em `isExpandedGame` e aspect ratio `0.76` para excelente legibilidade e responsividade touch.
+- **Banco Balanceado de Desafios Fonológicos Abrangendo Todas as Habilidades**:
+  - **Rimas**: Identificação de pares sonoros (ex: *BALÃO* rima com *LEÃO*, *MAMADEIRA* rima com *CADEIRA*).
+  - **Sons Finais (Últimos Sons)**: Discriminação auditiva da terminação fonética (ex: *BARRIL* e *BRASIL* terminam com *-IL*; *CANETA* e *CHUPETA* terminam com *-ETA*; *ESPELHO* e *COELHO* terminam com *-LHO*).
+  - **Sons Iniciais (Aliteração / Ataque)**: Correspondência de fonema de abertura (ex: *SAPATO* e *SANDUÍCHE* começam com */s/*; *PIPOCA* e *PATO* começam com */p/*).
+  - **Contagem e Estrutura Silábica**: Consciência quantitativa de sílabas com apoio de palmas (ex: *BOR-BO-LE-TA* = 4 sílabas; *CHO-CO-LA-TE* = 4 sílabas).
+  - **Manipulação Fonêmica**: Troca de fonema consonantal (ex: trocar M de *MOLA* por B = *BOLA*).
+  - **Supressão Silábica**: Eliminação de sílaba inicial para formação de nova palavra (ex: tirar *SA* de *SAPATO* = *PATO*).
+- **Interface e Experiência do Usuário (Design Escuro e Acessível)**:
+  - **Card Superior de Estímulo**:
+    - Tag colorida por habilidade (`RIMA` em `#38bdf8`, `SOM FINAL` em `#f59e0b`, `SOM INICIAL` em `#10b981`, `SÍLABAS` em `#a855f7`, `MANIPULAÇÃO` em `#ec4899`, `SUPRESSÃO` em `#f97316`).
+    - Badge de progresso (`Desafio X de 8`).
+    - Enunciado claro e direto em fonte `Outfit`.
+    - Vitrine central de estímulo com moldura destacada, emoji de apoio semiótico e palavra-alvo em caixa alta legível.
+    - Dica psicopedagógica na base do card.
+  - **Grade 2x2 de Alternativas Ancorada de Baixo para Cima (Bottom-Up)**:
+    - 4 opções identificadas com pílulas de letras (`A`, `B`, `C`, `D`), embaralhadas a cada rodada.
+    - Geometria calculada da base do canvas (`bottomPad = 12px`, `cardH = 50px`), sem risco de corte em telas menores.
+    - Estados visuais ricos: repouso, acerto com verde esmeralda (`#10b981`), e erro em vermelho com realce sutil da opção correta.
+  - **Feedback Multissensorial**:
+    - `this.sound.playSuccess()` e `+15 pontos` com transição rápida de 650ms no acerto.
+    - `this.sound.playError()` com exibição de explicação educativa e pausa de 950ms antes de avançar no erro.
+    - Atualização do store de tentativas (`this.recordAttempt`).
+
+#### 3. Validação Técnica
+- **Angular Build / Dev Server**: Compilação realizada com sucesso, 0 erros no bundle do Vite/Angular.
+
+---
+
 ## Sessão 57 - 02/10/2026 — Criação da Engine de Contagem de Objetos e Correspondência Biunívoca para o Jogo "Contagem de Objetos" (Jogo 44 - 3 a 6 Anos)
 
 ### O que foi feito

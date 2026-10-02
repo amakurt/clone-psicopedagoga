@@ -1153,13 +1153,13 @@ export class JogosComponent implements OnInit, OnDestroy {
     const measuredW = Math.max(container?.clientWidth || 0, (parentContainer?.clientWidth || 0) - 32);
     const containerWidth = measuredW > 320 ? measuredW : 560;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting';
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || (jogo?.type === 'phonology' && jogo?.id === 40);
     const maxAvailableH = window.innerHeight 
       ? Math.max(340, window.innerHeight - (isExpandedGame ? 160 : 220)) 
       : (isExpandedGame ? 460 : 320);
 
     let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
-    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting') ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
+    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || (jogo?.type === 'phonology' && jogo?.id === 40)) ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -1211,7 +1211,13 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'object_recall': this.setupObjectRecallGame(canvas, logicalW, logicalH); break;
       case 'visual_matching': this.setupVisualMatchingGame(canvas, logicalW, logicalH); break;
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
-      case 'phonology': this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'phonology': 
+        if (jogo.id === 40) {
+          this.setupAdvancedPhonologyGame(canvas, logicalW, logicalH);
+        } else {
+          this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id);
+        }
+        break;
       case 'social': 
         if (jogo.id === 51) {
           this.setupEmotionFaceGame(canvas, logicalW, logicalH);
@@ -5227,6 +5233,404 @@ export class JogosComponent implements OnInit, OnDestroy {
           break;
         }
       }
+    });
+  }
+
+  // 6.1 FONOLOGIA AVANÇADA - DESAFIO MISTO COMPLETO (JOGO 40)
+  setupAdvancedPhonologyGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface AdvancedPhonologyTrial {
+      category: 'RIMA' | 'SOM FINAL' | 'SOM INICIAL' | 'SÍLABAS' | 'MANIPULAÇÃO' | 'SUPRESSÃO';
+      categoryColor: string;
+      question: string;
+      stimulusEmoji: string;
+      stimulusWord: string;
+      correctAnswer: string;
+      distractors: string[];
+      explanation: string;
+    }
+
+    const PHONOLOGY_ADVANCED_DATA: AdvancedPhonologyTrial[] = [
+      {
+        category: 'RIMA',
+        categoryColor: '#38bdf8',
+        question: 'Qual palavra rima com BALÃO?',
+        stimulusEmoji: '🎈',
+        stimulusWord: 'BALÃO',
+        correctAnswer: '🦁 LEÃO',
+        distractors: ['🪑 CADEIRA', '🍌 BANANA', '🚗 CARRO'],
+        explanation: 'BALÃO rima com LEÃO (som final -ÃO)!'
+      },
+      {
+        category: 'SOM FINAL',
+        categoryColor: '#f59e0b',
+        question: 'Tem o mesmo som final (último som) de BARRIL:',
+        stimulusEmoji: '🛢️',
+        stimulusWord: 'BARRIL',
+        correctAnswer: '🇧🇷 BRASIL',
+        distractors: ['🪟 JANELA', '🚪 PORTA', '🍎 MAÇÃ'],
+        explanation: 'BARRIL e BRASIL terminam com o som -IL!'
+      },
+      {
+        category: 'SOM INICIAL',
+        categoryColor: '#10b981',
+        question: 'Começa com o mesmo som inicial de SAPATO (/s/):',
+        stimulusEmoji: '👟',
+        stimulusWord: 'SAPATO',
+        correctAnswer: '🥪 SANDUÍCHE',
+        distractors: ['🥾 BOTA', '🪑 CADEIRA', '🚗 CARRO'],
+        explanation: 'SAPATO e SANDUÍCHE começam com som /s/ (SA-)!'
+      },
+      {
+        category: 'SÍLABAS',
+        categoryColor: '#a855f7',
+        question: 'Quantas sílabas tem a palavra BORBOLETA?',
+        stimulusEmoji: '🦋',
+        stimulusWord: 'BORBOLETA',
+        correctAnswer: '4 sílabas',
+        distractors: ['3 sílabas', '2 sílabas', '5 sílabas'],
+        explanation: 'BOR-BO-LE-TA tem 4 palmas (4 sílabas)!'
+      },
+      {
+        category: 'MANIPULAÇÃO',
+        categoryColor: '#ec4899',
+        question: 'Trocando a letra M de MOLA por B, vira:',
+        stimulusEmoji: '🌀',
+        stimulusWord: 'MOLA',
+        correctAnswer: '⚽ BOLA',
+        distractors: ['👢 BOTA', '🎂 BOLO', '📦 BOLS'],
+        explanation: 'MOLA trocando M por B vira BOLA!'
+      },
+      {
+        category: 'SOM FINAL',
+        categoryColor: '#f59e0b',
+        question: 'Tem o mesmo som final (último som) de CANETA:',
+        stimulusEmoji: '🖊️',
+        stimulusWord: 'CANETA',
+        correctAnswer: '👶 CHUPETA',
+        distractors: ['⚽ BOLA', '🥪 LANCHE', '☀️ SOL'],
+        explanation: 'CANETA e CHUPETA terminam com o som -ETA!'
+      },
+      {
+        category: 'SUPRESSÃO',
+        categoryColor: '#f97316',
+        question: 'Se tirarmos a sílaba SA de SAPATO, o que sobra?',
+        stimulusEmoji: '👟',
+        stimulusWord: 'SAPATO',
+        correctAnswer: '🦆 PATO',
+        distractors: ['🐱 GATO', '🐭 RATO', '🐟 PEIXE'],
+        explanation: 'Tirando SA de SAPATO, sobra a palavra PATO!'
+      },
+      {
+        category: 'SOM INICIAL',
+        categoryColor: '#10b981',
+        question: 'Começa com o mesmo som inicial de PIPOCA (/p/):',
+        stimulusEmoji: '🍿',
+        stimulusWord: 'PIPOCA',
+        correctAnswer: '🦆 PATO',
+        distractors: ['🐱 GATO', '🐭 RATO', '🐶 CACHORRO'],
+        explanation: 'PIPOCA e PATO começam com som /p/ (P-)!'
+      },
+      {
+        category: 'RIMA',
+        categoryColor: '#38bdf8',
+        question: 'Qual palavra rima com MAMADEIRA?',
+        stimulusEmoji: '🍼',
+        stimulusWord: 'MAMADEIRA',
+        correctAnswer: '🪑 CADEIRA',
+        distractors: ['🚲 BICICLETA', '🍎 MAÇÃ', '👟 SAPATO'],
+        explanation: 'MAMADEIRA rima com CADEIRA (som final -EIRA)!'
+      },
+      {
+        category: 'SOM FINAL',
+        categoryColor: '#f59e0b',
+        question: 'Tem o mesmo som final (último som) de ESPELHO:',
+        stimulusEmoji: '🪞',
+        stimulusWord: 'ESPELHO',
+        correctAnswer: '🐰 COELHO',
+        distractors: ['🦁 LEÃO', '🐱 GATO', '🐸 SAPO'],
+        explanation: 'ESPELHO e COELHO terminam com o som -LHO!'
+      }
+    ];
+
+    // Embaralhar pool de desafios
+    const pool = [...PHONOLOGY_ADVANCED_DATA].sort(() => Math.random() - 0.5);
+    const totalRounds = 8;
+    let currentRound = 0;
+    let currentTrial: AdvancedPhonologyTrial;
+    let currentOptions: { label: string; isCorrect: boolean }[] = [];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+
+    // Layout ancorado de baixo para cima
+    const bottomPad = 12;
+    const cardGap = 8;
+    const cardH = 50;
+    const cardW = Math.min(265, Math.floor((W - 24 - cardGap) / 2));
+    const gridW = cardW * 2 + cardGap;
+    const gridX = Math.floor((W - gridW) / 2);
+    const gridY = H - bottomPad - (cardH * 2 + cardGap);
+
+    const topPad = 10;
+    const topCardX = gridX;
+    const topCardW = gridW;
+    const topCardY = topPad;
+    const topCardH = gridY - topPad - 10;
+
+    const getOptionBounds = (i: number) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      return {
+        bx: gridX + col * (cardW + cardGap),
+        by: gridY + row * (cardH + cardGap),
+        bw: cardW,
+        bh: cardH
+      };
+    };
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
+        this.finishGame();
+        return;
+      }
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      currentTrial = pool[(currentRound - 1) % pool.length];
+
+      const opts: { label: string; isCorrect: boolean }[] = [
+        { label: currentTrial.correctAnswer, isCorrect: true },
+        ...currentTrial.distractors.map(d => ({ label: d, isCorrect: false }))
+      ];
+
+      // Embaralhar opções da rodada
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      currentOptions = opts;
+
+      this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: ${currentTrial.question}`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // Fundo geral escuro consistente
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Cartão Principal do Desafio (Topo)
+      ctx.save();
+      const cardGrad = ctx.createLinearGradient(topCardX, topCardY, topCardX, topCardY + topCardH);
+      cardGrad.addColorStop(0, '#1e293b');
+      cardGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = cardGrad;
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(topCardX, topCardY, topCardW, topCardH, 14);
+      ctx.fill();
+      ctx.stroke();
+
+      // Topo do card: Tag de Categoria + Badge de Rodada
+      const headerY = topCardY + 20;
+
+      // Badge de Categoria (Esquerda)
+      const catW = 100;
+      const catH = 22;
+      const catX = topCardX + 12;
+      const catY = headerY - catH / 2;
+      ctx.fillStyle = `${currentTrial.categoryColor}22`;
+      ctx.strokeStyle = currentTrial.categoryColor;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(catX, catY, catW, catH, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = 'bold 10px "Outfit", sans-serif';
+      ctx.fillStyle = currentTrial.categoryColor;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.category, catX + catW / 2, headerY);
+
+      // Badge de Rodada (Direita)
+      const roundW = 100;
+      const roundH = 22;
+      const roundX = topCardX + topCardW - 12 - roundW;
+      const roundY = headerY - roundH / 2;
+      ctx.fillStyle = '#090d16';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(roundX, roundY, roundW, roundH, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 11px "Outfit", sans-serif';
+      ctx.fillText(`Desafio ${currentRound}/${totalRounds}`, roundX + roundW / 2, headerY);
+
+      // Pergunta do Desafio
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 14px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.question, topCardX + topCardW / 2, topCardY + 48, topCardW - 24);
+
+      // Caixa Central de Estímulo Fonético
+      const stimBoxW = Math.min(270, topCardW - 32);
+      const stimBoxH = 50;
+      const stimBoxX = Math.floor((W - stimBoxW) / 2);
+      const stimBoxY = topCardY + 68;
+
+      ctx.fillStyle = '#090d16';
+      ctx.strokeStyle = currentTrial.categoryColor;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.roundRect(stimBoxX, stimBoxY, stimBoxW, stimBoxH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Emoji do Estímulo
+      ctx.font = '24px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.stimulusEmoji, stimBoxX + 36, stimBoxY + stimBoxH / 2);
+
+      // Palavra do Estímulo em Destaque
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 17px "Outfit", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(currentTrial.stimulusWord, stimBoxX + 66, stimBoxY + stimBoxH / 2, stimBoxW - 74);
+
+      // Dica / Explicação Pedagógica Inferior
+      const hintY = stimBoxY + stimBoxH + 18;
+      if (hintY < topCardY + topCardH - 4) {
+        ctx.font = '500 11px "Outfit", sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('💡 Dica: Pronuncie devagar e escute com atenção!', W / 2, hintY, topCardW - 28);
+      }
+      ctx.restore();
+
+      // 2. Grid de Opções (2x2)
+      const letterTags = ['A', 'B', 'C', 'D'];
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+        const isSelected = feedbackIndex === i;
+
+        ctx.save();
+        let cardBg = '#1e293b';
+        let cardBorder = '#334155';
+        let pillBg = '#0f172a';
+        let pillBorder = '#475569';
+        let pillText = '#94a3b8';
+        let textColor = '#f1f5f9';
+
+        if (feedbackStatus === 'success' && isSelected) {
+          cardBg = '#064e3b';
+          cardBorder = '#10b981';
+          pillBg = '#022c22';
+          pillBorder = '#10b981';
+          pillText = '#34d399';
+          textColor = '#6ee7b7';
+        } else if (feedbackStatus === 'error' && isSelected) {
+          cardBg = '#450a0a';
+          cardBorder = '#ef4444';
+          pillBg = '#270707';
+          pillBorder = '#ef4444';
+          pillText = '#f87171';
+          textColor = '#fca5a5';
+        } else if (feedbackStatus === 'error' && opt.isCorrect) {
+          // Destacar a resposta correta sutilmente após erro
+          cardBg = '#064e3b44';
+          cardBorder = '#10b981';
+          pillBorder = '#10b981';
+          pillText = '#34d399';
+          textColor = '#6ee7b7';
+        }
+
+        ctx.fillStyle = cardBg;
+        ctx.strokeStyle = cardBorder;
+        ctx.lineWidth = isSelected ? 2 : 1;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // Letra A, B, C, D em Pílula
+        const pillW = 28;
+        const pillH = 28;
+        const pillX = bx + 8;
+        const pillY = by + (bh - pillH) / 2;
+
+        ctx.fillStyle = pillBg;
+        ctx.strokeStyle = pillBorder;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = pillText;
+        ctx.font = 'bold 13px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterTags[i], pillX + pillW / 2, pillY + pillH / 2);
+
+        // Texto da Alternativa (ex: 🦁 LEÃO, 🇧🇷 BRASIL)
+        const textX = pillX + pillW + 10;
+        const maxTextW = bw - (textX - bx) - 8;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 13px "Outfit", sans-serif';
+        ctx.fillText(opt.label, textX, by + bh / 2, maxTextW);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          feedbackIndex = i;
+          const isCorrect = opt.isCorrect;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 15);
+            this.gameInstruction.set(`🎉 Muito bem! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 650);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`❌ Ops! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: ${currentTrial.question}`);
+              draw();
+            }, 950);
+          }
+        }
+      });
     });
   }
 
