@@ -26,6 +26,8 @@ model Tenant {
   signatures       Signature[]
   whatsappConfigs  WhatsAppConfig[]
   whatsappLogs     WhatsAppLog[]
+  whatsappConversations WhatsAppConversation[]
+  whatsappMessages      WhatsAppMessage[]
   responsibles     Responsible[]
   documentRequests DocumentRequest[]
   schools          School[]
@@ -200,6 +202,7 @@ model Paciente {
   frequencySheets   FrequencySheet[]
   interventionDocuments InterventionDocument[]
   whatsappLogs         WhatsAppLog[]
+  whatsappConversations WhatsAppConversation[]
   abaAssessments       ABAAssessment[]
   abaPrograms          ABAProgram[]
   screeningAssessments ScreeningAssessment[]
@@ -232,6 +235,11 @@ model WhatsAppConfig {
   token           String
   phoneNumberId   String?
   autoSendReminders Boolean @default(false)
+  aiEnabled       Boolean  @default(false)
+  aiPrompt        String?
+  geminiKey       String?
+  autoMuteHours   Int      @default(4)
+  webhookSecret   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -254,6 +262,45 @@ model WhatsAppLog {
   paciente Paciente? @relation(fields: [patientId], references: [id])
 
   @@index([tenantId])
+}
+
+model WhatsAppConversation {
+  id            String    @id @default(cuid())
+  tenantId      String    @default("")
+  phone         String
+  contactName   String?
+  status        String    @default("ACTIVE") // ACTIVE | MUTED_BY_AGENT | MUTED_BY_HUMAN | CLOSED
+  mutedUntil    DateTime?
+  pacienteId    String?
+  responsibleId String?
+  lastMessageAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant   Tenant            @relation(fields: [tenantId], references: [id])
+  paciente Paciente?         @relation(fields: [pacienteId], references: [id])
+  messages WhatsAppMessage[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+  @@index([tenantId, phone])
+  @@index([tenantId, status])
+}
+
+model WhatsAppMessage {
+  id             String   @id @default(cuid())
+  tenantId       String   @default("")
+  conversationId String
+  sender         String   // 'USER' | 'AI' | 'HUMAN'
+  message        String
+  messageId      String?
+  createdAt      DateTime @default(now())
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id])
+  conversation WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([conversationId])
 }
 
 model Responsible {

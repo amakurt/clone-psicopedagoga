@@ -10,6 +10,7 @@ const TENANT_MODELS = new Set<string>([
   'interventionPlan', 'chatMessage', 'sessionDiary', 'frequencySheet',
   'interventionDocument', 'consentLog', 'nfse', 'waitingRoom', 'documentRequest',
   'availability', 'signature', 'whatsAppConfig', 'whatsAppLog', 'screeningAssessment',
+  'whatsAppConversation', 'whatsAppMessage',
 ]);
 
 const WITH_WHERE = new Set(['findMany', 'findFirst', 'count', 'aggregate', 'groupBy', 'updateMany', 'deleteMany']);

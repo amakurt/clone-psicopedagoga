@@ -1,6 +1,55 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 02 de Outubro de 2026
+## Última Atualização: 06 de Outubro de 2026
+
+---
+
+## Sessão 59 - 06/10/2026 — Implementação Completa do Atendimento Online com IA via WhatsApp (Evolution API + Google Gemini)
+
+### O que foi feito
+
+#### 1. Arquitetura e Decisões de Projeto
+- **Modelo de Atendimento**: Assistente Completo de Secretaria com acolhimento humanizado, triagem de novos contatos/famílias, esclarecimento de dúvidas sobre avaliação psicopedagógica/neurodesenvolvimento, consulta de horários e pré-agendamento com status `PENDENTE`.
+- **Gateway do WhatsApp**: Integração compatível com a Evolution API via Webhook para recepção de eventos de mensagens (`messages.upsert`) e envio via `/message/sendText`.
+- **Motor de Inteligência Artificial**: Google Gemini com prompt clínico especializado, diretrizes da clínica, identificação automática do paciente/responsável pelo número de telefone e histórico contextual dos turnos anteriores.
+- **Transbordo Inteligente e Pausa Automática (Hand-off)**:
+  - Detecção imediata de intenção de atendimento humano (palavras-chave como *"falar com atendente"*, *"humano"*, *"secretária"*).
+  - Pausa automática da IA por 4 horas quando a secretária responde à conversa diretamente no WhatsApp Web ou pelo painel, impedindo respostas sobrepostas.
+
+#### 2. Backend & Modelagem de Dados
+- **Prisma Schema (`backend/prisma/schema.prisma`)**:
+  - `WhatsAppConfig`: Adicionados campos `aiEnabled`, `aiPrompt`, `geminiKey`, `autoMuteHours`, `webhookSecret`.
+  - `WhatsAppConversation`: Tabela com `phone`, `contactName`, `status` (`ACTIVE`, `MUTED_BY_AGENT`, `MUTED_BY_HUMAN`, `CLOSED`), `mutedUntil`, `pacienteId`, `lastMessageAt`.
+  - `WhatsAppMessage`: Histórico com `conversationId`, `sender` (`USER`, `AI`, `HUMAN`), `message`, `messageId`, `createdAt`.
+  - Isolamento Multi-tenant: Registrados novos modelos em `TENANT_MODELS` em `backend/src/lib/tenant.ts`.
+- **Serviço de IA (`backend/src/services/whatsapp-ai.service.ts`)**:
+  - Vínculo inteligente de número de WhatsApp a registros de `Paciente` e `Responsible`.
+  - Consulta de agenda (`Appointment`) e criação automática de pré-agendamentos pendentes sob demanda.
+  - Fallback clínico acolhedor mesmo em caso de instabilidade na conexão externa.
+- **Rotas de WhatsApp (`backend/src/routes/whatsapp.ts`)**:
+  - `POST /api/whatsapp/webhook` e `POST /api/whatsapp/webhook/:instance`: Webhook público para receber mensagens da Evolution API em tempo real.
+  - `GET /api/whatsapp/conversations`: Listagem de conversas ativas/pausadas com busca e paginação.
+  - `GET /api/whatsapp/conversations/:id/messages`: Histórico de mensagens do chat.
+  - `POST /api/whatsapp/conversations/:id/toggle-mute`: Pausa e reativação manual da IA.
+  - `POST /api/whatsapp/conversations/:id/send`: Envio de mensagem manual pela secretária direto do sistema.
+
+#### 3. Frontend & Interface do Usuário (Angular)
+- **Serviço (`src/app/modules/whatsapp/services/whatsapp.service.ts`)**:
+  - Métodos integrados para consulta de conversas, envio manual e chaveamento de status da IA.
+- **Componente (`src/app/modules/whatsapp/pages/whatsapp-config.component.ts`)**:
+  - **Aba 1 (Atendimentos Online & Live Chat)**:
+    - Split-view moderna com lista de conversas, badges de status (`🤖 IA Ativa`, `⏸️ Transbordo`, `👤 Humano`).
+    - Janela de mensagens com balões estilizados por remetente (`Cliente`, `IA`, `Secretária`).
+    - Botão de Pausar/Reativar IA e barra de envio de mensagem manual.
+  - **Aba 2 (Configuração & IA)**:
+    - Credenciais Evolution API, teste de conexão, switch liga/desliga de IA, horas de auto-mute, campo de prompt clínico e box com URL do Webhook com botão de cópia rápida em 1 clique.
+  - **Aba 3 (Lembretes)**:
+    - Histórico e status de disparos de lembretes da clínica.
+
+#### 4. Validação Técnica
+- **Backend Build**: Compilado com sucesso (`tsc`, código 0).
+- **Frontend Build**: Bundle Angular gerado com 100% de sucesso (`npx ng build --configuration development`, código 0).
+- **Testes Unitários & Integração**: Script de validação `backend/scripts/test-whatsapp-ai.ts` aprovado com persistência real no banco de dados e testes de fluxo.
 
 ---
 
