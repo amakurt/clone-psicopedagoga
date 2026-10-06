@@ -1,6 +1,6 @@
 # Histórico da Sessão e Registro de Continuidade
 
-> **Data da Sessão:** 30 de Setembro de 2026  
+> **Data da Sessão:** 06 de Outubro de 2026  
 > **Status:** Todas as alterações funcionais, testadas e compiladas com sucesso.  
 > **Repositório:** `https://github.com/amakurt/clone-psicopedagoga.git` (Branch: `main`)
 
@@ -8,56 +8,57 @@
 
 ## 📌 1. Resumo das Tarefas Executadas Nesta Sessão
 
-### A. Cadastro de Escolas & Código INEP
-- **Banco de Dados (Prisma):** Adicionado campo `inep String?` no model `Escola` em `backend/prisma/schema.prisma` e `prisma/schema.prisma`.
-- **Backend:** Atualizado `backend/src/routes/escolas.ts` para receber, salvar e retornar o campo `inep`.
-- **Frontend:**
-  - `src/app/modules/escolas/pages/escola-form.component.ts`: Adicionado campo de entrada do Código INEP (com máscara/validação numérica de 8 dígitos).
-  - `src/app/modules/escolas/pages/escolas-list.component.ts`: Exibição do badge/tag INEP na listagem de escolas.
-  - `src/app/modules/escolas/pages/escola-detail.component.ts`: Exibição destacada do Código INEP nos detalhes da instituição.
+### Implementação Completa: Atendimento Online com IA via WhatsApp (Evolution API + Google Gemini)
 
-### B. Correção de Salvamento e Assinatura Digital de Laudos
-- **Problema:** Erro 500 ao salvar laudo porque faltava a chave estrangeira e campos de assinatura no banco.
-- **Solução:**
-  - Adicionado `autorId String?`, `signatureImage String?` e `signedAt DateTime?` no model `Laudo`.
-  - Backend `backend/src/routes/laudos.ts` atualizado para tratar `autorId` associando ao usuário logado (`req.user.id`) ou fallback seguro.
-  - Rota `POST /api/laudos/:id/assinar` atualizada para salvar o hash/imagem da assinatura digital.
+#### A. Arquitetura e Decisões de Projeto
+- **Assistente Completo de Secretaria**: Triagem de novos pais/pacientes, acolhimento humanizado com linguagem empática, tira-dúvidas institucionais sobre avaliações psicopedagógicas, consulta de horários e pré-agendamento de consultas na agenda (`Appointment`) com status `PENDENTE`.
+- **Gateway do WhatsApp**: Conexão nativa com a **Evolution API** via Webhooks para eventos `messages.upsert` e envio via `/message/sendText`.
+- **Motor de Inteligência Artificial**: Google Gemini com prompt clínico especializado, diretrizes da clínica, identificação automática do paciente/responsável pelo número de telefone e histórico contextual dos turnos anteriores.
+- **Transbordo Inteligente e Pausa Automática (Hand-off)**:
+  - Detecção imediata de intenção de atendimento humano (palavras-chave como *"falar com atendente"*, *"humano"*, *"secretária"*).
+  - Pausa automática da IA por 4 horas quando a secretária responde à conversa diretamente no WhatsApp Web ou pelo painel, impedindo respostas sobrepostas.
 
-### C. Editor Clínico A4 e Catálogo de 37 Modelos (`ClinicalDocEditorComponent`)
-- **Novo Componente:** Criado `src/app/shared/components/clinical-doc-editor/clinical-doc-editor.component.ts`.
-- **Catálogo de Modelos:** Criado `src/app/core/data/doc-templates.data.ts` contendo **37 modelos clínicos completos** organizados em 7 categorias:
-  - Diagnóstico (TEA, TDAH, Dislexia, Deficiência Intelectual, etc.)
-  - Avaliação (Neuropsicopedagógica, Funções Executivas, Perfil Sensorial, etc.)
-  - Intervenção (PEI, Plano ABA, Rotina Visual, Metas SMART, etc.)
-  - Escolar (Adaptação Curricular, Mediação Escolar, Relatório de Visita, etc.)
-  - Jurídico (Parecer para Concurso, Laudo Pericial, Justificativa de Medicamento, etc.)
-  - Família (Orientação Parental, Rotina Domiciliar, Entrevista de Anamnese, etc.)
-  - Financeiro (Recibo de Atendimento, Declaração de Quitação, etc.)
-- **Recursos do Editor:**
-  - Barra de ferramentas WYSIWYG completa (estilos de texto, cabeçalhos, listas, tabela clínica).
-  - Inserção de variáveis dinâmicas `{nome_paciente}`, `{idade}`, `{escola}`, `{serie}`, `{nome_responsavel}`, etc.
-  - Botão **"✂ Nova Folha"** (`insertPageBreak()`) para quebras manuais de página visíveis tanto na tela quanto no PDF.
-  - Pré-carregamento e conversão de logotipos para Base64 em memória via HTML Canvas para prevenir distorções e bloqueios de CORS.
+#### B. Banco de Dados & Prisma ORM
+- **`WhatsAppConfig` (`backend/prisma/schema.prisma`)**:
+  - Adicionados campos `aiEnabled`, `aiPrompt`, `geminiKey`, `autoMuteHours` e `webhookSecret`.
+- **`WhatsAppConversation`**:
+  - Nova tabela relacionando telefone, paciente/responsável, status (`ACTIVE`, `MUTED_BY_AGENT`, `MUTED_BY_HUMAN`, `CLOSED`), tempo de mute e data da última mensagem.
+- **`WhatsAppMessage`**:
+  - Registro de mensagens trocadas (`sender: 'USER' | 'AI' | 'HUMAN'`).
+- **Isolamento Multi-tenant**:
+  - Novos modelos adicionados em `TENANT_MODELS` em `backend/src/lib/tenant.ts`.
+- **Sincronização**:
+  - `npx prisma db push` e `npx prisma generate` executados com sucesso.
 
-### D. Exportação Direta para PDF Timbrado e Calibração de Layout
-- **Geração Direta:** Implementada integração com `html2pdf.js` com download automático de arquivo `.pdf` (sem acionar o diálogo de impressão do navegador e sem imprimir menus da aplicação).
-- **Fim do Corte de Linhas:** Algoritmo com `pagebreak.avoid` configurado para `p`, `li`, `ul`, `ol`, `table`, `tr` e `break-inside: avoid !important`, impedindo o corte horizontal de palavras ou linhas de marcadores.
-- **Compactação Título x Texto:** Removido o espaçamento inflado das classes do Tailwind prose (`margin-top: 1.25em`), reduzindo a margem inferior de títulos para `2px` e a margem superior de textos para `0px`.
-- **Paginação A4 Equilibrada:**
-  - **Página 1:** Cabeçalho oficial, dados do paciente, título do laudo e **Tópicos 1 a 7** (`Identificação`, `Motivo`, `Histórico`, `Observações Clínicas`, `Instrumentos Utilizados`, `Resultados e Síntese`, `Conclusão Diagnóstica`).
-  - **Página 2:** **Tópico 8** (`Plano de Intervenção e Recomendações`) e Rodapé oficial com linha de assinatura profissional e selo de assinatura digital auditável.
+#### C. Backend & Serviços Especializados
+- **Serviço de IA (`backend/src/services/whatsapp-ai.service.ts`)**:
+  - Vínculo inteligente de número de WhatsApp a registros de `Paciente` e `Responsible`.
+  - Consulta de agenda (`Appointment`) e criação automática de pré-agendamentos pendentes sob demanda.
+  - Fallback clínico acolhedor mesmo em caso de instabilidade na conexão externa.
+- **Rotas de WhatsApp (`backend/src/routes/whatsapp.ts`)**:
+  - `POST /api/whatsapp/webhook` e `POST /api/whatsapp/webhook/:instance`: Webhooks públicos para processamento de mensagens da Evolution API em tempo real.
+  - `GET /api/whatsapp/conversations`: Listagem de conversas ativas/pausadas com busca e paginação.
+  - `GET /api/whatsapp/conversations/:id/messages`: Histórico de mensagens do chat.
+  - `POST /api/whatsapp/conversations/:id/toggle-mute`: Pausa e reativação manual da IA.
+  - `POST /api/whatsapp/conversations/:id/send`: Envio de mensagem manual pela secretária direto do sistema.
 
-### E. Expansão do Editor Clínico A4 para Planos, Encaminhamentos e Contratos
-- **Planos de Intervenção (`src/app/modules/planos/pages/plano-form.component.ts` e `documentos-clinicos/pages/plano-intervencao-doc.component.ts`)**:
-  - Integração do `ClinicalDocEditorComponent` substituindo textareas genéricos.
-  - Modelos rápidos de PEI (Plano Educacional Individualizado), PIT (Plano de Intervenção Terapêutica) e Estimulação Precoce.
-  - Seção retrátil de honorários, número de sessões e botão para inserção da tabela financeira oficial no documento.
-  - Correção na rota backend `backend/src/routes/intervention-plans.ts` para fallback do `professionalId`.
-- **Encaminhamentos Clínicos (`src/app/modules/encaminhamentos/pages/encaminhamento-form.component.ts`)**:
-  - Editor A4 com modelos completos de encaminhamento para Neuropediatria, Fonoaudiologia, Terapia Ocupacional, Psiquiatria Infantil e Equipe Escolar.
-  - Timbrado oficial com logotipo da clínica e bloco de assinatura profissional.
-- **Acordos & Contratos Terapêuticos (`src/app/modules/acordos/pages/acordos.component.ts`)**:
-  - Visualização e edição de contratos (Serviços Clínicos, TCLE, Parceria Escolar, Termo LGPD) e propostas comerciais diretamente no editor clínico A4 com download de PDF timbrado.
+#### D. Frontend & Interface do Usuário (Angular)
+- **Serviço (`src/app/modules/whatsapp/services/whatsapp.service.ts`)**:
+  - Métodos integrados para consulta de conversas, envio manual e chaveamento de status da IA.
+- **Componente (`src/app/modules/whatsapp/pages/whatsapp-config.component.ts`)**:
+  - **Aba 1 (Atendimentos & Live Chat)**:
+    - Split-view moderna com lista de conversas, badges de status (`🤖 IA Ativa`, `⏸️ Transbordo`, `👤 Humano`).
+    - Janela de mensagens com balões estilizados por remetente (`Cliente`, `IA`, `Secretária`).
+    - Botão de Pausar/Reativar IA e barra de envio de mensagem manual.
+  - **Aba 2 (Configuração & IA)**:
+    - Credenciais Evolution API, teste de conexão, switch liga/desliga de IA, horas de auto-mute, campo de prompt clínico e card para copiar a URL do Webhook com 1 clique.
+  - **Aba 3 (Lembretes)**:
+    - Histórico e status de disparos de lembretes da clínica.
+
+#### E. Validação Técnica
+- **Backend Build**: Compilado com sucesso (`tsc`, código 0).
+- **Frontend Build**: Bundle Angular gerado com 100% de sucesso (`npx ng build --configuration development`, código 0).
+- **Testes Unitários & Integração**: Script de validação `backend/scripts/test-whatsapp-ai.ts` aprovado com persistência real no banco de dados e testes de fluxo.
 
 ---
 
@@ -88,5 +89,5 @@ npm run dev
 npm start
 ```
 
-O sistema estará acessível em `http://localhost:4200`.
-Acesse `http://localhost:4200/app/laudos/novo` para criar e exportar laudos clínicos com a nova diagramação.
+O sistema estará acessível em `http://localhost:4200`.  
+Acesse `http://localhost:4200/app/configuracoes/whatsapp` para gerenciar os atendimentos com IA e configurar a Evolution API.
