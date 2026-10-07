@@ -9471,7 +9471,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       {
         phase: 1,
         phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
-        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#38bdf8',
         phaseBg: '#1e3a8a',
         symbol: 'A',
@@ -9482,7 +9482,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       {
         phase: 1,
         phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
-        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#38bdf8',
         phaseBg: '#1e3a8a',
         symbol: '4',
@@ -9493,7 +9493,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       {
         phase: 1,
         phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
-        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#38bdf8',
         phaseBg: '#1e3a8a',
         symbol: 'E',
@@ -9504,7 +9504,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       {
         phase: 1,
         phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
-        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#38bdf8',
         phaseBg: '#1e3a8a',
         symbol: '7',
@@ -9516,8 +9516,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       // FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS (4 Rodadas) - Cor: Âmbar (#f59e0b)
       {
         phase: 2,
-        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
-        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseTitle: 'FASE 2: FOCO NOS NÚMEROS',
+        phaseRule: 'Toque nos NÚMEROS · Ignore vogais',
         phaseColor: '#f59e0b',
         phaseBg: '#78350f',
         symbol: '2',
@@ -9527,8 +9527,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       },
       {
         phase: 2,
-        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
-        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseTitle: 'FASE 2: FOCO NOS NÚMEROS',
+        phaseRule: 'Toque nos NÚMEROS · Ignore vogais',
         phaseColor: '#f59e0b',
         phaseBg: '#78350f',
         symbol: 'O',
@@ -9538,8 +9538,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       },
       {
         phase: 2,
-        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
-        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseTitle: 'FASE 2: FOCO NOS NÚMEROS',
+        phaseRule: 'Toque nos NÚMEROS · Ignore vogais',
         phaseColor: '#f59e0b',
         phaseBg: '#78350f',
         symbol: '8',
@@ -9549,8 +9549,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       },
       {
         phase: 2,
-        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
-        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseTitle: 'FASE 2: FOCO NOS NÚMEROS',
+        phaseRule: 'Toque nos NÚMEROS · Ignore vogais',
         phaseColor: '#f59e0b',
         phaseBg: '#78350f',
         symbol: 'U',
@@ -9562,8 +9562,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       // FASE 3: VOLTA PARA AS VOGAIS (4 Rodadas) - Cor: Esmeralda (#10b981)
       {
         phase: 3,
-        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
-        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseTitle: 'FASE 3: VOLTA ÀS VOGAIS',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#10b981',
         phaseBg: '#065f46',
         symbol: 'I',
@@ -9573,8 +9573,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       },
       {
         phase: 3,
-        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
-        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseTitle: 'FASE 3: VOLTA ÀS VOGAIS',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#10b981',
         phaseBg: '#065f46',
         symbol: '5',
@@ -9584,8 +9584,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       },
       {
         phase: 3,
-        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
-        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseTitle: 'FASE 3: VOLTA ÀS VOGAIS',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#10b981',
         phaseBg: '#065f46',
         symbol: '3',
@@ -9595,8 +9595,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       },
       {
         phase: 3,
-        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
-        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseTitle: 'FASE 3: VOLTA ÀS VOGAIS',
+        phaseRule: 'Toque nas VOGAIS · Ignore números',
         phaseColor: '#10b981',
         phaseBg: '#065f46',
         symbol: 'U',
@@ -9742,32 +9742,35 @@ export class JogosComponent implements OnInit, OnDestroy {
 
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#ffffff';
-        ctx.font = '900 22px "Outfit", sans-serif';
+        ctx.font = '900 19px "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const headline = currentTrial.phase === 1 ? '🎯 REGRA INICIAL DO JOGO' : '⚡ ATENÇÃO: A REGRA MUDOU! ⚡';
-        ctx.fillText(headline, W / 2, H * 0.20);
+        const headline = currentTrial.phase === 1 
+          ? '🎯 REGRA INICIAL DO JOGO' 
+          : (currentTrial.phase === 2 ? '⚡ ATENÇÃO: A REGRA MUDOU! ⚡' : '🔄 VOLTAMOS PARA AS VOGAIS! 🔄');
+        ctx.fillText(headline, W / 2, 16 + bannerH * 0.11);
 
         // Badge da Fase
-        const phaseBadgeW = Math.min(300, bannerW - 40);
-        const phaseBadgeH = 32;
+        const phaseBadgeW = Math.min(260, bannerW - 24);
+        const phaseBadgeH = 28;
+        const phaseBadgeY = 16 + bannerH * 0.21;
         ctx.fillStyle = '#0f172a';
         ctx.strokeStyle = currentTrial.phaseColor;
         ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.roundRect((W - phaseBadgeW) / 2, H * 0.30, phaseBadgeW, phaseBadgeH, 10);
+        ctx.roundRect((W - phaseBadgeW) / 2, phaseBadgeY, phaseBadgeW, phaseBadgeH, 10);
         ctx.fill();
         ctx.stroke();
 
         ctx.fillStyle = currentTrial.phaseColor;
-        ctx.font = 'bold 13px "Outfit", sans-serif';
-        ctx.fillText(currentTrial.phaseTitle, W / 2, H * 0.30 + phaseBadgeH / 2);
+        ctx.font = 'bold 12px "Outfit", sans-serif';
+        ctx.fillText(currentTrial.phaseTitle, W / 2, phaseBadgeY + phaseBadgeH / 2);
 
-        // Caixa destacada da Regra
-        const ruleCardW = bannerW - 40;
-        const ruleCardH = 68;
-        const ruleCardX = 36;
-        const ruleCardY = H * 0.44;
+        // Caixa destacada da Regra (104px de altura, acomoda 3 linhas limpas sem vazar)
+        const ruleCardW = bannerW - 20;
+        const ruleCardH = 104;
+        const ruleCardX = (W - ruleCardW) / 2;
+        const ruleCardY = phaseBadgeY + phaseBadgeH + 10;
         ctx.fillStyle = '#0f172a';
         ctx.strokeStyle = currentTrial.phaseColor;
         ctx.lineWidth = 1.5;
@@ -9776,22 +9779,31 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#f8fafc';
+        // Linha 1: Ação principal
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 15px "Outfit", sans-serif';
-        ctx.fillText(currentTrial.phaseRule, W / 2, ruleCardY + 24);
+        const line1 = currentTrial.phase === 2 ? 'Toque apenas nos NÚMEROS!' : 'Toque apenas nas VOGAIS!';
+        ctx.fillText(line1, W / 2, ruleCardY + 24);
 
-        const subGuide = currentTrial.phase === 2 
-          ? 'Esqueça as vogais por enquanto! Toque apenas se for número.'
-          : (currentTrial.phase === 3 ? 'Atenção ao retorno! Toque apenas nas vogais.' : 'Se aparecer número, mantenha o foco e não toque!');
+        // Linha 2: Alvos destacados
+        ctx.fillStyle = currentTrial.phaseColor;
+        ctx.font = '900 13.5px "Outfit", sans-serif';
+        const line2 = currentTrial.phase === 2 ? 'ALVO: [ 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 ]' : 'ALVO: [ A · E · I · O · U ]';
+        ctx.fillText(line2, W / 2, ruleCardY + 50);
+
+        // Linha 3: Inibição e orientação
         ctx.fillStyle = '#94a3b8';
-        ctx.font = '500 12.5px "Outfit", sans-serif';
-        ctx.fillText(subGuide, W / 2, ruleCardY + 48);
+        ctx.font = '500 11.5px "Outfit", sans-serif';
+        const line3 = currentTrial.phase === 2 
+          ? 'Esqueça as vogais! Se aparecer letra, não toque.' 
+          : (currentTrial.phase === 3 ? 'Atenção ao retorno! Ignore todos os números.' : 'Se aparecer número, mantenha o foco e não toque.');
+        ctx.fillText(line3, W / 2, ruleCardY + 76);
 
         // Botão para avançar direto
-        const btnW = 220;
-        const btnH = 40;
+        const btnW = Math.min(220, bannerW - 30);
+        const btnH = 38;
         const btnX = (W - btnW) / 2;
-        const btnY = H * 0.70;
+        const btnY = ruleCardY + ruleCardH + 12;
         ctx.fillStyle = '#10b981';
         ctx.strokeStyle = '#34d399';
         ctx.lineWidth = 2;
@@ -9801,7 +9813,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.stroke();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px "Outfit", sans-serif';
+        ctx.font = 'bold 13.5px "Outfit", sans-serif';
         ctx.fillText('COMEÇAR AGORA ▶', W / 2, btnY + btnH / 2);
 
         // Barra de contagem regressiva suave
@@ -9809,7 +9821,7 @@ export class JogosComponent implements OnInit, OnDestroy {
           const barW = bannerW - 60;
           const barH = 6;
           const barX = (W - barW) / 2;
-          const barY = H - 36;
+          const barY = H - 26;
 
           ctx.fillStyle = '#0f172a';
           ctx.beginPath();
@@ -9823,8 +9835,8 @@ export class JogosComponent implements OnInit, OnDestroy {
 
           const secsLeft = Math.ceil(progressFraction * 12);
           ctx.fillStyle = '#94a3b8';
-          ctx.font = '500 12px "Outfit", sans-serif';
-          ctx.fillText(`⏳ Iniciando em ${secsLeft}s... (ou toque no botão acima para começar)`, W / 2, barY - 12);
+          ctx.font = '500 11.5px "Outfit", sans-serif';
+          ctx.fillText(`⏳ Iniciando em ${secsLeft}s... (ou toque no botão)`, W / 2, barY - 12);
         }
 
         ctx.restore();
@@ -9847,12 +9859,14 @@ export class JogosComponent implements OnInit, OnDestroy {
       ctx.font = 'bold 11px "Outfit", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`${currentTrial.phaseTitle} · RODADA ${currentRoundIndex + 1}/${totalRounds}`, 24, 26);
+      const shortPhase = currentTrial.phase === 1 ? 'FASE 1 (VOGAIS)' : (currentTrial.phase === 2 ? 'FASE 2 (NÚMEROS)' : 'FASE 3 (VOGAIS)');
+      ctx.fillText(`${shortPhase} · RODADA ${currentRoundIndex + 1}/${totalRounds}`, 24, 26);
 
       // Instrução clara da Regra Ativa
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13.5px "Outfit", sans-serif';
-      ctx.fillText(currentTrial.phaseRule, 24, 48);
+      ctx.font = 'bold 13px "Outfit", sans-serif';
+      const activeInstruction = currentTrial.phase === 2 ? 'Toque nos NÚMEROS · Ignore vogais' : 'Toque nas VOGAIS · Ignore números';
+      ctx.fillText(activeInstruction, 24, 48);
 
       // Badge de ação
       const actionBadge = currentTrial.phase === 2 ? 'ALVO: NÚMERO' : 'ALVO: VOGAL';

@@ -77,7 +77,18 @@
   - Duração de cada estímulo estendida de 1.9s para **2.5 segundos**.
   - Instrução dinâmica na mudança de fase alertando com precisão: `⚠️ A REGRA MUDOU! Toque no QUADRADO ⬜`.
 
-#### 6. Validação e Compilação
+#### 6. Correção do Layout Visual no Banner de Explicação da Fase 2 (Jogo 27)
+- **Diagnóstico da Causa Raiz**:
+  - No banner de mudança de regra da Fase 2, os textos longos (`"FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS"` e `"Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!"`) estavam sendo renderizados em linha única sem quebra e com fontes excessivas para a largura do canvas, ultrapassando a borda dos cards em até 200px.
+- **Ajustes Implementados**:
+  - **Textos Concisos e Impactantes**: Redefinido `phaseTitle` para `"FASE 2: FOCO NOS NÚMEROS"` (badge com 260px) e estruturação do card explicativo em 3 linhas hierárquicas e limpas:
+    - *Linha 1*: `"Toque apenas nos NÚMEROS!"` (destaque branco em 15px bold).
+    - *Linha 2*: `"ALVO: [ 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8 · 9 ]"` (destaque âmbar em 13.5px extra-bold).
+    - *Linha 3*: `"Esqueça as vogais! Se aparecer letra, não toque."` (cinza suave em 11.5px).
+  - **Ampliação da Caixa**: Altura da caixa da regra aumentada para 104px e largura adaptativa (`bannerW - 20`), garantindo margens internas perfeitas em qualquer tamanho de tela sem qualquer vazamento de letras.
+  - **Cabeçalho Ativo Sincronizado**: O topo do canvas na rodada ativa agora utiliza legendas compactas (`"FASE 2 (NÚMEROS) · RODADA 5/12"` e `"Toque nos NÚMEROS · Ignore vogais"`), eliminando qualquer colisão com os badges laterais.
+
+#### 7. Validação e Compilação
 - Compilação do Angular finalizada com sucesso (bundle gerado sem erros de TypeScript).
 - Credenciais oficiais de teste mapeadas diretamente do banco de dados (`sarah@edupsych.com` / `123456` e `admin@test.com` / `123456`).
 
