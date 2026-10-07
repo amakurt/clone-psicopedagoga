@@ -44,7 +44,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 24, name: '24. Classificação', category: 'Funções Executivas', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Toque apenas nos animais — ignore os objetos', type: 'tap' },
   { id: 25, name: '25. Sequência de Passos', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Ordene os passos de escovar os dentes na sequência certa', type: 'sequence' },
   { id: 26, name: '26. Controle de Impulsos', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Toque quando o semáforo ficar verde — espere o sinal!', type: 'tap' },
-  { id: 27, name: '27. Flexibilidade Mental', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Alternar entre identificar vogais e números sem errar', type: 'tap' },
+  { id: 27, name: '27. Flexibilidade Mental', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Alternar entre regras de vogais e números em 3 fases', type: 'mental_flexibility' },
   { id: 28, name: '28. Tombe Switch', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Mude entre regras: às vezes cor, às vezes forma', type: 'tap' },
   { id: 29, name: '29. Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Trace o caminho arrastando entre os pontos em ordem sequencial', type: 'planning' },
   { id: 30, name: '30. Memória Operacional', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde o número e aplique o cálculo (+3, -4, x2) mentalmente', type: 'operational_memory' },
@@ -1230,13 +1230,13 @@ export class JogosComponent implements OnInit, OnDestroy {
     const measuredW = Math.max(container?.clientWidth || 0, (parentContainer?.clientWidth || 0) - 32);
     const containerWidth = measuredW > 320 ? measuredW : 560;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || jogo?.type === 'planning' || jogo?.type === 'operational_memory' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36));
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || jogo?.type === 'planning' || jogo?.type === 'operational_memory' || jogo?.type === 'mental_flexibility' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36));
     const maxAvailableH = window.innerHeight 
       ? Math.max(340, window.innerHeight - (isExpandedGame ? 160 : 220)) 
       : (isExpandedGame ? 460 : 320);
 
     let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
-    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || jogo?.type === 'planning' || jogo?.type === 'operational_memory' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36))) ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
+    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || jogo?.type === 'planning' || jogo?.type === 'operational_memory' || jogo?.type === 'mental_flexibility' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36))) ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -1292,6 +1292,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'rhyme': this.setupCompleteRhymeGame(canvas, logicalW, logicalH); break;
       case 'planning': this.setupPlanningGame(canvas, logicalW, logicalH); break;
       case 'operational_memory': this.setupOperationalMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
+      case 'mental_flexibility': this.setupMentalFlexibilityGame(canvas, logicalW, logicalH); break;
       case 'phonology': 
         if (jogo.id === 40) {
           this.setupAdvancedPhonologyGame(canvas, logicalW, logicalH);
@@ -1321,6 +1322,8 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.setupObjectRecallGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 18) {
           this.setupVisualMatchingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 27) {
+          this.setupMentalFlexibilityGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 29) {
           this.setupPlanningGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 30 || jogo.id === 20) {
@@ -9432,6 +9435,457 @@ export class JogosComponent implements OnInit, OnDestroy {
           }
         }
       });
+    });
+  }
+
+  // 17. FLEXIBILIDADE MENTAL - ALTERNÂNCIA DE REGRAS EM 3 FASES (JOGO 27)
+  setupMentalFlexibilityGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface FlexTrial {
+      phase: number;
+      phaseTitle: string;
+      phaseRule: string;
+      phaseColor: string;
+      phaseBg: string;
+      symbol: string;
+      isTarget: boolean;
+      feedbackCorrect: string;
+      feedbackError: string;
+    }
+
+    const TRIALS: FlexTrial[] = [
+      // FASE 1: REGRA DAS VOGAIS (4 Rodadas) - Cor: Azul (#38bdf8)
+      {
+        phase: 1,
+        phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
+        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseColor: '#38bdf8',
+        phaseBg: '#1e3a8a',
+        symbol: 'A',
+        isTarget: true,
+        feedbackCorrect: '✓ "A" é vogal! Toque correto!',
+        feedbackError: 'Ops! "A" é vogal, você deveria tocar!'
+      },
+      {
+        phase: 1,
+        phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
+        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseColor: '#38bdf8',
+        phaseBg: '#1e3a8a',
+        symbol: '4',
+        isTarget: false,
+        feedbackCorrect: '✓ Foco mantido! "4" é número (ignorado corretamente).',
+        feedbackError: '❌ "4" é número! A regra 1 pede apenas VOGAIS.'
+      },
+      {
+        phase: 1,
+        phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
+        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseColor: '#38bdf8',
+        phaseBg: '#1e3a8a',
+        symbol: 'E',
+        isTarget: true,
+        feedbackCorrect: '✓ "E" é vogal! Excelente!',
+        feedbackError: 'Ops! "E" é vogal, deveria tocar!'
+      },
+      {
+        phase: 1,
+        phaseTitle: 'FASE 1: FOCO NAS VOGAIS',
+        phaseRule: 'Toque apenas nas VOGAIS (A, E, I, O, U)! Ignore números!',
+        phaseColor: '#38bdf8',
+        phaseBg: '#1e3a8a',
+        symbol: '7',
+        isTarget: false,
+        feedbackCorrect: '✓ Muito bem! "7" é número (ignorado com sucesso).',
+        feedbackError: '❌ "7" é número! A regra 1 pede apenas VOGAIS.'
+      },
+
+      // FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS (4 Rodadas) - Cor: Âmbar (#f59e0b)
+      {
+        phase: 2,
+        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
+        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseColor: '#f59e0b',
+        phaseBg: '#78350f',
+        symbol: '2',
+        isTarget: true,
+        feedbackCorrect: '✓ "2" é número! Mudança de regra aplicada com sucesso!',
+        feedbackError: 'Ops! "2" é número, a regra nova pede números!'
+      },
+      {
+        phase: 2,
+        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
+        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseColor: '#f59e0b',
+        phaseBg: '#78350f',
+        symbol: 'O',
+        isTarget: false,
+        feedbackCorrect: '✓ Flexibilidade excelente! "O" é vogal (agora ignorada).',
+        feedbackError: '❌ Atenção: a regra mudou! "O" é vogal, agora foque em NÚMEROS.'
+      },
+      {
+        phase: 2,
+        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
+        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseColor: '#f59e0b',
+        phaseBg: '#78350f',
+        symbol: '8',
+        isTarget: true,
+        feedbackCorrect: '✓ "8" é número! Resposta rápida e correta!',
+        feedbackError: 'Ops! "8" é número, deveria tocar!'
+      },
+      {
+        phase: 2,
+        phaseTitle: 'FASE 2: A REGRA MUDOU! FOCO NOS NÚMEROS',
+        phaseRule: 'Agora ignore vogais! Toque apenas nos NÚMEROS (1, 2, 3...)!',
+        phaseColor: '#f59e0b',
+        phaseBg: '#78350f',
+        symbol: 'U',
+        isTarget: false,
+        feedbackCorrect: '✓ Inibição mantida! "U" é vogal (ignorada na regra de números).',
+        feedbackError: '❌ Descuido de perseveração: "U" é vogal! Foque em NÚMEROS.'
+      },
+
+      // FASE 3: VOLTA PARA AS VOGAIS (4 Rodadas) - Cor: Esmeralda (#10b981)
+      {
+        phase: 3,
+        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
+        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseColor: '#10b981',
+        phaseBg: '#065f46',
+        symbol: 'I',
+        isTarget: true,
+        feedbackCorrect: '✓ "I" é vogal! Alternância perfeita!',
+        feedbackError: 'Ops! "I" é vogal, deveria tocar!'
+      },
+      {
+        phase: 3,
+        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
+        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseColor: '#10b981',
+        phaseBg: '#065f46',
+        symbol: '5',
+        isTarget: false,
+        feedbackCorrect: '✓ "5" é número! Ignorado corretamente.',
+        feedbackError: '❌ "5" é número! A regra voltou para VOGAIS.'
+      },
+      {
+        phase: 3,
+        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
+        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseColor: '#10b981',
+        phaseBg: '#065f46',
+        symbol: '3',
+        isTarget: false,
+        feedbackCorrect: '✓ Foco de ouro! "3" é número (ignorado).',
+        feedbackError: '❌ "3" é número! A regra atual é VOGAIS.'
+      },
+      {
+        phase: 3,
+        phaseTitle: 'FASE 3: VOLTAMOS PARA AS VOGAIS',
+        phaseRule: 'Flexibilidade máxima: volte a tocar apenas nas VOGAIS!',
+        phaseColor: '#10b981',
+        phaseBg: '#065f46',
+        symbol: 'U',
+        isTarget: true,
+        feedbackCorrect: '✓ "U" é vogal! Parabéns pela flexibilidade mental!',
+        feedbackError: 'Ops! "U" é vogal, deveria tocar!'
+      }
+    ];
+
+    const totalRounds = TRIALS.length;
+    let currentRoundIndex = 0;
+    let currentTrial: FlexTrial;
+    let trialState: 'switch_banner' | 'active' | 'feedback' = 'active';
+    let feedbackResult: 'success' | 'error' | 'inhibition' | 'omission' = 'success';
+    let feedbackMessage = '';
+    let animId: number | null = null;
+    let roundStartTime = 0;
+    const trialDurationMs = 2200;
+    let lastPhase = 0;
+
+    const cleanup = () => {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+      if (this.gameData?.activeTimeout) {
+        clearTimeout(this.gameData.activeTimeout);
+        this.gameData.activeTimeout = null;
+      }
+    };
+
+    const nextTrial = () => {
+      cleanup();
+      if (currentRoundIndex >= totalRounds) {
+        this.sound.playVictory();
+        this.finishGame();
+        return;
+      }
+
+      currentTrial = TRIALS[currentRoundIndex];
+      const isNewPhase = currentTrial.phase !== lastPhase;
+      lastPhase = currentTrial.phase;
+
+      if (isNewPhase) {
+        // Banner de transição de fase anunciando a mudança de regra!
+        trialState = 'switch_banner';
+        this.sound.playSuccess();
+        this.gameInstruction.set(`⚠️ Atenção: ${currentTrial.phaseTitle}! ${currentTrial.phaseRule}`);
+        draw();
+
+        this.gameData.activeTimeout = setTimeout(() => {
+          startActiveTrial();
+        }, 1500);
+      } else {
+        startActiveTrial();
+      }
+    };
+
+    const startActiveTrial = () => {
+      trialState = 'active';
+      this.gameInstruction.set(`${currentTrial.phaseTitle}: ${currentTrial.phaseRule}`);
+      roundStartTime = Date.now();
+
+      const loop = () => {
+        const elapsed = Date.now() - roundStartTime;
+        if (elapsed >= trialDurationMs) {
+          // Tempo esgotou sem toque!
+          onTimeout();
+          return;
+        }
+
+        draw(1 - elapsed / trialDurationMs);
+        animId = requestAnimationFrame(loop);
+      };
+
+      animId = requestAnimationFrame(loop);
+    };
+
+    const onTimeout = () => {
+      cleanup();
+      trialState = 'feedback';
+
+      if (!currentTrial.isTarget) {
+        // O jogador fez o CERTO ao NÃO tocar (Sucesso de Inibição!)
+        this.sound.playSuccess();
+        this.recordAttempt(true, true);
+        this.gameScore.update(s => s + 8);
+        feedbackResult = 'inhibition';
+        feedbackMessage = currentTrial.feedbackCorrect;
+      } else {
+        // Omissão (era alvo e o jogador não tocou a tempo)
+        this.recordAttempt(false);
+        feedbackResult = 'omission';
+        feedbackMessage = currentTrial.feedbackError;
+      }
+
+      this.gameInstruction.set(feedbackMessage);
+      draw();
+
+      this.gameData.activeTimeout = setTimeout(() => {
+        currentRoundIndex++;
+        nextTrial();
+      }, 750);
+    };
+
+    const draw = (progressFraction = 0) => {
+      ctx.clearRect(0, 0, W, H);
+
+      // Fundo escuro com gradiente elegante
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#0a0f1d');
+      bgGrad.addColorStop(1, '#050811');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      if (!currentTrial) return;
+
+      if (trialState === 'switch_banner') {
+        // TELA DE MUDANÇA DE REGRA (SWITCH ANNOUNCEMENT)
+        ctx.save();
+        const bannerW = W - 32;
+        const bannerH = H - 32;
+        ctx.fillStyle = currentTrial.phaseBg;
+        ctx.strokeStyle = currentTrial.phaseColor;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = currentTrial.phaseColor;
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.roundRect(16, 16, bannerW, bannerH, 20);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 22px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⚡ MUDANÇA DE REGRA! ⚡', W / 2, H * 0.32);
+
+        ctx.fillStyle = currentTrial.phaseColor;
+        ctx.font = 'bold 16px "Outfit", sans-serif';
+        ctx.fillText(currentTrial.phaseTitle, W / 2, H * 0.48);
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '600 14px "Outfit", sans-serif';
+        ctx.fillText(currentTrial.phaseRule, W / 2, H * 0.65);
+        ctx.restore();
+        return;
+      }
+
+      // 1. BANNER SUPERIOR DA REGRA ATIVA
+      const headerH = 68;
+      ctx.save();
+      ctx.fillStyle = currentTrial.phaseBg;
+      ctx.strokeStyle = currentTrial.phaseColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(12, 10, W - 24, headerH, 14);
+      ctx.fill();
+      ctx.stroke();
+
+      // Indicador de Fase e Rodada
+      ctx.fillStyle = currentTrial.phaseColor;
+      ctx.font = 'bold 11px "Outfit", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${currentTrial.phaseTitle} · RODADA ${currentRoundIndex + 1}/${totalRounds}`, 24, 26);
+
+      // Instrução clara da Regra Ativa
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 13.5px "Outfit", sans-serif';
+      ctx.fillText(currentTrial.phaseRule, 24, 48);
+
+      // Badge de ação
+      const actionBadge = currentTrial.phase === 2 ? 'ALVO: NÚMERO' : 'ALVO: VOGAL';
+      const badgeW = 100;
+      const badgeX = W - 24 - badgeW;
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = currentTrial.phaseColor;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, 22, badgeW, 26, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = currentTrial.phaseColor;
+      ctx.font = 'bold 11px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(actionBadge, badgeX + badgeW / 2, 35);
+      ctx.restore();
+
+      // 2. ESTÍMULO CENTRAL (O Caractere)
+      const centerCardW = Math.min(220, W * 0.6);
+      const centerCardH = Math.min(180, H * 0.52);
+      const centerCardX = (W - centerCardW) / 2;
+      const centerCardY = headerH + 26;
+
+      ctx.save();
+      let cardBg = '#0f172a';
+      let cardBorder = currentTrial.phaseColor;
+      let symbolColor = '#ffffff';
+
+      if (trialState === 'feedback') {
+        if (feedbackResult === 'success' || feedbackResult === 'inhibition') {
+          cardBg = '#064e3b';
+          cardBorder = '#10b981';
+          symbolColor = '#a7f3d0';
+        } else {
+          cardBg = '#450a0a';
+          cardBorder = '#ef4444';
+          symbolColor = '#fca5a5';
+        }
+      }
+
+      ctx.fillStyle = cardBg;
+      ctx.strokeStyle = cardBorder;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = cardBorder;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.roundRect(centerCardX, centerCardY, centerCardW, centerCardH, 20);
+      ctx.fill();
+      ctx.stroke();
+
+      // O Símbolo em Fonte Grande
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = symbolColor;
+      ctx.font = '900 68px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.symbol, centerCardX + centerCardW / 2, centerCardY + centerCardH / 2 - 8);
+
+      // Dica de Tipo (VOGAL ou NÚMERO)
+      const isNum = !isNaN(Number(currentTrial.symbol));
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 12px "Outfit", sans-serif';
+      ctx.fillText(isNum ? 'É UM NÚMERO' : 'É UMA VOGAL', centerCardX + centerCardW / 2, centerCardY + centerCardH - 22);
+
+      // Barra de Tempo
+      if (trialState === 'active' && progressFraction > 0) {
+        const barW = centerCardW - 32;
+        const barH = 5;
+        const barX = centerCardX + 16;
+        const barY = centerCardY + centerCardH - 8;
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW, barH, 3);
+        ctx.fill();
+
+        ctx.fillStyle = currentTrial.phaseColor;
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, Math.max(0, barW * progressFraction), barH, 3);
+        ctx.fill();
+      }
+
+      // Mensagem de Feedback embaixo do Card
+      if (trialState === 'feedback') {
+        ctx.fillStyle = feedbackResult === 'success' || feedbackResult === 'inhibition' ? '#34d399' : '#f87171';
+        ctx.font = 'bold 13px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(feedbackMessage, W / 2, centerCardY + centerCardH + 28);
+      } else {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '500 12px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Toque no cartão central se corresponder à regra!', W / 2, centerCardY + centerCardH + 28);
+      }
+      ctx.restore();
+    };
+
+    nextTrial();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (trialState !== 'active') return;
+
+      cleanup();
+      trialState = 'feedback';
+
+      if (currentTrial.isTarget) {
+        // ACERTO! O jogador tocou no alvo correto
+        this.sound.playSuccess();
+        this.recordAttempt(true);
+        this.gameScore.update(s => s + 8.5);
+        feedbackResult = 'success';
+        feedbackMessage = currentTrial.feedbackCorrect;
+      } else {
+        // ERRO! O jogador tocou em quem deveria ignorar (Erro de Perseveração ou Impulsividade)
+        this.sound.playError();
+        this.recordAttempt(false);
+        feedbackResult = 'error';
+        feedbackMessage = currentTrial.feedbackError;
+      }
+
+      this.gameInstruction.set(feedbackMessage);
+      draw();
+
+      this.gameData.activeTimeout = setTimeout(() => {
+        currentRoundIndex++;
+        nextTrial();
+      }, 750);
     });
   }
 }

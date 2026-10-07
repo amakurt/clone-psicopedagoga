@@ -48,9 +48,26 @@
     - Operações de soma (+3, +4, +5), subtração (-4, -6, -9) e multiplicação simples (x2 dobrar, x3 triplicar).
   - Roteamento também aplicado ao **Jogo 20 ("20. Memória de Trabalho")**.
 
-#### 4. Validação e Compilação
-- Compilação do Angular finalizada com sucesso (bundle gerado em 5.1s, 0 erros de TypeScript).
-- Credenciais oficiais de teste mapeadas diretamente do banco de dados (`sarah@edupsych.com` / `123456` e `admin@test.com` / `123456`), eliminando tentativas incorretas de cadastro de conta.
+#### 4. Engine Dedicada para o Jogo 27: Flexibilidade Mental (`setupMentalFlexibilityGame`)
+- **Diagnóstico da Causa Raiz**: O jogo anterior rodava no motor de reação arcade rápida sem informar ao jogador qual regra estava ativa, gerando confusão total entre quando tocar e quando ignorar.
+- **Fundamentação Neuropsicológica**: Baseado no **Dimensional Change Card Sort (DCCS)** e em paradigmas clínicos de **Task Switching (Alternância de Set Cognitivo)**.
+- **Estrutura em 3 Fases Clínicas Visíveis (12 Rodadas)**:
+  - **Fase 1: FOCO NAS VOGAIS (4 Rodadas, Cor Azul `#38bdf8`)**:
+    - Banner: `🔤 REGRA 1: FOCO NAS VOGAIS (A, E, I, O, U)`.
+    - Estímulos de letras e números; tocar em vogal pontua acerto (+8.5 pts); ignorar número pontua sucesso de inibição (+8 pts).
+  - **Transição de Fase com Anúncio Visual & Sonoro (1.5s)**:
+    - Tela de alerta especial anunciando a mudança de regra: `⚡ MUDANÇA DE REGRA! FOCO NOS NÚMEROS!`.
+  - **Fase 2: A MUDANÇA DE REGRA (4 Rodadas, Cor Âmbar `#f59e0b`)**:
+    - Banner: `🔢 REGRA 2: FOCO NOS NÚMEROS (1, 2, 3...)! AGORA IGNORE VOGAIS!`.
+    - Desafia o paciente a inibir a perseveração na regra 1 e responder estritamente aos números.
+  - **Fase 3: VOLTA PARA AS VOGAIS (4 Rodadas, Cor Esmeralda `#10b981`)**:
+    - Banner: `🔤 REGRA 3: VOLTAMOS PARA AS VOGAIS!`.
+    - Treina a agilidade de retorno e desapego da regra anterior.
+- **Feedback Educativo Instantâneo**: Cada tentativa explica com precisão o motivo do acerto ou erro (ex: *"❌ Atenção à mudança: 'O' é vogal! Na regra atual foque em NÚMEROS"*).
+
+#### 5. Validação e Compilação
+- Compilação do Angular finalizada com sucesso (bundle gerado sem erros de TypeScript).
+- Credenciais oficiais de teste mapeadas diretamente do banco de dados (`sarah@edupsych.com` / `123456` e `admin@test.com` / `123456`).
 
 ---
 
