@@ -2488,5 +2488,51 @@ npm run start
     - Cartão correto realça em verde esmeralda com som de arpejo (`playSuccess()`) e soma **+15 pontos**.
     - Erro emite som de alerta (`playError()`) e exibe dica amigável na barra superior instruindo a contagem das fatias antes de permitir nova tentativa.
 
+---
 
+## Sessão 34 - 07/10/2026 — Silenciamento de Áudio e Cancelamento de Loops Fantasmas ao Fechar Modal dos Jogos
 
+### O que foi feito
+
+#### 1. Diagnóstico do Problema ("Áudio continua tocando após fechar o modal do jogo")
+- **Causa Raiz Identificada:**
+  1. **`ClinicalSoundSynthesizer` sem trava de ciclo de vida do modal:** Quando o modal era fechado, callbacks tardios de `setTimeout`, `setInterval` e `requestAnimationFrame` que já haviam sido enfileirados continuavam disparando em segundo plano. Ao chamarem métodos de som (`playSuccess`, `playClick`, `playMusicalNote`, etc.), o sintetizador inicializava preguiçosamente um novo `AudioContext` do Web Audio e tocava notas e acordes nos alto-falantes do usuário, mesmo com o modal do jogo fechado.
+  2. **Intervalos e loops de animação desacoplados do ciclo de vida:** Jogos com sequências e apresentações repetitivas (como `setupSequenceGame`, `setupCorsiGame`, `setupBreathingGame`, `setupTapGame`, `setupVisualTrackingGame`, `setupNumberSequenceGame`, `setupVisualMatchingGame`, `setupObjectRecallGame` e `setupAttentionGame`) mantinham timers locais (`playbackInterval = setInterval(...)`, `animFrameId = requestAnimationFrame(...)`, `activeTimeout = setTimeout(...)`) que continuavam rodando e consumindo CPU e áudio após o fechamento.
+
+#### 2. Solução Arquitetural Implementada (`jogos.component.ts`)
+
+- **Trava Estrita no `ClinicalSoundSynthesizer`:**
+  - Adicionada flag privada `isModalActive: boolean = false`.
+  - Criados métodos de ciclo de vida:
+    - `setActive(active: boolean)`: ativa o áudio ao abrir o jogo e desativa imediatamente ao fechar.
+    - `stopAll()`: força o fechamento imediato do `AudioContext` (`ctx.close()`), anula a referência e marca `isModalActive = false`.
+  - Todos os métodos de emissão sonora (`playClick`, `playFlip`, `playSuccess`, `playStarCollect`, `playCombo`, `playError`, `playVictory`, `playCalmChime`, `playCountdown`, `playMusicalNote`) receberam a guarda estrita:
+    ```typescript
+    if (!this.enabled || !this.isModalActive) return;
+    ```
+  - Bloqueio de inicialização de novo `AudioContext` caso o modal esteja fechado.
+
+- **Pipeline de Invalidação de Sessão & Limpeza em `JogosComponent`:**
+  - Implementado contador de sessão ativo `activeSessionId = 0` e lista de callbacks de limpeza `sessionCleanups: Array<() => void> = []`.
+  - Criados os utilitários `registerCleanup(fn)`, `runActiveCleanups()` e `isCurrentSession(sessionId)`.
+  - **`closeGame()` Atualizado:**
+    - Incrementa `activeSessionId++`, invalidando instantaneamente qualquer callback pendente da sessão anterior.
+    - Executa `this.sound.stopAll()`, cortando imediatamente todo som do Web Audio.
+    - Executa `this.clearTimers()`, limpando todos os timers e frames principais (`timerInterval`, `countdownInterval`, `activeTimeout`, `activeAnimFrame`, `breathingAnimId`).
+    - Executa `this.runActiveCleanups()`, cancelando todos os intervals, timeouts e frames registrados pelos motores específicos.
+    - Remove ouvintes do canvas e desativa handlers.
+  - **`startGame()` e `startCountdown()`:** Chamam `this.sound.setActive(true)` para reabilitar o som apenas na nova sessão ativa.
+  - **`ngOnDestroy()`:** Garante chamada de `this.closeGame()` ao descarregar a página.
+
+- **Blindagem Completa dos Motores dos Jogos:**
+  - Registrado cleanup e adicionadas verificações `if (!this.isCurrentSession(sessionId)) return;` em:
+    - **Sequência Cognitiva (`setupSequenceGame`):** cancelamento imediato de `playbackInterval`, timeouts e animações de partículas.
+    - **Blocos de Corsi (`setupCorsiGame`):** cancelamento imediato de `playbackInterval`, reprodução de notas musicais e timeouts de toque.
+    - **Respiração Guiada (`setupBreathingGame`):** cancelamento do frame de respiração contínua e dos chimes de sino de fim de ciclo.
+    - **Go/No-Go & Reação Rápida (`setupTapGame`):** cancelamento da cadeia de timeouts de apresentação de itens, impedindo toques automáticos de sucesso ou erro no fechamento.
+    - **Rastreamento Visual (`setupVisualTrackingGame`):** cancelamento da curva Bezier de movimentação, pulso e avanço automático de rodadas.
+    - **Sequência Numérica (`setupNumberSequenceGame`), Reconhecimento Visual (`setupVisualMatchingGame`), Lembrança de Objetos (`setupObjectRecallGame`) e Caça à Estrela (`setupAttentionGame`):** cancelamento de loops de renderização e timers de transição.
+
+#### 3. Validação
+- Compilação Angular (`task-223`) validada com zero erros (`Application bundle generation complete`).
+- Servidores frontend e backend em pleno funcionamento.

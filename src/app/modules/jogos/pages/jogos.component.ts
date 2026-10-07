@@ -87,6 +87,7 @@ export const JOGOS_DATA: Jogo[] = [
 class ClinicalSoundSynthesizer {
   private ctx: AudioContext | null = null;
   enabled = true;
+  private isModalActive = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -94,6 +95,23 @@ class ClinicalSoundSynthesizer {
       if (saved !== null) {
         this.enabled = saved === 'true';
       }
+    }
+  }
+
+  setActive(active: boolean) {
+    this.isModalActive = active;
+    if (!active) {
+      this.stopAll();
+    }
+  }
+
+  stopAll() {
+    this.isModalActive = false;
+    if (this.ctx) {
+      try {
+        this.ctx.close().catch(() => {});
+      } catch (e) {}
+      this.ctx = null;
     }
   }
 
@@ -106,6 +124,7 @@ class ClinicalSoundSynthesizer {
   }
 
   private initContext() {
+    if (!this.enabled) return;
     if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioCtx) this.ctx = new AudioCtx();
@@ -117,11 +136,12 @@ class ClinicalSoundSynthesizer {
 
   /** Garante que o contexto de áudio é desbloqueado no primeiro gesto do usuário */
   ensureUnlocked() {
+    this.isModalActive = true;
     this.initContext();
   }
 
   playClick() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -139,7 +159,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playFlip() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -157,7 +177,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playSuccess() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -179,7 +199,7 @@ class ClinicalSoundSynthesizer {
 
   /** Som especial cristalino de captura de estrela (Arpejo Brilhante) */
   playStarCollect() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -203,7 +223,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playCombo(multiplier: number) {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -222,7 +242,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playError() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -241,7 +261,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playVictory() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -262,7 +282,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playCalmChime() {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -284,7 +304,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playCountdown(pitch: number = 440) {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -301,7 +321,7 @@ class ClinicalSoundSynthesizer {
   }
 
   playMusicalNote(freq: number) {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.isModalActive) return;
     this.initContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime + 0.005;
@@ -734,10 +754,26 @@ export class JogosComponent implements OnInit, OnDestroy {
     }
   }
 
+  private activeSessionId = 0;
+  private sessionCleanups: Array<() => void> = [];
+
+  registerCleanup(fn: () => void) {
+    this.sessionCleanups.push(fn);
+  }
+
+  runActiveCleanups() {
+    while (this.sessionCleanups.length > 0) {
+      const fn = this.sessionCleanups.pop();
+      try { fn?.(); } catch (e) {}
+    }
+  }
+
+  isCurrentSession(sessionId: number): boolean {
+    return this.activeSessionId === sessionId && this.showGameModal();
+  }
+
   ngOnDestroy() { 
-    this.clearTimers(); 
-    this.removeCanvasListeners(); 
-    this.unlockOrientation();
+    this.closeGame();
   }
 
   toggleSound() {
@@ -1119,6 +1155,8 @@ export class JogosComponent implements OnInit, OnDestroy {
   startGame(jogo: Jogo) {
     this.closeGame();
     setTimeout(() => {
+      this.activeSessionId++;
+      this.sound.setActive(true);
       this.currentGame.set(jogo);
       this.gameScore.set(0);
       this.gameTimer.set(0);
@@ -1143,6 +1181,7 @@ export class JogosComponent implements OnInit, OnDestroy {
   }
 
   startCountdown() {
+    this.sound.setActive(true);
     this.isCountingDown.set(true);
     let count = 3;
     this.countdownValue.set(count);
@@ -1158,6 +1197,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.sound.playCountdown(880);
       } else {
         clearInterval(this.countdownInterval);
+        this.countdownInterval = null;
         this.isCountingDown.set(false);
         this.initGame();
       }
@@ -1179,15 +1219,27 @@ export class JogosComponent implements OnInit, OnDestroy {
   }
 
   clearTimers() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
-    if (this.countdownInterval) clearInterval(this.countdownInterval);
-    if (this.gameData?.activeTimeout) {
-      clearTimeout(this.gameData.activeTimeout);
-      this.gameData.activeTimeout = null;
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
-    if (this.gameData?.activeAnimFrame) {
-      cancelAnimationFrame(this.gameData.activeAnimFrame);
-      this.gameData.activeAnimFrame = null;
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+    if (this.gameData) {
+      if (this.gameData.activeTimeout) {
+        clearTimeout(this.gameData.activeTimeout);
+        this.gameData.activeTimeout = null;
+      }
+      if (this.gameData.activeAnimFrame) {
+        cancelAnimationFrame(this.gameData.activeAnimFrame);
+        this.gameData.activeAnimFrame = null;
+      }
+      if (this.gameData.breathingAnimId) {
+        cancelAnimationFrame(this.gameData.breathingAnimId);
+        this.gameData.breathingAnimId = null;
+      }
     }
   }
 
@@ -1208,7 +1260,10 @@ export class JogosComponent implements OnInit, OnDestroy {
   }
 
   closeGame() {
+    this.activeSessionId++;
+    this.sound.stopAll();
     this.clearTimers();
+    this.runActiveCleanups();
     this.removeCanvasListeners();
     this.unlockOrientation();
     this.showGameModal.set(false);
@@ -3448,8 +3503,17 @@ export class JogosComponent implements OnInit, OnDestroy {
     const totalRounds = 10;
     let roundsDone = 0;
     const radius = Math.max(20, Math.min(28, W * 0.052));
+    const sessionId = this.activeSessionId;
     let isTransitioning = false;
     let animFrameId: number | null = null;
+
+    const cleanup = () => {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    };
+    this.registerCleanup(() => cleanup());
 
     const renderBoard = () => {
       ctx.clearRect(0, 0, W, H);
@@ -3502,6 +3566,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       const duration = 240;
 
       const step = (now: number) => {
+        if (!this.isCurrentSession(sessionId)) return;
         const elapsed = now - startTime;
         const progress = Math.min(1, elapsed / duration);
 
@@ -3540,6 +3605,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const newRound = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (animFrameId) {
         cancelAnimationFrame(animFrameId);
         animFrameId = null;
@@ -3637,6 +3703,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const padColors = ['#ef4444', '#0284c7', '#10b981', '#f59e0b', '#0d9488'];
     const padNotes = [261.63, 293.66, 329.63, 392.00, 440.00]; // Pentatônica suave
     const numPads = 5;
+    const sessionId = this.activeSessionId;
 
     // Progressão clínica em 5 níveis
     const levelLengths = [3, 4, 4, 5, 6];
@@ -3677,6 +3744,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         animFrameId = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const padW = (W - 36) / numPads;
     const padH = Math.min(padW * 1.3, H * 0.42);
@@ -3699,245 +3767,262 @@ export class JogosComponent implements OnInit, OnDestroy {
       }
     };
 
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
+      const draw = () => {
+        if (!this.isCurrentSession(sessionId)) return;
+        ctx.clearRect(0, 0, W, H);
 
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, W, H);
 
-      // 1. Badge de Nível no topo
-      ctx.fillStyle = '#1e293b';
-      ctx.strokeStyle = '#334155';
-      ctx.lineWidth = 1;
-      const badgeW = 150;
-      const badgeH = 26;
-      ctx.beginPath();
-      ctx.roundRect((W - badgeW) / 2, 10, badgeW, badgeH, 13);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '600 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`NÍVEL ${currentLevel + 1} DE ${totalLevels}`, W / 2, 23);
-
-      // 2. Progresso de toques na sequência (bolinhas indicadoras)
-      const dotRadius = 5;
-      const dotGap = 8;
-      const totalSeqW = sequence.length * (dotRadius * 2 + dotGap) - dotGap;
-      const dotStartX = (W - totalSeqW) / 2;
-      const dotY = padY - 24;
-
-      for (let s = 0; s < sequence.length; s++) {
-        const dx = dotStartX + s * (dotRadius * 2 + dotGap) + dotRadius;
+        // 1. Badge de Nível no topo
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1;
+        const badgeW = 150;
+        const badgeH = 26;
         ctx.beginPath();
-        ctx.arc(dx, dotY, dotRadius, 0, Math.PI * 2);
-
-        if (s < userSeq.length) {
-          ctx.fillStyle = padColors[userSeq[s]];
-          ctx.fill();
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        } else if (isShowing && s === activePadIndex) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fill();
-        } else {
-          ctx.fillStyle = '#334155';
-          ctx.fill();
-        }
-      }
-
-      // 3. Desenho dos 5 Pads de Cores
-      for (let i = 0; i < numPads; i++) {
-        const x = 18 + i * padW;
-        const isActive = activePadIndex === i;
-
-        ctx.save();
-        if (isActive) {
-          ctx.fillStyle = padColors[i];
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 3.5;
-          ctx.shadowColor = padColors[i];
-          ctx.shadowBlur = 18;
-        } else {
-          ctx.fillStyle = '#1e293b';
-          ctx.strokeStyle = padColors[i];
-          ctx.lineWidth = 2;
-        }
-
-        ctx.beginPath();
-        ctx.roundRect(x + 4, padY, padW - 8, padH, 14);
+        ctx.roundRect((W - badgeW) / 2, 10, badgeW, badgeH, 13);
         ctx.fill();
         ctx.stroke();
-        ctx.restore();
 
-        if (isActive) {
-          ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '600 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`NÍVEL ${currentLevel + 1} DE ${totalLevels}`, W / 2, 23);
+
+        // 2. Progresso de toques na sequência (bolinhas indicadoras)
+        const dotRadius = 5;
+        const dotGap = 8;
+        const totalSeqW = sequence.length * (dotRadius * 2 + dotGap) - dotGap;
+        const dotStartX = (W - totalSeqW) / 2;
+        const dotY = padY - 24;
+
+        for (let s = 0; s < sequence.length; s++) {
+          const dx = dotStartX + s * (dotRadius * 2 + dotGap) + dotRadius;
           ctx.beginPath();
-          ctx.arc(x + padW / 2, padY + padH / 2, 10, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.arc(dx, dotY, dotRadius, 0, Math.PI * 2);
+
+          if (s < userSeq.length) {
+            ctx.fillStyle = padColors[userSeq[s]];
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          } else if (isShowing && s === activePadIndex) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+          } else {
+            ctx.fillStyle = '#334155';
+            ctx.fill();
+          }
         }
-      }
 
-      // 4. Renderizar partículas
-      if (particles.length > 0) {
-        for (let pIdx = particles.length - 1; pIdx >= 0; pIdx--) {
-          const p = particles[pIdx];
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.12;
-          p.alpha -= 0.025;
+        // 3. Desenho dos 5 Pads de Cores
+        for (let i = 0; i < numPads; i++) {
+          const x = 18 + i * padW;
+          const isActive = activePadIndex === i;
 
-          if (p.alpha <= 0) {
-            particles.splice(pIdx, 1);
-            continue;
+          ctx.save();
+          if (isActive) {
+            ctx.fillStyle = padColors[i];
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3.5;
+            ctx.shadowColor = padColors[i];
+            ctx.shadowBlur = 18;
+          } else {
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = padColors[i];
+            ctx.lineWidth = 2;
           }
 
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = p.alpha;
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.roundRect(x + 4, padY, padW - 8, padH, 14);
           ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          if (isActive) {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x + padW / 2, padY + padH / 2, 10, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
-        ctx.globalAlpha = 1.0;
-      }
 
-      animFrameId = requestAnimationFrame(draw);
-    };
+        // 4. Renderizar partículas
+        if (particles.length > 0) {
+          for (let pIdx = particles.length - 1; pIdx >= 0; pIdx--) {
+            const p = particles[pIdx];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.12;
+            p.alpha -= 0.025;
 
-    const startLevel = (level: number) => {
-      currentLevel = level;
-      userSeq = [];
-      isShowing = true;
-      isTransitioning = false;
-      activePadIndex = -1;
+            if (p.alpha <= 0) {
+              particles.splice(pIdx, 1);
+              continue;
+            }
 
-      const len = levelLengths[level];
-      sequence = [];
-      for (let i = 0; i < len; i++) {
-        let nextPad = Math.floor(Math.random() * numPads);
-        if (i >= 2 && sequence[i - 1] === nextPad && sequence[i - 2] === nextPad) {
-          nextPad = (nextPad + 1) % numPads;
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1.0;
         }
-        sequence.push(nextPad);
-      }
 
-      this.gameInstruction.set(`👀 Nível ${level + 1}: Memorize a sequência de ${len} cores`);
+        animFrameId = requestAnimationFrame(draw);
+      };
 
-      activeTimeout = setTimeout(() => {
-        playPlayback();
-      }, 700);
-    };
+      const startLevel = (level: number) => {
+        if (!this.isCurrentSession(sessionId)) return;
+        currentLevel = level;
+        userSeq = [];
+        isShowing = true;
+        isTransitioning = false;
+        activePadIndex = -1;
 
-    const playPlayback = () => {
-      isShowing = true;
-      userSeq = [];
-      activePadIndex = -1;
-      let step = 0;
+        const len = levelLengths[level];
+        sequence = [];
+        for (let i = 0; i < len; i++) {
+          let nextPad = Math.floor(Math.random() * numPads);
+          if (i >= 2 && sequence[i - 1] === nextPad && sequence[i - 2] === nextPad) {
+            nextPad = (nextPad + 1) % numPads;
+          }
+          sequence.push(nextPad);
+        }
 
-      if (playbackInterval) clearInterval(playbackInterval);
+        this.gameInstruction.set(`👀 Nível ${level + 1}: Memorize a sequência de ${len} cores`);
 
-      playbackInterval = setInterval(() => {
-        if (step >= sequence.length) {
-          clearInterval(playbackInterval);
-          playbackInterval = null;
-          isShowing = false;
-          activePadIndex = -1;
-          this.gameInstruction.set(`👉 Sua vez! Repita a sequência de ${sequence.length} cores`);
+        activeTimeout = setTimeout(() => {
+          if (!this.isCurrentSession(sessionId)) return;
+          playPlayback();
+        }, 700);
+      };
+
+      const playPlayback = () => {
+        if (!this.isCurrentSession(sessionId)) return;
+        isShowing = true;
+        userSeq = [];
+        activePadIndex = -1;
+        let step = 0;
+
+        if (playbackInterval) clearInterval(playbackInterval);
+
+        playbackInterval = setInterval(() => {
+          if (!this.isCurrentSession(sessionId)) {
+            cleanup();
+            return;
+          }
+
+          if (step >= sequence.length) {
+            clearInterval(playbackInterval);
+            playbackInterval = null;
+            isShowing = false;
+            activePadIndex = -1;
+            this.gameInstruction.set(`👉 Sua vez! Repita a sequência de ${sequence.length} cores`);
+            return;
+          }
+
+          const currentPad = sequence[step];
+          activePadIndex = currentPad;
+          this.sound.playMusicalNote(padNotes[currentPad]);
+
+          activeTimeout = setTimeout(() => {
+            if (!this.isCurrentSession(sessionId)) return;
+            if (activePadIndex === currentPad) activePadIndex = -1;
+          }, 380);
+
+          step++;
+        }, 680);
+      };
+
+      draw();
+      startLevel(0);
+
+      this.setCanvasHandler(canvas, (mx, my) => {
+        if (!this.isCurrentSession(sessionId)) return;
+        if (isShowing || isTransitioning) return;
+        if (my < padY || my > padY + padH) return;
+
+        const padIdx = Math.floor((mx - 18) / padW);
+        if (padIdx < 0 || padIdx >= numPads) return;
+
+        userSeq.push(padIdx);
+        activePadIndex = padIdx;
+        this.sound.playMusicalNote(padNotes[padIdx]);
+
+        setTimeout(() => {
+          if (!this.isCurrentSession(sessionId)) return;
+          if (activePadIndex === padIdx) activePadIndex = -1;
+        }, 220);
+
+        const currStep = userSeq.length - 1;
+        const isCorrectSoFar = userSeq[currStep] === sequence[currStep];
+
+        if (!isCorrectSoFar) {
+          this.sound.playError();
+          this.recordAttempt(false);
+          attemptsOnCurrentLevel++;
+
+          if (attemptsOnCurrentLevel < 2) {
+            this.gameInstruction.set(`Ops! Vamos ver a sequência novamente...`);
+            isShowing = true;
+            activeTimeout = setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
+              playPlayback();
+            }, 900);
+          } else {
+            this.gameInstruction.set(`Não se preocupe! Próximo desafio...`);
+            isTransitioning = true;
+            activeTimeout = setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
+              attemptsOnCurrentLevel = 0;
+              if (currentLevel + 1 < totalLevels) {
+                startLevel(currentLevel + 1);
+              } else {
+                cleanup();
+                this.finishGame();
+              }
+            }, 1100);
+          }
           return;
         }
 
-        const currentPad = sequence[step];
-        activePadIndex = currentPad;
-        this.sound.playMusicalNote(padNotes[currentPad]);
-
-        activeTimeout = setTimeout(() => {
-          if (activePadIndex === currentPad) activePadIndex = -1;
-        }, 380);
-
-        step++;
-      }, 680);
-    };
-
-    draw();
-    startLevel(0);
-
-    this.setCanvasHandler(canvas, (mx, my) => {
-      if (isShowing || isTransitioning) return;
-      if (my < padY || my > padY + padH) return;
-
-      const padIdx = Math.floor((mx - 18) / padW);
-      if (padIdx < 0 || padIdx >= numPads) return;
-
-      userSeq.push(padIdx);
-      activePadIndex = padIdx;
-      this.sound.playMusicalNote(padNotes[padIdx]);
-
-      setTimeout(() => {
-        if (activePadIndex === padIdx) activePadIndex = -1;
-      }, 220);
-
-      const currStep = userSeq.length - 1;
-      const isCorrectSoFar = userSeq[currStep] === sequence[currStep];
-
-      if (!isCorrectSoFar) {
-        this.sound.playError();
-        this.recordAttempt(false);
-        attemptsOnCurrentLevel++;
-
-        if (attemptsOnCurrentLevel < 2) {
-          this.gameInstruction.set(`Ops! Vamos ver a sequência novamente...`);
-          isShowing = true;
-          activeTimeout = setTimeout(() => {
-            playPlayback();
-          }, 900);
-        } else {
-          this.gameInstruction.set(`Não se preocupe! Próximo desafio...`);
+        if (userSeq.length === sequence.length) {
           isTransitioning = true;
-          activeTimeout = setTimeout(() => {
-            attemptsOnCurrentLevel = 0;
-            if (currentLevel + 1 < totalLevels) {
+          this.sound.playSuccess();
+          this.recordAttempt(true, true);
+          this.gameScore.update(s => s + 25);
+          attemptsOnCurrentLevel = 0;
+
+          spawnSparkles(W / 2, padY + padH / 2);
+
+          if (currentLevel + 1 < totalLevels) {
+            this.gameInstruction.set(`⭐ Excelente! Nível ${currentLevel + 1} concluído!`);
+            activeTimeout = setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
               startLevel(currentLevel + 1);
-            } else {
+            }, 1200);
+          } else {
+            this.gameInstruction.set(`🎉 Fantástico! Você dominou todos os 5 níveis de memória!`);
+            activeTimeout = setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
               cleanup();
+              this.sound.playVictory();
               this.finishGame();
-            }
-          }, 1100);
+            }, 1400);
+          }
         }
-        return;
-      }
-
-      if (userSeq.length === sequence.length) {
-        isTransitioning = true;
-        this.sound.playSuccess();
-        this.recordAttempt(true, true);
-        this.gameScore.update(s => s + 25);
-        attemptsOnCurrentLevel = 0;
-
-        spawnSparkles(W / 2, padY + padH / 2);
-
-        if (currentLevel + 1 < totalLevels) {
-          this.gameInstruction.set(`⭐ Excelente! Nível ${currentLevel + 1} concluído!`);
-          activeTimeout = setTimeout(() => {
-            startLevel(currentLevel + 1);
-          }, 1200);
-        } else {
-          this.gameInstruction.set(`🎉 Fantástico! Você dominou todos os 5 níveis de memória!`);
-          activeTimeout = setTimeout(() => {
-            cleanup();
-            this.sound.playVictory();
-            this.finishGame();
-          }, 1400);
-        }
-      }
-    });
-  }
+      });
+    }
 
   // 5b. SEQUÊNCIA NUMÉRICA (RACIOCÍNIO LÓGICO E SENTIDO NUMÉRICO)
   setupNumberSequenceGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
+    const sessionId = this.activeSessionId;
     const totalRounds = 6;
     let currentRound = 0;
     let isTransitioning = false;
@@ -4046,6 +4131,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         stepTimer = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const cardW = Math.min(64, (W - 50) / 5);
     const cardH = Math.min(74, H * 0.28);
@@ -4078,6 +4164,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const draw = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       ctx.clearRect(0, 0, W, H);
 
       ctx.fillStyle = '#0f172a';
@@ -4242,6 +4329,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     this.gameInstruction.set('Descubra o padrão e complete a sequência numérica');
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (isTransitioning) return;
 
       for (let i = 0; i < currentData.options.length; i++) {
@@ -4265,6 +4353,7 @@ export class JogosComponent implements OnInit, OnDestroy {
             this.gameInstruction.set(`⭐ Perfeito! O padrão é ${currentData.ruleName}`);
 
             stepTimer = setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
               currentRound++;
               if (currentRound >= totalRounds) {
                 cleanup();
@@ -4285,6 +4374,7 @@ export class JogosComponent implements OnInit, OnDestroy {
             this.gameInstruction.set(`Tente novamente! Olhe a diferença entre os números.`);
 
             setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
               if (wrongOptionIdx === i) wrongOptionIdx = null;
             }, 500);
           }
@@ -4297,6 +4387,7 @@ export class JogosComponent implements OnInit, OnDestroy {
   // 5c. MEMÓRIA VISUOESPACIAL DE SEQUÊNCIAS (TESTE DOS BLOCOS DE CORSI)
   setupCorsiGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
+    const sessionId = this.activeSessionId;
 
     // 9 blocos com distribuição espacial assimétrica padronizada (paradigma Corsi)
     const blockNormPositions = [
@@ -4354,6 +4445,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         animFrameId = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const blockSize = Math.min(52, Math.max(38, Math.min(W * 0.12, H * 0.17)));
 
@@ -4375,6 +4467,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const draw = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       ctx.clearRect(0, 0, W, H);
 
       ctx.fillStyle = '#0f172a';
@@ -4512,6 +4605,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const startLevel = (level: number) => {
+      if (!this.isCurrentSession(sessionId)) return;
       currentLevel = level;
       userSeq = [];
       isShowing = true;
@@ -4532,11 +4626,13 @@ export class JogosComponent implements OnInit, OnDestroy {
       this.gameInstruction.set(`👀 Nível ${level + 1}: Observe a sequência dos ${span} blocos...`);
 
       activeTimeout = setTimeout(() => {
+        if (!this.isCurrentSession(sessionId)) return;
         playPlayback();
       }, 750);
     };
 
     const playPlayback = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       isShowing = true;
       userSeq = [];
       activeBlockIdx = -1;
@@ -4546,6 +4642,11 @@ export class JogosComponent implements OnInit, OnDestroy {
       if (playbackInterval) clearInterval(playbackInterval);
 
       playbackInterval = setInterval(() => {
+        if (!this.isCurrentSession(sessionId)) {
+          cleanup();
+          return;
+        }
+
         if (step >= sequence.length) {
           clearInterval(playbackInterval);
           playbackInterval = null;
@@ -4560,6 +4661,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.sound.playMusicalNote(blockNotes[currentBlock]);
 
         activeTimeout = setTimeout(() => {
+          if (!this.isCurrentSession(sessionId)) return;
           if (activeBlockIdx === currentBlock) activeBlockIdx = -1;
         }, 440);
 
@@ -4571,6 +4673,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     startLevel(0);
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (isShowing || isTransitioning) return;
 
       for (let i = 0; i < numBlocks; i++) {
@@ -4592,6 +4695,7 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.sound.playMusicalNote(blockNotes[i]);
 
           setTimeout(() => {
+            if (!this.isCurrentSession(sessionId)) return;
             if (activeBlockIdx === i) activeBlockIdx = -1;
           }, 240);
 
@@ -4608,12 +4712,14 @@ export class JogosComponent implements OnInit, OnDestroy {
               this.gameInstruction.set(`Ops! Vamos rever a sequência dos blocos...`);
               isShowing = true;
               activeTimeout = setTimeout(() => {
+                if (!this.isCurrentSession(sessionId)) return;
                 playPlayback();
               }, 900);
             } else {
               this.gameInstruction.set(`Não se preocupe! Próximo nível...`);
               isTransitioning = true;
               activeTimeout = setTimeout(() => {
+                if (!this.isCurrentSession(sessionId)) return;
                 attemptsOnCurrentLevel = 0;
                 if (currentLevel + 1 < totalLevels) {
                   startLevel(currentLevel + 1);
@@ -4641,11 +4747,13 @@ export class JogosComponent implements OnInit, OnDestroy {
             if (currentLevel + 1 < totalLevels) {
               this.gameInstruction.set(`⭐ Excelente! Span de ${sequence.length} blocos alcançado!`);
               activeTimeout = setTimeout(() => {
+                if (!this.isCurrentSession(sessionId)) return;
                 startLevel(currentLevel + 1);
               }, 1200);
             } else {
               this.gameInstruction.set(`🎉 Fantástico! Você dominou o Teste de Corsi completo!`);
               activeTimeout = setTimeout(() => {
+                if (!this.isCurrentSession(sessionId)) return;
                 cleanup();
                 this.sound.playVictory();
                 this.finishGame();
@@ -4661,6 +4769,7 @@ export class JogosComponent implements OnInit, OnDestroy {
   // 5d. RECONHECIMENTO VISUAL IMEDIATO / MATCH-TO-SAMPLE (MEMÓRIA VISUAL - ID 18)
   setupVisualMatchingGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
+    const sessionId = this.activeSessionId;
     const totalRounds = 5;
     let currentRound = 0;
     let phase: 'SHOW' | 'RECALL' = 'SHOW';
@@ -4715,6 +4824,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         roundTimer = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const spawnSparkles = (cx: number, cy: number) => {
       const colors = ['#38bdf8', '#facc15', '#10b981', '#ffffff', '#fb923c'];
@@ -4744,6 +4854,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const optY = H * 0.66;
 
     const startShowPhase = (roundIdx: number) => {
+      if (!this.isCurrentSession(sessionId)) return;
       currentRound = roundIdx;
       currentData = rounds[roundIdx];
       phase = 'SHOW';
@@ -4755,12 +4866,14 @@ export class JogosComponent implements OnInit, OnDestroy {
 
       if (roundTimer) clearTimeout(roundTimer);
       roundTimer = setTimeout(() => {
+        if (!this.isCurrentSession(sessionId)) return;
         phase = 'RECALL';
         this.gameInstruction.set(`👉 Qual objeto você acabou de ver? Toque na opção correta!`);
       }, showDurationMs);
     };
 
     const draw = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       ctx.clearRect(0, 0, W, H);
 
       ctx.fillStyle = '#0f172a';
@@ -4914,6 +5027,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     startShowPhase(0);
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (phase !== 'RECALL' || isTransitioning) return;
 
       for (let i = 0; i < currentData.options.length; i++) {
@@ -4933,6 +5047,7 @@ export class JogosComponent implements OnInit, OnDestroy {
             this.gameInstruction.set(`⭐ Muito bem! Você acertou o objeto!`);
 
             roundTimer = setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
               if (currentRound + 1 < totalRounds) {
                 startShowPhase(currentRound + 1);
               } else {
@@ -4948,6 +5063,7 @@ export class JogosComponent implements OnInit, OnDestroy {
             this.gameInstruction.set(`Não foi esse! Tente lembrar da forma ou cor.`);
 
             setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
               if (wrongOptionIdx === i) wrongOptionIdx = null;
             }, 500);
           }
@@ -4960,6 +5076,7 @@ export class JogosComponent implements OnInit, OnDestroy {
   // 5e. RECORDAÇÃO LIVRE DE MÚLTIPLOS ITENS (LEMBRE-SE DOS OBJETOS - ID 17)
   setupObjectRecallGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
+    const sessionId = this.activeSessionId;
     const showcaseCounts = [3, 3, 4, 5];
     const totalRounds = showcaseCounts.length;
     let currentRound = 0;
@@ -5014,6 +5131,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         roundTimer = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const spawnSparkles = (cx: number, cy: number) => {
       const colors = ['#38bdf8', '#facc15', '#10b981', '#ffffff', '#fb923c'];
@@ -5033,6 +5151,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const startShowPhase = (roundIdx: number) => {
+      if (!this.isCurrentSession(sessionId)) return;
       currentRound = roundIdx;
       currentData = generateRound(roundIdx);
       foundTargets.clear();
@@ -5045,12 +5164,14 @@ export class JogosComponent implements OnInit, OnDestroy {
 
       if (roundTimer) clearTimeout(roundTimer);
       roundTimer = setTimeout(() => {
+        if (!this.isCurrentSession(sessionId)) return;
         phase = 'RECALL';
         this.gameInstruction.set(`👉 Toque nos objetos que estavam na vitrine! (0/${currentData.targets.length})`);
       }, showDurationMs);
     };
 
     const draw = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       ctx.clearRect(0, 0, W, H);
 
       ctx.fillStyle = '#0f172a';
@@ -5257,6 +5378,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     startShowPhase(0);
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (phase !== 'RECALL' || isTransitioning) return;
 
       const cols = 4;
@@ -5301,11 +5423,13 @@ export class JogosComponent implements OnInit, OnDestroy {
               if (currentRound + 1 < totalRounds) {
                 this.gameInstruction.set(`🎉 Perfeito! Você lembrou de toda a vitrine!`);
                 roundTimer = setTimeout(() => {
+                  if (!this.isCurrentSession(sessionId)) return;
                   startShowPhase(currentRound + 1);
                 }, 1300);
               } else {
                 this.gameInstruction.set(`🏆 Incrível! Você completou todas as vitrines!`);
                 roundTimer = setTimeout(() => {
+                  if (!this.isCurrentSession(sessionId)) return;
                   cleanup();
                   this.sound.playVictory();
                   this.finishGame();
@@ -5319,6 +5443,7 @@ export class JogosComponent implements OnInit, OnDestroy {
             this.gameInstruction.set(`Esse objeto não estava na vitrine! Procure outro.`);
 
             setTimeout(() => {
+              if (!this.isCurrentSession(sessionId)) return;
               if (wrongOptionIdx === i) wrongOptionIdx = null;
             }, 500);
           }
@@ -7693,11 +7818,19 @@ export class JogosComponent implements OnInit, OnDestroy {
   // 7.1 RESPIRAÇÃO GUIADA E AUTORREGULAÇÃO EMOCIONAL (JOGO 54)
   setupBreathingGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
+    const sessionId = this.activeSessionId;
     const totalCycles = 5;
     let currentCycle = 0;
     let cyclePhase: 'inhale' | 'hold' | 'exhale' | 'rest' = 'inhale';
     let phaseStartTime = performance.now();
     let isFinished = false;
+
+    this.registerCleanup(() => {
+      if (this.gameData?.breathingAnimId) {
+        cancelAnimationFrame(this.gameData.breathingAnimId);
+        this.gameData.breathingAnimId = null;
+      }
+    });
 
     // Fases em milissegundos
     const PHASE_DURATIONS = {
@@ -7743,7 +7876,7 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     // Interatividade ao tocar no balão
     this.setCanvasHandler(canvas, (mx, my) => {
-      if (isFinished) return;
+      if (!this.isCurrentSession(sessionId) || isFinished) return;
       const dx = mx - cx;
       const dy = my - cy;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -7760,7 +7893,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     });
 
     const render = (now: number) => {
-      if (isFinished) return;
+      if (!this.isCurrentSession(sessionId) || isFinished) return;
 
       const elapsed = now - phaseStartTime;
       const duration = PHASE_DURATIONS[cyclePhase];
@@ -8147,6 +8280,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const session = buildSequence();
+    const sessionId = this.activeSessionId;
     let currentIndex = 0;
     let isTransitioning = false;
     const radius = Math.max(26, Math.min(38, W * 0.08));
@@ -8154,7 +8288,16 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     // Registro ÚNICO do event listener no canvas
     let currentHandler: ((mx: number, my: number) => void) | null = null;
+    this.registerCleanup(() => {
+      if (this.gameData?.activeTimeout) {
+        clearTimeout(this.gameData.activeTimeout);
+        this.gameData.activeTimeout = null;
+      }
+      currentHandler = null;
+    });
+
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (currentHandler) {
         currentHandler(mx, my);
       }
@@ -8295,6 +8438,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const spawnNext = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (this.gameData.activeTimeout) {
         clearTimeout(this.gameData.activeTimeout);
         this.gameData.activeTimeout = null;
@@ -8328,6 +8472,7 @@ export class JogosComponent implements OnInit, OnDestroy {
 
       // Define o manipulador do toque no item atual
       currentHandler = (mx, my) => {
+        if (!this.isCurrentSession(sessionId)) return;
         if (isTransitioning) return;
         const dist = Math.hypot(mx - x, my - y);
 
@@ -8365,12 +8510,16 @@ export class JogosComponent implements OnInit, OnDestroy {
             drawItem(trial.symbol, x, y, false, '#ef4444');
           }
 
-          this.gameData.activeTimeout = setTimeout(spawnNext, 240);
+          this.gameData.activeTimeout = setTimeout(() => {
+            if (!this.isCurrentSession(sessionId)) return;
+            spawnNext();
+          }, 240);
         }
       };
 
       // TIMEOUT DE APRESENTAÇÃO
       this.gameData.activeTimeout = setTimeout(() => {
+        if (!this.isCurrentSession(sessionId)) return;
         if (isTransitioning) return;
         isTransitioning = true;
         currentHandler = null;
@@ -8388,12 +8537,18 @@ export class JogosComponent implements OnInit, OnDestroy {
           ctx.textAlign = 'center';
           ctx.fillText('✓ Foco mantido!', x, y - radius - 14);
 
-          this.gameData.activeTimeout = setTimeout(spawnNext, 340);
+          this.gameData.activeTimeout = setTimeout(() => {
+            if (!this.isCurrentSession(sessionId)) return;
+            spawnNext();
+          }, 340);
         } else {
           // OMISSÃO! (O jogador não tocou a tempo no alvo)
           this.recordAttempt(false);
           ctx.clearRect(0, 0, W, H);
-          this.gameData.activeTimeout = setTimeout(spawnNext, 180);
+          this.gameData.activeTimeout = setTimeout(() => {
+            if (!this.isCurrentSession(sessionId)) return;
+            spawnNext();
+          }, 180);
         }
       }, duration);
     };
@@ -8404,6 +8559,7 @@ export class JogosComponent implements OnInit, OnDestroy {
   // 10. RASTREAMENTO VISUAL (SEGUIMENTO OCULAR SUAVE E FIXAÇÃO SACÁDICA)
   setupVisualTrackingGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
+    const sessionId = this.activeSessionId;
     const totalRounds = 8;
     let roundsDone = 0;
     let isMoving = false;
@@ -8436,6 +8592,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.gameData.activeTimeout = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const drawStar = (x: number, y: number, stopped: boolean, pulseProgress: number = 0) => {
       // 1. Efeito de resplendor / brilho
@@ -8470,6 +8627,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     const newRound = () => {
+      if (!this.isCurrentSession(sessionId)) return;
       cleanup();
       isTransitioning = false;
       isStopped = false;
@@ -8500,6 +8658,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       this.gameInstruction.set(`Rodada ${roundsDone}/${totalRounds} · 👀 Siga a estrela com os olhos...`);
 
       const animateMove = (now: number) => {
+        if (!this.isCurrentSession(sessionId)) return;
         const elapsed = now - moveStartTime;
         const t = Math.min(1, elapsed / travelDuration);
 
@@ -8537,6 +8696,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       };
 
       const onStarStopped = (finalX: number, finalY: number) => {
+        if (!this.isCurrentSession(sessionId)) return;
         isMoving = false;
         isStopped = true;
         targetX = finalX;
@@ -8547,6 +8707,7 @@ export class JogosComponent implements OnInit, OnDestroy {
 
         const stopStartTime = performance.now();
         const pulseLoop = (now: number) => {
+          if (!this.isCurrentSession(sessionId)) return;
           if (!isStopped || isTransitioning) return;
           const stopElapsed = (now - stopStartTime) / 1000;
           const pulse = (Math.sin(stopElapsed * 6) + 1) / 2;
@@ -8560,6 +8721,7 @@ export class JogosComponent implements OnInit, OnDestroy {
 
         // Se o paciente não tocar em 4.5 segundos, avisa e avança
         roundTimeout = setTimeout(() => {
+          if (!this.isCurrentSession(sessionId)) return;
           if (!isStopped || isTransitioning) return;
           isTransitioning = true;
           this.recordAttempt(false);
@@ -8572,6 +8734,7 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     // Handler de toque no canvas
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (!this.isCurrentSession(sessionId)) return;
       if (isTransitioning) return;
 
       if (isMoving) {
@@ -8595,6 +8758,7 @@ export class JogosComponent implements OnInit, OnDestroy {
           // Efeito de celebração no acerto
           const hitStart = performance.now();
           const burstAnim = (now: number) => {
+            if (!this.isCurrentSession(sessionId)) return;
             const burstElapsed = now - hitStart;
             const progress = Math.min(1, burstElapsed / 260);
 
@@ -8624,7 +8788,10 @@ export class JogosComponent implements OnInit, OnDestroy {
             if (progress < 1) {
               animFrameId = requestAnimationFrame(burstAnim);
             } else {
-              setTimeout(newRound, 120);
+              setTimeout(() => {
+                if (!this.isCurrentSession(sessionId)) return;
+                newRound();
+              }, 120);
             }
           };
 
@@ -9151,6 +9318,8 @@ export class JogosComponent implements OnInit, OnDestroy {
     const memorizeDurationMs = 4500;
     let animId: number | null = null;
 
+    const sessionId = this.activeSessionId;
+
     const cleanup = () => {
       if (animId) {
         cancelAnimationFrame(animId);
@@ -9161,6 +9330,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.gameData.activeTimeout = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const getOptionBounds = (index: number) => {
       const bottomPad = 12;
@@ -9184,6 +9354,8 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     const newRound = () => {
       cleanup();
+      if (!this.isCurrentSession(sessionId)) return;
+
       if (currentRound >= totalRounds) {
         this.sound.playVictory();
         this.finishGame();
@@ -9207,6 +9379,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       memorizeStart = Date.now();
 
       const animLoop = () => {
+        if (!this.isCurrentSession(sessionId)) { cleanup(); return; }
         const elapsed = Date.now() - memorizeStart;
         if (elapsed >= memorizeDurationMs) {
           phase = 'recall';
@@ -9617,6 +9790,8 @@ export class JogosComponent implements OnInit, OnDestroy {
     const trialDurationMs = 3600;
     let lastPhase = 0;
 
+    const sessionId = this.activeSessionId;
+
     const cleanup = () => {
       if (animId) {
         cancelAnimationFrame(animId);
@@ -9627,9 +9802,12 @@ export class JogosComponent implements OnInit, OnDestroy {
         this.gameData.activeTimeout = null;
       }
     };
+    this.registerCleanup(() => cleanup());
 
     const nextTrial = () => {
       cleanup();
+      if (!this.isCurrentSession(sessionId)) return;
+
       if (currentRoundIndex >= totalRounds) {
         this.sound.playVictory();
         this.finishGame();
@@ -9650,6 +9828,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         const bannerStart = Date.now();
 
         const bannerLoop = () => {
+          if (!this.isCurrentSession(sessionId)) { cleanup(); return; }
           const elapsed = Date.now() - bannerStart;
           if (elapsed >= switchDurationMs) {
             startActiveTrial();
@@ -9667,11 +9846,14 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     const startActiveTrial = () => {
       cleanup();
+      if (!this.isCurrentSession(sessionId)) return;
+
       trialState = 'active';
       this.gameInstruction.set(`${currentTrial.phaseTitle}: ${currentTrial.phaseRule}`);
       roundStartTime = Date.now();
 
       const loop = () => {
+        if (!this.isCurrentSession(sessionId)) { cleanup(); return; }
         const elapsed = Date.now() - roundStartTime;
         if (elapsed >= trialDurationMs) {
           // Tempo esgotou sem toque!
@@ -9688,6 +9870,8 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     const onTimeout = () => {
       cleanup();
+      if (!this.isCurrentSession(sessionId)) return;
+
       trialState = 'feedback';
 
       if (!currentTrial.isTarget) {
