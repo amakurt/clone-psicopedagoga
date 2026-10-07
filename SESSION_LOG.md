@@ -29,13 +29,14 @@
   - Substituído o formato rígido de 3 perguntas por bancos completos de 6 desafios clínicos específicos com emojis e contextos reais:
     - **31. Rimas Básicas**: Identificação de rimas com terminações homófonas (-OLA, -ÃO, -ATO, -ENTE, -ELA, -OR).
     - **32. Sílabas**: Segmentação silábica correta e contagem (CA-SA, PI-PO-CA, BOR-BO-LE-TA).
-    - **33. Som Inicial**: Aliteração e identificação do fonema/letra inicial (MAÇÃ, ELEFANTE, BOLA, SAPATO, GATO, UVA).
-    - **34. Som Final**: Identificação do fonema/letra final (SOL, JACARÉ, TAMBOR, TATU, ANEL, AMOR).
+    - **33. Som Inicial**: Identificação de fonema/letra inicial com slot oculto no estímulo (`🍎 _ A Ç Ã`, `🐘 _ L E F A N T E`, etc.) e 4 alternativas em letras limpas padronizadas (`M`, `P`, `B`, `F`), eliminando o texto que entregava a resposta.
+    - **34. Som Final**: Identificação de fonema/letra final com slot oculto no estímulo (`☀️ S O _`, `🐊 J A C A R _`, etc.) e 4 alternativas padronizadas (`L`, `R`, `S`, `Z`).
     - **35. Contagem de Sílabas**: Quantificação de palmas/pulsos orais em palavras monossílabas até polissílabas.
     - **38. Fonemas**: Segmentação e consciência fonêmica isolada som por som (S-O-L, P-É, U-V-A).
     - **39. Junte Sílabas**: Síntese silábica oral e correspondência gráfica (CA + SA = CASA).
+  - **Eliminação de Respostas Entregues**: Nenhum jogo agora possui texto adicional entregando a alternativa correta ou letras evidentes no cabeçalho antes da escolha.
   - **Embaralhamento Aleatório**: As 4 opções de resposta agora são sorteadas por algoritmo Fisher-Yates, eliminando o vício de a opção A ser sempre a correta.
-  - **Sons e Layout Bottom-Up**: Adicionados efeitos sonoros com Web Audio API e layout adaptado para dispositivos móveis e tablets.
+  - **Sons e Layout Bottom-Up**: Adicionados efeitos sonoros com Web Audio API e layout adaptado para dispositivos móveis e tablets com tipografia ampliada para letras unitárias.
 
 #### 4. Aprimoramento das Regras nos Jogos de Funções Executivas (`setupTapGame`)
 - **Jogo 22 (Mude de Regra)**: Implementada alternância real de regras tipo Wisconsin (Fase 1: tocar círculos azuis e ignorar quadrados; Fase 2: regra inverte no meio e a criança deve tocar quadrados e ignorar círculos).

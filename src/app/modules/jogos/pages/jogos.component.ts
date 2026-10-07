@@ -6543,23 +6543,27 @@ export class JogosComponent implements OnInit, OnDestroy {
         { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'BORBOLETA 🦋', options: ['BOR - BO - LE - TA (4)', 'BO - RBO - LE - TA (4)', 'BOR - BOLETA (2)', 'BORBO - LETA (2)'], explanation: 'BOR-BO-LE-TA tem 4 sílabas!' },
         { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'SOL ☀️', options: ['SOL (1 sílaba)', 'SO - L (2)', 'S - O - L (3)', 'S - OL (2)'], explanation: 'SOL tem 1 sílaba só (monossílaba)!' },
       ],
-      // 33. Som Inicial
+      // 33. Som Inicial (identificar qual som/letra completa o início da palavra)
       33: [
-        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'MAÇÃ 🍎', options: ['M (som /m/)', 'A', 'Ç', 'P'], explanation: 'MAÇÃ começa com a letra M!' },
-        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'ELEFANTE 🐘', options: ['E (som /e/)', 'L', 'F', 'T'], explanation: 'ELEFANTE começa com a letra E!' },
-        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'BOLA ⚽', options: ['B (som /b/)', 'O', 'L', 'D'], explanation: 'BOLA começa com a letra B!' },
-        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'SAPATO 👟', options: ['S (som /s/)', 'A', 'P', 'Z'], explanation: 'SAPATO começa com a letra S!' },
-        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'GATO 🐱', options: ['G (som /g/)', 'A', 'T', 'J'], explanation: 'GATO começa com a letra G!' },
-        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'UVA 🍇', options: ['U (som /u/)', 'V', 'A', 'O'], explanation: 'UVA começa com a letra U!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '🍎  _ A Ç Ã', options: ['M', 'P', 'B', 'F'], explanation: 'MAÇÃ começa com a letra M (som /m/)!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '🐘  _ L E F A N T E', options: ['E', 'A', 'I', 'O'], explanation: 'ELEFANTE começa com a letra E!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '⚽  _ O L A', options: ['B', 'P', 'D', 'M'], explanation: 'BOLA começa com a letra B (som /b/)!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '👟  _ A P A T O', options: ['S', 'Z', 'C', 'X'], explanation: 'SAPATO começa com a letra S (som /s/)!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '🐱  _ A T O', options: ['G', 'J', 'C', 'P'], explanation: 'GATO começa com a letra G (som /g/)!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '🍇  _ V A', options: ['U', 'A', 'O', 'E'], explanation: 'UVA começa com a letra U!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '🍿  _ I P O C A', options: ['P', 'B', 'T', 'D'], explanation: 'PIPOCA começa com a letra P (som /p/)!' },
+        { headerPrompt: 'Qual letra completa o INÍCIO da palavra:', stimulus: '🦁  _ E Ã O', options: ['L', 'R', 'M', 'N'], explanation: 'LEÃO começa com a letra L (som /l/)!' },
       ],
-      // 34. Som Final
+      // 34. Som Final (identificar qual som/letra completa o final da palavra)
       34: [
-        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'SOL ☀️', options: ['L (som /l/)', 'S', 'O', 'Z'], explanation: 'SOL termina com a letra L!' },
-        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'JACARÉ 🐊', options: ['É (som /ɛ/)', 'J', 'A', 'C'], explanation: 'JACARÉ termina com a letra É!' },
-        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'TAMBOR 🥁', options: ['R (som /r/)', 'T', 'A', 'M'], explanation: 'TAMBOR termina com a letra R!' },
-        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'TATU 🐾', options: ['U (som /u/)', 'T', 'A', 'O'], explanation: 'TATU termina com a letra U!' },
-        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'ANEL 💍', options: ['L (som /l/)', 'A', 'N', 'E'], explanation: 'ANEL termina com a letra L!' },
-        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'AMOR 💖', options: ['R (som /r/)', 'A', 'M', 'O'], explanation: 'AMOR termina com a letra R!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '☀️  S O _', options: ['L', 'R', 'S', 'Z'], explanation: 'SOL termina com a letra L (som /l/)!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '🐊  J A C A R _', options: ['É', 'Í', 'Ó', 'Á'], explanation: 'JACARÉ termina com a letra É!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '🥁  T A M B O _', options: ['R', 'L', 'S', 'M'], explanation: 'TAMBOR termina com a letra R!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '🐾  T A T _', options: ['U', 'O', 'I', 'A'], explanation: 'TATU termina com a letra U!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '💍  A N E _', options: ['L', 'R', 'U', 'S'], explanation: 'ANEL termina com a letra L (som /l/)!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '💖  A M O _', options: ['R', 'L', 'S', 'Z'], explanation: 'AMOR termina com a letra R!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '📄  P A P E _', options: ['L', 'U', 'R', 'S'], explanation: 'PAPEL termina com a letra L (som /l/)!' },
+        { headerPrompt: 'Qual letra completa o FINAL da palavra:', stimulus: '🐌  C A R A C O _', options: ['L', 'R', 'U', 'M'], explanation: 'CARACOL termina com a letra L (som /l/)!' },
       ],
       // 35. Contagem de Sílabas
       35: [
@@ -6774,11 +6778,12 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.fillText(letterBadge, pillX + pillW / 2, pillY + pillH / 2);
 
         // Texto da Alternativa
-        const textX = pillX + pillW + 10;
+        const textX = pillX + pillW + 12;
         const maxTextW = bw - (textX - bx) - 8;
+        const isShort = opt.text.length <= 2;
         ctx.textAlign = 'left';
         ctx.fillStyle = textColor;
-        ctx.font = 'bold 13.5px "Outfit", sans-serif';
+        ctx.font = isShort ? '900 18px "Outfit", sans-serif' : 'bold 13.5px "Outfit", sans-serif';
         ctx.fillText(opt.text, textX, by + bh / 2, maxTextW);
 
         ctx.restore();
