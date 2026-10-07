@@ -36,7 +36,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 17, name: '17. Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados? Toque nos que lembra', type: 'object_recall' },
   { id: 18, name: '18. Memória Visual', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Veja a imagem e encontre ela entre as opções', type: 'visual_matching' },
   { id: 19, name: '19. Pares de Emojis', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de emojis iguais', type: 'memory' },
-  { id: 20, name: '20. Memória de Trabalho', category: 'Memória', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Guarde a sequência de números e responda com atenção', type: 'tap' },
+  { id: 20, name: '20. Memória de Trabalho', category: 'Memória', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Guarde o número na memória e aplique a transformação mental', type: 'operational_memory' },
 
   { id: 21, name: '21. Organize a Fila', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Organize os números de 1 a 6 na ordem correta', type: 'sequence' },
   { id: 22, name: '22. Mude de Regra', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Às vezes clique no círculo, às vezes no quadrado — a regra muda!', type: 'tap' },
@@ -46,8 +46,8 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 26, name: '26. Controle de Impulsos', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Toque quando o semáforo ficar verde — espere o sinal!', type: 'tap' },
   { id: 27, name: '27. Flexibilidade Mental', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Alternar entre identificar vogais e números sem errar', type: 'tap' },
   { id: 28, name: '28. Tombe Switch', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Mude entre regras: às vezes cor, às vezes forma', type: 'tap' },
-  { id: 29, name: '29. Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Encontre o caminho mais curto entre os pontos', type: 'tap' },
-  { id: 30, name: '30. Memória Operacional', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde o número e Some +3 — teste de memória de trabalho', type: 'tap' },
+  { id: 29, name: '29. Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Planeje e conecte os pontos em ordem sequencial no trajeto', type: 'planning' },
+  { id: 30, name: '30. Memória Operacional', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde o número e aplique o cálculo (+3, -4, x2) mentalmente', type: 'operational_memory' },
 
   { id: 31, name: '31. Rimas Básicas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Qual palavra rima com a palavra destacada? Toque na resposta', type: 'phonology' },
   { id: 32, name: '32. Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Separe a palavra em sílabas corretamente: CA-SA', type: 'phonology' },
@@ -1156,13 +1156,13 @@ export class JogosComponent implements OnInit, OnDestroy {
     const measuredW = Math.max(container?.clientWidth || 0, (parentContainer?.clientWidth || 0) - 32);
     const containerWidth = measuredW > 320 ? measuredW : 560;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36));
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || jogo?.type === 'planning' || jogo?.type === 'operational_memory' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36));
     const maxAvailableH = window.innerHeight 
       ? Math.max(340, window.innerHeight - (isExpandedGame ? 160 : 220)) 
       : (isExpandedGame ? 460 : 320);
 
     let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
-    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36))) ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
+    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || jogo?.type === 'planning' || jogo?.type === 'operational_memory' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36))) ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -1216,6 +1216,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
       case 'letter_swap': this.setupLetterSwapGame(canvas, logicalW, logicalH); break;
       case 'rhyme': this.setupCompleteRhymeGame(canvas, logicalW, logicalH); break;
+      case 'planning': this.setupPlanningGame(canvas, logicalW, logicalH); break;
+      case 'operational_memory': this.setupOperationalMemoryGame(canvas, logicalW, logicalH, jogo.id); break;
       case 'phonology': 
         if (jogo.id === 40) {
           this.setupAdvancedPhonologyGame(canvas, logicalW, logicalH);
@@ -1245,6 +1247,10 @@ export class JogosComponent implements OnInit, OnDestroy {
           this.setupObjectRecallGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 18) {
           this.setupVisualMatchingGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 29) {
+          this.setupPlanningGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 30 || jogo.id === 20) {
+          this.setupOperationalMemoryGame(canvas, logicalW, logicalH, jogo.id);
         } else if (jogo.id === 44) {
           this.setupObjectCountingGame(canvas, logicalW, logicalH);
         } else if (jogo.id === 46) {
@@ -8621,5 +8627,629 @@ export class JogosComponent implements OnInit, OnDestroy {
     };
 
     showQuestion();
+  }
+
+  // 15. PLANEJAMENTO - TRAIL MAKING TEST / SEQUENCIAMENTO ESPACIAL DE TRAJETO (JOGO 29)
+  setupPlanningGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface NodePoint {
+      id: number;
+      x: number;
+      y: number;
+      r: number;
+      errorFlash: number;
+    }
+
+    interface LevelConfig {
+      nodes: Array<{ id: number; px: number; py: number }>;
+    }
+
+    const LEVELS: LevelConfig[] = [
+      {
+        // Nível 1: 4 nós
+        nodes: [
+          { id: 1, px: 0.20, py: 0.72 },
+          { id: 2, px: 0.80, py: 0.28 },
+          { id: 3, px: 0.25, py: 0.28 },
+          { id: 4, px: 0.75, py: 0.72 }
+        ]
+      },
+      {
+        // Nível 2: 5 nós
+        nodes: [
+          { id: 1, px: 0.50, py: 0.80 },
+          { id: 2, px: 0.20, py: 0.45 },
+          { id: 3, px: 0.40, py: 0.20 },
+          { id: 4, px: 0.80, py: 0.30 },
+          { id: 5, px: 0.75, py: 0.75 }
+        ]
+      },
+      {
+        // Nível 3: 6 nós
+        nodes: [
+          { id: 1, px: 0.20, py: 0.30 },
+          { id: 2, px: 0.80, py: 0.25 },
+          { id: 3, px: 0.26, py: 0.78 },
+          { id: 4, px: 0.72, py: 0.75 },
+          { id: 5, px: 0.48, py: 0.46 },
+          { id: 6, px: 0.85, py: 0.52 }
+        ]
+      },
+      {
+        // Nível 4: 7 nós (Desafio máximo de planejamento)
+        nodes: [
+          { id: 1, px: 0.16, py: 0.76 },
+          { id: 2, px: 0.50, py: 0.84 },
+          { id: 3, px: 0.84, py: 0.70 },
+          { id: 4, px: 0.76, py: 0.24 },
+          { id: 5, px: 0.45, py: 0.16 },
+          { id: 6, px: 0.16, py: 0.28 },
+          { id: 7, px: 0.48, py: 0.48 }
+        ]
+      }
+    ];
+
+    let currentLevel = 0;
+    const totalLevels = LEVELS.length;
+    let targetIndex = 1;
+    let currentNodes: NodePoint[] = [];
+    let isTransitioning = false;
+
+    const marginX = 20;
+    const marginTop = 65;
+    const marginBottom = 20;
+    const usableW = W - marginX * 2;
+    const usableH = H - marginTop - marginBottom;
+    const nodeRadius = Math.max(20, Math.min(26, W * 0.055));
+
+    const loadLevel = () => {
+      if (currentLevel >= totalLevels) {
+        this.sound.playVictory();
+        this.finishGame();
+        return;
+      }
+
+      isTransitioning = false;
+      targetIndex = 1;
+      const config = LEVELS[currentLevel];
+      currentNodes = config.nodes.map(n => ({
+        id: n.id,
+        x: marginX + n.px * usableW,
+        y: marginTop + n.py * usableH,
+        r: nodeRadius,
+        errorFlash: 0
+      }));
+
+      this.gameInstruction.set(`Nível ${currentLevel + 1}/${totalLevels}: Conecte os nós de 1 até ${config.nodes.length} em ordem!`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // Fundo escuro com gradiente elegante
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#0a0f1d');
+      bgGrad.addColorStop(1, '#050811');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Card de Cabeçalho / Instrução superior
+      const headerH = 48;
+      ctx.save();
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(12, 8, W - 24, headerH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Badge de Nível
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 12px "Outfit", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`PLANEJAMENTO DE TRAJETO · NÍVEL ${currentLevel + 1}/${totalLevels}`, 24, 22);
+
+      // Subtítulo de Orientação
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '500 11.5px "Outfit", sans-serif';
+      ctx.fillText(`Conecte todos os pontos em ordem crescente (1 ➔ 2 ➔ 3 ...)`, 24, 40);
+
+      // Badge do Próximo Ponto (Alvo Atual)
+      const targetBadgeW = 108;
+      const targetBadgeH = 28;
+      const targetBadgeX = W - 24 - targetBadgeW;
+      const targetBadgeY = 18;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(targetBadgeX, targetBadgeY, targetBadgeW, targetBadgeH, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 11px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`PRÓXIMO: [ ${Math.min(targetIndex, currentNodes.length)} ]`, targetBadgeX + targetBadgeW / 2, targetBadgeY + targetBadgeH / 2);
+      ctx.restore();
+
+      // LINHAS DE CONEXÃO PLANEJADA (Traçado Neon Conectado)
+      if (targetIndex > 1) {
+        ctx.save();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = 'rgba(16, 185, 129, 0.6)';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+
+        for (let i = 1; i < targetIndex; i++) {
+          const fromNode = currentNodes.find(n => n.id === i);
+          const toNode = currentNodes.find(n => n.id === i + 1);
+          if (fromNode && toNode) {
+            if (i === 1) ctx.moveTo(fromNode.x, fromNode.y);
+            ctx.lineTo(toNode.x, toNode.y);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // RENDERIZAÇÃO DOS NÓS / PONTOS DE CHECAGEM
+      const now = Date.now();
+      currentNodes.forEach(node => {
+        const isDone = node.id < targetIndex;
+        const isTarget = node.id === targetIndex;
+        const isError = node.errorFlash > now;
+
+        ctx.save();
+
+        if (isError) {
+          // Flash de Erro
+          ctx.fillStyle = '#450a0a';
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = 'rgba(239, 68, 68, 0.6)';
+          ctx.shadowBlur = 12;
+        } else if (isDone) {
+          // Concluído com Sucesso
+          ctx.fillStyle = '#064e3b';
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
+          ctx.shadowBlur = 8;
+        } else if (isTarget) {
+          // Ponto Alvo Imediato (Pulsante e Convidativo)
+          ctx.fillStyle = '#1e3a8a';
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3;
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.6)';
+          ctx.shadowBlur = 14;
+
+          // Anel exterior de foco
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, node.r + 6, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          // Ponto Futuro (Ainda não alcançado)
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 1.8;
+          ctx.shadowBlur = 0;
+        }
+
+        // Círculo Principal do Nó
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Rótulo / Número do Nó
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (isDone) {
+          ctx.fillStyle = '#a7f3d0';
+          ctx.font = 'bold 16px "Outfit", sans-serif';
+          ctx.fillText('✓', node.x, node.y);
+        } else if (isTarget) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 18px "Outfit", sans-serif';
+          ctx.fillText(String(node.id), node.x, node.y);
+        } else {
+          ctx.fillStyle = '#cbd5e1';
+          ctx.font = 'bold 16px "Outfit", sans-serif';
+          ctx.fillText(String(node.id), node.x, node.y);
+        }
+
+        ctx.restore();
+      });
+    };
+
+    loadLevel();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (isTransitioning) return;
+
+      const hitDist = nodeRadius * 1.55;
+      const clickedNode = currentNodes.find(n => Math.hypot(mx - n.x, my - n.y) <= hitDist);
+      if (!clickedNode) return;
+
+      if (clickedNode.id < targetIndex) {
+        // Já concluído, ignorar
+        return;
+      }
+
+      if (clickedNode.id === targetIndex) {
+        // ACERTO NO PLANEJAMENTO!
+        const musicalNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
+        this.sound.playMusicalNote(musicalNotes[(clickedNode.id - 1) % musicalNotes.length]);
+        this.recordAttempt(true);
+        this.gameScore.update(s => s + 5);
+
+        targetIndex++;
+
+        if (targetIndex > currentNodes.length) {
+          // NÍVEL CONCLUÍDO COM SUCESSO!
+          isTransitioning = true;
+          this.sound.playSuccess();
+          this.gameScore.update(s => s + 10);
+          this.gameInstruction.set(`🎉 Excelente! Sequência de planejamento ${currentLevel + 1} completada!`);
+          draw();
+
+          this.gameData.activeTimeout = setTimeout(() => {
+            currentLevel++;
+            loadLevel();
+          }, 650);
+        } else {
+          draw();
+        }
+      } else {
+        // ERRO DE PLANEJAMENTO / TOQUE FORA DE SEQUÊNCIA
+        this.sound.playError();
+        this.recordAttempt(false);
+        clickedNode.errorFlash = Date.now() + 500;
+        this.gameInstruction.set(`⚠️ Fora de ordem! Siga o plano: o próximo é o ponto [ ${targetIndex} ].`);
+        draw();
+
+        this.gameData.activeTimeout = setTimeout(() => {
+          clickedNode.errorFlash = 0;
+          draw();
+        }, 500);
+      }
+    });
+  }
+
+  // 16. MEMÓRIA OPERACIONAL / TRABALHO - TRANSFORMAÇÃO E RETENÇÃO MENTAL (JOGOS 30 E 20)
+  setupOperationalMemoryGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
+    const ctx = this.canvasCtx!;
+
+    interface OpMemoryTrial {
+      num: number;
+      ruleName: string;
+      target: number;
+      distractors: number[];
+      explanation: string;
+    }
+
+    const TRIALS: OpMemoryTrial[] = [
+      { num: 5, ruleName: 'SOME + 3', target: 8, distractors: [7, 9, 10], explanation: '5 + 3 = 8' },
+      { num: 12, ruleName: 'SUBTRAIA - 4', target: 8, distractors: [6, 9, 7], explanation: '12 - 4 = 8' },
+      { num: 6, ruleName: 'DOBRE (x 2)', target: 12, distractors: [10, 14, 8], explanation: '6 x 2 = 12' },
+      { num: 9, ruleName: 'SOME + 4', target: 13, distractors: [12, 14, 15], explanation: '9 + 4 = 13' },
+      { num: 15, ruleName: 'SUBTRAIA - 6', target: 9, distractors: [8, 10, 11], explanation: '15 - 6 = 9' },
+      { num: 7, ruleName: 'SOME + 5', target: 12, distractors: [11, 13, 10], explanation: '7 + 5 = 12' },
+      { num: 4, ruleName: 'TRIPLIQUE (x 3)', target: 12, distractors: [9, 14, 16], explanation: '4 x 3 = 12' },
+      { num: 18, ruleName: 'SUBTRAIA - 9', target: 9, distractors: [8, 10, 7], explanation: '18 - 9 = 9' }
+    ];
+
+    const pool = [...TRIALS].sort(() => Math.random() - 0.5);
+    const totalRounds = 8;
+    let currentRound = 0;
+    let currentTrial: OpMemoryTrial;
+    let currentOptions: Array<{ value: number; isCorrect: boolean }> = [];
+    let phase: 'memorize' | 'recall' = 'memorize';
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+    let memorizeStart = 0;
+    const memorizeDurationMs = 2400;
+    let animId: number | null = null;
+
+    const cleanup = () => {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+      if (this.gameData?.activeTimeout) {
+        clearTimeout(this.gameData.activeTimeout);
+        this.gameData.activeTimeout = null;
+      }
+    };
+
+    const getOptionBounds = (index: number) => {
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const gapX = 10;
+      const totalOptionsH = cardH * 2 + gapY;
+      const startOptionsY = H - bottomPad - totalOptionsH;
+
+      const sidePad = 14;
+      const cardW = (W - sidePad * 2 - gapX) / 2;
+
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+
+      const bx = sidePad + col * (cardW + gapX);
+      const by = startOptionsY + row * (cardH + gapY);
+
+      return { bx, by, bw: cardW, bh: cardH };
+    };
+
+    const newRound = () => {
+      cleanup();
+      if (currentRound >= totalRounds) {
+        this.sound.playVictory();
+        this.finishGame();
+        return;
+      }
+
+      currentTrial = pool[currentRound % pool.length];
+      currentRound++;
+      phase = 'memorize';
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      // 4 opções embaralhadas
+      const rawOptions = [
+        { value: currentTrial.target, isCorrect: true },
+        ...currentTrial.distractors.map(d => ({ value: d, isCorrect: false }))
+      ].sort(() => Math.random() - 0.5);
+      currentOptions = rawOptions;
+
+      this.gameInstruction.set(`Guarde o número na mente e aplique a regra: ${currentTrial.ruleName}!`);
+      memorizeStart = Date.now();
+
+      const animLoop = () => {
+        const elapsed = Date.now() - memorizeStart;
+        if (elapsed >= memorizeDurationMs) {
+          phase = 'recall';
+          animId = null;
+          this.gameInstruction.set(`Qual é o resultado de ${currentTrial.ruleName} sobre o número guardado?`);
+          draw();
+          return;
+        }
+
+        draw(1 - elapsed / memorizeDurationMs);
+        animId = requestAnimationFrame(animLoop);
+      };
+
+      animId = requestAnimationFrame(animLoop);
+    };
+
+    const draw = (progressFraction = 0) => {
+      ctx.clearRect(0, 0, W, H);
+
+      // Fundo escuro com gradiente
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#0a0f1d');
+      bgGrad.addColorStop(1, '#050811');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. CARD CENTRAL DE APRESENTAÇÃO / RETENÇÃO
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const startOptionsY = H - bottomPad - (cardH * 2 + gapY);
+
+      const topCardMargin = 14;
+      const topCardX = topCardMargin;
+      const topCardY = 10;
+      const topCardW = W - topCardMargin * 2;
+      const topCardH = startOptionsY - topCardY - 12;
+
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(topCardX, topCardY, topCardW, topCardH, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      // Badge superior de Rodada / Fase
+      const badgeW = 260;
+      const badgeH = 24;
+      const badgeX = topCardX + (topCardW - badgeW) / 2;
+      const badgeY = topCardY + 10;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = phase === 'memorize' ? '#f59e0b' : '#38bdf8';
+      ctx.font = 'bold 11px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const phaseTitle = phase === 'memorize' ? 'FASE 1: GUARDE NA MEMÓRIA' : 'FASE 2: RESPONDA COM CÁLCULO';
+      ctx.fillText(`DESAFIO ${currentRound}/${totalRounds} · ${phaseTitle}`, badgeX + badgeW / 2, badgeY + badgeH / 2);
+
+      // ESTÍMULO CENTRAL (O Número em Destaque ou [ ? ])
+      const centerBoxY = badgeY + badgeH + 12;
+      const centerBoxH = topCardH - (badgeH + 34) - (phase === 'memorize' ? 44 : 36);
+      const displayNum = phase === 'memorize' ? String(currentTrial.num) : '?';
+
+      const numCardW = Math.min(130, topCardW * 0.35);
+      const numCardH = Math.min(68, centerBoxH);
+      const numCardX = topCardX + (topCardW - numCardW) / 2;
+      const numCardY = centerBoxY + (centerBoxH - numCardH) / 2;
+
+      // Caixa do Número
+      ctx.fillStyle = phase === 'memorize' ? '#1e3a8a' : '#1e293b';
+      ctx.strokeStyle = phase === 'memorize' ? '#38bdf8' : '#64748b';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = phase === 'memorize' ? 'rgba(56, 189, 248, 0.45)' : 'rgba(0,0,0,0)';
+      ctx.shadowBlur = phase === 'memorize' ? 12 : 0;
+      ctx.beginPath();
+      ctx.roundRect(numCardX, numCardY, numCardW, numCardH, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Número
+      ctx.fillStyle = phase === 'memorize' ? '#ffffff' : '#94a3b8';
+      ctx.font = '900 38px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(displayNum, numCardX + numCardW / 2, numCardY + numCardH / 2);
+
+      // REGRA MENTAL (Embaixo do Número)
+      const ruleBoxY = topCardY + topCardH - (phase === 'memorize' ? 36 : 30);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 14px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`⚡ REGRA: ${currentTrial.ruleName}`, topCardX + topCardW / 2, ruleBoxY);
+
+      // Barra de Contagem Regressiva na Fase 1
+      if (phase === 'memorize' && progressFraction > 0) {
+        const barW = topCardW - 40;
+        const barH = 5;
+        const barX = topCardX + 20;
+        const barY = topCardY + topCardH - 12;
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW, barH, 3);
+        ctx.fill();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, Math.max(0, barW * progressFraction), barH, 3);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 2. BOTÕES DE RESPOSTA (4 Opções no Grid)
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+        const letterBadge = ['A', 'B', 'C', 'D'][i];
+
+        ctx.save();
+        let bgColor = '#0f172a';
+        let borderColor = '#1e293b';
+        let textColor = '#e2e8f0';
+        let pillBg = '#1e293b';
+        let pillText = '#94a3b8';
+
+        if (phase === 'memorize') {
+          // Desabilitado durante a memorização
+          bgColor = '#090d16';
+          borderColor = '#131b2e';
+          textColor = '#475569';
+          pillBg = '#111827';
+          pillText = '#334155';
+        } else if (feedbackStatus !== 'none') {
+          if (feedbackIndex === i) {
+            if (feedbackStatus === 'success') {
+              bgColor = '#064e3b';
+              borderColor = '#10b981';
+              textColor = '#ffffff';
+              pillBg = '#10b981';
+              pillText = '#ffffff';
+            } else {
+              bgColor = '#450a0a';
+              borderColor = '#ef4444';
+              textColor = '#fef2f2';
+              pillBg = '#ef4444';
+              pillText = '#ffffff';
+            }
+          } else if (opt.isCorrect && feedbackStatus === 'error') {
+            borderColor = '#10b981';
+          }
+        }
+
+        ctx.fillStyle = bgColor;
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        // Pílula da Letra (A, B, C, D)
+        const pillW = 28;
+        const pillH = 28;
+        const pillX = bx + 10;
+        const pillY = by + (bh - pillH) / 2;
+
+        ctx.fillStyle = pillBg;
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+        ctx.fill();
+
+        ctx.fillStyle = pillText;
+        ctx.font = '900 13px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterBadge, pillX + pillW / 2, pillY + pillH / 2);
+
+        // Valor Numérico da Alternativa
+        const textX = pillX + pillW + 10;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 18px "Outfit", sans-serif';
+        const displayOptionText = phase === 'memorize' ? '?' : String(opt.value);
+        ctx.fillText(displayOptionText, textX + 10, by + bh / 2);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (phase !== 'recall' || feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          feedbackIndex = i;
+          const isCorrect = opt.isCorrect;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 12.5);
+            this.gameInstruction.set(`🎉 Muito bem! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 650);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`❌ Ops! O número era ${currentTrial.num}. ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 1200);
+          }
+        }
+      });
+    });
   }
 }

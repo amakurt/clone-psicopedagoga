@@ -4,6 +4,53 @@
 
 ---
 
+## Sessão 61 - 07/10/2026 — Criação das Engines Dedicadas para o Jogo 29 (Planejamento) e Jogo 30 (Memória Operacional)
+
+### O que foi feito
+
+#### 1. Correção Estrutural da Discrepância nos Jogos 29 e 30
+- **Diagnóstico da Causa Raiz**:
+  - Os jogos `29. Planejamento`, `30. Memória Operacional` e `20. Memória de Trabalho` estavam configurados como `type: 'tap'` em `JOGOS_DATA`.
+  - Como não possuíam blocos de tratamento específicos dentro de `setupTapGame`, caíam no fallback padrão do Jogo 2 ("Contagem Rápida" com frutas `🍎`, `🍌`, `🍇`), que não guardava qualquer relação com suas descrições clínicas e pedagógicas.
+  - O usuário identificou que o Jogo 29 estava idêntico ao 30 e desconectado de suas propostas.
+
+#### 2. Engine Dedicada para o Jogo 29: Planejamento (`setupPlanningGame`)
+- **Fundamentação Neuropsicológica**: Baseado no **Trail Making Test (TMT)** e em testes de planejamento espacial e sequencial das funções executivas.
+- **Mecânica do Jogo**:
+  - A criança ou paciente visualiza pontos numerados distribuídos no canvas.
+  - O objetivo é planejar mentalmente a rota e conectar os pontos em estrita ordem crescente (`1 ➔ 2 ➔ 3 ➔ ...`).
+  - **4 Níveis Progressivos**:
+    - Nível 1: 4 nós (1 até 4)
+    - Nível 2: 5 nós (1 até 5)
+    - Nível 3: 6 nós (1 até 6)
+    - Nível 4: 7 nós (1 até 7)
+  - **Trilha Neon Conectada**: Conexões concluídas são traçadas com linhas de brilho esmeralda neon (`#10b981`), mantendo o histórico visual do trajeto.
+  - **Feedback Sonoro & Visual**:
+    - Cada nó correto toca uma nota musical em frequência crescente da escala (Web Audio API).
+    - Toques fora de sequência disparam alerta sonoro suave e flash vermelho no nó tocado indevidamente, indicando qual é o próximo nó planejado sem punição excessiva.
+    - Conclusão do nível dispara bônus e som de vitória.
+
+#### 3. Engine Dedicada para o Jogo 30: Memória Operacional (`setupOperationalMemoryGame`)
+- **Fundamentação Neuropsicológica**: Baseado em paradigmas de **Memória de Trabalho (Working Memory Transformation)** — retenção de estímulo e aplicação de regra de cálculo mental.
+- **Estrutura em Duas Fases Interativas**:
+  - **Fase 1: Memorização e Regra (2.4s)**:
+    - Exibe o número base em destaque ampliado (ex: `8`) dentro de card escuro com contorno azul neon.
+    - Exibe a regra mental (ex: `⚡ REGRA: SOME + 3` ou `SUBTRAIA - 4`, `DOBRE x 2`).
+    - Uma barra de contagem regressiva suave orienta o tempo de memorização antes de o número sumir.
+    - Os botões de resposta permanecem desabilitados com interrogação durante a retenção.
+  - **Fase 2: Retenção e Cálculo Interativo**:
+    - O número original se oculta em `[ ? ]` (exigindo recuperação na memória de curto prazo).
+    - A criança deve aplicar a operação mental e selecionar o resultado correto entre 4 alternativas embaralhadas (A, B, C, D).
+  - **Banco de 8 Desafios Clínicos Balanceados**:
+    - Operações de soma (+3, +4, +5), subtração (-4, -6, -9) e multiplicação simples (x2 dobrar, x3 triplicar).
+  - Roteamento também aplicado ao **Jogo 20 ("20. Memória de Trabalho")**.
+
+#### 4. Validação e Compilação
+- Compilação do Angular finalizada com sucesso (bundle gerado em 5.1s, 0 erros de TypeScript).
+- Credenciais oficiais de teste mapeadas diretamente do banco de dados (`sarah@edupsych.com` / `123456` e `admin@test.com` / `123456`), eliminando tentativas incorretas de cadastro de conta.
+
+---
+
 ## Sessão 60 - 07/10/2026 — Numeração Global dos 60 Jogos, Engine Dedicada para o Jogo 36 (Troca de Letras) e Auditoria/Refatoração das Engines Clínicas
 
 ### O que foi feito
