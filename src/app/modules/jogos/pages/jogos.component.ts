@@ -8082,7 +8082,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         return {
           trials: [{ symbol: '🔵', isTarget: true }, ...phase1, ...phase2],
           instruction: 'Regra 1: Toque no CÍRCULO 🔵! Atenção: a regra vai mudar no meio!',
-          durationMs: 1900
+          durationMs: 2500
         };
       }
 
@@ -8317,7 +8317,11 @@ export class JogosComponent implements OnInit, OnDestroy {
       const y = Math.random() * safeH + paddingY;
       const duration = session.durationMs;
 
-      this.gameInstruction.set(`${session.instruction} (${currentIndex}/${session.trials.length})`);
+      if (gameId === 22 && currentIndex > 7) {
+        this.gameInstruction.set(`⚠️ A REGRA MUDOU! Toque no QUADRADO ⬜ (${currentIndex}/${session.trials.length})`);
+      } else {
+        this.gameInstruction.set(`${session.instruction} (${currentIndex}/${session.trials.length})`);
+      }
 
       // Renderiza o item imediatamente na tela
       drawItem(trial.symbol, x, y, trial.isTarget);
@@ -9144,7 +9148,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     let feedbackStatus: 'none' | 'success' | 'error' = 'none';
     let feedbackIndex = -1;
     let memorizeStart = 0;
-    const memorizeDurationMs = 2400;
+    const memorizeDurationMs = 4500;
     let animId: number | null = null;
 
     const cleanup = () => {
@@ -9405,6 +9409,14 @@ export class JogosComponent implements OnInit, OnDestroy {
     newRound();
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (phase === 'memorize') {
+        cleanup();
+        phase = 'recall';
+        this.gameInstruction.set(`Qual é o resultado de ${currentTrial.ruleName} sobre o número guardado?`);
+        draw();
+        return;
+      }
+
       if (phase !== 'recall' || feedbackStatus !== 'none') return;
 
       currentOptions.forEach((opt, i) => {
@@ -9602,7 +9614,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     let feedbackMessage = '';
     let animId: number | null = null;
     let roundStartTime = 0;
-    const trialDurationMs = 2200;
+    const trialDurationMs = 3600;
     let lastPhase = 0;
 
     const cleanup = () => {
@@ -9629,21 +9641,32 @@ export class JogosComponent implements OnInit, OnDestroy {
       lastPhase = currentTrial.phase;
 
       if (isNewPhase) {
-        // Banner de transição de fase anunciando a mudança de regra!
+        // Banner de transição de fase com tempo estendido para leitura calma (12 segundos)
         trialState = 'switch_banner';
         this.sound.playSuccess();
-        this.gameInstruction.set(`⚠️ Atenção: ${currentTrial.phaseTitle}! ${currentTrial.phaseRule}`);
-        draw();
+        this.gameInstruction.set(`📖 Leia com calma a regra da ${currentTrial.phaseTitle}! Toque no botão ou aguarde.`);
 
-        this.gameData.activeTimeout = setTimeout(() => {
-          startActiveTrial();
-        }, 1500);
+        const switchDurationMs = 12000;
+        const bannerStart = Date.now();
+
+        const bannerLoop = () => {
+          const elapsed = Date.now() - bannerStart;
+          if (elapsed >= switchDurationMs) {
+            startActiveTrial();
+            return;
+          }
+          draw(1 - elapsed / switchDurationMs);
+          animId = requestAnimationFrame(bannerLoop);
+        };
+
+        animId = requestAnimationFrame(bannerLoop);
       } else {
         startActiveTrial();
       }
     };
 
     const startActiveTrial = () => {
+      cleanup();
       trialState = 'active';
       this.gameInstruction.set(`${currentTrial.phaseTitle}: ${currentTrial.phaseRule}`);
       roundStartTime = Date.now();
@@ -9703,7 +9726,7 @@ export class JogosComponent implements OnInit, OnDestroy {
       if (!currentTrial) return;
 
       if (trialState === 'switch_banner') {
-        // TELA DE MUDANÇA DE REGRA (SWITCH ANNOUNCEMENT)
+        // TELA DE MUDANÇA DE REGRA (SWITCH ANNOUNCEMENT) AMPLIADA
         ctx.save();
         const bannerW = W - 32;
         const bannerH = H - 32;
@@ -9711,7 +9734,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.strokeStyle = currentTrial.phaseColor;
         ctx.lineWidth = 2.5;
         ctx.shadowColor = currentTrial.phaseColor;
-        ctx.shadowBlur = 16;
+        ctx.shadowBlur = 18;
         ctx.beginPath();
         ctx.roundRect(16, 16, bannerW, bannerH, 20);
         ctx.fill();
@@ -9722,15 +9745,88 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.font = '900 22px "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('⚡ MUDANÇA DE REGRA! ⚡', W / 2, H * 0.32);
+        const headline = currentTrial.phase === 1 ? '🎯 REGRA INICIAL DO JOGO' : '⚡ ATENÇÃO: A REGRA MUDOU! ⚡';
+        ctx.fillText(headline, W / 2, H * 0.20);
+
+        // Badge da Fase
+        const phaseBadgeW = Math.min(300, bannerW - 40);
+        const phaseBadgeH = 32;
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = currentTrial.phaseColor;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.roundRect((W - phaseBadgeW) / 2, H * 0.30, phaseBadgeW, phaseBadgeH, 10);
+        ctx.fill();
+        ctx.stroke();
 
         ctx.fillStyle = currentTrial.phaseColor;
-        ctx.font = 'bold 16px "Outfit", sans-serif';
-        ctx.fillText(currentTrial.phaseTitle, W / 2, H * 0.48);
+        ctx.font = 'bold 13px "Outfit", sans-serif';
+        ctx.fillText(currentTrial.phaseTitle, W / 2, H * 0.30 + phaseBadgeH / 2);
+
+        // Caixa destacada da Regra
+        const ruleCardW = bannerW - 40;
+        const ruleCardH = 68;
+        const ruleCardX = 36;
+        const ruleCardY = H * 0.44;
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = currentTrial.phaseColor;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(ruleCardX, ruleCardY, ruleCardW, ruleCardH, 14);
+        ctx.fill();
+        ctx.stroke();
 
         ctx.fillStyle = '#f8fafc';
-        ctx.font = '600 14px "Outfit", sans-serif';
-        ctx.fillText(currentTrial.phaseRule, W / 2, H * 0.65);
+        ctx.font = 'bold 15px "Outfit", sans-serif';
+        ctx.fillText(currentTrial.phaseRule, W / 2, ruleCardY + 24);
+
+        const subGuide = currentTrial.phase === 2 
+          ? 'Esqueça as vogais por enquanto! Toque apenas se for número.'
+          : (currentTrial.phase === 3 ? 'Atenção ao retorno! Toque apenas nas vogais.' : 'Se aparecer número, mantenha o foco e não toque!');
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 12.5px "Outfit", sans-serif';
+        ctx.fillText(subGuide, W / 2, ruleCardY + 48);
+
+        // Botão para avançar direto
+        const btnW = 220;
+        const btnH = 40;
+        const btnX = (W - btnW) / 2;
+        const btnY = H * 0.70;
+        ctx.fillStyle = '#10b981';
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(btnX, btnY, btnW, btnH, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px "Outfit", sans-serif';
+        ctx.fillText('COMEÇAR AGORA ▶', W / 2, btnY + btnH / 2);
+
+        // Barra de contagem regressiva suave
+        if (progressFraction > 0) {
+          const barW = bannerW - 60;
+          const barH = 6;
+          const barX = (W - barW) / 2;
+          const barY = H - 36;
+
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.roundRect(barX, barY, barW, barH, 3);
+          ctx.fill();
+
+          ctx.fillStyle = currentTrial.phaseColor;
+          ctx.beginPath();
+          ctx.roundRect(barX, barY, Math.max(0, barW * progressFraction), barH, 3);
+          ctx.fill();
+
+          const secsLeft = Math.ceil(progressFraction * 12);
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '500 12px "Outfit", sans-serif';
+          ctx.fillText(`⏳ Iniciando em ${secsLeft}s... (ou toque no botão acima para começar)`, W / 2, barY - 12);
+        }
+
         ctx.restore();
         return;
       }
@@ -9859,6 +9955,13 @@ export class JogosComponent implements OnInit, OnDestroy {
     nextTrial();
 
     this.setCanvasHandler(canvas, (mx, my) => {
+      if (trialState === 'switch_banner') {
+        // Usuário ou terapeuta leu a regra e tocou para começar sem esperar os 12s
+        cleanup();
+        startActiveTrial();
+        return;
+      }
+
       if (trialState !== 'active') return;
 
       cleanup();

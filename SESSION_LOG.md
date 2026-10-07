@@ -65,7 +65,19 @@
     - Treina a agilidade de retorno e desapego da regra anterior.
 - **Feedback Educativo Instantâneo**: Cada tentativa explica com precisão o motivo do acerto ou erro (ex: *"❌ Atenção à mudança: 'O' é vogal! Na regra atual foque em NÚMEROS"*).
 
-#### 5. Validação e Compilação
+#### 5. Ampliação do Tempo de Apresentação e Explicação das Regras
+- **Jogo 27: Flexibilidade Mental**:
+  - **Tempo de Explicação das Regras Ampliado para 12 Segundos**: O banner de transição de fase (`switchDurationMs`), que apresenta a regra da Fase 1 (Vogais), Fase 2 (Números) e Fase 3 (Retorno às Vogais), teve seu tempo estendido de 5s para **12.0 segundos**, garantindo leitura tranquila e confortável para crianças e terapeutas.
+  - **Controle Flexível (Avanço Imediato)**: Adicionado contador regressivo em tempo real (`⏳ Iniciando em Xs...`) e suporte total ao toque na tela ou no botão `[ COMEÇAR AGORA ▶ ]`, permitindo que o usuário avance imediatamente quando terminar de ler, sem ficar preso aguardando o cronômetro.
+  - **Tempo de Resposta Aumentado**: O tempo de exposição de cada estímulo na fase ativa (`trialDurationMs`) foi ampliado para **3.6 segundos** (de 2.6s), reduzindo a ansiedade e permitindo reflexão executiva adequada.
+- **Jogo 30: Memória Operacional**:
+  - Tempo de retenção e cálculo (`memorizeDurationMs`) aumentado de 2.4s para **4.5 segundos**.
+  - O jogador agora também pode tocar na tela para avançar imediatamente para a escolha da alternativa se já tiver feito o cálculo mental.
+- **Jogo 22: Mude de Regra**:
+  - Duração de cada estímulo estendida de 1.9s para **2.5 segundos**.
+  - Instrução dinâmica na mudança de fase alertando com precisão: `⚠️ A REGRA MUDOU! Toque no QUADRADO ⬜`.
+
+#### 6. Validação e Compilação
 - Compilação do Angular finalizada com sucesso (bundle gerado sem erros de TypeScript).
 - Credenciais oficiais de teste mapeadas diretamente do banco de dados (`sarah@edupsych.com` / `123456` e `admin@test.com` / `123456`).
 
