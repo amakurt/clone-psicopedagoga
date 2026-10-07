@@ -14,20 +14,23 @@
   - Como não possuíam blocos de tratamento específicos dentro de `setupTapGame`, caíam no fallback padrão do Jogo 2 ("Contagem Rápida" com frutas `🍎`, `🍌`, `🍇`), que não guardava qualquer relação com suas descrições clínicas e pedagógicas.
   - O usuário identificou que o Jogo 29 estava idêntico ao 30 e desconectado de suas propostas.
 
-#### 2. Engine Dedicada para o Jogo 29: Planejamento (`setupPlanningGame`)
-- **Fundamentação Neuropsicológica**: Baseado no **Trail Making Test (TMT)** e em testes de planejamento espacial e sequencial das funções executivas.
-- **Mecânica do Jogo**:
-  - A criança ou paciente visualiza pontos numerados distribuídos no canvas.
-  - O objetivo é planejar mentalmente a rota e conectar os pontos em estrita ordem crescente (`1 ➔ 2 ➔ 3 ➔ ...`).
+#### 2. Engine Dedicada para o Jogo 29: Planejamento (`setupPlanningGame`) — Interação "Clicar e Arrastar"
+- **Fundamentação Neuropsicológica**: Baseado no **Trail Making Test (TMT)** e em testes de planejamento espacial, coordenação visomotora e sequenciamento executivo.
+- **Mecânica do Jogo com Arrastar e Conectar (Drag-and-Connect)**:
+  - Sugestão clínica atendida: em vez de apenas tocar, o usuário agora **clica/toca e arrasta o dedo ou mouse** diretamente de um número para o próximo (`1 ➔ 2 ➔ 3 ➔ ...`).
+  - **Rastreamento Dinâmico em Tempo Real**:
+    - Ao segurar e arrastar, uma linha elástica tracejada com neon ciano (`#38bdf8`) e ponto luminoso acompanha a ponta do dedo/cursor.
+    - Ao alcançar a área do ponto seguinte planejado, ocorre o **Snap imediato** conectando o segmento em neon esmeralda (`#10b981`).
+    - O paciente pode continuar arrastando para os próximos números em sequência fluida, ou soltar e retomar a qualquer momento.
+    - Suporte híbrido: toques diretos também são aceitos para garantir acessibilidade a crianças com dificuldades motoras finas.
   - **4 Níveis Progressivos**:
     - Nível 1: 4 nós (1 até 4)
     - Nível 2: 5 nós (1 até 5)
     - Nível 3: 6 nós (1 até 6)
     - Nível 4: 7 nós (1 até 7)
-  - **Trilha Neon Conectada**: Conexões concluídas são traçadas com linhas de brilho esmeralda neon (`#10b981`), mantendo o histórico visual do trajeto.
   - **Feedback Sonoro & Visual**:
-    - Cada nó correto toca uma nota musical em frequência crescente da escala (Web Audio API).
-    - Toques fora de sequência disparam alerta sonoro suave e flash vermelho no nó tocado indevidamente, indicando qual é o próximo nó planejado sem punição excessiva.
+    - Cada conexão realizada toca uma nota musical em frequência crescente da escala pentatônica/maior (Web Audio API).
+    - Desvios para nós fora de ordem geram aviso sonoro suave e destaque vermelho no ponto indevido, sem perda de progresso.
     - Conclusão do nível dispara bônus e som de vitória.
 
 #### 3. Engine Dedicada para o Jogo 30: Memória Operacional (`setupOperationalMemoryGame`)

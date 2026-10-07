@@ -46,7 +46,7 @@ export const JOGOS_DATA: Jogo[] = [
   { id: 26, name: '26. Controle de Impulsos', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Toque quando o semáforo ficar verde — espere o sinal!', type: 'tap' },
   { id: 27, name: '27. Flexibilidade Mental', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Alternar entre identificar vogais e números sem errar', type: 'tap' },
   { id: 28, name: '28. Tombe Switch', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Mude entre regras: às vezes cor, às vezes forma', type: 'tap' },
-  { id: 29, name: '29. Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Planeje e conecte os pontos em ordem sequencial no trajeto', type: 'planning' },
+  { id: 29, name: '29. Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Trace o caminho arrastando entre os pontos em ordem sequencial', type: 'planning' },
   { id: 30, name: '30. Memória Operacional', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde o número e aplique o cálculo (+3, -4, x2) mentalmente', type: 'operational_memory' },
 
   { id: 31, name: '31. Rimas Básicas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Qual palavra rima com a palavra destacada? Toque na resposta', type: 'phonology' },
@@ -706,6 +706,8 @@ export class JogosComponent implements OnInit, OnDestroy {
   private canvasCtx: CanvasRenderingContext2D | null = null;
   private gameData: any = {};
   private canvasPointerHandler: ((e: PointerEvent) => void) | null = null;
+  private canvasPointerMoveHandler: ((e: PointerEvent) => void) | null = null;
+  private canvasPointerUpHandler: ((e: PointerEvent) => void) | null = null;
   private canvasTouchHandler: ((e: TouchEvent) => void) | null = null;
   private canvasClickHandler: ((e: MouseEvent) => void) | null = null;
 
@@ -785,6 +787,15 @@ export class JogosComponent implements OnInit, OnDestroy {
         canvas.removeEventListener('pointerdown', this.canvasPointerHandler);
         this.canvasPointerHandler = null;
       }
+      if (this.canvasPointerMoveHandler) {
+        canvas.removeEventListener('pointermove', this.canvasPointerMoveHandler);
+        this.canvasPointerMoveHandler = null;
+      }
+      if (this.canvasPointerUpHandler) {
+        window.removeEventListener('pointerup', this.canvasPointerUpHandler);
+        canvas.removeEventListener('pointerup', this.canvasPointerUpHandler);
+        this.canvasPointerUpHandler = null;
+      }
       if (this.canvasTouchHandler) {
         canvas.removeEventListener('touchstart', this.canvasTouchHandler);
         this.canvasTouchHandler = null;
@@ -839,6 +850,69 @@ export class JogosComponent implements OnInit, OnDestroy {
       this.canvasClickHandler = (e: MouseEvent) => processPointer(e.clientX, e.clientY, e);
       canvas.addEventListener('touchstart', this.canvasTouchHandler, { passive: false });
       canvas.addEventListener('click', this.canvasClickHandler, { passive: false });
+    }
+  }
+
+  setCanvasDragHandler(
+    canvas: HTMLCanvasElement,
+    handlers: {
+      onDown: (x: number, y: number) => void;
+      onMove: (x: number, y: number) => void;
+      onUp: (x: number, y: number) => void;
+    }
+  ) {
+    this.removeCanvasListeners();
+    this.sound.ensureUnlocked();
+
+    const getPos = (clientX: number, clientY: number) => this.getPointerPos(canvas, clientX, clientY);
+
+    if (window.PointerEvent) {
+      this.canvasPointerHandler = (e: PointerEvent) => {
+        this.sound.ensureUnlocked();
+        if (e.cancelable) e.preventDefault();
+        const pos = getPos(e.clientX, e.clientY);
+        handlers.onDown(pos.x, pos.y);
+      };
+
+      this.canvasPointerMoveHandler = (e: PointerEvent) => {
+        if (e.cancelable) e.preventDefault();
+        const pos = getPos(e.clientX, e.clientY);
+        handlers.onMove(pos.x, pos.y);
+      };
+
+      this.canvasPointerUpHandler = (e: PointerEvent) => {
+        const pos = getPos(e.clientX, e.clientY);
+        handlers.onUp(pos.x, pos.y);
+      };
+
+      canvas.addEventListener('pointerdown', this.canvasPointerHandler, { passive: false });
+      canvas.addEventListener('pointermove', this.canvasPointerMoveHandler, { passive: false });
+      window.addEventListener('pointerup', this.canvasPointerUpHandler, { passive: false });
+    } else {
+      this.canvasTouchHandler = (e: TouchEvent) => {
+        this.sound.ensureUnlocked();
+        if (e.cancelable) e.preventDefault();
+        if (e.touches && e.touches.length > 0) {
+          const pos = getPos(e.touches[0].clientX, e.touches[0].clientY);
+          handlers.onDown(pos.x, pos.y);
+        }
+      };
+      const touchMove = (e: TouchEvent) => {
+        if (e.cancelable) e.preventDefault();
+        if (e.touches && e.touches.length > 0) {
+          const pos = getPos(e.touches[0].clientX, e.touches[0].clientY);
+          handlers.onMove(pos.x, pos.y);
+        }
+      };
+      const touchEnd = (e: TouchEvent) => {
+        const touch = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+        const pos = touch ? getPos(touch.clientX, touch.clientY) : { x: 0, y: 0 };
+        handlers.onUp(pos.x, pos.y);
+      };
+
+      canvas.addEventListener('touchstart', this.canvasTouchHandler, { passive: false });
+      canvas.addEventListener('touchmove', touchMove, { passive: false });
+      window.addEventListener('touchend', touchEnd, { passive: false });
     }
   }
 
@@ -8629,7 +8703,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     showQuestion();
   }
 
-  // 15. PLANEJAMENTO - TRAIL MAKING TEST / SEQUENCIAMENTO ESPACIAL DE TRAJETO (JOGO 29)
+  // 15. PLANEJAMENTO - TRAIL MAKING TEST / ARRASTAR E CONECTAR TRAJETO (JOGO 29)
   setupPlanningGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
 
@@ -8695,6 +8769,8 @@ export class JogosComponent implements OnInit, OnDestroy {
     let targetIndex = 1;
     let currentNodes: NodePoint[] = [];
     let isTransitioning = false;
+    let isDragging = false;
+    let dragPos: { x: number; y: number } | null = null;
 
     const marginX = 20;
     const marginTop = 65;
@@ -8702,6 +8778,7 @@ export class JogosComponent implements OnInit, OnDestroy {
     const usableW = W - marginX * 2;
     const usableH = H - marginTop - marginBottom;
     const nodeRadius = Math.max(20, Math.min(26, W * 0.055));
+    const musicalNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
 
     const loadLevel = () => {
       if (currentLevel >= totalLevels) {
@@ -8711,6 +8788,8 @@ export class JogosComponent implements OnInit, OnDestroy {
       }
 
       isTransitioning = false;
+      isDragging = false;
+      dragPos = null;
       targetIndex = 1;
       const config = LEVELS[currentLevel];
       currentNodes = config.nodes.map(n => ({
@@ -8721,7 +8800,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         errorFlash: 0
       }));
 
-      this.gameInstruction.set(`Nível ${currentLevel + 1}/${totalLevels}: Conecte os nós de 1 até ${config.nodes.length} em ordem!`);
+      this.gameInstruction.set(`Nível ${currentLevel + 1}/${totalLevels}: Toque no 1 e arraste até os próximos pontos em ordem!`);
       draw();
     };
 
@@ -8751,15 +8830,15 @@ export class JogosComponent implements OnInit, OnDestroy {
       ctx.font = 'bold 12px "Outfit", sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`PLANEJAMENTO DE TRAJETO · NÍVEL ${currentLevel + 1}/${totalLevels}`, 24, 22);
+      ctx.fillText(`PLANEJAMENTO & TRAJETO · NÍVEL ${currentLevel + 1}/${totalLevels}`, 24, 22);
 
       // Subtítulo de Orientação
       ctx.fillStyle = '#94a3b8';
       ctx.font = '500 11.5px "Outfit", sans-serif';
-      ctx.fillText(`Conecte todos os pontos em ordem crescente (1 ➔ 2 ➔ 3 ...)`, 24, 40);
+      ctx.fillText(`Arraste do ponto atual até o próximo número (1 ➔ 2 ➔ 3 ...)`, 24, 40);
 
       // Badge do Próximo Ponto (Alvo Atual)
-      const targetBadgeW = 108;
+      const targetBadgeW = 118;
       const targetBadgeH = 28;
       const targetBadgeX = W - 24 - targetBadgeW;
       const targetBadgeY = 18;
@@ -8775,11 +8854,12 @@ export class JogosComponent implements OnInit, OnDestroy {
       ctx.fillStyle = '#e2e8f0';
       ctx.font = 'bold 11px "Outfit", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`PRÓXIMO: [ ${Math.min(targetIndex, currentNodes.length)} ]`, targetBadgeX + targetBadgeW / 2, targetBadgeY + targetBadgeH / 2);
+      const nextTargetId = targetIndex === 1 ? 1 : Math.min(targetIndex, currentNodes.length);
+      ctx.fillText(`PRÓXIMO: [ ${nextTargetId} ]`, targetBadgeX + targetBadgeW / 2, targetBadgeY + targetBadgeH / 2);
       ctx.restore();
 
-      // LINHAS DE CONEXÃO PLANEJADA (Traçado Neon Conectado)
-      if (targetIndex > 1) {
+      // LINHAS DE CONEXÃO JÁ COMPLETADAS (Traçado Neon Esmeralda)
+      if (targetIndex > 2) {
         ctx.save();
         ctx.strokeStyle = '#10b981';
         ctx.lineWidth = 4;
@@ -8789,7 +8869,7 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.shadowBlur = 10;
         ctx.beginPath();
 
-        for (let i = 1; i < targetIndex; i++) {
+        for (let i = 1; i < targetIndex - 1; i++) {
           const fromNode = currentNodes.find(n => n.id === i);
           const toNode = currentNodes.find(n => n.id === i + 1);
           if (fromNode && toNode) {
@@ -8801,11 +8881,45 @@ export class JogosComponent implements OnInit, OnDestroy {
         ctx.restore();
       }
 
+      // LINHA DINÂMICA AO VIVO DE ARRASTO (Rubber-band elástico neon)
+      if (isDragging && dragPos && targetIndex > 1) {
+        const fromNode = currentNodes.find(n => n.id === targetIndex - 1);
+        if (fromNode) {
+          ctx.save();
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3.5;
+          ctx.lineCap = 'round';
+          ctx.setLineDash([7, 6]);
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.7)';
+          ctx.shadowBlur = 12;
+
+          ctx.beginPath();
+          ctx.moveTo(fromNode.x, fromNode.y);
+          ctx.lineTo(dragPos.x, dragPos.y);
+          ctx.stroke();
+
+          // Ponto luminoso na ponta do dedo / cursor
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#38bdf8';
+          ctx.beginPath();
+          ctx.arc(dragPos.x, dragPos.y, 8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(dragPos.x, dragPos.y, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
       // RENDERIZAÇÃO DOS NÓS / PONTOS DE CHECAGEM
       const now = Date.now();
       currentNodes.forEach(node => {
-        const isDone = node.id < targetIndex;
-        const isTarget = node.id === targetIndex;
+        const isCompleted = targetIndex > 1 && node.id < targetIndex;
+        const isCurrentTarget = node.id === targetIndex;
+        const isLastConnected = targetIndex > 1 && node.id === targetIndex - 1;
         const isError = node.errorFlash > now;
 
         ctx.save();
@@ -8817,14 +8931,14 @@ export class JogosComponent implements OnInit, OnDestroy {
           ctx.lineWidth = 3;
           ctx.shadowColor = 'rgba(239, 68, 68, 0.6)';
           ctx.shadowBlur = 12;
-        } else if (isDone) {
+        } else if (isCompleted) {
           // Concluído com Sucesso
           ctx.fillStyle = '#064e3b';
           ctx.strokeStyle = '#10b981';
           ctx.lineWidth = 2.5;
           ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
           ctx.shadowBlur = 8;
-        } else if (isTarget) {
+        } else if (isCurrentTarget) {
           // Ponto Alvo Imediato (Pulsante e Convidativo)
           ctx.fillStyle = '#1e3a8a';
           ctx.strokeStyle = '#38bdf8';
@@ -8832,9 +8946,9 @@ export class JogosComponent implements OnInit, OnDestroy {
           ctx.shadowColor = 'rgba(56, 189, 248, 0.6)';
           ctx.shadowBlur = 14;
 
-          // Anel exterior de foco
+          // Anel exterior pulsante
           ctx.beginPath();
-          ctx.arc(node.x, node.y, node.r + 6, 0, Math.PI * 2);
+          ctx.arc(node.x, node.y, node.r + 7, 0, Math.PI * 2);
           ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
           ctx.lineWidth = 2;
           ctx.stroke();
@@ -8855,16 +8969,16 @@ export class JogosComponent implements OnInit, OnDestroy {
         // Rótulo / Número do Nó
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        if (isDone) {
+        if (isCompleted && !isLastConnected) {
           ctx.fillStyle = '#a7f3d0';
           ctx.font = 'bold 16px "Outfit", sans-serif';
           ctx.fillText('✓', node.x, node.y);
-        } else if (isTarget) {
+        } else if (isCurrentTarget) {
           ctx.fillStyle = '#ffffff';
           ctx.font = '900 18px "Outfit", sans-serif';
           ctx.fillText(String(node.id), node.x, node.y);
         } else {
-          ctx.fillStyle = '#cbd5e1';
+          ctx.fillStyle = isCompleted ? '#34d399' : '#cbd5e1';
           ctx.font = 'bold 16px "Outfit", sans-serif';
           ctx.fillText(String(node.id), node.x, node.y);
         }
@@ -8875,54 +8989,122 @@ export class JogosComponent implements OnInit, OnDestroy {
 
     loadLevel();
 
-    this.setCanvasHandler(canvas, (mx, my) => {
-      if (isTransitioning) return;
+    const connectStep = (node: NodePoint) => {
+      this.sound.playMusicalNote(musicalNotes[(node.id - 1) % musicalNotes.length]);
+      this.recordAttempt(true);
+      this.gameScore.update(s => s + 5);
 
-      const hitDist = nodeRadius * 1.55;
-      const clickedNode = currentNodes.find(n => Math.hypot(mx - n.x, my - n.y) <= hitDist);
-      if (!clickedNode) return;
+      targetIndex++;
 
-      if (clickedNode.id < targetIndex) {
-        // Já concluído, ignorar
-        return;
-      }
-
-      if (clickedNode.id === targetIndex) {
-        // ACERTO NO PLANEJAMENTO!
-        const musicalNotes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
-        this.sound.playMusicalNote(musicalNotes[(clickedNode.id - 1) % musicalNotes.length]);
-        this.recordAttempt(true);
-        this.gameScore.update(s => s + 5);
-
-        targetIndex++;
-
-        if (targetIndex > currentNodes.length) {
-          // NÍVEL CONCLUÍDO COM SUCESSO!
-          isTransitioning = true;
-          this.sound.playSuccess();
-          this.gameScore.update(s => s + 10);
-          this.gameInstruction.set(`🎉 Excelente! Sequência de planejamento ${currentLevel + 1} completada!`);
-          draw();
-
-          this.gameData.activeTimeout = setTimeout(() => {
-            currentLevel++;
-            loadLevel();
-          }, 650);
-        } else {
-          draw();
-        }
-      } else {
-        // ERRO DE PLANEJAMENTO / TOQUE FORA DE SEQUÊNCIA
-        this.sound.playError();
-        this.recordAttempt(false);
-        clickedNode.errorFlash = Date.now() + 500;
-        this.gameInstruction.set(`⚠️ Fora de ordem! Siga o plano: o próximo é o ponto [ ${targetIndex} ].`);
+      if (targetIndex > currentNodes.length) {
+        // NÍVEL CONCLUÍDO COM SUCESSO!
+        isTransitioning = true;
+        isDragging = false;
+        dragPos = null;
+        this.sound.playSuccess();
+        this.gameScore.update(s => s + 10);
+        this.gameInstruction.set(`🎉 Excelente! Sequência de planejamento ${currentLevel + 1} completada!`);
         draw();
 
         this.gameData.activeTimeout = setTimeout(() => {
-          clickedNode.errorFlash = 0;
+          currentLevel++;
+          loadLevel();
+        }, 650);
+      } else {
+        this.gameInstruction.set(`Muito bem! Arraste agora até o ponto [ ${targetIndex} ]!`);
+        draw();
+      }
+    };
+
+    this.setCanvasDragHandler(canvas, {
+      onDown: (mx, my) => {
+        if (isTransitioning) return;
+
+        const hitDist = nodeRadius * 1.6;
+        const touchedNode = currentNodes.find(n => Math.hypot(mx - n.x, my - n.y) <= hitDist);
+
+        if (targetIndex === 1) {
+          // Primeiro ponto (iniciar o trajeto tocando no 1)
+          if (touchedNode && touchedNode.id === 1) {
+            connectStep(touchedNode);
+            isDragging = true;
+            dragPos = { x: mx, y: my };
+            draw();
+          } else if (touchedNode && touchedNode.id > 1) {
+            this.sound.playError();
+            this.recordAttempt(false);
+            touchedNode.errorFlash = Date.now() + 500;
+            this.gameInstruction.set('⚠️ Comece no ponto [ 1 ]!');
+            draw();
+          }
+          return;
+        }
+
+        // Se tocar no último nó conectado, ativa o arrasto
+        if (touchedNode && touchedNode.id === targetIndex - 1) {
+          isDragging = true;
+          dragPos = { x: mx, y: my };
           draw();
-        }, 500);
+          return;
+        }
+
+        // Se tocar diretamente no alvo atual (suporte tanto para clique quanto arrasto)
+        if (touchedNode && touchedNode.id === targetIndex) {
+          connectStep(touchedNode);
+          isDragging = true;
+          dragPos = { x: mx, y: my };
+          return;
+        }
+
+        // Toque em nó fora de sequência
+        if (touchedNode && touchedNode.id > targetIndex) {
+          this.sound.playError();
+          this.recordAttempt(false);
+          touchedNode.errorFlash = Date.now() + 500;
+          this.gameInstruction.set(`⚠️ Fora de ordem! Arraste até o ponto [ ${targetIndex} ].`);
+          draw();
+        }
+      },
+
+      onMove: (mx, my) => {
+        if (isTransitioning || !isDragging) return;
+
+        dragPos = { x: mx, y: my };
+
+        // Checar se o cursor alcançou o próximo ponto alvo
+        const targetNode = currentNodes.find(n => n.id === targetIndex);
+        if (targetNode) {
+          const distToTarget = Math.hypot(mx - targetNode.x, my - targetNode.y);
+          if (distToTarget <= nodeRadius * 1.55) {
+            // SNAP! Conexão realizada ao arrastar até o ponto
+            connectStep(targetNode);
+            if (targetIndex <= currentNodes.length) {
+              dragPos = { x: mx, y: my };
+            }
+            return;
+          }
+        }
+
+        // Checar se esbarrou em nó incorreto adiante
+        const wrongNode = currentNodes.find(n => n.id > targetIndex && Math.hypot(mx - n.x, my - n.y) <= nodeRadius * 1.3);
+        if (wrongNode && wrongNode.errorFlash <= Date.now()) {
+          this.sound.playError();
+          this.recordAttempt(false);
+          wrongNode.errorFlash = Date.now() + 500;
+          this.gameInstruction.set(`⚠️ Desvio! O plano correto vai para o ponto [ ${targetIndex} ].`);
+        }
+
+        draw();
+      },
+
+      onUp: () => {
+        isDragging = false;
+        dragPos = null;
+        if (!isTransitioning && targetIndex <= currentNodes.length) {
+          const fromId = targetIndex === 1 ? 1 : targetIndex - 1;
+          this.gameInstruction.set(`Toque no ponto [ ${fromId} ] e arraste até o [ ${targetIndex} ]!`);
+        }
+        draw();
       }
     });
   }
