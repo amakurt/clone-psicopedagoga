@@ -1,6 +1,51 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 06 de Outubro de 2026
+## Última Atualização: 07 de Outubro de 2026
+
+---
+
+## Sessão 60 - 07/10/2026 — Numeração Global dos 60 Jogos, Engine Dedicada para o Jogo 36 (Troca de Letras) e Auditoria/Refatoração das Engines Clínicas
+
+### O que foi feito
+
+#### 1. Identificação e Numeração Global de Todos os 60 Jogos
+- **Prefixo Oficial nos Nomes (`JOGOS_DATA`)**: Todos os 60 jogos agora possuem prefixo numérico de dois dígitos (`01. Caça à Estrela`, `02. Contagem Rápida`, ..., `36. Troca de Letras`, `37. Complete a Rima`, ..., `60. Autoconhecimento`).
+  - Garante alinhamento imediato quando o profissional/usuário busca ou se refere a "jogo número tal".
+  - A busca e os relatórios de evolução clínica refletem a numeração com perfeição.
+- **Badge Numérico nos Cards do Catálogo**: Adicionado badge de alta visibilidade `#01` a `#60` com backdrop escuro no canto superior esquerdo de cada card de jogo na grade visual.
+
+#### 2. Nova Engine Dedicada para o Jogo 36 ("36. Troca de Letras" - Manipulação Fonêmica)
+- **Diagnóstico**: O jogo anterior possuía apenas 3 questões estáticas que imprimiam a palavra já transformada no cabeçalho (`MATO→RATO`) sem instrução interativa, e a alternativa correta sempre caía na primeira opção (A).
+- **Nova Engine Criada (`setupLetterSwapGame`)**:
+  - Banco clínico com 10 desafios de manipulação fonêmica (troca de fonemas/grafemas iniciais e mediais): `MATO` 🌾 trocando M por R vira `RATO` 🐀; `BOLA` ⚽ trocando L por T vira `BOTA` 👢; `CAMA` 🛏️ trocando M por S vira `CASA` 🏠; `VELA` 🕯️ trocando V por T vira `TELA` 🖥️; `MESA` 🪑 trocando M por P vira `PESA` ⚖️; `FACA` 🔪 trocando F por V vira `VACA` 🐮; `LUA` 🌙 trocando L por R vira `RUA` 🛣️; `GATO` 🐱 trocando G por P vira `PATO` 🦆; `PANELA` 🍳 trocando P por J vira `JANELA` 🪟; `MALA` 🧳 trocando M por S vira `SALA` 🛋️.
+  - **Interface Canvas Bottom-Up**:
+    - **Tiles de Letras**: Cada letra da palavra base é renderizada em blocos visuais estilizados, com a letra a ser substituída destacada com contorno âmbar brilhante (`#f59e0b`).
+    - **Banner de Transformação**: Exibe claramente a regra de substituição `[ M ] ➔ [ R ]` e a pergunta "Qual nova palavra se forma?".
+    - **4 Alternativas Embaralhadas**: Pílulas A, B, C, D com emojis e palavras, sorteadas aleatoriamente a cada rodada.
+    - **Feedback & Áudio**: Sons nativos de acerto (`playSuccess`) e erro (`playError`), cálculo de pontuação (+15 pontos) e explicação pedagógica após a tentativa.
+
+#### 3. Auditoria e Refatoração dos Demais Jogos Fonológicos (Jogos 31 a 35, 38 e 39)
+- **Overhaul do `setupPhonologyGame`**:
+  - Substituído o formato rígido de 3 perguntas por bancos completos de 6 desafios clínicos específicos com emojis e contextos reais:
+    - **31. Rimas Básicas**: Identificação de rimas com terminações homófonas (-OLA, -ÃO, -ATO, -ENTE, -ELA, -OR).
+    - **32. Sílabas**: Segmentação silábica correta e contagem (CA-SA, PI-PO-CA, BOR-BO-LE-TA).
+    - **33. Som Inicial**: Aliteração e identificação do fonema/letra inicial (MAÇÃ, ELEFANTE, BOLA, SAPATO, GATO, UVA).
+    - **34. Som Final**: Identificação do fonema/letra final (SOL, JACARÉ, TAMBOR, TATU, ANEL, AMOR).
+    - **35. Contagem de Sílabas**: Quantificação de palmas/pulsos orais em palavras monossílabas até polissílabas.
+    - **38. Fonemas**: Segmentação e consciência fonêmica isolada som por som (S-O-L, P-É, U-V-A).
+    - **39. Junte Sílabas**: Síntese silábica oral e correspondência gráfica (CA + SA = CASA).
+  - **Embaralhamento Aleatório**: As 4 opções de resposta agora são sorteadas por algoritmo Fisher-Yates, eliminando o vício de a opção A ser sempre a correta.
+  - **Sons e Layout Bottom-Up**: Adicionados efeitos sonoros com Web Audio API e layout adaptado para dispositivos móveis e tablets.
+
+#### 4. Aprimoramento das Regras nos Jogos de Funções Executivas (`setupTapGame`)
+- **Jogo 22 (Mude de Regra)**: Implementada alternância real de regras tipo Wisconsin (Fase 1: tocar círculos azuis e ignorar quadrados; Fase 2: regra inverte no meio e a criança deve tocar quadrados e ignorar círculos).
+- **Jogo 27 (Flexibilidade Mental)**: Alternância dinâmica de classificação entre Vogais e Números.
+- **Jogo 28 (Tombe Switch)**: Alternância de regras baseada em cores e formas.
+- **Jogo 58 (Paciência)**: Exercício de controle inibitório com semáforo (espera do sinal verde com punição para toques prematuros no vermelho/amarelo).
+
+#### 5. Validação Técnica
+- **Angular Build**: Compilação realizada com sucesso (`ng build`, 0 erros, código 0).
+- **Live Reload**: Servidor de desenvolvimento atualizado em tempo real sem regressões.
 
 ---
 

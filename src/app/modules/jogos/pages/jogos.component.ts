@@ -16,71 +16,71 @@ export interface Jogo {
 }
 
 export const JOGOS_DATA: Jogo[] = [
-  { id: 1, name: 'Caça à Estrela', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Encontre a estrela azul entre os círculos cinza', type: 'attention' },
-  { id: 2, name: 'Contagem Rápida', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Toque nos frutos aparecendo na tela o mais rápido possível', type: 'tap' },
-  { id: 3, name: 'Stroop Simples', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Diga a cor da tinta, ignore a palavra escrita', type: 'stroop' },
-  { id: 4, name: 'Atenção Dividida', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Toque nos círculos azuis e ignore os vermelhos ao mesmo tempo', type: 'tap' },
-  { id: 5, name: 'Inibir Resposta', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Toque apenas nos quadrados — nunca nos círculos', type: 'tap' },
-  { id: 6, name: 'Rastreamento Visual', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Siga a estrela com o olhar e toque nela quando parar', type: 'tracking' },
-  { id: 7, name: 'Memória de Cores', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Lembre-se das cores mostradas e repita a sequência', type: 'sequence' },
-  { id: 8, name: 'Sequência Numérica', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Complete a sequência de números na ordem correta', type: 'number_sequence' },
-  { id: 9, name: 'Memória de Posições', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Lembre-se de onde cada emoji estava escondido', type: 'memory' },
-  { id: 10, name: 'Caça Palavras', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Encontre as letras que formam a palavra escondida', type: 'attention' },
+  { id: 1, name: '01. Caça à Estrela', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Encontre a estrela azul entre os círculos cinza', type: 'attention' },
+  { id: 2, name: '02. Contagem Rápida', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Toque nos frutos aparecendo na tela o mais rápido possível', type: 'tap' },
+  { id: 3, name: '03. Stroop Simples', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Diga a cor da tinta, ignore a palavra escrita', type: 'stroop' },
+  { id: 4, name: '04. Atenção Dividida', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Toque nos círculos azuis e ignore os vermelhos ao mesmo tempo', type: 'tap' },
+  { id: 5, name: '05. Inibir Resposta', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '6-10', description: 'Toque apenas nos quadrados — nunca nos círculos', type: 'tap' },
+  { id: 6, name: '06. Rastreamento Visual', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Siga a estrela com o olhar e toque nela quando parar', type: 'tracking' },
+  { id: 7, name: '07. Memória de Cores', category: 'Atenção', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Lembre-se das cores mostradas e repita a sequência', type: 'sequence' },
+  { id: 8, name: '08. Sequência Numérica', category: 'Atenção', difficulty: 2, time: '3 min', ageRange: '5-9', description: 'Complete a sequência de números na ordem correta', type: 'number_sequence' },
+  { id: 9, name: '09. Memória de Posições', category: 'Atenção', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Lembre-se de onde cada emoji estava escondido', type: 'memory' },
+  { id: 10, name: '10. Caça Palavras', category: 'Atenção', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Encontre as letras que formam a palavra escondida', type: 'attention' },
 
-  { id: 11, name: 'Jogo da Memória', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-8', description: 'Encontre os pares de frutas virando as cartas', type: 'memory' },
-  { id: 12, name: 'Memória de Animais', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de animais escondidos', type: 'memory' },
-  { id: 13, name: 'Memória de Números', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Lembre-se dos números e encontre os pares', type: 'memory' },
-  { id: 14, name: 'Memória de Formas', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Encontre as formas geométricas iguais', type: 'memory' },
-  { id: 15, name: 'Super Memória', category: 'Memória', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Grade 4x4 com 8 pares — desafio máximo', type: 'memory' },
-  { id: 16, name: 'Blocos de Corsi (Sequências)', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Memorize a ordem dos blocos espaciais que acendem', type: 'corsi' },
-  { id: 17, name: 'Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados? Toque nos que lembra', type: 'object_recall' },
-  { id: 18, name: 'Memória Visual', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Veja a imagem e encontre ela entre as opções', type: 'visual_matching' },
-  { id: 19, name: 'Pares de Emojis', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de emojis iguais', type: 'memory' },
-  { id: 20, name: 'Memória de Trabalho', category: 'Memória', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Guarde 5 números na memória e repita ao contrário', type: 'tap' },
+  { id: 11, name: '11. Jogo da Memória', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-8', description: 'Encontre os pares de frutas virando as cartas', type: 'memory' },
+  { id: 12, name: '12. Memória de Animais', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de animais escondidos', type: 'memory' },
+  { id: 13, name: '13. Memória de Números', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Lembre-se dos números e encontre os pares', type: 'memory' },
+  { id: 14, name: '14. Memória de Formas', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Encontre as formas geométricas iguais', type: 'memory' },
+  { id: 15, name: '15. Super Memória', category: 'Memória', difficulty: 3, time: '7 min', ageRange: '8-12', description: 'Grade 4x4 com 8 pares — desafio máximo', type: 'memory' },
+  { id: 16, name: '16. Blocos de Corsi (Sequências)', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Memorize a ordem dos blocos espaciais que acendem', type: 'corsi' },
+  { id: 17, name: '17. Lembre-se dos Objetos', category: 'Memória', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Quais objetos foram mostrados? Toque nos que lembra', type: 'object_recall' },
+  { id: 18, name: '18. Memória Visual', category: 'Memória', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Veja a imagem e encontre ela entre as opções', type: 'visual_matching' },
+  { id: 19, name: '19. Pares de Emojis', category: 'Memória', difficulty: 1, time: '5 min', ageRange: '3-7', description: 'Encontre os pares de emojis iguais', type: 'memory' },
+  { id: 20, name: '20. Memória de Trabalho', category: 'Memória', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Guarde a sequência de números e responda com atenção', type: 'tap' },
 
-  { id: 21, name: 'Organize a Fila', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Organize os números de 1 a 6 na ordem correta', type: 'sequence' },
-  { id: 22, name: 'Mude de Regra', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Às vezes clique no círculo, às vezes no quadrado — a regra muda!', type: 'tap' },
-  { id: 23, name: 'Stroop Avançado', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Cores aparecem escritas em cores diferentes — responda rápido!', type: 'stroop' },
-  { id: 24, name: 'Classificação', category: 'Funções Executivas', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Toque apenas nos animais — ignore os objetos', type: 'tap' },
-  { id: 25, name: 'Sequência de Passos', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Ordene os passos de escovar os dentes na sequência certa', type: 'sequence' },
-  { id: 26, name: 'Controle de Impulsos', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Toque quando o semáforo ficar verde — espere o sinal!', type: 'tap' },
-  { id: 27, name: 'Flexibilidade Mental', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Alternar entre contar vogais e consoantes sem errar', type: 'tap' },
-  { id: 28, name: 'Tombe Switch', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Mude entre regras: às vezes cor, às vezes forma', type: 'tap' },
-  { id: 29, name: 'Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Encontre o caminho mais curto entre os pontos', type: 'tap' },
-  { id: 30, name: 'Memória Operacional', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde o número e Some +3 — teste de memória de trabalho', type: 'tap' },
+  { id: 21, name: '21. Organize a Fila', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Organize os números de 1 a 6 na ordem correta', type: 'sequence' },
+  { id: 22, name: '22. Mude de Regra', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Às vezes clique no círculo, às vezes no quadrado — a regra muda!', type: 'tap' },
+  { id: 23, name: '23. Stroop Avançado', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Cores aparecem escritas em cores diferentes — responda rápido!', type: 'stroop' },
+  { id: 24, name: '24. Classificação', category: 'Funções Executivas', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Toque apenas nos animais — ignore os objetos', type: 'tap' },
+  { id: 25, name: '25. Sequência de Passos', category: 'Funções Executivas', difficulty: 1, time: '5 min', ageRange: '4-8', description: 'Ordene os passos de escovar os dentes na sequência certa', type: 'sequence' },
+  { id: 26, name: '26. Controle de Impulsos', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Toque quando o semáforo ficar verde — espere o sinal!', type: 'tap' },
+  { id: 27, name: '27. Flexibilidade Mental', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '7-12', description: 'Alternar entre identificar vogais e números sem errar', type: 'tap' },
+  { id: 28, name: '28. Tombe Switch', category: 'Funções Executivas', difficulty: 3, time: '5 min', ageRange: '8-12', description: 'Mude entre regras: às vezes cor, às vezes forma', type: 'tap' },
+  { id: 29, name: '29. Planejamento', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Encontre o caminho mais curto entre os pontos', type: 'tap' },
+  { id: 30, name: '30. Memória Operacional', category: 'Funções Executivas', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Guarde o número e Some +3 — teste de memória de trabalho', type: 'tap' },
 
-  { id: 31, name: 'Rimas Básicas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Qual palavra rima com "SOLA"? Toque na resposta', type: 'phonology' },
-  { id: 32, name: 'Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Separe a palavra em sílabas: CA-SA = 2 sílabas', type: 'phonology' },
-  { id: 33, name: 'Som Inicial', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-6', description: 'Qual letra começa "MAÇÃ"? Toque na letra correta', type: 'phonology' },
-  { id: 34, name: 'Som Final', category: 'Consciência Fonológica', difficulty: 2, time: '3 min', ageRange: '5-8', description: 'Qual letra termina "SOL"? Toque na resposta', type: 'phonology' },
-  { id: 35, name: 'Contagem de Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Quantas sílabas tem "BOR-BO-CHA"? Toque no número', type: 'phonology' },
-  { id: 36, name: 'Troca de Letras', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: 'Troque o M de "MATO" por R — qual palavra fica?', type: 'phonology' },
-  { id: 37, name: 'Complete a Rima', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: '"Peixe ___" — qual palavra completa a rima?', type: 'phonology' },
-  { id: 38, name: 'Fonemas', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Separe "SOL" em sons individuais: S-O-L', type: 'phonology' },
-  { id: 39, name: 'Junte Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'CA + SO = ? Toque na palavra formada', type: 'phonology' },
-  { id: 40, name: 'Fonologia Avançada', category: 'Consciência Fonológica', difficulty: 3, time: '5 min', ageRange: '6-10', description: 'Misto: rimas, sílabas e sons — desafio completo', type: 'phonology' },
+  { id: 31, name: '31. Rimas Básicas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Qual palavra rima com a palavra destacada? Toque na resposta', type: 'phonology' },
+  { id: 32, name: '32. Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Separe a palavra em sílabas corretamente: CA-SA', type: 'phonology' },
+  { id: 33, name: '33. Som Inicial', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-6', description: 'Qual letra ou som começa a palavra? Toque na letra correta', type: 'phonology' },
+  { id: 34, name: '34. Som Final', category: 'Consciência Fonológica', difficulty: 2, time: '3 min', ageRange: '5-8', description: 'Qual letra ou som termina a palavra? Toque na resposta', type: 'phonology' },
+  { id: 35, name: '35. Contagem de Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Quantas sílabas (palmas) tem a palavra apresentada?', type: 'phonology' },
+  { id: 36, name: '36. Troca de Letras', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: 'Troque a letra indicada da palavra por outra e descubra a nova palavra!', type: 'letter_swap' },
+  { id: 37, name: '37. Complete a Rima', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-8', description: 'Descubra a palavra que rima e completa o versinho lúdico', type: 'rhyme' },
+  { id: 38, name: '38. Fonemas', category: 'Consciência Fonológica', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Separe a palavra em sons individuais (fonemas): S - O - L', type: 'phonology' },
+  { id: 39, name: '39. Junte Sílabas', category: 'Consciência Fonológica', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Junte as sílabas e toque na palavra formada (CA + SA = CASA)', type: 'phonology' },
+  { id: 40, name: '40. Fonologia Avançada', category: 'Consciência Fonológica', difficulty: 3, time: '5 min', ageRange: '6-10', description: 'Misto: rimas, sílabas e sons — desafio completo', type: 'phonology' },
 
-  { id: 41, name: 'Soma Simples', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Resolva somas de números de 1 a 20', type: 'math' },
-  { id: 42, name: 'Subtração', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '5-8', description: 'Resolva subtrações simples com resultados positivos', type: 'math' },
-  { id: 43, name: 'Comparação', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Maior, menor ou igual? Toque no símbolo correto', type: 'compare' },
-  { id: 44, name: 'Contagem de Objetos', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Conte os objetos na tela e toque no número correto', type: 'counting' },
-  { id: 45, name: 'Tabuada', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Pratique multiplicações de 1 a 10', type: 'math' },
-  { id: 46, name: 'Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva historinhas e desafios matemáticos do cotidiano', type: 'problems' },
-  { id: 47, name: 'Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
-  { id: 48, name: 'Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'fractions' },
-  { id: 49, name: 'Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'shapes' },
-  { id: 50, name: 'Desafio Matemático', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '8-12', description: 'Misto progressivo: somas, subtrações e tabuadas práticas', type: 'math' },
+  { id: 41, name: '41. Soma Simples', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Resolva somas de números de 1 a 20', type: 'math' },
+  { id: 42, name: '42. Subtração', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '5-8', description: 'Resolva subtrações simples com resultados positivos', type: 'math' },
+  { id: 43, name: '43. Comparação', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Maior, menor ou igual? Toque no símbolo correto', type: 'compare' },
+  { id: 44, name: '44. Contagem de Objetos', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '3-6', description: 'Conte os objetos na tela e toque no número correto', type: 'counting' },
+  { id: 45, name: '45. Tabuada', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Pratique multiplicações de 1 a 10', type: 'math' },
+  { id: 46, name: '46. Problemas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Resolva historinhas e desafios matemáticos do cotidiano', type: 'problems' },
+  { id: 47, name: '47. Sequência Crescente', category: 'Matemática', difficulty: 1, time: '3 min', ageRange: '4-7', description: 'Organize os números na ordem crescente', type: 'sequence' },
+  { id: 48, name: '48. Frações Visuais', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '7-10', description: 'Qual fração representa a pizza colorida?', type: 'fractions' },
+  { id: 49, name: '49. Formas Geométricas', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '5-9', description: 'Identifique: círculo, quadrado, triângulo, retângulo', type: 'shapes' },
+  { id: 50, name: '50. Desafio Matemático', category: 'Matemática', difficulty: 2, time: '5 min', ageRange: '8-12', description: 'Misto progressivo: somas, subtrações e tabuadas práticas', type: 'math' },
 
-  { id: 51, name: 'Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Reconheça a expressão do rosto: feliz, triste, bravo, assustado ou surpreso', type: 'social' },
-  { id: 52, name: 'Empatia', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '4-8', description: 'Como a pessoa se sente? Escolha a resposta certa', type: 'social' },
-  { id: 53, name: 'Situações Sociais', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'O que fazer quando alguém está triste na escola?', type: 'social' },
-  { id: 54, name: 'Respiração', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Siga o ritmo do balão: inspire ao crescer, segure e expire ao diminuir', type: 'breathing' },
-  { id: 55, name: 'Expressão de Sentimentos', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Como VOCÊ se sente agora? Toque na emoção', type: 'social' },
-  { id: 56, name: 'Resolução de Conflitos', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Dois amigos brigaram pelo brinquedo — qual a solução pacífica?', type: 'social' },
-  { id: 57, name: 'Cooperação', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Aprenda sobre trabalhar junto e ajudar os amigos', type: 'social' },
-  { id: 58, name: 'Paciência', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Espere a vez sem interromper — exercício de paciência', type: 'tap' },
-  { id: 59, name: 'Gratidão', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Pense em 3 coisas pelas quais você é grato hoje', type: 'social' },
-  { id: 60, name: 'Autoconhecimento', category: 'Socioemocional', difficulty: 3, time: '7 min', ageRange: '7-12', description: 'Misto: emoções, conflitos e regulação — desafio completo', type: 'social' },
+  { id: 51, name: '51. Emoções no Rosto', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Reconheça a expressão do rosto: feliz, triste, bravo, assustado ou surpreso', type: 'social' },
+  { id: 52, name: '52. Empatia', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '4-8', description: 'Como a pessoa se sente? Escolha a resposta certa', type: 'social' },
+  { id: 53, name: '53. Situações Sociais', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'O que fazer quando alguém está triste na escola?', type: 'social' },
+  { id: 54, name: '54. Respiração', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Siga o ritmo do balão: inspire ao crescer, segure e expire ao diminuir', type: 'breathing' },
+  { id: 55, name: '55. Expressão de Sentimentos', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Como VOCÊ se sente agora? Toque na emoção', type: 'social' },
+  { id: 56, name: '56. Resolução de Conflitos', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '6-10', description: 'Dois amigos brigaram pelo brinquedo — qual a solução pacífica?', type: 'social' },
+  { id: 57, name: '57. Cooperação', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-7', description: 'Aprenda sobre trabalhar junto e ajudar os amigos', type: 'social' },
+  { id: 58, name: '58. Paciência', category: 'Socioemocional', difficulty: 2, time: '5 min', ageRange: '5-10', description: 'Espere a vez sem interromper — exercício de paciência', type: 'tap' },
+  { id: 59, name: '59. Gratidão', category: 'Socioemocional', difficulty: 1, time: '3 min', ageRange: '3-8', description: 'Pense em 3 coisas pelas quais você é grato hoje', type: 'social' },
+  { id: 60, name: '60. Autoconhecimento', category: 'Socioemocional', difficulty: 3, time: '7 min', ageRange: '7-12', description: 'Misto: emoções, conflitos e regulação — desafio completo', type: 'social' },
 ];
 
 /** Sintetizador Nativo de Áudio Clínico (Web Audio API) */
@@ -376,6 +376,9 @@ class ClinicalSoundSynthesizer {
             <div>
               <div class="h-20 sm:h-24 flex items-center justify-center relative overflow-hidden" [class]="getCategoryBg(jogo.category)">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider bg-black/45 text-white backdrop-blur-sm shadow-sm ring-1 ring-white/10">
+                  #{{ jogo.id < 10 ? '0' + jogo.id : jogo.id }}
+                </span>
                 <span class="material-icons text-3xl sm:text-4xl opacity-75 group-hover:scale-110 transition-transform duration-300">{{ getCategoryIcon(jogo.category) }}</span>
                 <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight backdrop-blur-sm" [class]="getCategoryStyle(jogo.category)">
                   {{ jogo.category }}
@@ -1153,13 +1156,13 @@ export class JogosComponent implements OnInit, OnDestroy {
     const measuredW = Math.max(container?.clientWidth || 0, (parentContainer?.clientWidth || 0) - 32);
     const containerWidth = measuredW > 320 ? measuredW : 560;
     const jogo = this.currentGame();
-    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || (jogo?.type === 'phonology' && jogo?.id === 40);
+    const isExpandedGame = jogo?.type === 'social' || jogo?.type === 'breathing' || jogo?.type === 'math' || jogo?.type === 'shapes' || jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36));
     const maxAvailableH = window.innerHeight 
       ? Math.max(340, window.innerHeight - (isExpandedGame ? 160 : 220)) 
       : (isExpandedGame ? 460 : 320);
 
     let logicalW = Math.min(isExpandedGame ? 580 : 500, containerWidth);
-    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || (jogo?.type === 'phonology' && jogo?.id === 40)) ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
+    const targetAspect = (jogo?.type === 'fractions' || jogo?.type === 'problems' || jogo?.type === 'counting' || jogo?.type === 'rhyme' || jogo?.type === 'letter_swap' || (jogo?.type === 'phonology' && (jogo?.id === 40 || jogo?.id === 37 || jogo?.id === 36))) ? 0.76 : (isExpandedGame ? 0.74 : 0.6);
     let logicalH = Math.round(logicalW * targetAspect);
     if (logicalH > maxAvailableH) {
       logicalH = maxAvailableH;
@@ -1211,9 +1214,15 @@ export class JogosComponent implements OnInit, OnDestroy {
       case 'object_recall': this.setupObjectRecallGame(canvas, logicalW, logicalH); break;
       case 'visual_matching': this.setupVisualMatchingGame(canvas, logicalW, logicalH); break;
       case 'attention': this.setupAttentionGame(canvas, logicalW, logicalH); break;
+      case 'letter_swap': this.setupLetterSwapGame(canvas, logicalW, logicalH); break;
+      case 'rhyme': this.setupCompleteRhymeGame(canvas, logicalW, logicalH); break;
       case 'phonology': 
         if (jogo.id === 40) {
           this.setupAdvancedPhonologyGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 37) {
+          this.setupCompleteRhymeGame(canvas, logicalW, logicalH);
+        } else if (jogo.id === 36) {
+          this.setupLetterSwapGame(canvas, logicalW, logicalH);
         } else {
           this.setupPhonologyGame(canvas, logicalW, logicalH, jogo.id);
         }
@@ -5634,94 +5643,1185 @@ export class JogosComponent implements OnInit, OnDestroy {
     });
   }
 
-  // 6. CONSCIÊNCIA FONOLÓGICA
-  setupPhonologyGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
+  // 6. CONSCIÊNCIA FONOLÓGICA - COMPLETE A RIMA DEDICADO (JOGO 37 - 5 a 8 ANOS)
+  setupCompleteRhymeGame(canvas: HTMLCanvasElement, W: number, H: number) {
     const ctx = this.canvasCtx!;
-    const WORD_SETS: Record<number, Array<{word: string, options: string[]}>> = {
-      31: [{word:'SOLA',options:['SOLA','MOLA','BOLA','FOLA']},{word:'CARO',options:['CARO','CAVO','CARRO','CASA']},{word:'PATO',options:['PATO','PATA','MATO','RATO']}],
-      32: [{word:'CA-SA',options:['CA-SA','CASA','CA-SA','CAS-A']},{word:'BO-LA',options:['BO-LA','BOLA','BO-LA','BOL-A']},{word:'PA-TO',options:['PA-TO','PATO','PA-TO','PAT-O']}],
-      33: [{word:'MAÇÃ',options:['M','A','Ã','Ç']},{word:'BOLA',options:['B','O','L','A']},{word:'SOL',options:['S','O','L','Z']}],
-      34: [{word:'SOL',options:['L','O','S','Z']},{word:'PÉ',options:['É','P','E','X']},{word:'MAR',options:['R','A','M','L']}],
-      35: [{word:'BOR-BO-LE-TA',options:['4','3','2','5']},{word:'CA-SA',options:['2','1','3','4']},{word:'PA-TO',options:['2','1','3','4']}],
-      36: [{word:'MATO→RATO',options:['RATO','MATO','BATO','SATO']},{word:'CASA→CANA',options:['CANA','CASA','CATA','CALA']},{word:'BOLA→BOTA',options:['BOTA','BOLA','BONA','BOCA']}],
-      37: [{word:'Peixe ___',options:['AZUL','DENTE','MOLHO','VERDE']},{word:'Amor ___',options:['DOURADO','TEMPO','COR','ÁGUA']},{word:'Copo ___',options:['D\'ÁGUA','GRANDE','MESA','AZUL']}],
-      38: [{word:'SOL',options:['S-O-L','S-O','SOL','S-L-O']},{word:'CASA',options:['C-A-S-A','C-AS-A','CA-S-A','CASA']},{word:'PATO',options:['P-A-T-O','PA-T-O','PATO','P-A-TO']}],
-      39: [{word:'CA+SO',options:['CASO','CASSO','CAÇO','CALO']},{word:'BO+LA',options:['BOLA','BOLHA','BOALA','BOA']},{word:'PA+TO',options:['PATO','PACTO','PATTO','PATOA']}],
-      40: [{word:'P_TO',options:['PATO','PETO','PITO','PUTO']},{word:'M_R',options:['MAR','MOR','MUR','MER']},{word:'C_S_',options:['CASA','COSA','CUSA','CESA']}],
-    };
-    const words = WORD_SETS[gameId] || WORD_SETS[31];
-    let currentIdx = 0;
 
-    const btnW = Math.min(210, (W - 70) / 2);
-    const btnH = 50;
-    const gap = 14;
-    const startX = (W - (btnW * 2 + gap)) / 2;
-    const startY = H * 0.44;
+    interface RhymeTrial {
+      emoji: string;
+      verseLine1: string;
+      verseHighlight: string;
+      verseLine2: string;
+      rhymeBase: string;
+      soundEnding: string;
+      correctOption: string;
+      distractors: string[];
+      explanation: string;
+    }
 
-    let isTransitioning = false;
-    const drawQuestion = () => {
-      isTransitioning = false;
-      if (currentIdx >= words.length) {
+    const RHYME_DATA: RhymeTrial[] = [
+      {
+        emoji: '🦆',
+        verseLine1: 'O pato brincalhão',
+        verseHighlight: 'PATO',
+        verseLine2: 'calçou o seu...',
+        rhymeBase: 'PATO',
+        soundEnding: '-ATO',
+        correctOption: '👞 SAPATO',
+        distractors: ['👟 CHINELO', '🧢 BONÉ', '🧦 MEIA'],
+        explanation: 'PATO rima com SAPATO! Os dois terminam com som -ATO.'
+      },
+      {
+        emoji: '🦁',
+        verseLine1: 'O leão corajoso',
+        verseHighlight: 'LEÃO',
+        verseLine2: 'subiu no...',
+        rhymeBase: 'LEÃO',
+        soundEnding: '-ÃO',
+        correctOption: '🎈 BALÃO',
+        distractors: ['🚗 CARRO', '🚲 BICICLETA', '🚤 BARCO'],
+        explanation: 'LEÃO rima com BALÃO! Os dois terminam com som -ÃO.'
+      },
+      {
+        emoji: '🐜',
+        verseLine1: 'A formiga ligeira',
+        verseHighlight: 'FORMIGA',
+        verseLine2: 'coçou a...',
+        rhymeBase: 'FORMIGA',
+        soundEnding: '-IGA',
+        correctOption: '🤰 BARRIGA',
+        distractors: ['👂 ORELHA', '🦵 PERNA', '👃 NARIZ'],
+        explanation: 'FORMIGA rima com BARRIGA! Os dois terminam com som -IGA.'
+      },
+      {
+        emoji: '🐌',
+        verseLine1: 'O caracol no jardim',
+        verseHighlight: 'CARACOL',
+        verseLine2: 'tomou banho de...',
+        rhymeBase: 'CARACOL',
+        soundEnding: '-OL',
+        correctOption: '☀️ SOL',
+        distractors: ['🌧️ CHUVA', '🌙 LUA', '💨 VENTO'],
+        explanation: 'CARACOL rima com SOL! Os dois terminam com som -OL.'
+      },
+      {
+        emoji: '🐒',
+        verseLine1: 'O macaco no galho',
+        verseHighlight: 'MACACO',
+        verseLine2: 'vestiu o...',
+        rhymeBase: 'MACACO',
+        soundEnding: '-ACO',
+        correctOption: '🧥 CASACO',
+        distractors: ['🎩 CHAPÉU', '👕 CAMISA', '👖 CALÇA'],
+        explanation: 'MACACO rima com CASACO! Os dois terminam com som -ACO.'
+      },
+      {
+        emoji: '🐝',
+        verseLine1: 'A abelha dourada',
+        verseHighlight: 'ABELHA',
+        verseLine2: 'pousou na...',
+        rhymeBase: 'ABELHA',
+        soundEnding: '-ELHA',
+        correctOption: '👂 ORELHA',
+        distractors: ['✋ MÃO', '👃 NARIZ', '🦶 PÉ'],
+        explanation: 'ABELHA rima com ORELHA! Os dois terminam com som -ELHA.'
+      },
+      {
+        emoji: '🐱',
+        verseLine1: 'A gatinha dengosa',
+        verseHighlight: 'GATINHA',
+        verseLine2: 'pulou na...',
+        rhymeBase: 'GATINHA',
+        soundEnding: '-INHA',
+        correctOption: '🥫 LATINHA',
+        distractors: ['📦 CAIXA', '🛏️ CAMA', '🪑 MESA'],
+        explanation: 'GATINHA rima com LATINHA! Os dois terminam com som -INHA.'
+      },
+      {
+        emoji: '🪆',
+        verseLine1: 'A boneca de pano',
+        verseHighlight: 'BONECA',
+        verseLine2: 'brincou de...',
+        rhymeBase: 'BONECA',
+        soundEnding: '-ECA',
+        correctOption: '🪅 PETECA',
+        distractors: ['⚽ BOLA', '🪢 CORDA', '🎲 DADO'],
+        explanation: 'BONECA rima com PETECA! Os dois terminam com som -ECA.'
+      },
+      {
+        emoji: '🏰',
+        verseLine1: 'O castelo bonito',
+        verseHighlight: 'CASTELO',
+        verseLine2: 'é todo...',
+        rhymeBase: 'CASTELO',
+        soundEnding: '-ELO',
+        correctOption: '🟨 AMARELO',
+        distractors: ['🟦 AZUL', '🟩 VERDE', '🟥 VERMELHO'],
+        explanation: 'CASTELO rima com AMARELO! Os dois terminam com som -ELO.'
+      },
+      {
+        emoji: '🍳',
+        verseLine1: 'A dona panela',
+        verseHighlight: 'PANELA',
+        verseLine2: 'caiu da...',
+        rhymeBase: 'PANELA',
+        soundEnding: '-ELA',
+        correctOption: '🪟 JANELA',
+        distractors: ['🚪 PORTA', '🪑 CADEIRA', '🛏️ CAMA'],
+        explanation: 'PANELA rima com JANELA! Os dois terminam com som -ELA.'
+      }
+    ];
+
+    let currentRound = 0;
+    const totalRounds = 10;
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+
+    interface ActiveOption {
+      label: string;
+      isCorrect: boolean;
+    }
+
+    let currentOptions: ActiveOption[] = [];
+    let currentTrial: RhymeTrial = RHYME_DATA[0];
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
         this.finishGame();
         return;
       }
-      const q = words[currentIdx];
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      // Seleciona o trial correspondente
+      currentTrial = RHYME_DATA[(currentRound - 1) % RHYME_DATA.length];
+
+      // Monta as 4 opções e embaralha (Fisher-Yates)
+      const opts: ActiveOption[] = [
+        { label: currentTrial.correctOption, isCorrect: true },
+        ...currentTrial.distractors.map(d => ({ label: d, isCorrect: false }))
+      ];
+
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+
+      currentOptions = opts;
+      this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: Qual palavra completa a rima de ${currentTrial.rhymeBase}?`);
+      draw();
+    };
+
+    // Geometria Responsiva Ancorada de Baixo para Cima (Bottom-Up)
+    const getOptionBounds = (index: number) => {
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const gapX = 10;
+      const totalOptionsH = cardH * 2 + gapY;
+      const startOptionsY = H - bottomPad - totalOptionsH;
+
+      const sidePad = 14;
+      const cardW = (W - sidePad * 2 - gapX) / 2;
+
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+
+      const bx = sidePad + col * (cardW + gapX);
+      const by = startOptionsY + row * (cardH + gapY);
+
+      return { bx, by, bw: cardW, bh: cardH };
+    };
+
+    const draw = () => {
       ctx.clearRect(0, 0, W, H);
 
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 13px sans-serif';
+      // Fundo escuro com gradiente suave
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#0a0f1d');
+      bgGrad.addColorStop(1, '#050811');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. CARD SUPERIOR DE ESTÍMULO (VERSINHO RIMADO)
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const startOptionsY = H - bottomPad - (cardH * 2 + gapY);
+
+      const topCardMargin = 12;
+      const topCardX = topCardMargin;
+      const topCardY = 12;
+      const topCardW = W - topCardMargin * 2;
+      const topCardH = startOptionsY - topCardY - 12;
+
+      // Moldura do Card de Versinho
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(topCardX, topCardY, topCardW, topCardH, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Topo do Card: Badge de Categoria (Esquerda) e Rodada (Direita)
+      const headerY = topCardY + 20;
+
+      // Badge de Categoria "RIMA POÉTICA"
+      const catW = 110;
+      const catH = 22;
+      const catX = topCardX + 12;
+      const catY = headerY - catH / 2;
+      ctx.fillStyle = '#ec489922';
+      ctx.strokeStyle = '#ec4899';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(catX, catY, catW, catH, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = 'bold 10px "Outfit", sans-serif';
+      ctx.fillStyle = '#f472b6';
       ctx.textAlign = 'center';
-      ctx.fillText(`Desafio Fonológico ${currentIdx + 1}/${words.length}`, W / 2, H * 0.14);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🎶 RIMA POÉTICA', catX + catW / 2, headerY);
 
+      // Badge de Rodada
+      const roundW = 95;
+      const roundH = 22;
+      const roundX = topCardX + topCardW - 12 - roundW;
+      const roundY = headerY - roundH / 2;
+      ctx.fillStyle = '#090d16';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(roundX, roundY, roundW, roundH, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 11px "Outfit", sans-serif';
+      ctx.fillText(`Desafio ${currentRound}/${totalRounds}`, roundX + roundW / 2, headerY);
+
+      // Enunciado Pedagógico
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 13.5px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Complete a rima do versinho:', topCardX + topCardW / 2, topCardY + 46);
+
+      // Vitrine Central: Emoji de Apoio Semiótico
+      const emojiY = topCardY + (topCardH * 0.44);
+      ctx.font = '36px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.emoji, topCardX + topCardW / 2, emojiY);
+
+      // Linha 1 do Versinho (ex: "O pato brincalhão")
+      ctx.font = '600 15px "Outfit", sans-serif';
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillText(currentTrial.verseLine1, topCardX + topCardW / 2, emojiY + 34);
+
+      // Linha 2 do Versinho com Palavra de Rima em Destaque
+      // ex: "calçou o seu..." + [ ______ ]
+      const line2Y = emojiY + 58;
+      ctx.font = 'bold 16px "Outfit", sans-serif';
       ctx.fillStyle = '#38bdf8';
-      ctx.font = '900 32px sans-serif';
-      ctx.fillText(q.word, W / 2, H * 0.30);
+      ctx.fillText(`${currentTrial.verseLine2} [  ?  ]`, topCardX + topCardW / 2, line2Y);
 
-      q.options.forEach((opt, i) => {
-        const x = startX + (i % 2) * (btnW + gap);
-        const y = startY + Math.floor(i / 2) * (btnH + 10);
-        ctx.fillStyle = '#1e293b';
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1.5;
+      // Dica Fonológica de Apoio no Rodapé do Card
+      const hintY = topCardY + topCardH - 16;
+      ctx.font = 'italic 11px "Outfit", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`💡 Dica: Procure uma palavra com o som final ${currentTrial.soundEnding}`, topCardX + topCardW / 2, hintY);
+
+      // 2. GRADE 2x2 DE CARTÕES DE RESPOSTA ANCORADOS NA BASE
+      const letterTags = ['A', 'B', 'C', 'D'];
+
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+        const isSelected = feedbackIndex === i;
+
+        ctx.save();
+
+        let cardBg = '#1e293b';
+        let cardBorder = '#334155';
+        let pillBg = '#0f172a';
+        let pillBorder = '#475569';
+        let pillText = '#94a3b8';
+        let textColor = '#f8fafc';
+
+        if (feedbackStatus === 'success' && isSelected) {
+          cardBg = '#065f46';
+          cardBorder = '#10b981';
+          pillBg = '#047857';
+          pillBorder = '#34d399';
+          pillText = '#ffffff';
+          textColor = '#ffffff';
+        } else if (feedbackStatus === 'error' && isSelected) {
+          cardBg = '#881337';
+          cardBorder = '#f43f5e';
+          pillBg = '#9f1239';
+          pillBorder = '#fb7185';
+          pillText = '#ffffff';
+          textColor = '#ffffff';
+        } else if (feedbackStatus === 'error' && opt.isCorrect) {
+          // Destacar a resposta correta sutilmente após erro
+          cardBg = '#064e3b44';
+          cardBorder = '#10b981';
+          pillBorder = '#10b981';
+          pillText = '#34d399';
+          textColor = '#6ee7b7';
+        }
+
+        ctx.fillStyle = cardBg;
+        ctx.strokeStyle = cardBorder;
+        ctx.lineWidth = isSelected ? 2 : 1.2;
         ctx.beginPath();
-        ctx.roundRect(x, y, btnW, btnH, 12);
+        ctx.roundRect(bx, by, bw, bh, 12);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#0d9488';
-        ctx.font = 'bold 12px sans-serif';
+        // Letra A, B, C, D em Pílula
+        const pillW = 28;
+        const pillH = 28;
+        const pillX = bx + 8;
+        const pillY = by + (bh - pillH) / 2;
+
+        ctx.fillStyle = pillBg;
+        ctx.strokeStyle = pillBorder;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = pillText;
+        ctx.font = 'bold 13px "Outfit", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(String.fromCharCode(65 + i), x + 20, y + btnH / 2 + 4);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterTags[i], pillX + pillW / 2, pillY + pillH / 2);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 15px sans-serif';
-        ctx.fillText(opt, x + btnW / 2 + 6, y + btnH / 2 + 4);
+        // Texto da Alternativa (ex: 👞 SAPATO, 🎈 BALÃO)
+        const textX = pillX + pillW + 10;
+        const maxTextW = bw - (textX - bx) - 8;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 13.5px "Outfit", sans-serif';
+        ctx.fillText(opt.label, textX, by + bh / 2, maxTextW);
+
+        ctx.restore();
       });
-
-      this.gameInstruction.set(`Pergunta ${currentIdx + 1}/${words.length} · Toque na opção correta`);
     };
 
+    newRound();
+
     this.setCanvasHandler(canvas, (mx, my) => {
-      if (isTransitioning) return;
-      const q = words[currentIdx];
-      if (!q) return;
-      q.options.forEach((opt, i) => {
-        const x = startX + (i % 2) * (btnW + gap);
-        const y = startY + Math.floor(i / 2) * (btnH + 10);
-        if (mx >= x && mx <= x + btnW && my >= y && my <= y + btnH) {
-          isTransitioning = true;
-          const correct = opt === q.options[0]; // primeira opção do set é o alvo
-          this.recordAttempt(correct);
-          if (correct) {
+      if (feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          feedbackIndex = i;
+          const isCorrect = opt.isCorrect;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
             this.gameScore.update(s => s + 15);
+            this.gameInstruction.set(`🎉 Muito bem! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 600);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`❌ Ops! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: Qual palavra rima com ${currentTrial.rhymeBase}?`);
+              draw();
+            }, 950);
           }
-          currentIdx++;
-          setTimeout(drawQuestion, 300);
         }
       });
     });
+  }
 
-    drawQuestion();
+  // 6.2 TROCA DE LETRAS - MANIPULAÇÃO FONÊMICA DEDICADA (JOGO 36)
+  setupLetterSwapGame(canvas: HTMLCanvasElement, W: number, H: number) {
+    const ctx = this.canvasCtx!;
+
+    interface LetterSwapTrial {
+      baseWord: string;
+      baseEmoji: string;
+      swapIndex: number;
+      oldLetter: string;
+      newLetter: string;
+      targetWord: string;
+      targetEmoji: string;
+      distractors: Array<{ word: string; emoji: string }>;
+      explanation: string;
+    }
+
+    const TRIALS: LetterSwapTrial[] = [
+      {
+        baseWord: 'MATO',
+        baseEmoji: '🌾',
+        swapIndex: 0,
+        oldLetter: 'M',
+        newLetter: 'R',
+        targetWord: 'RATO',
+        targetEmoji: '🐀',
+        distractors: [
+          { word: 'GATO', emoji: '🐱' },
+          { word: 'PATO', emoji: '🦆' },
+          { word: 'SAPO', emoji: '🐸' }
+        ],
+        explanation: 'MATO trocando M por R vira RATO!'
+      },
+      {
+        baseWord: 'BOLA',
+        baseEmoji: '⚽',
+        swapIndex: 2,
+        oldLetter: 'L',
+        newLetter: 'T',
+        targetWord: 'BOTA',
+        targetEmoji: '👢',
+        distractors: [
+          { word: 'BOCA', emoji: '👄' },
+          { word: 'BOLO', emoji: '🎂' },
+          { word: 'MOLA', emoji: '🌀' }
+        ],
+        explanation: 'BOLA trocando L por T vira BOTA!'
+      },
+      {
+        baseWord: 'CAMA',
+        baseEmoji: '🛏️',
+        swapIndex: 2,
+        oldLetter: 'M',
+        newLetter: 'S',
+        targetWord: 'CASA',
+        targetEmoji: '🏠',
+        distractors: [
+          { word: 'CAPA', emoji: '🦸' },
+          { word: 'CAIXA', emoji: '📦' },
+          { word: 'CARA', emoji: '😀' }
+        ],
+        explanation: 'CAMA trocando M por S vira CASA!'
+      },
+      {
+        baseWord: 'VELA',
+        baseEmoji: '🕯️',
+        swapIndex: 0,
+        oldLetter: 'V',
+        newLetter: 'T',
+        targetWord: 'TELA',
+        targetEmoji: '🖥️',
+        distractors: [
+          { word: 'BALA', emoji: '🍬' },
+          { word: 'MALA', emoji: '🧳' },
+          { word: 'FILA', emoji: '🚶' }
+        ],
+        explanation: 'VELA trocando V por T vira TELA!'
+      },
+      {
+        baseWord: 'MESA',
+        baseEmoji: '🪑',
+        swapIndex: 0,
+        oldLetter: 'M',
+        newLetter: 'P',
+        targetWord: 'PESA',
+        targetEmoji: '⚖️',
+        distractors: [
+          { word: 'PEÇA', emoji: '🧩' },
+          { word: 'MEIA', emoji: '🧦' },
+          { word: 'PENA', emoji: '🪶' }
+        ],
+        explanation: 'MESA trocando M por P vira PESA!'
+      },
+      {
+        baseWord: 'FACA',
+        baseEmoji: '🔪',
+        swapIndex: 0,
+        oldLetter: 'F',
+        newLetter: 'V',
+        targetWord: 'VACA',
+        targetEmoji: '🐮',
+        distractors: [
+          { word: 'JACA', emoji: '🍈' },
+          { word: 'MACA', emoji: '🏥' },
+          { word: 'BOCA', emoji: '👄' }
+        ],
+        explanation: 'FACA trocando F por V vira VACA!'
+      },
+      {
+        baseWord: 'LUA',
+        baseEmoji: '🌙',
+        swapIndex: 0,
+        oldLetter: 'L',
+        newLetter: 'R',
+        targetWord: 'RUA',
+        targetEmoji: '🛣️',
+        distractors: [
+          { word: 'SUA', emoji: '🙋' },
+          { word: 'BOA', emoji: '👍' },
+          { word: 'UVA', emoji: '🍇' }
+        ],
+        explanation: 'LUA trocando L por R vira RUA!'
+      },
+      {
+        baseWord: 'GATO',
+        baseEmoji: '🐱',
+        swapIndex: 0,
+        oldLetter: 'G',
+        newLetter: 'P',
+        targetWord: 'PATO',
+        targetEmoji: '🦆',
+        distractors: [
+          { word: 'RATO', emoji: '🐀' },
+          { word: 'SAPO', emoji: '🐸' },
+          { word: 'MATO', emoji: '🌾' }
+        ],
+        explanation: 'GATO trocando G por P vira PATO!'
+      },
+      {
+        baseWord: 'PANELA',
+        baseEmoji: '🍳',
+        swapIndex: 0,
+        oldLetter: 'P',
+        newLetter: 'J',
+        targetWord: 'JANELA',
+        targetEmoji: '🪟',
+        distractors: [
+          { word: 'CANELA', emoji: '🌿' },
+          { word: 'TABELA', emoji: '📋' },
+          { word: 'BOLA', emoji: '⚽' }
+        ],
+        explanation: 'PANELA trocando P por J vira JANELA!'
+      },
+      {
+        baseWord: 'MALA',
+        baseEmoji: '🧳',
+        swapIndex: 0,
+        oldLetter: 'M',
+        newLetter: 'S',
+        targetWord: 'SALA',
+        targetEmoji: '🛋️',
+        distractors: [
+          { word: 'BALA', emoji: '🍬' },
+          { word: 'BOLA', emoji: '⚽' },
+          { word: 'TALA', emoji: '🪵' }
+        ],
+        explanation: 'MALA trocando M por S vira SALA!'
+      }
+    ];
+
+    const pool = [...TRIALS].sort(() => Math.random() - 0.5);
+    const totalRounds = 8;
+    let currentRound = 0;
+    let currentTrial: LetterSwapTrial;
+    let currentOptions: Array<{ word: string; emoji: string; isCorrect: boolean }> = [];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+
+    // Layout ancorado de baixo para cima (Bottom-Up)
+    const getOptionBounds = (index: number) => {
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const gapX = 10;
+      const totalOptionsH = cardH * 2 + gapY;
+      const startOptionsY = H - bottomPad - totalOptionsH;
+
+      const sidePad = 14;
+      const cardW = (W - sidePad * 2 - gapX) / 2;
+
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+
+      const bx = sidePad + col * (cardW + gapX);
+      const by = startOptionsY + row * (cardH + gapY);
+
+      return { bx, by, bw: cardW, bh: cardH };
+    };
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
+        this.sound.playVictory();
+        this.finishGame();
+        return;
+      }
+
+      currentTrial = pool[currentRound % pool.length];
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      const opts: Array<{ word: string; emoji: string; isCorrect: boolean }> = [
+        { word: currentTrial.targetWord, emoji: currentTrial.targetEmoji, isCorrect: true },
+        ...currentTrial.distractors.map(d => ({ word: d.word, emoji: d.emoji, isCorrect: false }))
+      ];
+
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+
+      currentOptions = opts;
+      this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: Troque a letra ${currentTrial.oldLetter} por ${currentTrial.newLetter} em ${currentTrial.baseWord}`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // Fundo escuro com gradiente suave
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#0a0f1d');
+      bgGrad.addColorStop(1, '#050811');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. CARD SUPERIOR DE ESTÍMULO
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const startOptionsY = H - bottomPad - (cardH * 2 + gapY);
+
+      const topCardMargin = 12;
+      const topCardX = topCardMargin;
+      const topCardY = 10;
+      const topCardW = W - topCardMargin * 2;
+      const topCardH = startOptionsY - topCardY - 10;
+
+      // Card Central
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(topCardX, topCardY, topCardW, topCardH, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      // Badge superior de Rodada / Objetivo
+      const badgeW = 210;
+      const badgeH = 24;
+      const badgeX = topCardX + (topCardW - badgeW) / 2;
+      const badgeY = topCardY + 10;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`DESAFIO ${currentRound}/${totalRounds} · TROCA DE LETRAS`, badgeX + badgeW / 2, badgeY + badgeH / 2);
+
+      // Letras da palavra base em blocos (Tiles)
+      const letters = currentTrial.baseWord.split('');
+      const tileW = Math.min(42, Math.floor((topCardW - 60) / letters.length));
+      const tileH = Math.min(50, Math.floor(topCardH * 0.28));
+      const tileGap = 8;
+      const totalTilesW = letters.length * tileW + (letters.length - 1) * tileGap;
+      const startTileX = topCardX + (topCardW - totalTilesW) / 2;
+      const startTileY = badgeY + badgeH + 12;
+
+      letters.forEach((l, idx) => {
+        const tx = startTileX + idx * (tileW + tileGap);
+        const ty = startTileY;
+        const isSwap = idx === currentTrial.swapIndex;
+
+        ctx.save();
+        if (isSwap) {
+          // Destaque para a letra que será trocada (borda amber brilhante)
+          ctx.fillStyle = '#451a03';
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2.5;
+          ctx.shadowColor = 'rgba(245, 158, 11, 0.45)';
+          ctx.shadowBlur = 10;
+        } else {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.5;
+        }
+
+        ctx.beginPath();
+        ctx.roundRect(tx, ty, tileW, tileH, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // Letra
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isSwap ? '#fef08a' : '#f8fafc';
+        ctx.font = `900 ${Math.round(tileH * 0.58)}px "Outfit", sans-serif`;
+        ctx.fillText(l, tx + tileW / 2, ty + tileH / 2);
+      });
+
+      // Banner da Instrução de Troca: "Troque M por R" com seta estilizada
+      const bannerW = Math.min(topCardW - 24, 300);
+      const bannerH = Math.min(36, Math.floor(topCardH * 0.22));
+      const bannerX = topCardX + (topCardW - bannerW) / 2;
+      const bannerY = startTileY + tileH + 12;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 14);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 13px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`Troque  [ ${currentTrial.oldLetter} ]  ➔  [ ${currentTrial.newLetter} ]`, bannerX + bannerW / 2, bannerY + bannerH / 2);
+
+      // Pergunta orientadora
+      const promptY = bannerY + bannerH + 16;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 12.5px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Qual nova palavra se forma?', topCardX + topCardW / 2, promptY);
+
+      ctx.restore();
+
+      // 2. ALTERNATIVAS ANCORADAS (GRID 2x2)
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+        const letterBadge = ['A', 'B', 'C', 'D'][i];
+
+        ctx.save();
+
+        let bgColor = '#1e293b';
+        let borderColor = '#334155';
+        let textColor = '#f8fafc';
+        let pillBg = '#0f172a';
+        let pillText = '#38bdf8';
+
+        if (feedbackStatus !== 'none') {
+          if (feedbackIndex === i) {
+            if (opt.isCorrect) {
+              bgColor = '#064e3b';
+              borderColor = '#10b981';
+              textColor = '#ecfdf5';
+              pillBg = '#10b981';
+              pillText = '#ffffff';
+            } else {
+              bgColor = '#7f1d1d';
+              borderColor = '#ef4444';
+              textColor = '#fef2f2';
+              pillBg = '#ef4444';
+              pillText = '#ffffff';
+            }
+          } else if (opt.isCorrect && feedbackStatus === 'error') {
+            borderColor = '#10b981';
+          }
+        }
+
+        // Fundo do Botão
+        ctx.fillStyle = bgColor;
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        // Pílula da Letra (A, B, C, D)
+        const pillW = 28;
+        const pillH = 28;
+        const pillX = bx + 10;
+        const pillY = by + (bh - pillH) / 2;
+
+        ctx.fillStyle = pillBg;
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+        ctx.fill();
+
+        ctx.fillStyle = pillText;
+        ctx.font = '900 13px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterBadge, pillX + pillW / 2, pillY + pillH / 2);
+
+        // Texto e Emoji da Alternativa (ex: 🐀 RATO)
+        const textX = pillX + pillW + 10;
+        const maxTextW = bw - (textX - bx) - 8;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 14px "Outfit", sans-serif';
+        ctx.fillText(`${opt.emoji}  ${opt.word}`, textX, by + bh / 2, maxTextW);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          feedbackIndex = i;
+          const isCorrect = opt.isCorrect;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 15);
+            this.gameInstruction.set(`🎉 Muito bem! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 600);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`❌ Ops! ${currentTrial.baseWord} trocando ${currentTrial.oldLetter} por ${currentTrial.newLetter} não vira ${opt.word}.`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: Troque a letra ${currentTrial.oldLetter} por ${currentTrial.newLetter} em ${currentTrial.baseWord}`);
+              draw();
+            }, 950);
+          }
+        }
+      });
+    });
+  }
+
+  // 6. CONSCIÊNCIA FONOLÓGICA GENÉRICA (JOGOS 31, 32, 33, 34, 35, 38, 39)
+  setupPhonologyGame(canvas: HTMLCanvasElement, W: number, H: number, gameId: number) {
+    const ctx = this.canvasCtx!;
+
+    interface PhonologyTrial {
+      headerPrompt: string;
+      stimulus: string;
+      options: string[];
+      explanation: string;
+    }
+
+    const GAME_BANKS: Record<number, PhonologyTrial[]> = {
+      // 31. Rimas Básicas
+      31: [
+        { headerPrompt: 'Qual palavra rima com:', stimulus: 'SOLA 👞', options: ['MOLA 🌀', 'CASA 🏠', 'BOLO 🎂', 'DADO 🎲'], explanation: 'SOLA rima com MOLA (som final -OLA)!' },
+        { headerPrompt: 'Qual palavra rima com:', stimulus: 'CORAÇÃO ❤️', options: ['AVIÃO ✈️', 'SAPATO 👟', 'FLOR 🌸', 'LÁPIS ✏️'], explanation: 'CORAÇÃO rima com AVIÃO (som final -ÃO)!' },
+        { headerPrompt: 'Qual palavra rima com:', stimulus: 'PATO 🦆', options: ['GATO 🐱', 'BOCA 👄', 'LUA 🌙', 'SOL ☀️'], explanation: 'PATO rima com GATO (som final -ATO)!' },
+        { headerPrompt: 'Qual palavra rima com:', stimulus: 'DENTE 🦷', options: ['PENTE 🪮', 'BOLA ⚽', 'MESA 🪑', 'CARRO 🚗'], explanation: 'DENTE rima com PENTE (som final -ENTE)!' },
+        { headerPrompt: 'Qual palavra rima com:', stimulus: 'JANELA 🪟', options: ['PANELA 🍳', 'BALA 🍬', 'COPO 🥤', 'PEIXE 🐟'], explanation: 'JANELA rima com PANELA (som final -ELA)!' },
+        { headerPrompt: 'Qual palavra rima com:', stimulus: 'FLOR 🌸', options: ['AMOR 💖', 'ÁGUA 💧', 'FOGO 🔥', 'VENTO 💨'], explanation: 'FLOR rima com AMOR (som final -OR)!' },
+      ],
+      // 32. Sílabas
+      32: [
+        { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'CASA 🏠', options: ['CA - SA (2)', 'CAS - A (2)', 'C - A - S - A (4)', 'CA - S - A (3)'], explanation: 'CA-SA tem 2 sílabas!' },
+        { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'PIPOCA 🍿', options: ['PI - PO - CA (3)', 'PIP - O - CA (3)', 'PI - POCA (2)', 'P - I - P - O (4)'], explanation: 'PI-PO-CA tem 3 sílabas!' },
+        { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'BOLA ⚽', options: ['BO - LA (2)', 'BOL - A (2)', 'B - O - L - A (4)', 'BOLA (1)'], explanation: 'BO-LA tem 2 sílabas!' },
+        { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'SAPATO 👟', options: ['SA - PA - TO (3)', 'SAP - A - TO (3)', 'SA - PATO (2)', 'SAPA - TO (2)'], explanation: 'SA-PA-TO tem 3 sílabas!' },
+        { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'BORBOLETA 🦋', options: ['BOR - BO - LE - TA (4)', 'BO - RBO - LE - TA (4)', 'BOR - BOLETA (2)', 'BORBO - LETA (2)'], explanation: 'BOR-BO-LE-TA tem 4 sílabas!' },
+        { headerPrompt: 'Separe em sílabas a palavra:', stimulus: 'SOL ☀️', options: ['SOL (1 sílaba)', 'SO - L (2)', 'S - O - L (3)', 'S - OL (2)'], explanation: 'SOL tem 1 sílaba só (monossílaba)!' },
+      ],
+      // 33. Som Inicial
+      33: [
+        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'MAÇÃ 🍎', options: ['M (som /m/)', 'A', 'Ç', 'P'], explanation: 'MAÇÃ começa com a letra M!' },
+        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'ELEFANTE 🐘', options: ['E (som /e/)', 'L', 'F', 'T'], explanation: 'ELEFANTE começa com a letra E!' },
+        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'BOLA ⚽', options: ['B (som /b/)', 'O', 'L', 'D'], explanation: 'BOLA começa com a letra B!' },
+        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'SAPATO 👟', options: ['S (som /s/)', 'A', 'P', 'Z'], explanation: 'SAPATO começa com a letra S!' },
+        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'GATO 🐱', options: ['G (som /g/)', 'A', 'T', 'J'], explanation: 'GATO começa com a letra G!' },
+        { headerPrompt: 'Qual letra/som começa a palavra:', stimulus: 'UVA 🍇', options: ['U (som /u/)', 'V', 'A', 'O'], explanation: 'UVA começa com a letra U!' },
+      ],
+      // 34. Som Final
+      34: [
+        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'SOL ☀️', options: ['L (som /l/)', 'S', 'O', 'Z'], explanation: 'SOL termina com a letra L!' },
+        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'JACARÉ 🐊', options: ['É (som /ɛ/)', 'J', 'A', 'C'], explanation: 'JACARÉ termina com a letra É!' },
+        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'TAMBOR 🥁', options: ['R (som /r/)', 'T', 'A', 'M'], explanation: 'TAMBOR termina com a letra R!' },
+        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'TATU 🐾', options: ['U (som /u/)', 'T', 'A', 'O'], explanation: 'TATU termina com a letra U!' },
+        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'ANEL 💍', options: ['L (som /l/)', 'A', 'N', 'E'], explanation: 'ANEL termina com a letra L!' },
+        { headerPrompt: 'Qual a letra/som FINAL da palavra:', stimulus: 'AMOR 💖', options: ['R (som /r/)', 'A', 'M', 'O'], explanation: 'AMOR termina com a letra R!' },
+      ],
+      // 35. Contagem de Sílabas
+      35: [
+        { headerPrompt: 'Quantas sílabas (palmas) tem:', stimulus: 'BORBOLETA 🦋', options: ['4 sílabas', '3 sílabas', '2 sílabas', '5 sílabas'], explanation: 'BOR-BO-LE-TA = 4 palmas!' },
+        { headerPrompt: 'Quantas sílabas (palmas) tem:', stimulus: 'CASA 🏠', options: ['2 sílabas', '1 sílaba', '3 sílabas', '4 sílabas'], explanation: 'CA-SA = 2 palmas!' },
+        { headerPrompt: 'Quantas sílabas (palmas) tem:', stimulus: 'PIPOCA 🍿', options: ['3 sílabas', '2 sílabas', '4 sílabas', '1 sílaba'], explanation: 'PI-PO-CA = 3 palmas!' },
+        { headerPrompt: 'Quantas sílabas (palmas) tem:', stimulus: 'SOL ☀️', options: ['1 sílaba', '2 sílabas', '3 sílabas', '4 sílabas'], explanation: 'SOL = 1 palma só!' },
+        { headerPrompt: 'Quantas sílabas (palmas) tem:', stimulus: 'CHOCOLATE 🍫', options: ['4 sílabas', '3 sílabas', '2 sílabas', '5 sílabas'], explanation: 'CHO-CO-LA-TE = 4 palmas!' },
+        { headerPrompt: 'Quantas sílabas (palmas) tem:', stimulus: 'GATINHO 🐱', options: ['3 sílabas', '2 sílabas', '4 sílabas', '1 sílaba'], explanation: 'GA-TI-NHO = 3 palmas!' },
+      ],
+      // 38. Fonemas (Segmentação fonêmica)
+      38: [
+        { headerPrompt: 'Separe em SONS individuais (fonemas):', stimulus: 'SOL ☀️', options: ['S - O - L (3 sons)', 'S - OL (2 sons)', 'SO - L (2 sons)', 'SOL (1 som)'], explanation: 'SOL tem 3 fonemas: /s/ /o/ /l/!' },
+        { headerPrompt: 'Separe em SONS individuais (fonemas):', stimulus: 'PÉ 🦶', options: ['P - É (2 sons)', 'PÉ (1 som)', 'P - E - E (3 sons)', 'P (1 som)'], explanation: 'PÉ tem 2 fonemas: /p/ /ɛ/!' },
+        { headerPrompt: 'Separe em SONS individuais (fonemas):', stimulus: 'UVA 🍇', options: ['U - V - A (3 sons)', 'UV - A (2 sons)', 'U - VA (2 sons)', 'UVA (1 som)'], explanation: 'UVA tem 3 fonemas: /u/ /v/ /a/!' },
+        { headerPrompt: 'Separe em SONS individuais (fonemas):', stimulus: 'LUA 🌙', options: ['L - U - A (3 sons)', 'LU - A (2 sons)', 'L - UA (2 sons)', 'LUA (1 som)'], explanation: 'LUA tem 3 fonemas: /l/ /u/ /a/!' },
+        { headerPrompt: 'Separe em SONS individuais (fonemas):', stimulus: 'CÃO 🐕', options: ['C - Ã - O (3 sons)', 'C - ÃO (2 sons)', 'CÃO (1 som)', 'CA - O (2 sons)'], explanation: 'CÃO tem 3 fonemas: /k/ /ã/ /w/!' },
+        { headerPrompt: 'Separe em SONS individuais (fonemas):', stimulus: 'PAZ 🕊️', options: ['P - A - Z (3 sons)', 'PA - Z (2 sons)', 'P - AZ (2 sons)', 'PAZ (1 som)'], explanation: 'PAZ tem 3 fonemas: /p/ /a/ /s/!' },
+      ],
+      // 39. Junte Sílabas (Síntese silábica)
+      39: [
+        { headerPrompt: 'Junte as sílabas e forme a palavra:', stimulus: 'CA + SA 🧩', options: ['CASA 🏠', 'CASSO 🪚', 'CAÇO 🏹', 'CARA 😀'], explanation: 'CA + SA forma a palavra CASA!' },
+        { headerPrompt: 'Junte as sílabas e forme a palavra:', stimulus: 'BO + LA 🧩', options: ['BOLA ⚽', 'BOTA 👢', 'BOCA 👄', 'BOLO 🎂'], explanation: 'BO + LA forma a palavra BOLA!' },
+        { headerPrompt: 'Junte as sílabas e forme a palavra:', stimulus: 'PI + PO + CA 🧩', options: ['PIPOCA 🍿', 'PICO 🏔️', 'PIPA 🪁', 'PETECA 🪶'], explanation: 'PI + PO + CA forma a palavra PIPOCA!' },
+        { headerPrompt: 'Junte as sílabas e forme a palavra:', stimulus: 'MA + CA + CO 🧩', options: ['MACACO 🐵', 'MALA 🧳', 'MATA 🌲', 'MACA 🏥'], explanation: 'MA + CA + CO forma a palavra MACACO!' },
+        { headerPrompt: 'Junte as sílabas e forme a palavra:', stimulus: 'JA + NE + LA 🧩', options: ['JANELA 🪟', 'JACA 🍈', 'JORNAL 📰', 'JOGO 🎮'], explanation: 'JA + NE + LA forma a palavra JANELA!' },
+        { headerPrompt: 'Junte as sílabas e forme a palavra:', stimulus: 'SA + PA + TO 🧩', options: ['SAPATO 👟', 'SAPO 🐸', 'SALA 🛋️', 'SACO 🛍️'], explanation: 'SA + PA + TO forma a palavra SAPATO!' },
+      ]
+    };
+
+    const rawBank = GAME_BANKS[gameId] || GAME_BANKS[31];
+    const trials = [...rawBank].sort(() => Math.random() - 0.5);
+    const totalRounds = trials.length;
+    let currentRound = 0;
+    let currentTrial: PhonologyTrial;
+    let currentOptions: Array<{ text: string; isCorrect: boolean }> = [];
+    let feedbackStatus: 'none' | 'success' | 'error' = 'none';
+    let feedbackIndex = -1;
+
+    // Layout ancorado de baixo para cima (Bottom-Up)
+    const getOptionBounds = (index: number) => {
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const gapX = 10;
+      const totalOptionsH = cardH * 2 + gapY;
+      const startOptionsY = H - bottomPad - totalOptionsH;
+
+      const sidePad = 14;
+      const cardW = (W - sidePad * 2 - gapX) / 2;
+
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+
+      const bx = sidePad + col * (cardW + gapX);
+      const by = startOptionsY + row * (cardH + gapY);
+
+      return { bx, by, bw: cardW, bh: cardH };
+    };
+
+    const newRound = () => {
+      if (currentRound >= totalRounds) {
+        this.sound.playVictory();
+        this.finishGame();
+        return;
+      }
+
+      currentTrial = trials[currentRound];
+      currentRound++;
+      feedbackStatus = 'none';
+      feedbackIndex = -1;
+
+      // Embaralhar as 4 opções garantindo que a opção 0 original seja marcada como correta
+      const opts = currentTrial.options.map((text, idx) => ({ text, isCorrect: idx === 0 }));
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+
+      currentOptions = opts;
+      this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: ${currentTrial.headerPrompt} ${currentTrial.stimulus}`);
+      draw();
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // Fundo escuro com gradiente suave
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#0a0f1d');
+      bgGrad.addColorStop(1, '#050811');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. CARD SUPERIOR DE ESTÍMULO
+      const bottomPad = 12;
+      const cardH = 50;
+      const gapY = 8;
+      const startOptionsY = H - bottomPad - (cardH * 2 + gapY);
+
+      const topCardMargin = 12;
+      const topCardX = topCardMargin;
+      const topCardY = 10;
+      const topCardW = W - topCardMargin * 2;
+      const topCardH = startOptionsY - topCardY - 10;
+
+      // Card Central
+      ctx.save();
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(topCardX, topCardY, topCardW, topCardH, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      // Badge superior de Rodada / Objetivo
+      const badgeW = 200;
+      const badgeH = 24;
+      const badgeX = topCardX + (topCardW - badgeW) / 2;
+      const badgeY = topCardY + 12;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`DESAFIO ${currentRound}/${totalRounds}`, badgeX + badgeW / 2, badgeY + badgeH / 2);
+
+      // Pergunta orientadora
+      const promptY = badgeY + badgeH + 16;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 13px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.headerPrompt, topCardX + topCardW / 2, promptY);
+
+      // Estímulo Principal em Destaque
+      const stimY = promptY + (topCardH - (promptY - topCardY)) * 0.42;
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '900 28px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentTrial.stimulus, topCardX + topCardW / 2, stimY);
+
+      ctx.restore();
+
+      // 2. ALTERNATIVAS ANCORADAS (GRID 2x2)
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+        const letterBadge = ['A', 'B', 'C', 'D'][i];
+
+        ctx.save();
+
+        let bgColor = '#1e293b';
+        let borderColor = '#334155';
+        let textColor = '#f8fafc';
+        let pillBg = '#0f172a';
+        let pillText = '#38bdf8';
+
+        if (feedbackStatus !== 'none') {
+          if (feedbackIndex === i) {
+            if (opt.isCorrect) {
+              bgColor = '#064e3b';
+              borderColor = '#10b981';
+              textColor = '#ecfdf5';
+              pillBg = '#10b981';
+              pillText = '#ffffff';
+            } else {
+              bgColor = '#7f1d1d';
+              borderColor = '#ef4444';
+              textColor = '#fef2f2';
+              pillBg = '#ef4444';
+              pillText = '#ffffff';
+            }
+          } else if (opt.isCorrect && feedbackStatus === 'error') {
+            borderColor = '#10b981';
+          }
+        }
+
+        // Fundo do Botão
+        ctx.fillStyle = bgColor;
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        // Pílula da Letra (A, B, C, D)
+        const pillW = 28;
+        const pillH = 28;
+        const pillX = bx + 10;
+        const pillY = by + (bh - pillH) / 2;
+
+        ctx.fillStyle = pillBg;
+        ctx.beginPath();
+        ctx.roundRect(pillX, pillY, pillW, pillH, 8);
+        ctx.fill();
+
+        ctx.fillStyle = pillText;
+        ctx.font = '900 13px "Outfit", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterBadge, pillX + pillW / 2, pillY + pillH / 2);
+
+        // Texto da Alternativa
+        const textX = pillX + pillW + 10;
+        const maxTextW = bw - (textX - bx) - 8;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = textColor;
+        ctx.font = 'bold 13.5px "Outfit", sans-serif';
+        ctx.fillText(opt.text, textX, by + bh / 2, maxTextW);
+
+        ctx.restore();
+      });
+    };
+
+    newRound();
+
+    this.setCanvasHandler(canvas, (mx, my) => {
+      if (feedbackStatus !== 'none') return;
+
+      currentOptions.forEach((opt, i) => {
+        const { bx, by, bw, bh } = getOptionBounds(i);
+
+        if (mx >= bx && mx <= bx + bw && my >= by && my <= by + bh) {
+          feedbackIndex = i;
+          const isCorrect = opt.isCorrect;
+          this.recordAttempt(isCorrect);
+
+          if (isCorrect) {
+            feedbackStatus = 'success';
+            this.sound.playSuccess();
+            this.gameScore.update(s => s + 15);
+            this.gameInstruction.set(`🎉 Muito bem! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              newRound();
+            }, 600);
+          } else {
+            feedbackStatus = 'error';
+            this.sound.playError();
+            this.gameInstruction.set(`❌ Ops! ${currentTrial.explanation}`);
+            draw();
+            this.gameData.activeTimeout = setTimeout(() => {
+              feedbackStatus = 'none';
+              feedbackIndex = -1;
+              this.gameInstruction.set(`Desafio ${currentRound}/${totalRounds}: ${currentTrial.headerPrompt} ${currentTrial.stimulus}`);
+              draw();
+            }, 950);
+          }
+        }
+      });
+    });
   }
 
   // 7. SOCIOEMOCIONAL (TEORIA DA MENTE, EMPATIA E AUTOCONHECIMENTO)
@@ -6872,6 +7972,79 @@ export class JogosComponent implements OnInit, OnDestroy {
           trials,
           instruction: 'Toque na estrela quando ela surgir!',
           durationMs: 2500
+        };
+      }
+
+      if (gameId === 22) {
+        // Mude de Regra (Dimensional Change / Rule Switching)
+        const phase1: TapItemTrial[] = [];
+        for (let i = 0; i < 4; i++) phase1.push({ symbol: '🔵', isTarget: true });
+        for (let i = 0; i < 2; i++) phase1.push({ symbol: '⬜', isTarget: false });
+        for (let i = phase1.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [phase1[i], phase1[j]] = [phase1[j], phase1[i]];
+        }
+        const phase2: TapItemTrial[] = [];
+        for (let i = 0; i < 4; i++) phase2.push({ symbol: '⬜', isTarget: true });
+        for (let i = 0; i < 2; i++) phase2.push({ symbol: '🔵', isTarget: false });
+        for (let i = phase2.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [phase2[i], phase2[j]] = [phase2[j], phase2[i]];
+        }
+        return {
+          trials: [{ symbol: '🔵', isTarget: true }, ...phase1, ...phase2],
+          instruction: 'Regra 1: Toque no CÍRCULO 🔵! Atenção: a regra vai mudar no meio!',
+          durationMs: 1900
+        };
+      }
+
+      if (gameId === 27) {
+        // Flexibilidade Mental (Alternância Vogal vs Número)
+        const vowels = ['🅰️', '🅴', '🅸', '🅾️', '🆄'];
+        const numbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'];
+        const pool: TapItemTrial[] = [];
+        for (let i = 0; i < 4; i++) pool.push({ symbol: vowels[i % vowels.length], isTarget: true });
+        for (let i = 0; i < 3; i++) pool.push({ symbol: numbers[i % numbers.length], isTarget: false });
+        for (let i = 0; i < 4; i++) pool.push({ symbol: numbers[(i + 2) % numbers.length], isTarget: true });
+        for (let i = 0; i < 3; i++) pool.push({ symbol: vowels[(i + 2) % vowels.length], isTarget: false });
+        return {
+          trials: [{ symbol: vowels[0], isTarget: true }, ...pool],
+          instruction: 'Flexibilidade: Toque nas VOGAIS ou NÚMEROS conforme solicitado!',
+          durationMs: 2000
+        };
+      }
+
+      if (gameId === 28) {
+        // Tombe Switch (Cor vs Forma)
+        const pool: TapItemTrial[] = [];
+        for (let i = 0; i < 6; i++) pool.push({ symbol: '🟢', isTarget: true });
+        for (let i = 0; i < 3; i++) pool.push({ symbol: '🔴', isTarget: false });
+        for (let i = 0; i < 3; i++) pool.push({ symbol: '⬜', isTarget: false });
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return {
+          trials: [{ symbol: '🟢', isTarget: true }, ...pool],
+          instruction: 'Tombe Switch: Toque apenas nos círculos VERDES 🟢!',
+          durationMs: 1900
+        };
+      }
+
+      if (gameId === 58) {
+        // Paciência (Controle Inibitório com Semáforo)
+        const pool: TapItemTrial[] = [];
+        for (let i = 0; i < 7; i++) pool.push({ symbol: '🟢', isTarget: true });
+        for (let i = 0; i < 4; i++) pool.push({ symbol: '🟡', isTarget: false });
+        for (let i = 0; i < 4; i++) pool.push({ symbol: '🔴', isTarget: false });
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        return {
+          trials: [{ symbol: '🟢', isTarget: true }, ...pool],
+          instruction: 'Paciência: Toque APENAS quando o semáforo for VERDE 🟢!',
+          durationMs: 2200
         };
       }
 
