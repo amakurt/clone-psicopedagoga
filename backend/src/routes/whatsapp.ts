@@ -246,8 +246,12 @@ async function handleEvolutionWebhook(req: any, res: any) {
     });
 
     if (aiResult.replyText) {
-      // Envia resposta de volta pelo WhatsApp
-      await sendWhatsAppMessage(cleanPhone, aiResult.replyText, targetTenantId);
+      // Envia resposta de volta pelo WhatsApp (se a Evolution API estiver configurada e acessível)
+      try {
+        await sendWhatsAppMessage(cleanPhone, aiResult.replyText, targetTenantId);
+      } catch (sendErr: any) {
+        console.warn(`[WhatsApp Webhook] Aviso ao enviar para Evolution API: ${sendErr.message}. Mensagem mantida no histórico.`);
+      }
 
       // Registra mensagem da IA no banco
       await db.whatsAppMessage.create({

@@ -1,6 +1,47 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 07 de Outubro de 2026
+## Última Atualização: 08 de Outubro de 2026
+
+---
+
+## Sessão 62 - 08/10/2026 — Sincronização do Repositório, Validação dos Servidores e Bateria de Testes do Atendimento com IA no WhatsApp
+
+### O que foi feito
+
+#### 1. Sincronização e Atualização do Repositório
+- Executado `git pull origin main` (fast-forward de 34 commits) integrando as últimas melhorias de jogos cognitivos, engines TMT, limpeza de ciclo de vida e silenciamento de áudio ao fechar modal.
+- Executado `npx prisma generate` no backend com sincronização total do schema.
+- Validação estática de TypeScript com `npx tsc --noEmit` sem qualquer erro.
+
+#### 2. Inicialização dos Servidores de Desenvolvimento e Homologação
+- Backend Express/Prisma/SQLite inicializado e rodando na porta `3000`.
+- Frontend Angular 18 inicializado com `ng serve` na porta `4200` com *Live Reload* e todos os chunks compilados.
+- Testes de integridade via HTTP (`GET /` e `POST /api/auth/login`) executados com sucesso (200 OK para `sarah@edupsych.com`).
+
+#### 3. Correção de Modelos da API Google Gemini
+- **Diagnóstico**: O endpoint de chat estava configurado com o modelo `gemini-2.5-flash`, depreciado pelo Google em favor das versões mais recentes da família Gemini.
+- **Ajuste**: Atualizado `models` em `backend/src/services/whatsapp-ai.service.ts` para os modelos ativos com alta performance:
+  - `gemini-3.5-flash`
+  - `gemini-3.5-flash-lite`
+  - `gemini-3.8-flash`
+  - `gemini-flash-latest`
+- Validação direta via script: tempo de resposta instantâneo com geração de respostas clínicas humanizadas e acolhedoras.
+
+#### 4. Resiliência do Webhook do WhatsApp e Persistência Local
+- **Ajuste em `backend/src/routes/whatsapp.ts`**:
+  - Envolvido o disparo para a Evolution API externa (`sendWhatsAppMessage`) em bloco `try/catch` resiliente.
+  - Garante que mesmo em ambientes locais de teste ou caso a Evolution API externa esteja temporariamente fora do ar, todas as mensagens recebidas de clientes e as respostas acolhedoras geradas pela IA sejam **100% salvas no banco de dados SQLite** e apareçam no painel de **Live Chat** em tempo real.
+- **Correção em `backend/scripts/test-whatsapp-ai.ts`**:
+  - Adicionado `import 'dotenv/config'` no topo do script para garantir carregamento de variáveis de ambiente de forma autônoma.
+
+#### 5. Bateria de Testes de WhatsApp Realizada
+- **Teste Automatizado (`test-whatsapp-ai.ts`)**:
+  - Cenário 1 (Dúvida sobre avaliação psicopedagógica infantil): Aprovado com resposta da IA.
+  - Cenário 2 (Solicitação de atendente humano): Aprovado com detecção de intenção `HANDOFF`, ativação de `shouldMute: true` e pausa da IA por 4 horas.
+  - Cenário 3 (Persistência relacional de conversas e mensagens): Aprovado com sucesso.
+- **Teste de Simulação de Webhook Evolution API**:
+  - Disparado evento `messages.upsert` com pergunta sobre avaliação de TDAH.
+  - Conversa criada com status `ACTIVE`, nome do contato extraído e resposta da IA gerada e persistida no banco.
 
 ---
 

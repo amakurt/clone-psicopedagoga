@@ -42,7 +42,7 @@ function isDirectHandoffRequest(text: string): boolean {
  * Realiza chamada à API do Google Gemini com fallback de modelos
  */
 async function callGeminiForChat(prompt: string, apiKey: string): Promise<string> {
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
+  const models = ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest'];
   let lastError: any = null;
 
   for (const model of models) {

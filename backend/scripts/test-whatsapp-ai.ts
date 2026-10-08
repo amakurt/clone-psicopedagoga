@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import prisma from '../src/lib/prisma';
 import { processWhatsAppAIMessage } from '../src/services/whatsapp-ai.service';
 
