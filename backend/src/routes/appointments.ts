@@ -184,15 +184,15 @@ router.put('/:id/status', async (req, res) => {
     }
   }
 
-  if (respUserId) {
-    const labels: Record<string, string> = {
-      CONFIRMADO: 'Agendamento confirmado',
-      CANCELADO: 'Agendamento cancelado',
-      CONCLUIDO: 'Agendamento finalizado',
-    };
-    const title = labels[status] || 'Agendamento atualizado';
-    const message = `${title}: ${appointment.patientName} (${appointment.date} ${appointment.startTime})`;
+  const labels: Record<string, string> = {
+    CONFIRMADO: 'Agendamento confirmado',
+    CANCELADO: 'Agendamento cancelado',
+    CONCLUIDO: 'Agendamento finalizado',
+  };
+  const title = labels[status] || 'Agendamento atualizado';
+  const message = `${title}: ${appointment.patientName} (${appointment.date} ${appointment.startTime})`;
 
+  if (respUserId) {
     await db.notification.create({
       data: {
         tenantId: req.user?.tenantId,
@@ -203,13 +203,56 @@ router.put('/:id/status', async (req, res) => {
         read: false
       },
     });
+  }
 
-    const { sendWhatsAppMessage } = await import('./whatsapp');
+  if (responsible?.phones) {
     try {
-      await sendWhatsAppMessage(responsible?.phones || '', `🗓️ ${title}: ${appointment.patientName} (${appointment.date} ${appointment.startTime})`, req.user?.tenantId);
+      const { sendWhatsAppMessage } = await import('./whatsapp');
+      await sendWhatsAppMessage(
+        responsible.phones,
+        `🗓️ *EduPsych Pro - ${title}*\nOlá, ${responsible.name || 'Responsável'}!\nO agendamento de *${appointment.patientName}* para o dia *${appointment.date}* às *${appointment.startTime}* foi atualizado: *${status}*.`,
+        req.user?.tenantId || appointment.tenantId
+      );
       console.log(`[WHATSAPP] Notificação de status enviada para ${responsible?.name}`);
     } catch (error: any) {
       console.warn(`[WHATSAPP] Falha ao notificar status para ${responsible?.name}: ${error.message}`);
+    }
+  }
+
+  // Registra confirmação ou cancelamento diretamente no chat do paciente para feedback imediato
+  if (status === 'CONFIRMADO') {
+    try {
+      await db.chatMessage.create({
+        data: {
+          tenantId: req.user?.tenantId || appointment.tenantId,
+          senderId: req.user?.id || 'staff-system',
+          senderName: 'Secretaria da Clínica',
+          senderRole: 'STAFF',
+          message: `✅ Consulta Confirmada! O agendamento de ${appointment.patientName} para o dia ${appointment.date} às ${appointment.startTime} foi confirmado pela recepção da clínica. Esperamos vocês! 🌸`,
+          pacienteId: appointment.pacienteId,
+          readByStaff: true,
+          readByGuardian: false,
+        },
+      });
+    } catch (err: any) {
+      console.warn('Erro ao salvar mensagem de confirmação no chat:', err?.message);
+    }
+  } else if (status === 'CANCELADO') {
+    try {
+      await db.chatMessage.create({
+        data: {
+          tenantId: req.user?.tenantId || appointment.tenantId,
+          senderId: req.user?.id || 'staff-system',
+          senderName: 'Secretaria da Clínica',
+          senderRole: 'STAFF',
+          message: `⚠️ O agendamento de ${appointment.patientName} para o dia ${appointment.date} às ${appointment.startTime} foi cancelado. Se desejar remarcar para outro horário, basta nos avisar por aqui! 🌸`,
+          pacienteId: appointment.pacienteId,
+          readByStaff: true,
+          readByGuardian: false,
+        },
+      });
+    } catch (err: any) {
+      console.warn('Erro ao salvar mensagem de cancelamento no chat:', err?.message);
     }
   }
 

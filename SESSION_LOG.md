@@ -1,6 +1,46 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 08 de Outubro de 2026
+## Última Atualização: 10 de Outubro de 2026
+
+---
+
+## Sessão 63 - 10/10/2026 — Consulta de Disponibilidade em Tempo Real, Pré-Agendamento Inteligente pela IA e Resolução de Respostas Truncadas
+
+### O que foi feito
+
+#### 1. Consulta em Tempo Real da Agenda da Clínica pela IA
+- **Mecanismo de Disponibilidade (`getClinicAvailabilityContext`)**:
+  - Implementada função no `whatsapp-ai.service.ts` que consulta a tabela `Appointment` para os próximos 7 dias úteis.
+  - Mapeia os horários ocupados (`CONFIRMADO`, `AGENDADO`, `PENDENTE`) e os horários livres nos blocos padrão de atendimento (`08:00`, `09:00`, `10:00`, `11:00`, `14:00`, `15:00`, `16:00`, `17:00`).
+  - O prompt da IA recebe o quadro exato da agenda clínica em tempo real para o dia atual e dias subsequentes, permitindo responder ao responsável com total precisão sobre vagas disponíveis.
+
+#### 2. Pré-Agendamento Automático (`status: 'PENDENTE'`)
+- **Extração Estruturada e Criação no Banco (`registerPendingAppointment`)**:
+  - A IA orienta o responsável sobre os horários e, ao receber a confirmação de data e hora pretendida, emite uma diretiva JSON segura (`{"agendamento": {"data": "YYYY-MM-DD", "horario": "HH:mm"}}`).
+  - O backend intercepta a diretiva, limpa o texto exibido ao responsável e realiza o cadastro direto do `Appointment` com status `PENDENTE`.
+  - Notifica a equipe/recepção da clínica no painel com notificação interna.
+  - A IA informa ao responsável com tom acolhedor que o horário foi pré-reservado e que a equipe da secretaria fará a confirmação formal em breve.
+
+#### 3. Confirmação do Atendente e Notificação Automática ao Responsável
+- **Atualização de Status em `backend/src/routes/appointments.ts`**:
+  - Quando a equipe da clínica altera o status para `CONFIRMADO` (ou `CANCELADO`) via painel:
+    - É criada uma mensagem automática em `ChatMessage` com `senderRole: 'STAFF'` e remetente "Secretaria da Clínica", notificando o responsável diretamente na conversa.
+    - É disparada notificação via WhatsApp (caso o responsável possua telefone cadastrado).
+    - É criada notificação in-app para o usuário do responsável.
+
+#### 4. Resolução de Respostas Truncadas / Interrompidas no Chat
+- **Diagnóstico da Causa Raiz**:
+  - Modelos Gemini 3.5/3.8 Flash utilizavam parte do orçamento de tokens com raciocínio interno (*thinking tokens*), e o limite anterior de `maxOutputTokens: 600` causava corte prematuro (`MAX_TOKENS`).
+- **Ajuste Realizado**:
+  - Configurado `maxOutputTokens: 2500`.
+  - Adicionado `thinkingConfig: { thinkingBudget: 0 }` para que 100% dos tokens sejam dedicados ao texto final da resposta ao usuário, eliminando completamente respostas incompletas.
+
+#### 5. Validação Automatizada de Ponta a Ponta
+- Criado e executado com sucesso o script `backend/scripts/test-scheduling-ai.ts`:
+  - Simulação de solicitação de agendamento por responsável.
+  - Verificação de disponibilidade e resposta acolhedora da IA.
+  - Criação do `Appointment` com status `PENDENTE`.
+  - Confirmação pela recepção e envio de mensagem de confirmação para o chat do responsável.
 
 ---
 
