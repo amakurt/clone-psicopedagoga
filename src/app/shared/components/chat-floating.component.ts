@@ -176,14 +176,21 @@ interface ChatConversation {
                 }
                 @for (msg of messages(); track msg.id) {
                   <div class="flex" [class.justify-end]="isMine(msg)">
-                    <div class="max-w-[85%] sm:max-w-[80%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-snug"
+                    <div class="max-w-[85%] sm:max-w-[80%] px-3.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-snug shadow-sm"
                       [class]="isMine(msg)
                         ? 'bg-primary text-on-primary rounded-br-md'
+                        : msg.senderRole === 'AI'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-emerald-100 rounded-bl-md'
                         : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md'">
-                      <p class="text-[11px] font-semibold mb-1 opacity-90" *ngIf="!isMine(msg)">
-                        {{ isGuardian() ? msg.senderName : (selectedConversation()?.responsibleName ? selectedConversation()!.responsibleName + ' (' + (selectedConversation()!.responsibleRelationship || 'Responsável') + ')' : (msg.senderName || 'Responsável')) }}
+                      <p class="text-[11px] font-semibold mb-1 flex items-center gap-1 opacity-90" *ngIf="!isMine(msg)">
+                        @if (msg.senderRole === 'AI') {
+                          <span class="material-icons text-[13px] text-emerald-600 dark:text-emerald-400">smart_toy</span>
+                          <span class="text-emerald-700 dark:text-emerald-300 font-bold">Assistente Virtual (IA)</span>
+                        } @else {
+                          {{ isGuardian() ? msg.senderName : (selectedConversation()?.responsibleName ? selectedConversation()!.responsibleName + ' (' + (selectedConversation()!.responsibleRelationship || 'Responsável') + ')' : (msg.senderName || 'Responsável')) }}
+                        }
                       </p>
-                      <p class="whitespace-pre-wrap break-words">{{ msg.message }}</p>
+                      <p class="whitespace-pre-wrap break-words leading-relaxed">{{ msg.message }}</p>
                       <p class="text-[9px] sm:text-[10px] mt-1 opacity-70 text-right">{{ formatTime(msg.createdAt) }}</p>
                     </div>
                   </div>

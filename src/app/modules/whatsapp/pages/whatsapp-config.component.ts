@@ -368,7 +368,7 @@ import {
                   <span class="material-icons text-emerald-600 text-xl">psychology</span>
                   <div>
                     <h3 class="text-sm font-bold text-slate-900 dark:text-white">Motor de Atendimento com IA</h3>
-                    <p class="text-xs text-slate-500">Google Gemini Flash integrado para acolhimento e triagem</p>
+                    <p class="text-xs text-slate-500">Google Gemini Flash para acolhimento no WhatsApp e no Chat Interno do Sistema</p>
                   </div>
                 </div>
 

@@ -3,6 +3,7 @@ import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate } from '../middleware';
+import { processInternalChatAIMessage } from '../services/whatsapp-ai.service';
 
 const router = Router();
 router.use(authenticate);
@@ -723,6 +724,16 @@ router.post('/chat', async (req, res) => {
   });
 
   await notifyStaffOnGuardianMessage(req.user!.tenantId!, responsible.name, pacienteId, message.trim());
+
+  // Aciona a IA do sistema para suporte imediato e acolhimento no chat
+  processInternalChatAIMessage({
+    tenantId: req.user!.tenantId!,
+    pacienteId,
+    userMessageText: message.trim(),
+    senderName: responsible.name,
+  }).catch((err) =>
+    console.warn('Erro ao processar resposta da IA no chat do responsável:', err?.message)
+  );
 
   res.status(201).json(chatMessage);
 });

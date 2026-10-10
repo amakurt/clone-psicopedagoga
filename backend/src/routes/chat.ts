@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate, authorize, validate } from '../middleware';
+import { processInternalChatAIMessage } from '../services/whatsapp-ai.service';
 
 const router = Router();
 router.use(authenticate);
@@ -234,6 +235,18 @@ router.post('/', validate(chatMessageInputSchema), async (req, res) => {
       readByGuardian: senderRole === 'RESPONSAVEL',
     },
   });
+
+  // Se a mensagem partiu do responsável, aciona a IA do sistema para dar suporte e acolhimento
+  if (senderRole === 'RESPONSAVEL') {
+    processInternalChatAIMessage({
+      tenantId: req.user?.tenantId || '',
+      pacienteId,
+      userMessageText: message.trim(),
+      senderName,
+    }).catch((err) =>
+      console.warn('Erro ao processar resposta da IA no chat interno:', err?.message)
+    );
+  }
 
   res.status(201).json(chatMessage);
 });

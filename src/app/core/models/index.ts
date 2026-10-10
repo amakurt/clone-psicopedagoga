@@ -356,7 +356,7 @@ export interface ChatMessage {
   id: string;
   senderId: string;
   senderName: string;
-  senderRole?: 'RESPONSAVEL' | 'STAFF';
+  senderRole?: 'RESPONSAVEL' | 'STAFF' | 'AI';
   message: string;
   pacienteId: string;
   readByStaff?: boolean;

@@ -282,3 +282,162 @@ Responda agora diretamente à mensagem do cliente como a assistente da clínica:
     intent,
   };
 }
+
+export interface InternalChatMessageInput {
+  tenantId: string;
+  pacienteId: string;
+  userMessageText: string;
+  senderName: string;
+}
+
+/**
+ * Processa mensagens recebidas no Chat Interno do Sistema (Portal da Família / Chat com os Pais)
+ */
+export async function processInternalChatAIMessage(
+  input: InternalChatMessageInput
+): Promise<{ replyText?: string; shouldMute?: boolean; intent?: string }> {
+  try {
+    const db = scoped(prisma, input.tenantId);
+
+    // 1. Verifica se a IA está habilitada na clínica
+    const config = await db.whatsAppConfig.findFirst();
+    if (!config || !config.aiEnabled) {
+      return {};
+    }
+
+    // 2. Transbordo direto se pediu atendimento humano
+    if (isDirectHandoffRequest(input.userMessageText)) {
+      const replyText =
+        'Com certeza! Já notifiquei nossa equipe e um profissional da clínica continuará seu atendimento por aqui em breve. 🌸';
+      await db.chatMessage.create({
+        data: {
+          tenantId: input.tenantId,
+          senderId: 'ai-assistant',
+          senderName: 'Assistente Virtual (IA)',
+          senderRole: 'AI',
+          message: replyText,
+          pacienteId: input.pacienteId,
+          readByStaff: false,
+          readByGuardian: true,
+        },
+      });
+      return { replyText, shouldMute: true, intent: 'HANDOFF' };
+    }
+
+    // 3. Pausa se houve mensagem recente da equipe (Staff) para não atropelar conversa humana
+    const autoMuteMs = (config.autoMuteHours || 4) * 60 * 60 * 1000;
+    const recentStaffMsg = await db.chatMessage.findFirst({
+      where: {
+        pacienteId: input.pacienteId,
+        senderRole: 'STAFF',
+        createdAt: { gte: new Date(Date.now() - autoMuteMs) },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (recentStaffMsg) {
+      return {}; // Atendimento humano ativo, não sobrepõe
+    }
+
+    // 4. Contexto do Paciente e do Responsável
+    const paciente = await db.paciente.findUnique({
+      where: { id: input.pacienteId },
+      include: {
+        responsible: true,
+        appointments: {
+          take: 3,
+          orderBy: { date: 'desc' },
+          where: { status: { in: ['CONFIRMADO', 'PENDENTE', 'AGENDADO'] } },
+        },
+      },
+    });
+
+    const patientName = paciente?.name || 'a criança';
+    const responsibleName = input.senderName || paciente?.responsible?.name || 'Família';
+    const patientNotes = paciente?.notes || 'Em acompanhamento';
+
+    // 5. Histórico recente de mensagens no chat interno
+    const recentMessages = await db.chatMessage.findMany({
+      where: { pacienteId: input.pacienteId },
+      take: 6,
+      orderBy: { createdAt: 'desc' },
+    });
+    recentMessages.reverse();
+
+    const historyContext = recentMessages
+      .map(
+        (m: any) =>
+          `${
+            m.senderRole === 'RESPONSAVEL'
+              ? 'Responsável'
+              : m.senderRole === 'AI'
+              ? 'Assistente IA'
+              : 'Equipe'
+          }: ${m.message}`
+      )
+      .join('\n');
+
+    // 6. Montagem do Prompt
+    const customPrompt =
+      config.aiPrompt ||
+      `
+Você é a Assistente Virtual acolhedora e atenciosa da clínica EduPsych Pro de Psicopedagogia e Neurodesenvolvimento Infantil.
+Seu objetivo é dar suporte aos pais e responsáveis pelo chat interno do sistema, com empatia, delicadeza e profissionalismo.
+`;
+
+    const systemPrompt = `
+${customPrompt.trim()}
+
+CONTEXTO DO ATENDIMENTO INTERNO NO PORTAL:
+- Responsável: ${responsibleName}
+- Paciente: ${patientName}
+- Notas clínicas resumidas: ${patientNotes}
+
+HISTÓRICO RECENTE DO CHAT:
+${historyContext || 'Início da conversa.'}
+
+NOVA MENSAGEM DO RESPONSÁVEL:
+"${input.userMessageText}"
+
+DIRETRIZES:
+1. Responda em Português do Brasil com tom empático, acolhedor e atencioso (use emojis suaves como 🌸, ✨, 🧠, 📚).
+2. Não forneça diagnósticos médicos fechados ou alterações de conduta clínica sem parecer da equipe.
+3. Se o responsável tiver dúvidas sobre evolução, acolha e esclareça que a equipe técnica também lerá e acompanhará.
+4. Se o assunto for agendamento ou horários, informe a disponibilidade geral e acolha o pedido.
+5. Seja direta, concisa (máximo 2 a 3 parágrafos curtos) e tranquilizadora.
+`.trim();
+
+    let replyText = '';
+    const geminiKey = config.geminiKey || process.env.GEMINI_API_KEY || '';
+    if (geminiKey) {
+      try {
+        replyText = await callGeminiForChat(systemPrompt, geminiKey);
+      } catch (err: any) {
+        console.warn('Falha na chamada ao Gemini no chat interno:', err?.message);
+      }
+    }
+
+    if (!replyText) {
+      replyText = `Olá, ${responsibleName}! 🌸 Recebemos sua mensagem sobre ${patientName}. Nossa equipe clínica já está acompanhando seu contato para lhe dar todo o suporte necessário. Se precisar de algo urgente, estamos sempre à disposição! ✨`;
+    }
+
+    // 7. Persistência da resposta da IA no banco
+    await db.chatMessage.create({
+      data: {
+        tenantId: input.tenantId,
+        senderId: 'ai-assistant',
+        senderName: 'Assistente Virtual (IA)',
+        senderRole: 'AI',
+        message: replyText,
+        pacienteId: input.pacienteId,
+        readByStaff: false,
+        readByGuardian: true,
+      },
+    });
+
+    return { replyText, intent: 'INFO' };
+  } catch (err: any) {
+    console.error('Erro em processInternalChatAIMessage:', err);
+    return {};
+  }
+}
+

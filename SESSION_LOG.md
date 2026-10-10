@@ -2577,3 +2577,46 @@ npm run start
 #### 3. Validação
 - Compilação Angular (`task-223`) validada com zero erros (`Application bundle generation complete`).
 - Servidores frontend e backend em pleno funcionamento.
+
+---
+
+## Sessão 35 - 10/10/2026 — Integração da IA no Chat Interno do Sistema (Portal da Família & Chat com os Pais)
+
+### O que foi feito
+
+#### 1. Ativação do Motor de IA no Chat Interno da Plataforma
+- **Objetivo:** Permitir que o Google Gemini Flash atue como secretária/assistente virtual não apenas no WhatsApp externo, mas também diretamente no Chat Interno do sistema (Portal da Família e widget de chat flutuante com os responsáveis).
+- **Serviço Centralizado (`backend/src/services/whatsapp-ai.service.ts`):**
+  - Implementada a função `processInternalChatAIMessage(input)`.
+  - **Transbordo & Hand-off Humano:** Reconhecimento automático de pedidos para falar com humano (*"falar com secretária"*, *"humano"*, *"atendente"*), gerando acolhimento imediato e pausando a IA.
+  - **Auto-Mute por Intervenção da Equipe:** Se a equipe da clínica (`STAFF`) enviou mensagem recentemente (respeitando `autoMuteHours`), a IA não sobrepõe a conversa humana, permitindo atendimento direto sem interrupções.
+  - **Contextualização Clínica Segura:** Resgata dados da criança (nome, notas clínicas, queixa, agendamentos) e histórico das mensagens anteriores para fornecer respostas empáticas e acolhedoras, sem emitir diagnósticos médicos fechados.
+  - Persistência das mensagens no banco em `ChatMessage` com `senderRole: 'AI'` e `senderName: 'Assistente Virtual (IA)'`.
+
+#### 2. Integração nas Rotas de Mensageria do Backend
+- **`backend/src/routes/chat.ts`:**
+  - Acionamento assíncrono de `processInternalChatAIMessage` na rota padrão `POST /api/chat` quando o remetente for `RESPONSAVEL`.
+- **`backend/src/routes/guardian.ts`:**
+  - Acionamento de `processInternalChatAIMessage` no endpoint dedicado do portal do responsável (`POST /api/guardian/chat`).
+- **Resiliência no Webhook de WhatsApp:**
+  - Salvamento da resposta gerada pela IA no banco antes da tentativa de envio externo, com tratamento gracioso de falha caso a Evolution API esteja offline em ambientes locais de teste.
+
+#### 3. Experiência de Usuário e UI no Frontend (Angular)
+- **Modelos (`src/app/core/models/index.ts`):**
+  - Atualizada a tipagem de `ChatMessage` para incluir `senderRole: 'RESPONSAVEL' | 'STAFF' | 'AI'`.
+- **Componente Flutuante (`src/app/shared/components/chat-floating.component.ts`):**
+  - Renderização dedicada das mensagens da IA com balão em tom verde esmeralda suave (`bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800`), badge de `smart_toy Assistente Virtual (IA)` e horário formatado.
+- **Portal da Família (`src/app/modules/guardian/pages/guardian-chat.component.ts`):**
+  - Balões e identificadores visuais estilizados para mensagens da IA.
+- **Configurações do WhatsApp (`src/app/modules/whatsapp/pages/whatsapp-config.component.ts`):**
+  - Textos informativos atualizados esclarecendo que a IA cobre tanto o WhatsApp quanto o Chat Interno do Sistema.
+
+#### 4. Validação e Testes
+- Script de teste automatizado `backend/scripts/test-internal-chat-ai.ts` aprovado com 100% de sucesso:
+  - Mensagem do responsável registrada.
+  - IA executada com context retriever e Gemini.
+  - Resposta salva com sucesso no banco em `ChatMessage` com `senderRole: 'AI'`.
+- `npx tsc --noEmit` (backend) sem erros (código 0).
+- `npx ng build --configuration development` (frontend) gerado com 100% de sucesso (código 0).
+- Servidores de desenvolvimento ativos e testados localmente.
+

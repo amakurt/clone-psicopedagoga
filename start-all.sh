@@ -23,7 +23,9 @@ if [ -z "$LAN_IP" ]; then
 fi
 
 # --- Colima/Docker (Evolution API - Opcional) ---
+HAS_DOCKER=0
 if docker info >/dev/null 2>&1; then
+  HAS_DOCKER=1
   echo "==> Docker disponível"
 else
   echo "==> Docker não detectado ou inativo (Evolution API WhatsApp ficará offline)"
@@ -33,7 +35,7 @@ EVO_UP=0
 if curl -s -o /dev/null http://localhost:8080 2>/dev/null; then
   EVO_UP=1
   echo "==> Evolution API já está no ar"
-else
+elif [ "$HAS_DOCKER" = "1" ]; then
   echo "==> Subindo Evolution API (docker compose)..."
   (cd "$ROOT/evolution-api" && docker compose up -d >"$LOG_DIR/evolution.log" 2>&1 || true)
   for i in $(seq 1 30); do

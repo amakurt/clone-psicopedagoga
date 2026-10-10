@@ -59,8 +59,17 @@ import { AuthService } from '@core/services/auth.service';
               <div class="max-w-[88%] sm:max-w-md px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl sm:rounded-3xl shadow-sm"
                 [class]="msg.senderId === currentUserId() 
                   ? 'bg-primary text-on-primary rounded-br-sm' 
+                  : msg.senderRole === 'AI'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-emerald-100 rounded-bl-sm'
                   : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-bl-sm'">
-                <p class="text-[10px] sm:text-[11px] font-bold opacity-80 mb-0.5" *ngIf="msg.senderId !== currentUserId()">{{ msg.senderName }}</p>
+                <p class="text-[10px] sm:text-[11px] font-bold opacity-80 mb-0.5 flex items-center gap-1" *ngIf="msg.senderId !== currentUserId()">
+                  @if (msg.senderRole === 'AI') {
+                    <span class="material-icons text-[13px] text-emerald-600 dark:text-emerald-400">smart_toy</span>
+                    <span class="text-emerald-700 dark:text-emerald-300">Assistente Virtual (IA)</span>
+                  } @else {
+                    {{ msg.senderName }}
+                  }
+                </p>
                 <p class="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words">{{ msg.message }}</p>
                 <p class="text-[9px] sm:text-[10px] mt-1 opacity-70 text-right">{{ msg.createdAt }}</p>
               </div>
