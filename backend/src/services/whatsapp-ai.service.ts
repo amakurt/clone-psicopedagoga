@@ -48,17 +48,30 @@ async function callGeminiForChat(prompt: string, apiKey: string): Promise<string
   for (const model of models) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
+      const requestBody: any = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.5,
+          maxOutputTokens: 2500,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      };
+
+      let response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 600,
-          },
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      // Se o endpoint retornar erro 400 por não suportar thinkingConfig, retenta sem thinkingConfig
+      if (!response.ok && response.status === 400) {
+        delete requestBody.generationConfig.thinkingConfig;
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        });
+      }
 
       if (!response.ok) {
         const errText = await response.text();
@@ -202,7 +215,8 @@ DIRETRIZES FUNDAMENTAIS:
    - Colete a preferência de dia/período e o nome da criança.
    - Se o usuário sugerir uma data/hora clara (ex: "quarta-feira às 14h"), responda acolhendo e informando que você já pré-registrou a solicitação na agenda e a secretária confirmará em breve.
 4. Se o usuário estiver muito ansioso, pedir para falar com um ser humano ou se houver uma emergência, responda dizendo que está avisando a secretária para assumir a conversa.
-5. Mensagens para WhatsApp devem ser concisas (máximo de 2 a 3 parágrafos curtos), sem jargões difíceis.
+5. Mensagens para WhatsApp devem ser acolhedoras e bem estruturadas (2 a 3 parágrafos), sem jargões difíceis.
+6. SEMPRE conclua o seu raciocínio até o final e encerre com uma saudação atenciosa (ex: "Qualquer dúvida, estamos sempre à disposição! ✨"). NUNCA corte ou interrompa uma frase pela metade.
 
 DADOS DO CONTEXTO:
 - Nome informado no WhatsApp: ${incoming.pushName || 'Não especificado'}
@@ -403,7 +417,8 @@ DIRETRIZES:
 2. Não forneça diagnósticos médicos fechados ou alterações de conduta clínica sem parecer da equipe.
 3. Se o responsável tiver dúvidas sobre evolução, acolha e esclareça que a equipe técnica também lerá e acompanhará.
 4. Se o assunto for agendamento ou horários, informe a disponibilidade geral e acolha o pedido.
-5. Seja direta, concisa (máximo 2 a 3 parágrafos curtos) e tranquilizadora.
+5. Seja direta, acolhedora e tranquilizadora (2 a 3 parágrafos).
+6. SEMPRE conclua todo o raciocínio até o fim e encerre a mensagem com uma despedida calorosa e atenciosa. NUNCA corte ou interrompa a resposta no meio de uma frase.
 `.trim();
 
     let replyText = '';

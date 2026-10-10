@@ -2611,12 +2611,20 @@ npm run start
 - **Configurações do WhatsApp (`src/app/modules/whatsapp/pages/whatsapp-config.component.ts`):**
   - Textos informativos atualizados esclarecendo que a IA cobre tanto o WhatsApp quanto o Chat Interno do Sistema.
 
-#### 4. Validação e Testes
+#### 4. Resolução de Respostas Cortadas da IA (Truncamento de Tokens)
+- **Diagnóstico:** Identificado que o parâmetro `maxOutputTokens` estava fixado em `600`. Como os modelos Gemini mais recentes geram tokens de raciocínio (*thoughtsTokenCount*), esse limite era consumido internamente, cortando a resposta textual no meio da frase com status `finishReason: MAX_TOKENS`.
+- **Solução Implementada:**
+  - `maxOutputTokens` ampliado para `2500` em `callGeminiForChat()`.
+  - Configurado `thinkingConfig: { thinkingBudget: 0 }` para eliminar espera e consumo invisível de tokens de raciocínio em tarefas de chat conversacional rápido, com fallback seguro caso o endpoint rejeite a flag.
+  - Adicionadas diretrizes explícitas no prompt do sistema instruindo o Gemini a sempre concluir todo o raciocínio até o ponto final e assinar com despedida calorosa, eliminando qualquer risco de frases interrompidas.
+
+#### 5. Validação e Testes
 - Script de teste automatizado `backend/scripts/test-internal-chat-ai.ts` aprovado com 100% de sucesso:
   - Mensagem do responsável registrada.
-  - IA executada com context retriever e Gemini.
+  - IA executada com context retriever e Gemini gerando resposta 100% completa de início ao fim.
   - Resposta salva com sucesso no banco em `ChatMessage` com `senderRole: 'AI'`.
 - `npx tsc --noEmit` (backend) sem erros (código 0).
 - `npx ng build --configuration development` (frontend) gerado com 100% de sucesso (código 0).
 - Servidores de desenvolvimento ativos e testados localmente.
+
 
