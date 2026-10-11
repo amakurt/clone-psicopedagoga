@@ -143,6 +143,32 @@
   - Adicionado auto-scroll automático (`scrollToBottom()`) ao receber ou enviar mensagens.
   - Limpeza de memória com `OnDestroy` (`clearInterval(this.pollTimer)`).
 
+#### 13. Botão e Modal para Atendente Humano Encerrar a Conversa com Mensagem Padrão
+- **Necessidade**:
+  - Permitir que o atendente humano encerre a conversa diretamente pelo painel de Live Chat do WhatsApp, com opção de disparar uma mensagem de despedida acolhedora e personalizável para o WhatsApp do cliente.
+- **Implementações no Backend (`backend/src/routes/whatsapp.ts`)**:
+  - Criado o endpoint `POST /api/whatsapp/conversations/:id/close`:
+    - Recebe opcionalmente `closingMessage` (texto customizado) e `sendWhatsApp` (booleano).
+    - Monta dinamicamente a mensagem padrão preenchendo variáveis `{nome}` e `{crianca}` (ou utiliza a configurada nas regras de inatividade da clínica caso exista).
+    - Dispara via WhatsApp usando `sendWhatsAppMessage` caso `sendWhatsApp: true`.
+    - Registra a mensagem na thread como `sender: 'HUMAN'` com o conteúdo enviado.
+    - Atualiza o status da conversa para `CLOSED` e remove eventuais mutes ativos.
+  - Criado o endpoint `POST /api/whatsapp/conversations/:id/reopen`:
+    - Permite que o atendente reabra a conversa para `ACTIVE` manualmente a qualquer momento.
+  - Reabertura automática: se o responsável enviar uma nova mensagem no WhatsApp posteriormente, o webhook já reabre o status para `ACTIVE` de forma transparente.
+- **Implementações no Frontend (`whatsapp-config.component.ts` & `whatsapp.service.ts`)**:
+  - **Botão de Ação no Chat**:
+    - Adicionado botão "Encerrar Atendimento" (ícone `power_settings_new`, cor rose) visível no cabeçalho da conversa aberta quando o status não for `CLOSED`.
+    - Adicionado botão "Reabrir Atendimento" (ícone `restart_alt`, cor emerald) quando a conversa estiver com status `CLOSED`.
+  - **Modal de Confirmação e Personalização**:
+    - Modal com textarea contendo a mensagem padrão de despedida preenchida e editável antes do envio.
+    - Checkbox para optar por disparar ou não a mensagem no WhatsApp do cliente.
+    - Botões "Cancelar" e "Confirmar Encerramento".
+  - **Feedback Visual**:
+    - Tag/Badge `Encerrado` visível na lista de conversas da esquerda e no cabeçalho da conversa selecionada.
+- **Validação**:
+  - Compilação estática do Backend (`tsc --noEmit`) e Frontend Angular (`ng build`) 100% aprovadas.
+
 
 
 

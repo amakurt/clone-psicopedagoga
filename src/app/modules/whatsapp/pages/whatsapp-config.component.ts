@@ -153,6 +153,10 @@ import {
                           <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
                             Pede Atendente
                           </span>
+                        } @else if (conv.status === 'CLOSED') {
+                          <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                            Encerrado
+                          </span>
                         } @else {
                           <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                             Humano
@@ -182,9 +186,13 @@ import {
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                           🤖 Respostas por IA
                         </span>
+                      } @else if (selectedConv()?.status === 'CLOSED') {
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                          ✅ Atendimento Encerrado
+                        </span>
                       } @else {
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-                          ⏸️ IA Pausada
+                          ⏸️ Atendimento Humano (IA Pausada)
                         </span>
                       }
                     </h3>
@@ -199,14 +207,28 @@ import {
 
                 <!-- Botões de Ação da Secretária -->
                 <div class="flex items-center gap-2">
-                  <button (click)="toggleMuteSelected()"
-                    [ngClass]="selectedConv()?.status === 'ACTIVE' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'"
-                    class="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors">
-                    <span class="material-icons text-sm">
-                      {{ selectedConv()?.status === 'ACTIVE' ? 'pause_circle' : 'play_circle' }}
-                    </span>
-                    {{ selectedConv()?.status === 'ACTIVE' ? 'Pausar IA' : 'Reativar IA' }}
-                  </button>
+                  @if (selectedConv()?.status !== 'CLOSED') {
+                    <button (click)="toggleMuteSelected()"
+                      [ngClass]="selectedConv()?.status === 'ACTIVE' ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'"
+                      class="px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                      <span class="material-icons text-sm">
+                        {{ selectedConv()?.status === 'ACTIVE' ? 'pause_circle' : 'play_circle' }}
+                      </span>
+                      {{ selectedConv()?.status === 'ACTIVE' ? 'Pausar IA' : 'Reativar IA' }}
+                    </button>
+
+                    <button (click)="openCloseModal()"
+                      class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
+                      <span class="material-icons text-sm">power_settings_new</span>
+                      Encerrar Atendimento
+                    </button>
+                  } @else {
+                    <button (click)="reopenSelected()"
+                      class="px-3 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
+                      <span class="material-icons text-sm">restart_alt</span>
+                      Reabrir Atendimento
+                    </button>
+                  }
                 </div>
               </div>
 
@@ -505,6 +527,57 @@ import {
           }
         </div>
       }
+      <!-- Modal de Encerramento de Atendimento -->
+      @if (showCloseModal()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl max-w-lg w-full p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+              <div class="flex items-center gap-2.5">
+                <div class="size-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <span class="material-icons text-xl">power_settings_new</span>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Encerrar Atendimento</h3>
+                  <p class="text-[11px] text-slate-500">Finalizar a conversa com {{ selectedConv()?.contactName || selectedConv()?.phone }}</p>
+                </div>
+              </div>
+              <button (click)="closeCloseModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
+
+            <div class="space-y-3">
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Mensagem Padrão de Despedida no WhatsApp:
+              </label>
+              <textarea [(ngModel)]="customClosingMessage" rows="4"
+                class="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs leading-relaxed focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                placeholder="Digite a mensagem de encerramento que será enviada para o WhatsApp do responsável..."></textarea>
+
+              <label class="flex items-center gap-2 cursor-pointer pt-1">
+                <input type="checkbox" [(ngModel)]="sendClosingViaWhatsApp" class="rounded text-emerald-600 focus:ring-emerald-500 size-4">
+                <span class="text-xs text-slate-700 dark:text-slate-300 font-medium">Disparar esta mensagem para o WhatsApp do cliente</span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <button (click)="closeCloseModal()" [disabled]="closingLoading()"
+                class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                Cancelar
+              </button>
+              <button (click)="confirmCloseConversation()" [disabled]="closingLoading()"
+                class="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl flex items-center gap-1.5 transition-colors shadow-sm">
+                @if (closingLoading()) {
+                  <span class="material-icons text-sm animate-spin">sync</span>
+                } @else {
+                  <span class="material-icons text-sm">check</span>
+                }
+                Confirmar Encerramento
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -548,6 +621,12 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
   replyInput = '';
   searchQuery = '';
   statusFilter = signal<'ALL' | 'ACTIVE' | 'MUTED_BY_AGENT' | 'MUTED_BY_HUMAN'>('ALL');
+
+  // Encerramento de Atendimento
+  showCloseModal = signal(false);
+  closingLoading = signal(false);
+  customClosingMessage = '';
+  sendClosingViaWhatsApp = true;
 
   // Histórico de disparos
   logs = signal<WhatsAppLog[]>([]);
@@ -790,6 +869,69 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
 
     const willMute = conv.status === 'ACTIVE';
     this.whatsappService.toggleMute(conv.id, willMute, this.config.autoMuteHours || 4).subscribe({
+      next: (res) => {
+        this.selectedConv.set(res.conversation);
+        this.loadConversations();
+      },
+    });
+  }
+
+  openCloseModal() {
+    const conv = this.selectedConv();
+    if (!conv) return;
+    const contactName = conv.contactName || conv.paciente?.name || 'Família';
+    const targetName = conv.paciente?.name ? `o ${conv.paciente.name}` : 'a família';
+
+    if (this.config.inactivityMessage && this.config.inactivityMessage.trim()) {
+      this.customClosingMessage = this.config.inactivityMessage
+        .replace(/\{nome\}/gi, contactName)
+        .replace(/\{contato\}/gi, contactName)
+        .replace(/\{paciente\}/gi, targetName)
+        .replace(/\{crianca\}/gi, targetName);
+    } else {
+      this.customClosingMessage = `Olá, ${contactName}! 🌸 Atendimento finalizado pela nossa equipe. Se precisar de qualquer orientação, agendamento ou suporte futuro, basta nos enviar uma nova mensagem! Um abraço bem carinhoso para você e para ${targetName}! ✨`;
+    }
+    this.sendClosingViaWhatsApp = true;
+    this.showCloseModal.set(true);
+  }
+
+  closeCloseModal() {
+    this.showCloseModal.set(false);
+    this.closingLoading.set(false);
+  }
+
+  confirmCloseConversation() {
+    const conv = this.selectedConv();
+    if (!conv || this.closingLoading()) return;
+
+    this.closingLoading.set(true);
+    this.whatsappService.closeConversation(conv.id, this.customClosingMessage, this.sendClosingViaWhatsApp).subscribe({
+      next: (res) => {
+        this.closingLoading.set(false);
+        this.showCloseModal.set(false);
+        this.selectedConv.set(res.conversation);
+        this.loadConversations();
+
+        // Recarrega as mensagens do chat aberto
+        this.whatsappService.getConversationMessages(conv.id).subscribe({
+          next: (msgRes) => {
+            this.currentMessages.set(msgRes.messages || []);
+            this.scrollToBottom();
+          },
+        });
+      },
+      error: (err: any) => {
+        this.closingLoading.set(false);
+        alert('Erro ao encerrar atendimento: ' + (err?.error?.error || err?.message || 'Erro desconhecido'));
+      },
+    });
+  }
+
+  reopenSelected() {
+    const conv = this.selectedConv();
+    if (!conv) return;
+
+    this.whatsappService.reopenConversation(conv.id).subscribe({
       next: (res) => {
         this.selectedConv.set(res.conversation);
         this.loadConversations();

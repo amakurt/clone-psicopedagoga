@@ -484,6 +484,90 @@ router.post('/conversations/:id/toggle-mute', async (req, res) => {
   res.json({ success: true, conversation: updated });
 });
 
+router.post('/conversations/:id/close', async (req, res) => {
+  const db = scoped(prisma, (req.user as any)?.tenantId);
+  const { id } = req.params;
+  const { closingMessage, sendWhatsApp = true } = req.body;
+
+  const conversation = await db.whatsAppConversation.findUnique({
+    where: { id },
+    include: { paciente: true },
+  });
+  if (!conversation) {
+    return res.status(404).json({ error: 'Conversa não encontrada' });
+  }
+
+  const config = await db.whatsAppConfig.findFirst();
+
+  const contactName = conversation.contactName || conversation.paciente?.name || 'Família';
+  const targetName = conversation.paciente?.name ? `o ${conversation.paciente.name}` : 'a família';
+
+  let textToSend = closingMessage;
+  if (!textToSend || !textToSend.trim()) {
+    if (config?.inactivityMessage && config.inactivityMessage.trim()) {
+      textToSend = config.inactivityMessage
+        .replace(/\{nome\}/gi, contactName)
+        .replace(/\{contato\}/gi, contactName)
+        .replace(/\{paciente\}/gi, targetName)
+        .replace(/\{crianca\}/gi, targetName);
+    } else {
+      textToSend = `Olá, ${contactName}! 🌸 Atendimento finalizado pela nossa equipe. Se precisar de qualquer orientação, agendamento ou suporte futuro, basta nos enviar uma nova mensagem! Um abraço bem carinhoso para você e para ${targetName}! ✨`;
+    }
+  }
+
+  // 1. Envia a mensagem pelo WhatsApp se selecionado
+  if (sendWhatsApp && textToSend && textToSend.trim()) {
+    try {
+      await sendWhatsAppMessage(conversation.phone, textToSend.trim(), (req.user as any)?.tenantId);
+    } catch (sendErr: any) {
+      console.warn(`[WhatsApp Close] Aviso ao enviar para Evolution API: ${sendErr.message}`);
+    }
+
+    // Registra a mensagem da clínica no histórico
+    await db.whatsAppMessage.create({
+      data: {
+        tenantId: (req.user as any)?.tenantId,
+        conversationId: id,
+        sender: 'HUMAN',
+        message: textToSend.trim(),
+      },
+    });
+  }
+
+  // 2. Atualiza a conversa para CLOSED e limpa mutes
+  const updated = await db.whatsAppConversation.update({
+    where: { id },
+    data: {
+      status: 'CLOSED',
+      mutedUntil: null,
+      lastMessageAt: new Date(),
+    },
+  });
+
+  res.json({ success: true, conversation: updated, closingMessage: textToSend });
+});
+
+router.post('/conversations/:id/reopen', async (req, res) => {
+  const db = scoped(prisma, (req.user as any)?.tenantId);
+  const { id } = req.params;
+
+  const conversation = await db.whatsAppConversation.findUnique({ where: { id } });
+  if (!conversation) {
+    return res.status(404).json({ error: 'Conversa não encontrada' });
+  }
+
+  const updated = await db.whatsAppConversation.update({
+    where: { id },
+    data: {
+      status: 'ACTIVE',
+      mutedUntil: null,
+      lastMessageAt: new Date(),
+    },
+  });
+
+  res.json({ success: true, conversation: updated });
+});
+
 router.post('/conversations/:id/send', async (req, res) => {
   const db = scoped(prisma, (req.user as any)?.tenantId);
   const { id } = req.params;

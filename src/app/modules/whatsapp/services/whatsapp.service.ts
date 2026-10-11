@@ -98,6 +98,20 @@ export class WhatsAppService {
     );
   }
 
+  closeConversation(id: string, closingMessage?: string, sendWhatsApp: boolean = true) {
+    return this.api.post<{ success: boolean; conversation: WhatsAppConversation; closingMessage?: string }>(
+      `${this.endpoint}/conversations/${id}/close`,
+      { closingMessage, sendWhatsApp }
+    );
+  }
+
+  reopenConversation(id: string) {
+    return this.api.post<{ success: boolean; conversation: WhatsAppConversation }>(
+      `${this.endpoint}/conversations/${id}/reopen`,
+      {}
+    );
+  }
+
   sendMessage(id: string, message: string) {
     return this.api.post<{ success: boolean; message: WhatsAppMessage }>(
       `${this.endpoint}/conversations/${id}/send`,
