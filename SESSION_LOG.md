@@ -54,6 +54,15 @@
 - **Resultado Final**:
   - Ao pedir "quarta-feira às 10h", o sistema gerou com exatidão o agendamento para **14/10/2026 às 10:00** com status `PENDENTE` e confirmação completa no chat.
 
+#### 7. Remoção de Despedidas Repetitivas e Fluidez Conversacional
+- **Ajuste de Comportamento Solicitado**:
+  - A IA incluía fórmulas repetitivas ao final de toda resposta ("qualquer dúvida estamos à disposição", "um abraço afetuoso para você e para o Gabriel!").
+- **Implementação**:
+  - Atualizadas as diretrizes nos prompts do WhatsApp e Chat Interno (`whatsapp-ai.service.ts`).
+  - Proibido o encerramento padrão durante mensagens intermediárias de diálogo (perguntas de horários, confirmações parciais, esclarecimentos).
+  - A despedida calorosa e o abraço afetuoso foram restritos estritamente para o momento em que o responsável **finaliza o atendimento** (ex: ao agradecer, despedir-se ou encerrar o contato).
+  - Validado via teste automatizado: respostas intermediárias mantêm a conversa aberta e objetiva, enquanto mensagens de despedida do cliente recebem o encerramento caloroso com abraço afetuoso.
+
 ---
 
 ## Sessão 62 - 08/10/2026 — Sincronização do Repositório, Validação dos Servidores e Bateria de Testes do Atendimento com IA no WhatsApp
