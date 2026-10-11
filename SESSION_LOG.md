@@ -110,10 +110,12 @@
   - Como não havia verificação de duplicidade por `messageId`, o backend processava a mesma mensagem duas vezes, gerando duas respostas da IA.
 - **Origem do Nome do Usuário na Resposta**:
   - O protocolo do WhatsApp/Baileys envia o campo `pushName` configurado no próprio perfil do remetente (ex: "Amauri Castro"). A IA utiliza esse nome para um atendimento humanizado e acolhedor.
-- **Ajustes Implementados em `backend/src/routes/whatsapp.ts`**:
+- **Ajustes Implementados em `backend/src/routes/whatsapp.ts` e `whatsapp-ai.service.ts`**:
   - Implementado cache em memória `processingMessageIds` e verificação no banco de dados para descartar retentativas do mesmo `messageId`.
   - O webhook agora responde **imediatamente com HTTP 200 OK** (`{ received: true, queued: true }`) em ~15ms, eliminando qualquer risco de timeout ou retentativa da Evolution API.
   - A geração da resposta da IA e o envio ocorrem de forma assíncrona em background com tratamento resiliente de erros.
+  - Priorização do modelo ultra rápido **`gemini-3.5-flash-lite`** (latência reduzida de minutos para **~1.9 segundos**), mantendo alta qualidade de acolhimento e consulta à agenda.
+  - Remoção de checagens redundantes de status da instância em mensagens normais, liberando o canal para disparo imediato.
 
 
 

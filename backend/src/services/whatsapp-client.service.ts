@@ -57,12 +57,12 @@ export async function sendWhatsAppMessage(
   const baseUrl = normalizeApiUrl(apiUrlRaw);
   const instance = (phoneNumberId || '').trim();
 
-  // Verifica se a instância está conectada antes de enviar
-  if (instance) {
+  // Em testes manuais (overrideConfig fornecido), verifica o estado da instância antes
+  if (instance && overrideConfig) {
     try {
       const stateRes = await fetch(`${baseUrl}/instance/connectionState/${instance}`, {
         headers: { apikey: token.trim() },
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(3000),
       });
       if (stateRes.ok) {
         const stateData = (await stateRes.json()) as any;
