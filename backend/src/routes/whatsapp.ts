@@ -12,7 +12,7 @@ const router = Router();
 // =========================================================================
 
 export { sendWhatsAppMessage } from '../services/whatsapp-client.service';
-import { sendWhatsAppMessage } from '../services/whatsapp-client.service';
+import { sendWhatsAppMessage, normalizeApiUrl } from '../services/whatsapp-client.service';
 
 /**
  * Extrai texto e dados da mensagem a partir de diferentes formatos de payload (Evolution API v1, v2)
@@ -272,14 +272,14 @@ router.use(authenticate);
 router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 const configSchema = z.object({
-  apiUrl: z.string().url(),
-  token: z.string().min(1),
-  phoneNumberId: z.string().optional(),
-  aiEnabled: z.boolean().optional(),
-  aiPrompt: z.string().optional(),
-  geminiKey: z.string().optional(),
-  autoMuteHours: z.number().int().min(1).max(72).optional(),
-  webhookSecret: z.string().optional(),
+  apiUrl: z.string().min(1, 'URL da API é obrigatória'),
+  token: z.string().optional().nullable(),
+  phoneNumberId: z.string().optional().nullable(),
+  aiEnabled: z.boolean().optional().nullable(),
+  aiPrompt: z.string().optional().nullable(),
+  geminiKey: z.string().optional().nullable(),
+  autoMuteHours: z.number().int().min(1).max(72).optional().nullable(),
+  webhookSecret: z.string().optional().nullable(),
 });
 
 const sendReminderSchema = z.object({
@@ -320,20 +320,31 @@ router.post('/config', validate(configSchema), async (req, res) => {
   const { apiUrl, token, phoneNumberId, aiEnabled, aiPrompt, geminiKey, autoMuteHours, webhookSecret } = req.body;
 
   const existing = await db.whatsAppConfig.findFirst();
-  let config;
+  const normalizedApi = normalizeApiUrl(apiUrl);
+
   const dataToSave: any = {
-    apiUrl,
-    token,
-    phoneNumberId,
+    apiUrl: normalizedApi,
+    phoneNumberId: phoneNumberId ? phoneNumberId.trim() : null,
     aiEnabled: aiEnabled ?? false,
     aiPrompt: aiPrompt ?? null,
     autoMuteHours: autoMuteHours ?? 4,
     webhookSecret: webhookSecret ?? null,
   };
-  if (geminiKey !== undefined) {
-    dataToSave.geminiKey = geminiKey || null;
+
+  // Se o token foi enviado (preenchido), atualiza. Caso contrário, mantém o token existente!
+  if (token && token.trim()) {
+    dataToSave.token = token.trim();
+  } else if (existing?.token) {
+    dataToSave.token = existing.token;
+  } else {
+    return res.status(400).json({ error: 'Token de autenticação (apikey) é obrigatório' });
   }
 
+  if (geminiKey !== undefined) {
+    dataToSave.geminiKey = geminiKey && geminiKey.trim() ? geminiKey.trim() : null;
+  }
+
+  let config;
   if (existing) {
     config = await db.whatsAppConfig.update({
       where: { id: existing.id },
@@ -588,16 +599,21 @@ router.get('/history', async (req, res) => {
 });
 
 router.post('/test', async (req, res) => {
-  const { phone } = req.body;
+  const { phone, apiUrl, token, phoneNumberId } = req.body;
   if (!phone) {
     return res.status(400).json({ error: 'Telefone é obrigatório' });
   }
 
   try {
-    await sendWhatsAppMessage(phone, '✅ Mensagem de teste do EduPsych Pro - WhatsApp configurado com sucesso!', (req.user as any)?.tenantId);
+    await sendWhatsAppMessage(
+      phone,
+      '✅ Mensagem de teste do EduPsych Pro - WhatsApp configurado com sucesso!',
+      (req.user as any)?.tenantId,
+      { apiUrl, token, phoneNumberId }
+    );
     res.json({ success: true, message: 'Mensagem de teste enviada com sucesso' });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
 });
 

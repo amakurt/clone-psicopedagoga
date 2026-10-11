@@ -595,7 +595,8 @@ export class WhatsAppComponent implements OnInit {
       },
       error: (err: any) => {
         this.savingConfig.set(false);
-        this.testMessage.set('Erro ao salvar configurações: ' + (err?.error?.message || 'Erro desconhecido'));
+        const errorMsg = err?.error?.error || err?.error?.message || err?.message || 'Erro desconhecido';
+        this.testMessage.set('Erro ao salvar configurações: ' + errorMsg);
         this.testSuccess.set(false);
       },
     });
@@ -614,16 +615,27 @@ export class WhatsAppComponent implements OnInit {
     this.testMessage.set('Enviando mensagem de teste...');
     this.testSuccess.set(false);
 
-    this.whatsappService.sendTest(this.testPhone).subscribe({
-      next: () => {
-        this.testMessage.set('Mensagem de teste enviada com sucesso!');
-        this.testSuccess.set(true);
-      },
-      error: (err: any) => {
-        this.testMessage.set('Falha no envio: ' + (err?.error?.error || 'Verifique URL e Token'));
-        this.testSuccess.set(false);
-      },
-    });
+    this.whatsappService
+      .sendTest(this.testPhone, {
+        apiUrl: this.config.apiUrl,
+        token: this.config.token,
+        phoneNumberId: this.config.phoneNumberId,
+      })
+      .subscribe({
+        next: () => {
+          this.testMessage.set('✅ Mensagem de teste enviada com sucesso!');
+          this.testSuccess.set(true);
+        },
+        error: (err: any) => {
+          const errorMsg =
+            err?.error?.error ||
+            err?.error?.message ||
+            err?.message ||
+            'Verifique se a Evolution API está ligada e as credenciais corretas';
+          this.testMessage.set('❌ Falha no envio: ' + errorMsg);
+          this.testSuccess.set(false);
+        },
+      });
   }
 
   // Conversas

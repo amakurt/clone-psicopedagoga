@@ -77,6 +77,30 @@
 - **Validação Automatizada**:
   - Criado script de homologação `test-inactivity-monitor.ts` com validação de 100% de sucesso em ambos os canais e prova de idempotência.
 
+#### 9. Correção de Erros ao Salvar e Testar Configurações do WhatsApp
+- **Diagnóstico da Causa Raiz do Erro ao Salvar**:
+  - O endpoint `GET /api/whatsapp/config` não retorna o hash/token da API em texto puro por motivos de segurança (retorna `hasToken: true`).
+  - No formulário do Angular (`whatsapp-config.component.ts`), o campo de Token ficava em branco (`""`). Ao clicar em "Salvar Configurações", o payload enviava `token: ""`, que era rejeitado pelo validador Zod do backend (`z.string().min(1)`), gerando status HTTP 400.
+  - Além disso, o interceptor do Angular lia `err?.error?.message` (ao invés de `err?.error?.error`), exibindo para o usuário *"Erro ao salvar configurações: Erro desconhecido"*.
+- **Diagnóstico da Causa Raiz do Erro ao Testar**:
+  - O teste dependia da URL e Token já gravados no banco; se o usuário digitasse novas credenciais e clicasse em "Testar", a requisição ainda tentava usar as antigas.
+  - A URL gravada era `http://localhost:8080`, onde não havia servidor da Evolution API ativo localmente, gerando falha crua de rede `ECONNREFUSED / fetch failed`.
+  - Se o usuário digitasse telefone brasileiro sem o código do país DDI 55 (ex: `11999998888`), a Evolution API rejeitava o envio.
+- **Melhorias e Ajustes Implementados**:
+  - **`backend/src/routes/whatsapp.ts`**:
+    - O campo `token` no schema agora é opcional/anulável. Se vier vazio e já existir um token gravado no banco, o token existente é preservado com segurança.
+    - O endpoint `POST /api/whatsapp/test` agora aceita `apiUrl`, `token` e `phoneNumberId` diretamente no body para testar imediatamente com os dados preenchidos na tela.
+  - **`backend/src/services/whatsapp-client.service.ts`**:
+    - Implementada função `normalizeApiUrl` que garante protocolo (`http://` para localhost e `https://` para domínios externos) e remove barras finais.
+    - Sanitização inteligente de telefone: números com 10 ou 11 dígitos recebem automaticamente o DDI `55`.
+    - Tratamento amigável e detalhado de exceções: informa claramente se a URL estiver inacessível/offline, se o token estiver incorreto (401/403) ou se a instância informada não foi encontrada (404).
+  - **`src/app/modules/whatsapp/pages/whatsapp-config.component.ts`**:
+    - O botão "Testar Envio" agora envia os campos atuais da tela (`apiUrl`, `token`, `phoneNumberId`).
+    - Exibição de mensagens de erro detalhadas (`err?.error?.error || err?.error?.message`), orientando o usuário com precisão.
+  - **Validação Automatizada**:
+    - Criado script `backend/scripts/test-whatsapp-config-flow.ts` validando normalização de URL, persistência segura de token e diagnóstico claro de conexão.
+
+
 ---
 
 ## Sessão 62 - 08/10/2026 — Sincronização do Repositório, Validação dos Servidores e Bateria de Testes do Atendimento com IA no WhatsApp

@@ -71,8 +71,8 @@ export class WhatsAppService {
     return this.api.post(`${this.endpoint}/config`, config);
   }
 
-  sendTest(phone: string) {
-    return this.api.post(`${this.endpoint}/test`, { phone });
+  sendTest(phone: string, overrides?: { apiUrl?: string; token?: string; phoneNumberId?: string }) {
+    return this.api.post(`${this.endpoint}/test`, { phone, ...overrides });
   }
 
   // --- Gestão de Conversas e Atendimento Online ---
