@@ -94,6 +94,9 @@
     - Implementada função `normalizeApiUrl` que garante protocolo (`http://` para localhost e `https://` para domínios externos) e remove barras finais.
     - Sanitização inteligente de telefone: números com 10 ou 11 dígitos recebem automaticamente o DDI `55`.
     - Tratamento amigável e detalhado de exceções: informa claramente se a URL estiver inacessível/offline, se o token estiver incorreto (401/403) ou se a instância informada não foi encontrada (404).
+    - Validação prévia do estado da instância (`state !== 'open'`) com orientação direta para leitura do QR Code em `/manager` e timeout de 12s com AbortSignal para evitar travamento.
+  - **Infraestrutura**:
+    - Inicializada a máquina virtual Docker (Colima) e subidos com sucesso os containers da Evolution API v2.3.7, Postgres e Redis na porta `8080`.
   - **`src/app/modules/whatsapp/pages/whatsapp-config.component.ts`**:
     - O botão "Testar Envio" agora envia os campos atuais da tela (`apiUrl`, `token`, `phoneNumberId`).
     - Exibição de mensagens de erro detalhadas (`err?.error?.error || err?.error?.message`), orientando o usuário com precisão.

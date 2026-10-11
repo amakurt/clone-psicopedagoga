@@ -56,6 +56,40 @@ export async function sendWhatsAppMessage(
 
   const baseUrl = normalizeApiUrl(apiUrlRaw);
   const instance = (phoneNumberId || '').trim();
+
+  // Verifica se a instância está conectada antes de enviar
+  if (instance) {
+    try {
+      const stateRes = await fetch(`${baseUrl}/instance/connectionState/${instance}`, {
+        headers: { apikey: token.trim() },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (stateRes.ok) {
+        const stateData = (await stateRes.json()) as any;
+        const state = stateData?.instance?.state;
+        if (state && state !== 'open') {
+          const stateLabels: Record<string, string> = {
+            close: 'desconectada',
+            connecting: 'aguardando conexão/leitura do QR Code',
+          };
+          const statusDesc = stateLabels[state] || state;
+          throw new Error(
+            `A instância "${instance}" está ${statusDesc}. Acesse ${baseUrl}/manager no seu navegador para escanear o QR Code no seu WhatsApp e conectar o aparelho.`
+          );
+        }
+      }
+    } catch (stateErr: any) {
+      if (stateErr.message?.includes('A instância')) {
+        throw stateErr;
+      }
+      if (stateErr.message?.includes('ECONNREFUSED') || stateErr.message?.includes('fetch failed')) {
+        throw new Error(
+          `Não foi possível conectar ao servidor em "${baseUrl}". Verifique se o servidor da Evolution API está ligado e acessível.`
+        );
+      }
+    }
+  }
+
   const endpoint = instance ? `${baseUrl}/message/sendText/${instance}` : `${baseUrl}/message/sendText`;
 
   try {
@@ -69,6 +103,7 @@ export async function sendWhatsAppMessage(
         number: cleanedPhone,
         text: message,
       }),
+      signal: AbortSignal.timeout(12000),
     });
 
     if (!response.ok) {
@@ -86,6 +121,11 @@ export async function sendWhatsAppMessage(
 
     return await response.json();
   } catch (err: any) {
+    if (err.name === 'TimeoutError' || err.message?.includes('aborted') || err.message?.includes('timeout')) {
+      throw new Error(
+        `Tempo limite esgotado ao aguardar a Evolution API. Verifique se a instância "${instance}" está conectada ao WhatsApp em ${baseUrl}/manager.`
+      );
+    }
     if (err.message && (err.message.includes('ECONNREFUSED') || err.message.includes('fetch failed'))) {
       throw new Error(
         `Não foi possível conectar ao servidor em "${baseUrl}". Verifique se o servidor da Evolution API está ligado e acessível.`
