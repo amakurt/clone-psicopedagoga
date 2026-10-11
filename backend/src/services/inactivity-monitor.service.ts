@@ -18,10 +18,10 @@ export async function checkAndCloseInactiveConversations(
     // =========================================================================
     // 1. VERIFICAÇÃO WHATSAPP
     // =========================================================================
+    // Busca todas as conversas ativas no WhatsApp
     const activeWhatsAppConversations = await prisma.whatsAppConversation.findMany({
       where: {
         status: 'ACTIVE',
-        lastMessageAt: { lte: cutoffTime },
       },
       include: {
         paciente: {
@@ -31,6 +31,19 @@ export async function checkAndCloseInactiveConversations(
     });
 
     for (const conv of activeWhatsAppConversations) {
+      // Obtém configuração da clínica para saber o tempo e mensagem personalizada
+      const config = await prisma.whatsAppConfig.findFirst({
+        where: { tenantId: conv.tenantId },
+      });
+
+      const inactivityMinutes = config?.inactivityTimeoutMinutes ?? 15;
+      const convCutoffTime = new Date(Date.now() - inactivityMinutes * 60 * 1000);
+
+      // Se a última interação foi mais recente que o tempo limite, pula
+      if (new Date(conv.lastMessageAt).getTime() > convCutoffTime.getTime()) {
+        continue;
+      }
+
       // Busca a última mensagem da conversa
       const lastMsg = await prisma.whatsAppMessage.findFirst({
         where: { conversationId: conv.id },
@@ -43,7 +56,16 @@ export async function checkAndCloseInactiveConversations(
         const contactName = conv.contactName || conv.paciente?.responsible?.name || 'Família';
         const targetName = patientName ? `o ${patientName}` : 'a família';
 
-        const closingMsg = `Olá, ${contactName}! 🌸 Como não tivemos mais retorno por aqui, estamos finalizando este atendimento por enquanto. Se precisar de qualquer orientação, agendamento ou suporte futuro, basta nos enviar uma nova mensagem! Um abraço bem carinhoso para você e para ${targetName}! ✨`;
+        let closingMsg = '';
+        if (config?.inactivityMessage && config.inactivityMessage.trim()) {
+          closingMsg = config.inactivityMessage
+            .replace(/\{nome\}/gi, contactName)
+            .replace(/\{contato\}/gi, contactName)
+            .replace(/\{paciente\}/gi, targetName)
+            .replace(/\{crianca\}/gi, targetName);
+        } else {
+          closingMsg = `Olá, ${contactName}! 🌸 Como não tivemos mais retorno por aqui, estamos finalizando este atendimento por enquanto. Se precisar de qualquer orientação, agendamento ou suporte futuro, basta nos enviar uma nova mensagem! Um abraço bem carinhoso para você e para ${targetName}! ✨`;
+        }
 
         // Salva a mensagem no banco
         await prisma.whatsAppMessage.create({
@@ -68,7 +90,7 @@ export async function checkAndCloseInactiveConversations(
         try {
           const { sendWhatsAppMessage } = await import('./whatsapp-client.service');
           await sendWhatsAppMessage(conv.phone, closingMsg, conv.tenantId);
-          console.log(`[INACTIVITY] Atendimento WhatsApp encerrado por inatividade para ${conv.phone}`);
+          console.log(`[INACTIVITY] Atendimento WhatsApp encerrado por inatividade para ${conv.phone} (${inactivityMinutes}min)`);
         } catch (err: any) {
           console.warn(`[INACTIVITY] Falha ao enviar WhatsApp de encerramento para ${conv.phone}:`, err?.message);
         }

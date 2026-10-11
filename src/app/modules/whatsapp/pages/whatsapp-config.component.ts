@@ -392,6 +392,27 @@ import {
 
               <div>
                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Tempo de Inatividade para Encerramento (Minutos)
+                </label>
+                <div class="flex items-center gap-3">
+                  <input type="number" min="1" max="1440" [(ngModel)]="config.inactivityTimeoutMinutes"
+                    class="w-24 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs">
+                  <span class="text-xs text-slate-500">minutos sem resposta do responsável para finalizar a conversa</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Mensagem de Finalização por Inatividade (Opcional)
+                </label>
+                <textarea [(ngModel)]="config.inactivityMessage" rows="3"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  placeholder="Ex: Olá, {nome}! 🌸 Como não tivemos retorno, estamos encerrando este atendimento. Se precisar de suporte futuro, basta nos enviar uma nova mensagem! Um abraço carinhoso! ✨"></textarea>
+                <p class="text-[10px] text-slate-400 mt-0.5">Use &#123;nome&#125; para o nome do responsável ou &#123;crianca&#125; para o nome do paciente. Deixe em branco para usar o padrão acolhedor da clínica.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Chave Google Gemini (Opcional)
                 </label>
                 <input [(ngModel)]="config.geminiKey" type="password"
@@ -501,6 +522,8 @@ export class WhatsAppComponent implements OnInit {
     aiPrompt: '',
     geminiKey: '',
     autoMuteHours: 4,
+    inactivityTimeoutMinutes: 15,
+    inactivityMessage: '',
   };
   savingConfig = signal(false);
   isConfigured = signal(false);
@@ -579,6 +602,8 @@ export class WhatsAppComponent implements OnInit {
           this.config.aiEnabled = res.config.aiEnabled ?? false;
           this.config.aiPrompt = res.config.aiPrompt || '';
           this.config.autoMuteHours = res.config.autoMuteHours ?? 4;
+          this.config.inactivityTimeoutMinutes = res.config.inactivityTimeoutMinutes ?? 15;
+          this.config.inactivityMessage = res.config.inactivityMessage || '';
         }
       },
     });

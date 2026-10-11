@@ -117,6 +117,23 @@
   - Priorização do modelo ultra rápido **`gemini-3.5-flash-lite`** (latência reduzida de minutos para **~1.9 segundos**), mantendo alta qualidade de acolhimento e consulta à agenda.
   - Remoção de checagens redundantes de status da instância em mensagens normais, liberando o canal para disparo imediato.
 
+#### 11. Configuração Dinâmica de Inatividade e Encerramento no WhatsApp
+- **Necessidade**:
+  - Permitir que a clínica configure pelo painel o tempo em minutos para encerramento automático da conversa por inatividade e personalize a mensagem de despedida/encerramento enviada pela IA no WhatsApp.
+- **Implementações**:
+  - **Schema Prisma (`WhatsAppConfig`)**:
+    - Adicionados os campos `inactivityTimeoutMinutes Int @default(15)` e `inactivityMessage String?`.
+    - Sincronizados os schemas `backend/prisma/schema.prisma` e `prisma/schema.prisma` e executado `prisma db push` com sucesso.
+  - **Backend (`whatsapp.ts` & `inactivity-monitor.service.ts`)**:
+    - Endpoints `GET /config` e `POST /config` atualizados para salvar e retornar os novos campos.
+    - `checkAndCloseInactiveConversations` agora busca dinamicamente o tempo e mensagem configurados para cada tenant.
+    - Suporte a variáveis na mensagem: `{nome}` / `{contato}` e `{crianca}` / `{paciente}` substituídos pelos dados da conversa.
+    - Transição de status da conversa para `CLOSED` e reabertura automática para `ACTIVE` se a família enviar nova mensagem futuramente.
+  - **Frontend Angular (`whatsapp-config.component.ts`)**:
+    - Adicionado campo numérico de tempo limite (minutos) e textarea de mensagem personalizada na aba de Configurações do WhatsApp.
+    - Interface `WhatsAppConfig` atualizada em `whatsapp.service.ts`.
+
+
 
 
 ---

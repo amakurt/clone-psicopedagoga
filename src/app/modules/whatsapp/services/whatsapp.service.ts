@@ -11,6 +11,8 @@ export interface WhatsAppConfig {
   geminiKey?: string;
   hasGeminiKey?: boolean;
   autoMuteHours?: number;
+  inactivityTimeoutMinutes?: number;
+  inactivityMessage?: string;
   webhookSecret?: string;
 }
 

@@ -302,6 +302,8 @@ const configSchema = z.object({
   aiPrompt: z.string().optional().nullable(),
   geminiKey: z.string().optional().nullable(),
   autoMuteHours: z.number().int().min(1).max(72).optional().nullable(),
+  inactivityTimeoutMinutes: z.number().int().min(1).max(1440).optional().nullable(),
+  inactivityMessage: z.string().optional().nullable(),
   webhookSecret: z.string().optional().nullable(),
 });
 
@@ -333,6 +335,8 @@ router.get('/config', async (req, res) => {
       aiPrompt: config.aiPrompt,
       hasGeminiKey: !!config.geminiKey,
       autoMuteHours: config.autoMuteHours,
+      inactivityTimeoutMinutes: config.inactivityTimeoutMinutes ?? 15,
+      inactivityMessage: config.inactivityMessage ?? null,
       webhookSecret: config.webhookSecret,
     },
   });
@@ -340,7 +344,18 @@ router.get('/config', async (req, res) => {
 
 router.post('/config', validate(configSchema), async (req, res) => {
   const db = scoped(prisma, (req.user as any)?.tenantId);
-  const { apiUrl, token, phoneNumberId, aiEnabled, aiPrompt, geminiKey, autoMuteHours, webhookSecret } = req.body;
+  const {
+    apiUrl,
+    token,
+    phoneNumberId,
+    aiEnabled,
+    aiPrompt,
+    geminiKey,
+    autoMuteHours,
+    inactivityTimeoutMinutes,
+    inactivityMessage,
+    webhookSecret,
+  } = req.body;
 
   const existing = await db.whatsAppConfig.findFirst();
   const normalizedApi = normalizeApiUrl(apiUrl);
@@ -351,6 +366,8 @@ router.post('/config', validate(configSchema), async (req, res) => {
     aiEnabled: aiEnabled ?? false,
     aiPrompt: aiPrompt ?? null,
     autoMuteHours: autoMuteHours ?? 4,
+    inactivityTimeoutMinutes: inactivityTimeoutMinutes ?? 15,
+    inactivityMessage: inactivityMessage ? inactivityMessage.trim() : null,
     webhookSecret: webhookSecret ?? null,
   };
 

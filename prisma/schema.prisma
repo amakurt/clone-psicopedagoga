@@ -229,6 +229,13 @@ model WhatsAppConfig {
   token           String
   phoneNumberId   String?
   autoSendReminders Boolean @default(false)
+  aiEnabled       Boolean  @default(false)
+  aiPrompt        String?
+  geminiKey       String?
+  autoMuteHours   Int      @default(4)
+  inactivityTimeoutMinutes Int   @default(15)
+  inactivityMessage String?
+  webhookSecret   String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
