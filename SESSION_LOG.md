@@ -133,6 +133,17 @@
     - Adicionado campo numérico de tempo limite (minutos) e textarea de mensagem personalizada na aba de Configurações do WhatsApp.
     - Interface `WhatsAppConfig` atualizada em `whatsapp.service.ts`.
 
+#### 12. Atualização em Tempo Real (Polling Silencioso) no Live Chat do WhatsApp
+- **Diagnóstico da Causa Raiz**:
+  - A tela de atendimento do WhatsApp (`/app/whatsapp`) carregava as conversas e mensagens apenas uma vez no `ngOnInit` ou quando um item era clicado manualmente.
+  - Ao alternar para o atendimento humano, quando o responsável respondia pelo celular, a mensagem era persistida corretamente no banco pelo webhook, mas a tela do atendente não possuía rotina periódica de escuta, exigindo recarregar o navegador (F5).
+- **Implementações em `whatsapp-config.component.ts`**:
+  - Implementado timer de polling silencioso a cada 3,5 segundos (`startPolling()` / `silentRefreshLiveChat()`) executado apenas na aba de atendimento e quando a aba do navegador estiver visível.
+  - Sincronização inteligente da lista de conversas e detecção de novas mensagens na conversa aberta.
+  - Adicionado auto-scroll automático (`scrollToBottom()`) ao receber ou enviar mensagens.
+  - Limpeza de memória com `OnDestroy` (`clearInterval(this.pollTimer)`).
+
+
 
 
 

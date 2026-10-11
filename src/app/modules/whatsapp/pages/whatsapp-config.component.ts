@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -211,7 +211,7 @@ import {
               </div>
 
               <!-- Área de Mensagens (Rolável) -->
-              <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30 dark:bg-slate-900/40">
+              <div #messagesContainer class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30 dark:bg-slate-900/40">
                 @if (loadingMessages()) {
                   <div class="py-12 text-center text-slate-400 text-xs">
                     <span class="material-icons animate-spin text-xl">sync</span>
@@ -508,8 +508,11 @@ import {
     </div>
   `,
 })
-export class WhatsAppComponent implements OnInit {
+export class WhatsAppComponent implements OnInit, OnDestroy {
   private whatsappService = inject(WhatsAppService);
+
+  @ViewChild('messagesContainer') private messagesContainer?: ElementRef;
+  private pollTimer: any = null;
 
   activeTab = signal<'atendimento' | 'configuracao' | 'historico'>('atendimento');
 
@@ -560,6 +563,72 @@ export class WhatsAppComponent implements OnInit {
     this.loadConfig();
     this.loadConversations();
     this.loadHistory();
+    this.startPolling();
+  }
+
+  ngOnDestroy() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  startPolling() {
+    if (this.pollTimer) clearInterval(this.pollTimer);
+    this.pollTimer = setInterval(() => {
+      if (this.activeTab() === 'atendimento' && typeof document !== 'undefined' && !document.hidden) {
+        this.silentRefreshLiveChat();
+      }
+    }, 3500);
+  }
+
+  silentRefreshLiveChat() {
+    const filter = this.statusFilter();
+    const params: any = {};
+    if (filter !== 'ALL') params.status = filter;
+
+    this.whatsappService.getConversations(params).subscribe({
+      next: (res) => {
+        const freshList = res.data || [];
+        this.conversations.set(freshList);
+        this.filterConversations();
+
+        const currentSelected = this.selectedConv();
+        if (currentSelected) {
+          const updated = freshList.find(c => c.id === currentSelected.id);
+          if (updated && (updated.status !== currentSelected.status || updated.lastMessageAt !== currentSelected.lastMessageAt)) {
+            this.selectedConv.set(updated);
+          }
+
+          // Atualiza as mensagens da conversa aberta silenciosamente
+          this.whatsappService.getConversationMessages(currentSelected.id).subscribe({
+            next: (msgRes) => {
+              const freshMsgs = msgRes.messages || [];
+              const oldMsgs = this.currentMessages();
+
+              const hasNew =
+                freshMsgs.length !== oldMsgs.length ||
+                (freshMsgs.length > 0 &&
+                  oldMsgs.length > 0 &&
+                  freshMsgs[freshMsgs.length - 1].id !== oldMsgs[oldMsgs.length - 1].id);
+
+              if (hasNew) {
+                this.currentMessages.set(freshMsgs);
+                this.scrollToBottom();
+              }
+            },
+          });
+        }
+      },
+    });
+  }
+
+  scrollToBottom() {
+    setTimeout(() => {
+      if (this.messagesContainer?.nativeElement) {
+        this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
+      }
+    }, 60);
   }
 
   tabBtnClass(tab: 'atendimento' | 'configuracao' | 'historico'): string {
@@ -709,6 +778,7 @@ export class WhatsAppComponent implements OnInit {
       next: (res) => {
         this.currentMessages.set(res.messages || []);
         this.loadingMessages.set(false);
+        this.scrollToBottom();
       },
       error: () => this.loadingMessages.set(false),
     });
@@ -738,6 +808,7 @@ export class WhatsAppComponent implements OnInit {
         this.currentMessages.update(msgs => [...msgs, res.message]);
         this.replyInput = '';
         this.sendingReply.set(false);
+        this.scrollToBottom();
         this.loadConversations();
       },
       error: () => this.sendingReply.set(false),
