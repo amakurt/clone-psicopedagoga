@@ -58,6 +58,9 @@ function extractEvolutionMessage(body: any) {
 // 2. WEBHOOK PÚBLICO (SEM AUTH JWT - RECEBE DA EVOLUTION API)
 // =========================================================================
 
+// Set em memória para deduplicação rápida de mensagens simultâneas da Evolution API
+const processingMessageIds = new Set<string>();
+
 async function handleEvolutionWebhook(req: any, res: any) {
   try {
     const eventType = req.body?.event || req.body?.type;
@@ -165,96 +168,116 @@ async function handleEvolutionWebhook(req: any, res: any) {
       return res.json({ received: true, ignoredReason: 'empty-text' });
     }
 
-    // Salva mensagem do cliente
-    await db.whatsAppMessage.create({
-      data: {
-        tenantId: targetTenantId,
-        conversationId: conversation.id,
-        sender: 'USER',
-        message: parsed.text,
-        messageId: parsed.messageId || null,
-      },
-    });
-
-    await db.whatsAppConversation.update({
-      where: { id: conversation.id },
-      data: {
-        contactName: parsed.pushName || conversation.contactName,
-        status: conversation.status === 'CLOSED' ? 'ACTIVE' : conversation.status,
-        lastMessageAt: new Date(),
-      },
-    });
-
-    // 4. Verificação de status e pausa (Mute)
-    const now = new Date();
-    const isMuted =
-      (conversation.status === 'MUTED_BY_HUMAN' || conversation.status === 'MUTED_BY_AGENT') &&
-      conversation.mutedUntil &&
-      conversation.mutedUntil > now;
-
-    if (!config.aiEnabled) {
-      return res.json({ received: true, action: 'ai-disabled' });
-    }
-
-    if (isMuted) {
-      return res.json({ received: true, action: 'conversation-muted-for-human', status: conversation.status });
-    }
-
-    // Se o mute expirou, reativa para ACTIVE
-    if (conversation.status !== 'ACTIVE') {
-      await db.whatsAppConversation.update({
-        where: { id: conversation.id },
-        data: { status: 'ACTIVE', mutedUntil: null },
-      });
-    }
-
-    // 5. Executa processamento de IA
-    const aiResult = await processWhatsAppAIMessage({
-      tenantId: targetTenantId,
-      phone: cleanPhone,
-      pushName: parsed.pushName,
-      messageText: parsed.text,
-      messageId: parsed.messageId,
-    });
-
-    if (aiResult.replyText) {
-      // 1. Registra mensagem da IA no banco primeiro para garantir o histórico no Live Chat
-      await db.whatsAppMessage.create({
-        data: {
-          tenantId: targetTenantId,
-          conversationId: conversation.id,
-          sender: 'AI',
-          message: aiResult.replyText,
-        },
-      });
-
-      // 2. Envia resposta de volta pelo WhatsApp (se a Evolution API estiver configurada e acessível)
-      try {
-        await sendWhatsAppMessage(cleanPhone, aiResult.replyText, targetTenantId);
-      } catch (sendErr: any) {
-        console.warn(`[WhatsApp Webhook] Aviso ao enviar para Evolution API: ${sendErr.message}. Mensagem mantida no histórico.`);
+    // Deduplicação estrita: se este messageId já está em processamento ou já foi registrado, ignora retentativas
+    if (parsed.messageId) {
+      if (processingMessageIds.has(parsed.messageId)) {
+        return res.json({ received: true, ignoredReason: 'already-processing-messageId' });
       }
+      const existingMessage = await db.whatsAppMessage.findFirst({
+        where: { messageId: parsed.messageId },
+      });
+      if (existingMessage) {
+        return res.json({ received: true, ignoredReason: 'duplicate-messageId-in-db' });
+      }
+      processingMessageIds.add(parsed.messageId);
+    }
 
-      // Se a IA determinou transbordo (Hand-off)
-      if (aiResult.shouldMute) {
-        const muteUntil = new Date(Date.now() + (aiResult.muteHours || 4) * 60 * 60 * 1000);
+    // Responde ao Webhook imediatamente com HTTP 200 para evitar que a Evolution API considere timeout e reenvie a mensagem
+    res.json({ received: true, queued: true });
+
+    // Processamento da mensagem e da IA em background
+    (async () => {
+      try {
+        // Salva mensagem do cliente
+        await db.whatsAppMessage.create({
+          data: {
+            tenantId: targetTenantId,
+            conversationId: conversation.id,
+            sender: 'USER',
+            message: parsed.text,
+            messageId: parsed.messageId || null,
+          },
+        });
+
         await db.whatsAppConversation.update({
           where: { id: conversation.id },
           data: {
-            status: 'MUTED_BY_AGENT',
-            mutedUntil: muteUntil,
+            contactName: parsed.pushName || conversation.contactName,
+            status: conversation.status === 'CLOSED' ? 'ACTIVE' : conversation.status,
             lastMessageAt: new Date(),
           },
         });
-      }
-    }
 
-    return res.json({
-      received: true,
-      success: true,
-      intent: aiResult.intent,
-      replied: Boolean(aiResult.replyText),
-    });
+        // 4. Verificação de status e pausa (Mute)
+        const now = new Date();
+        const isMuted =
+          (conversation.status === 'MUTED_BY_HUMAN' || conversation.status === 'MUTED_BY_AGENT') &&
+          conversation.mutedUntil &&
+          conversation.mutedUntil > now;
+
+        if (!config.aiEnabled || isMuted) {
+          return;
+        }
+
+        // Se o mute expirou, reativa para ACTIVE
+        if (conversation.status !== 'ACTIVE') {
+          await db.whatsAppConversation.update({
+            where: { id: conversation.id },
+            data: { status: 'ACTIVE', mutedUntil: null },
+          });
+        }
+
+        // 5. Executa processamento de IA
+        const aiResult = await processWhatsAppAIMessage({
+          tenantId: targetTenantId,
+          phone: cleanPhone,
+          pushName: parsed.pushName,
+          messageText: parsed.text,
+          messageId: parsed.messageId,
+        });
+
+        if (aiResult.replyText) {
+          // 1. Registra mensagem da IA no banco primeiro para garantir o histórico no Live Chat
+          await db.whatsAppMessage.create({
+            data: {
+              tenantId: targetTenantId,
+              conversationId: conversation.id,
+              sender: 'AI',
+              message: aiResult.replyText,
+            },
+          });
+
+          // 2. Envia resposta de volta pelo WhatsApp
+          try {
+            await sendWhatsAppMessage(cleanPhone, aiResult.replyText, targetTenantId);
+          } catch (sendErr: any) {
+            console.warn(`[WhatsApp Webhook] Aviso ao enviar para Evolution API: ${sendErr.message}. Mensagem mantida no histórico.`);
+          }
+
+          // Se a IA determinou transbordo (Hand-off)
+          if (aiResult.shouldMute) {
+            const muteUntil = new Date(Date.now() + (aiResult.muteHours || 4) * 60 * 60 * 1000);
+            await db.whatsAppConversation.update({
+              where: { id: conversation.id },
+              data: {
+                status: 'MUTED_BY_AGENT',
+                mutedUntil: muteUntil,
+                lastMessageAt: new Date(),
+              },
+            });
+          }
+        }
+      } catch (bgError: any) {
+        console.error('[WhatsApp Webhook] Erro no processamento em background:', bgError);
+      } finally {
+        if (parsed.messageId) {
+          // Mantém o ID no set por 60s antes de limpar, garantindo que retentativas atrasadas sejam descartadas
+          setTimeout(() => {
+            processingMessageIds.delete(parsed.messageId);
+          }, 60000);
+        }
+      }
+    })();
   } catch (error: any) {
     console.error('Erro no webhook do WhatsApp:', error);
     return res.status(500).json({ error: error.message });

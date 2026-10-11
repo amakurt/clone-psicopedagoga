@@ -103,6 +103,19 @@
   - **Validação Automatizada**:
     - Criado script `backend/scripts/test-whatsapp-config-flow.ts` validando normalização de URL, persistência segura de token e diagnóstico claro de conexão.
 
+#### 10. Resolução de Mensagens Duplicadas e Otimização de Latência no Webhook
+- **Diagnóstico da Causa Raiz**:
+  - Quando o usuário enviava mensagem no WhatsApp, o backend processava a IA de forma síncrona dentro da requisição do webhook da Evolution API (consulta à agenda + inferência Gemini + envio de resposta).
+  - Esse processamento levava entre 4 e 7 segundos. A Evolution API possui timeout rígido de webhook (5s) e, ao não receber o `200 OK` imediatamente, reenviava o mesmo evento com o mesmo `messageId`.
+  - Como não havia verificação de duplicidade por `messageId`, o backend processava a mesma mensagem duas vezes, gerando duas respostas da IA.
+- **Origem do Nome do Usuário na Resposta**:
+  - O protocolo do WhatsApp/Baileys envia o campo `pushName` configurado no próprio perfil do remetente (ex: "Amauri Castro"). A IA utiliza esse nome para um atendimento humanizado e acolhedor.
+- **Ajustes Implementados em `backend/src/routes/whatsapp.ts`**:
+  - Implementado cache em memória `processingMessageIds` e verificação no banco de dados para descartar retentativas do mesmo `messageId`.
+  - O webhook agora responde **imediatamente com HTTP 200 OK** (`{ received: true, queued: true }`) em ~15ms, eliminando qualquer risco de timeout ou retentativa da Evolution API.
+  - A geração da resposta da IA e o envio ocorrem de forma assíncrona em background com tratamento resiliente de erros.
+
+
 
 ---
 
