@@ -42,6 +42,18 @@
   - Criação do `Appointment` com status `PENDENTE`.
   - Confirmação pela recepção e envio de mensagem de confirmação para o chat do responsável.
 
+#### 6. Correção de Deslocamento de Fuso Horário e Mapeamento de Dias/Horários
+- **Diagnóstico da Causa Raiz**:
+  - Em horários noturnos no Brasil (UTC-3), o uso de `Date.toISOString().split('T')[0]` convertia a data para UTC (já no dia seguinte), gerando descompasso entre o dia da semana local (ex: Quarta-feira) e o dia do calendário (+1 dia).
+  - Um agendamento de teste anterior (às 14:00) havia sido inserido na mesma thread de conversa, causando confusão visual para o responsável.
+- **Ajustes Realizados**:
+  - Implementada a função `formatLocalDate(date)` para manter o padrão `YYYY-MM-DD` estritamente no fuso local.
+  - Adicionada a função `normalizeTimeSlot` para normalizar variações como `"10h"`, `"10"`, `"10:00"`.
+  - Atualizada a lista de prioridade de modelos para `gemini-3.7-flash` e `gemini-3.6-flash`, com agregação de todas as partes de texto (`parts.map.join`), garantindo respostas ricas e sem truncamento.
+  - Proteção contra mute indevido: notificações automáticas do sistema não pausam o chat da IA familiar.
+- **Resultado Final**:
+  - Ao pedir "quarta-feira às 10h", o sistema gerou com exatidão o agendamento para **14/10/2026 às 10:00** com status `PENDENTE` e confirmação completa no chat.
+
 ---
 
 ## Sessão 62 - 08/10/2026 — Sincronização do Repositório, Validação dos Servidores e Bateria de Testes do Atendimento com IA no WhatsApp

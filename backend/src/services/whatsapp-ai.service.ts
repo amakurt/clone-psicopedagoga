@@ -42,7 +42,13 @@ function isDirectHandoffRequest(text: string): boolean {
  * Realiza chamada à API do Google Gemini com fallback de modelos
  */
 async function callGeminiForChat(prompt: string, apiKey: string): Promise<string> {
-  const models = ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest'];
+  const models = [
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-flash-latest',
+    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',
+  ];
   let lastError: any = null;
 
   for (const model of models) {
@@ -80,7 +86,8 @@ async function callGeminiForChat(prompt: string, apiKey: string): Promise<string
       }
 
       const data = (await response.json()) as any;
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      const rawText = parts.map((p: any) => p.text || '').join('');
       if (rawText && rawText.trim()) {
         return rawText.trim();
       }
@@ -105,15 +112,25 @@ function calculateEndTime(startTime: string, durationMinutes: number = 50): stri
 }
 
 /**
+ * Formata um objeto Date no padrão local YYYY-MM-DD (evitando salto de fuso horário do UTC)
+ */
+export function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
  * Consulta a agenda da clínica e retorna um sumário em texto dos dias e horários livres
  */
-async function getClinicAvailabilityContext(db: any, daysAhead: number = 7): Promise<string> {
+export async function getClinicAvailabilityContext(db: any, daysAhead: number = 7): Promise<string> {
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = formatLocalDate(today);
 
   const futureLimit = new Date();
   futureLimit.setDate(today.getDate() + daysAhead + 4);
-  const futureLimitStr = futureLimit.toISOString().split('T')[0];
+  const futureLimitStr = formatLocalDate(futureLimit);
 
   const activeAppointments = await db.appointment.findMany({
     where: {
@@ -138,7 +155,7 @@ async function getClinicAvailabilityContext(db: any, daysAhead: number = 7): Pro
     if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
     businessDaysCount++;
-    const dateStr = curDate.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(curDate);
     const [y, m, d] = dateStr.split('-');
     const formattedDate = `${d}/${m}/${y}`;
     const dayLabel = `${dayNames[dayOfWeek]} (${formattedDate} - data ISO: ${dateStr})`;
@@ -165,9 +182,26 @@ async function getClinicAvailabilityContext(db: any, daysAhead: number = 7): Pro
 }
 
 /**
+ * Normaliza strings de horário para o padrão HH:mm (ex: "10h", "10", "14:00")
+ */
+export function normalizeTimeSlot(timeStr: string): string {
+  if (!timeStr) return '09:00';
+  let cleaned = timeStr.trim().toLowerCase().replace('h', '').replace('m', '');
+  if (cleaned.includes(':')) {
+    const [h, m] = cleaned.split(':');
+    return `${h.padStart(2, '0')}:${(m || '00').padEnd(2, '0').slice(0, 2)}`;
+  }
+  const num = parseInt(cleaned, 10);
+  if (!isNaN(num) && num >= 0 && num <= 23) {
+    return `${String(num).padStart(2, '0')}:00`;
+  }
+  return timeStr;
+}
+
+/**
  * Extrai o bloco de JSON de pré-agendamento retornado pela IA e limpa o texto visível
  */
-function extractPendingAppointmentJson(text: string): {
+export function extractPendingAppointmentJson(text: string): {
   cleanText: string;
   appointmentData?: { data: string; horario: string };
 } {
@@ -185,7 +219,7 @@ function extractPendingAppointmentJson(text: string): {
     if (parsed.agendamento?.data && parsed.agendamento?.horario) {
       appointmentData = {
         data: parsed.agendamento.data.trim(),
-        horario: parsed.agendamento.horario.trim(),
+        horario: normalizeTimeSlot(parsed.agendamento.horario),
       };
     }
   } catch (err) {
@@ -354,7 +388,7 @@ export async function processWhatsAppAIMessage(
 
   // 5. Consulta disponibilidade real da agenda da clínica
   const availabilityText = await getClinicAvailabilityContext(db, 7);
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = formatLocalDate(new Date());
 
   // 6. Construção do Prompt para a IA
   const customClinicPrompt =
@@ -377,14 +411,17 @@ DIRETRIZES FUNDAMENTAIS:
 AGENDA DA CLÍNICA & HORÁRIOS DISPONÍVEIS:
 ${availabilityText}
 
-REGRAS DE AGENDAMENTO:
+REGRAS ESTRITAS DE AGENDAMENTO:
 - Se o cliente perguntar horários disponíveis, apresente com carinho opções LIVRES da lista acima para os próximos dias úteis.
-- Se o cliente escolher ou sugerir uma data e horário:
+- Se o cliente escolher ou sugerir uma data e horário (ex: "quarta-feira às 10h", "quarta 10h", "amanhã às 14:00", etc.):
+  * MAPEAMENTO EXATO DO DIA: Localize na lista "AGENDA DA CLÍNICA & HORÁRIOS DISPONÍVEIS" acima a linha correspondente ao dia solicitado (ex: se pediu "quarta-feira", use a data ISO da Quarta-feira listada acima. Se hoje é sábado 10/10/2026, quarta-feira é 2026-10-14).
+  * MAPEAMENTO EXATO DA HORA: Use RIGOROSAMENTE o horário solicitado pelo cliente (ex: se pediu 10h ou 10:00, use "10:00". JAMAIS altere para 14:00 ou outro horário se o cliente pediu 10h!).
   * Verifique se está LIVRE na lista de disponibilidade da agenda acima.
-  * Se estiver LIVRE: acolha com entusiasmo, diga que já registrou o pré-agendamento no sistema com status "Pendente" para a secretária validar e que ela receberá a confirmação em breve. E OBRIGATORIAMENTE anexe no final da resposta o bloco JSON técnico:
+  * Se estiver LIVRE: acolha com entusiasmo, diga que já registrou o pré-agendamento no sistema com status "Pendente" para a secretária validar e que receberá a confirmação em breve. E OBRIGATORIAMENTE anexe no final da resposta o bloco JSON técnico:
     \`\`\`json
     {"agendamento": {"data": "YYYY-MM-DD", "horario": "HH:mm"}}
     \`\`\`
+    (Exemplo para quarta-feira 10h com data ISO 2026-10-14: \`{"agendamento": {"data": "2026-10-14", "horario": "10:00"}}\`)
   * Se estiver OCUPADO: explique carinhosamente que esse horário já está reservado e sugira outros horários livres daquele mesmo dia ou do dia seguinte.
 - Se o cliente ainda NÃO tiver definido data e horário específicos, NÃO inclua o bloco JSON.
 
@@ -489,17 +526,18 @@ export async function processInternalChatAIMessage(
       return { replyText, shouldMute: true, intent: 'HANDOFF' };
     }
 
-    // 3. Pausa se houve mensagem recente da equipe (Staff) para não atropelar conversa humana
+    // 3. Pausa APENAS se houve mensagem manual de um atendente humano da equipe (ignora notificações automáticas)
     const autoMuteMs = (config.autoMuteHours || 4) * 60 * 60 * 1000;
     const recentStaffMsg = await db.chatMessage.findFirst({
       where: {
         pacienteId: input.pacienteId,
         senderRole: 'STAFF',
+        senderId: { notIn: ['staff-auto', 'staff-system'] },
         createdAt: { gte: new Date(Date.now() - autoMuteMs) },
       },
       orderBy: { createdAt: 'desc' },
     });
-    if (recentStaffMsg) {
+    if (recentStaffMsg && !recentStaffMsg.message.startsWith('✅') && !recentStaffMsg.message.startsWith('🗓️')) {
       return {}; // Atendimento humano ativo, não sobrepõe
     }
 
@@ -543,7 +581,7 @@ export async function processInternalChatAIMessage(
 
     // 6. Consulta disponibilidade real da agenda da clínica
     const availabilityText = await getClinicAvailabilityContext(db, 7);
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatLocalDate(new Date());
 
     // 7. Montagem do Prompt
     const customPrompt =
@@ -565,16 +603,22 @@ CONTEXTO DO ATENDIMENTO INTERNO NO PORTAL:
 AGENDA DA CLÍNICA & HORÁRIOS DISPONÍVEIS:
 ${availabilityText}
 
-REGRAS DE AGENDAMENTO E HORÁRIOS:
+REGRAS ESTRITAS DE AGENDAMENTO E HORÁRIOS:
 1. Se o responsável perguntar sobre dias e horários livres, sugira com carinho algumas opções LIVRES listadas acima nos próximos dias úteis.
-2. Se o responsável escolher/confirmar uma data e horário:
+2. Se o responsável escolher/confirmar uma data e horário (ex: "para quarta feira as 10h", "quarta 10h", "terça às 14:00", "amanhã às 15h"):
+   - MAPEAMENTO EXATO DO DIA: Localize na lista "AGENDA DA CLÍNICA & HORÁRIOS DISPONÍVEIS" acima a linha correspondente ao dia solicitado (ex: se pediu "quarta-feira", use a data ISO da Quarta-feira listada acima. Ex: se hoje é sábado 10/10/2026, quarta-feira é 2026-10-14).
+   - MAPEAMENTO EXATO DA HORA: Use RIGOROSAMENTE o horário solicitado pelo responsável (ex: se pediu 10h ou 10:00, use "10:00". JAMAIS agende para 14:00 ou outro horário se o usuário pediu 10h!).
    - Verifique se o dia e horário estão LIVRES na lista da agenda acima.
-   - Se estiver LIVRE: confirme com carinho e entusiasmo, diga que você já registrou o pré-agendamento no sistema com status "Pendente" para a equipe/secretária validar na agenda e que assim que confirmarem ele receberá a confirmação por aqui. E OBRIGATORIAMENTE anexe no final da resposta o bloco JSON técnico:
-     \`\`\`json
-     {"agendamento": {"data": "YYYY-MM-DD", "horario": "HH:mm"}}
-     \`\`\`
+   - Se estiver LIVRE:
+     * Confirme com carinho e entusiasmo o dia e horário solicitados.
+     * Diga que registrou o pré-agendamento no sistema com status "Pendente" para que a equipe da secretaria faça a validação final.
+     * OBRIGATORIAMENTE anexe no final da resposta o bloco JSON técnico:
+       \`\`\`json
+       {"agendamento": {"data": "YYYY-MM-DD", "horario": "HH:mm"}}
+       \`\`\`
+       (Exemplo para quarta-feira 10h com data ISO 2026-10-14: \`{"agendamento": {"data": "2026-10-14", "horario": "10:00"}}\`)
    - Se estiver OCUPADO na lista: explique com delicadeza que esse horário específico já está reservado e sugira outros horários livres daquele mesmo dia ou do dia seguinte.
-3. Se o responsável ainda NÃO tiver definido uma data e horário específicos, NÃO inclua o bloco JSON.
+3. Se o responsável ainda NÃO tiver definido uma data e horário específicos (ex: apenas "gostaria de agendar"), NÃO inclua o bloco JSON.
 
 DIRETRIZES GERAIS:
 1. Responda em Português do Brasil com tom empático, acolhedor e atencioso (use emojis suaves como 🌸, ✨, 🧠, 📚).
