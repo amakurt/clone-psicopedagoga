@@ -11,37 +11,8 @@ const router = Router();
 // 1. HELPERS & ENVIO DE MENSAGENS (EVOLUTION API)
 // =========================================================================
 
-export async function sendWhatsAppMessage(phone: string, message: string, tenantId?: string) {
-  const db = scoped(prisma, tenantId);
-  const configRecord = await db.whatsAppConfig.findFirst();
-  if (!configRecord) {
-    throw new Error('WhatsApp não configurado. Configure a API em Configurações > WhatsApp.');
-  }
-
-  const cleanedPhone = phone.replace(/\D/g, '');
-  const baseUrl = configRecord.apiUrl.replace(/\/+$/, '');
-  const instance = configRecord.phoneNumberId || '';
-  const endpoint = instance ? `${baseUrl}/message/sendText/${instance}` : `${baseUrl}/message/sendText`;
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': configRecord.token,
-    },
-    body: JSON.stringify({
-      number: cleanedPhone,
-      text: message,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`WhatsApp API error: ${response.status} - ${errorText}`);
-  }
-
-  return response.json();
-}
+export { sendWhatsAppMessage } from '../services/whatsapp-client.service';
+import { sendWhatsAppMessage } from '../services/whatsapp-client.service';
 
 /**
  * Extrai texto e dados da mensagem a partir de diferentes formatos de payload (Evolution API v1, v2)
@@ -209,6 +180,7 @@ async function handleEvolutionWebhook(req: any, res: any) {
       where: { id: conversation.id },
       data: {
         contactName: parsed.pushName || conversation.contactName,
+        status: conversation.status === 'CLOSED' ? 'ACTIVE' : conversation.status,
         lastMessageAt: new Date(),
       },
     });
@@ -323,7 +295,7 @@ const sendBulkSchema = z.object({
 
 // --- Configuração ---
 router.get('/config', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const config = await db.whatsAppConfig.findFirst();
   if (!config) {
     return res.json({ configured: false });
@@ -344,7 +316,7 @@ router.get('/config', async (req, res) => {
 });
 
 router.post('/config', validate(configSchema), async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { apiUrl, token, phoneNumberId, aiEnabled, aiPrompt, geminiKey, autoMuteHours, webhookSecret } = req.body;
 
   const existing = await db.whatsAppConfig.findFirst();
@@ -378,7 +350,7 @@ router.post('/config', validate(configSchema), async (req, res) => {
 
 // --- Gestão de Conversas ---
 router.get('/conversations', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { status, search, page = '1', limit = '30' } = req.query;
 
   const pageNum = parseInt(page as string);
@@ -418,7 +390,7 @@ router.get('/conversations', async (req, res) => {
 });
 
 router.get('/conversations/:id/messages', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { id } = req.params;
 
   const conversation = await db.whatsAppConversation.findUnique({
@@ -440,7 +412,7 @@ router.get('/conversations/:id/messages', async (req, res) => {
 });
 
 router.post('/conversations/:id/toggle-mute', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { id } = req.params;
   const { mute, hours = 4 } = req.body;
 
@@ -462,7 +434,7 @@ router.post('/conversations/:id/toggle-mute', async (req, res) => {
 });
 
 router.post('/conversations/:id/send', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { id } = req.params;
   const { message } = req.body;
 
@@ -476,11 +448,11 @@ router.post('/conversations/:id/send', async (req, res) => {
   }
 
   try {
-    await sendWhatsAppMessage(conversation.phone, message.trim(), req.user?.tenantId);
+    await sendWhatsAppMessage(conversation.phone, message.trim(), (req.user as any)?.tenantId);
 
     const saved = await db.whatsAppMessage.create({
       data: {
-        tenantId: req.user!.tenantId,
+        tenantId: (req.user as any)?.tenantId,
         conversationId: id,
         sender: 'HUMAN',
         message: message.trim(),
@@ -500,7 +472,7 @@ router.post('/conversations/:id/send', async (req, res) => {
 
 // --- Lembretes e Histórico Original ---
 router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { patientId, message, phone } = req.body;
 
   const patient = await db.paciente.findUnique({ where: { id: patientId } });
@@ -514,7 +486,7 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
   }
 
   try {
-    await sendWhatsAppMessage(phoneToUse, message, req.user?.tenantId);
+    await sendWhatsAppMessage(phoneToUse, message, (req.user as any)?.tenantId);
 
     const log = await db.whatsAppLog.create({
       data: {
@@ -522,7 +494,7 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
         phone: phoneToUse,
         message,
         status: 'SENT',
-        sentBy: req.user!.id,
+        sentBy: (req.user as any)?.id,
       },
     });
 
@@ -534,7 +506,7 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
         phone: phoneToUse,
         message,
         status: 'FAILED',
-        sentBy: req.user!.id,
+        sentBy: (req.user as any)?.id,
       },
     });
 
@@ -543,7 +515,7 @@ router.post('/send-reminder', validate(sendReminderSchema), async (req, res) => 
 });
 
 router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { patientIds, message } = req.body;
 
   const patients = await db.paciente.findMany({
@@ -559,7 +531,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
     }
 
     try {
-      await sendWhatsAppMessage(patient.phone, message, req.user?.tenantId);
+      await sendWhatsAppMessage(patient.phone, message, (req.user as any)?.tenantId);
 
       const log = await db.whatsAppLog.create({
         data: {
@@ -567,7 +539,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
           phone: patient.phone,
           message,
           status: 'SENT',
-          sentBy: req.user!.id,
+          sentBy: (req.user as any)?.id,
         },
       });
 
@@ -579,7 +551,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
           phone: patient.phone,
           message,
           status: 'FAILED',
-          sentBy: req.user!.id,
+          sentBy: (req.user as any)?.id,
         },
       });
 
@@ -591,7 +563,7 @@ router.post('/send-bulk', validate(sendBulkSchema), async (req, res) => {
 });
 
 router.get('/history', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
+  const db = scoped(prisma, (req.user as any)?.tenantId);
   const { patientId, status, page = '1', limit = '50' } = req.query;
   const where: any = {};
   if (patientId) where.patientId = patientId;
@@ -622,7 +594,7 @@ router.post('/test', async (req, res) => {
   }
 
   try {
-    await sendWhatsAppMessage(phone, '✅ Mensagem de teste do EduPsych Pro - WhatsApp configurado com sucesso!', req.user?.tenantId);
+    await sendWhatsAppMessage(phone, '✅ Mensagem de teste do EduPsych Pro - WhatsApp configurado com sucesso!', (req.user as any)?.tenantId);
     res.json({ success: true, message: 'Mensagem de teste enviada com sucesso' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

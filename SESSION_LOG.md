@@ -63,6 +63,20 @@
   - A despedida calorosa e o abraço afetuoso foram restritos estritamente para o momento em que o responsável **finaliza o atendimento** (ex: ao agradecer, despedir-se ou encerrar o contato).
   - Validado via teste automatizado: respostas intermediárias mantêm a conversa aberta e objetiva, enquanto mensagens de despedida do cliente recebem o encerramento caloroso com abraço afetuoso.
 
+#### 8. Encerramento Automático de Atendimento por Inatividade (15 minutos)
+- **Necessidade**:
+  - Quando o responsável para de responder no meio de um atendimento com a IA, a sessão permanecia aberta indefinidamente sem conclusão formal.
+- **Implementação do Monitor de Inatividade (`inactivity-monitor.service.ts`)**:
+  - Criado serviço de monitoramento periódico (executado a cada 60 segundos no backend).
+  - **Critério de Inatividade**: se a última mensagem foi enviada pela IA ou equipe há **15 minutos ou mais** sem retorno do responsável.
+  - **Ação no Chat Interno**: envia automaticamente mensagem afetuosa de finalização:
+    > *"🌸 Atendimento finalizado por inatividade. Como não tivemos mais retorno por aqui, estamos encerrando esta conversa por enquanto. Se precisar de qualquer novidade, agendamento ou suporte, estamos sempre à disposição! Um abraço bem carinhoso para você e para [criança]! ✨"*
+  - **Ação no WhatsApp**: atualiza o status da conversa para `CLOSED`, envia a mensagem de encerramento acolhedora e reabre automaticamente para `ACTIVE` caso o cliente retorne mais tarde com nova mensagem.
+  - **Proteção de Idempotência**: impede o envio duplicado de encerramentos.
+  - **Desacoplamento Limpo**: extraído serviço cliente de WhatsApp (`whatsapp-client.service.ts`) eliminando acoplamentos com rotas de API.
+- **Validação Automatizada**:
+  - Criado script de homologação `test-inactivity-monitor.ts` com validação de 100% de sucesso em ambos os canais e prova de idempotência.
+
 ---
 
 ## Sessão 62 - 08/10/2026 — Sincronização do Repositório, Validação dos Servidores e Bateria de Testes do Atendimento com IA no WhatsApp

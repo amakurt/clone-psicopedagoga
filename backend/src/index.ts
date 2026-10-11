@@ -95,6 +95,9 @@ process.on('uncaughtException', (err) => {
   console.error('[uncaughtException]', err);
 });
 
+import { startInactivityMonitor } from './services/inactivity-monitor.service';
+
 app.listen(PORT, () => {
   console.log(`Backend rodando na porta ${PORT}`);
+  startInactivityMonitor();
 });
