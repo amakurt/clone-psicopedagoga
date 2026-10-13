@@ -2,6 +2,17 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { authorizeSuperAdmin } from '../middleware';
+import {
+  checkEvolutionHealth,
+  fetchEvolutionInstances,
+  getEvolutionInstanceStatus,
+  getEvolutionQrCode,
+  createEvolutionInstance,
+  restartEvolutionInstance,
+  logoutEvolutionInstance,
+  syncTenantWhatsAppInstance,
+  isPlanWhatsAppEligible,
+} from '../services/whatsapp-client.service';
 
 const router = Router();
 
@@ -238,6 +249,11 @@ router.patch('/tenants/:id/status', async (req, res) => {
       });
     }
 
+    // Regra A: Sincroniza / desconecta WhatsApp se a clínica for bloqueada ou reativada
+    syncTenantWhatsAppInstance(id).catch((err) => {
+      console.warn(`[SUPERADMIN_STATUS_WHATSAPP_SYNC_WARN] Tenant ${id}:`, err?.message);
+    });
+
     return res.json({
       message: `Clínica ${status === 'BLOQUEADO' ? 'bloqueada' : 'desbloqueada'} com sucesso`,
       tenant: {
@@ -360,6 +376,11 @@ router.patch('/tenants/:id/plan', async (req, res) => {
       });
     }
 
+    // Regra A: Sincroniza / desconecta WhatsApp se rebaixado para Básico ou provisiona se PRO/VIP
+    syncTenantWhatsAppInstance(id).catch((err) => {
+      console.warn(`[SUPERADMIN_PLAN_WHATSAPP_SYNC_WARN] Tenant ${id}:`, err?.message);
+    });
+
     return res.json({
       message: `Plano atualizado para ${planCode} com sucesso`,
       tenant: {
@@ -449,6 +470,198 @@ router.post('/tenants/:id/impersonate', async (req, res) => {
   } catch (error: any) {
     console.error('[SUPERADMIN_IMPERSONATE_ERROR]', error);
     return res.status(500).json({ error: 'Erro ao iniciar modo suporte' });
+  }
+});
+
+// =========================================================================
+// 7. GESTÃO CENTRALIZADA DA EVOLUTION API (WHATSAPP MULTI-TENANT)
+// =========================================================================
+
+// 7.1 Status de Saúde do Servidor Evolution API
+router.get('/whatsapp/status', async (req, res) => {
+  try {
+    const health = await checkEvolutionHealth();
+    const rawInstances = await fetchEvolutionInstances();
+
+    const counts = {
+      total: rawInstances.length,
+      open: rawInstances.filter((i) => i.connectionStatus === 'open' || i.state === 'open').length,
+      close: rawInstances.filter((i) => i.connectionStatus === 'close' || i.state === 'close').length,
+      connecting: rawInstances.filter((i) => i.connectionStatus === 'connecting' || i.state === 'connecting').length,
+    };
+
+    return res.json({
+      health,
+      counts,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_WHATSAPP_STATUS_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao obter status da Evolution API' });
+  }
+});
+
+// 7.2 Listagem de Todas as Clínicas com Status de WhatsApp / Instâncias
+router.get('/whatsapp/instances', async (req, res) => {
+  try {
+    const [tenants, rawInstances] = await Promise.all([
+      prisma.tenant.findMany({
+        orderBy: { name: 'asc' },
+        include: {
+          whatsappConfigs: true,
+          _count: {
+            select: {
+              whatsappConversations: true,
+              pacientes: true,
+            },
+          },
+        },
+      }),
+      fetchEvolutionInstances(),
+    ]);
+
+    const evoMap = new Map<string, any>();
+    for (const inst of rawInstances) {
+      const name = (inst.name || inst.instanceName || '').trim().toLowerCase();
+      if (name) evoMap.set(name, inst);
+    }
+
+    const items = tenants.map((tenant) => {
+      const config = tenant.whatsappConfigs[0] || null;
+      const eligible = isPlanWhatsAppEligible(tenant.plan) && tenant.status === 'ATIVO';
+
+      // Nome da instância esperado ou configurado
+      let expectedInstance = config?.phoneNumberId || '';
+      if (!expectedInstance) {
+        expectedInstance = tenant.slug
+          ? tenant.slug.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+          : `clinica-${tenant.id.slice(-6)}`;
+      }
+
+      const live = evoMap.get(expectedInstance.toLowerCase());
+      let state = 'not_provisioned';
+      if (live) {
+        state = live.connectionStatus || live.state || 'close';
+      } else if (config?.phoneNumberId) {
+        state = 'not_found';
+      }
+
+      return {
+        tenantId: tenant.id,
+        tenantName: tenant.name,
+        tenantSlug: tenant.slug,
+        plan: tenant.plan || 'TRIAL',
+        status: tenant.status,
+        eligible,
+        instanceName: expectedInstance,
+        isProvisioned: !!live,
+        state, // 'open' | 'close' | 'connecting' | 'not_provisioned' | 'not_found'
+        ownerJid: live?.ownerJid || null,
+        ownerPhone: live?.ownerJid ? live.ownerJid.replace(/@.*$/, '') : null,
+        profileName: live?.profileName || null,
+        profilePicUrl: live?.profilePicUrl || null,
+        conversationsCount: tenant._count?.whatsappConversations || 0,
+        pacientesCount: tenant._count?.pacientes || 0,
+        aiEnabled: config?.aiEnabled ?? false,
+      };
+    });
+
+    return res.json({
+      instances: items,
+      totalTenants: tenants.length,
+      eligibleCount: items.filter((i) => i.eligible).length,
+      connectedCount: items.filter((i) => i.state === 'open').length,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_WHATSAPP_INSTANCES_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao listar instâncias de WhatsApp das clínicas' });
+  }
+});
+
+// 7.3 Provisionar Instância para uma Clínica Específica
+router.post('/whatsapp/instances/:tenantId/provision', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const result = await syncTenantWhatsAppInstance(tenantId);
+    return res.json({
+      message: 'Instância sincronizada com sucesso',
+      ...result,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_WHATSAPP_PROVISION_ERROR]', error);
+    return res.status(500).json({ error: error.message || 'Erro ao provisionar instância' });
+  }
+});
+
+// 7.4 Obter QR Code de Pareamento para a Clínica (Superadmin pode escanear)
+router.get('/whatsapp/instances/:tenantId/qrcode', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: { whatsappConfigs: true },
+    });
+    if (!tenant) return res.status(404).json({ error: 'Clínica não encontrada' });
+
+    let instanceName = tenant.whatsappConfigs[0]?.phoneNumberId;
+    if (!instanceName) {
+      instanceName = tenant.slug
+        ? tenant.slug.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+        : `clinica-${tenant.id.slice(-6)}`;
+      await syncTenantWhatsAppInstance(tenantId);
+    }
+
+    const qrResult = await getEvolutionQrCode(instanceName);
+    return res.json({
+      tenantId,
+      tenantName: tenant.name,
+      instanceName,
+      ...qrResult,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_WHATSAPP_QR_ERROR]', error);
+    return res.status(500).json({ error: error.message || 'Erro ao obter QR Code' });
+  }
+});
+
+// 7.5 Reiniciar Instância do WhatsApp
+router.post('/whatsapp/instances/:tenantId/restart', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const config = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+    const instanceName = config?.phoneNumberId;
+    if (!instanceName) {
+      return res.status(400).json({ error: 'Clínica não possui instância configurada' });
+    }
+
+    const result = await restartEvolutionInstance(instanceName);
+    if (!result.success) {
+      return res.status(500).json({ error: result.error || 'Falha ao reiniciar' });
+    }
+    return res.json({ message: `Instância ${instanceName} reiniciada com sucesso` });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_WHATSAPP_RESTART_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao reiniciar instância' });
+  }
+});
+
+// 7.6 Desconectar (Logout) da Instância
+router.post('/whatsapp/instances/:tenantId/disconnect', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const config = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+    const instanceName = config?.phoneNumberId;
+    if (!instanceName) {
+      return res.status(400).json({ error: 'Clínica não possui instância configurada' });
+    }
+
+    const result = await logoutEvolutionInstance(instanceName);
+    if (!result.success) {
+      return res.status(500).json({ error: result.error || 'Falha ao desconectar' });
+    }
+    return res.json({ message: `Instância ${instanceName} desconectada com sucesso` });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_WHATSAPP_DISCONNECT_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao desconectar instância' });
   }
 });
 

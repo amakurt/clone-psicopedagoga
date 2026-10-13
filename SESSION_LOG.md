@@ -1,6 +1,59 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 10 de Outubro de 2026
+## Última Atualização: 13 de Outubro de 2026
+
+---
+
+## Sessão 64 - 13/10/2026 — Integração da Evolution API no Painel do Superadmin (Multi-Tenant, QR Code na Tela e Restrição de Planos)
+
+### O que foi feito
+
+#### 1. Arquitetura Multi-Tenant para a Evolution API
+- **Provisionamento e Sincronização por Clínica (`whatsapp-client.service.ts`)**:
+  - Implementadas funções especializadas de integração com a Evolution API v2:
+    - `checkEvolutionHealth()`: monitoramento da porta 8080 com latência e versão.
+    - `fetchEvolutionInstances()`: listagem de todas as instâncias ativas na Evolution API.
+    - `getEvolutionInstanceStatus(instanceName)`: consulta de status em tempo real (`open`, `close`, `connecting`).
+    - `getEvolutionQrCode(instanceName)`: obtenção do QR Code em base64 e código de pareamento.
+    - `createEvolutionInstance(instanceName)`: criação automática de instância já com o webhook configurado (`http://host.docker.internal:3000/api/whatsapp/webhook`).
+    - `restartEvolutionInstance(instanceName)` e `logoutEvolutionInstance(instanceName)`.
+    - `syncTenantWhatsAppInstance(tenantId)`: ciclo de vida automático conforme o plano da clínica.
+- **Regra de Planos (PRO e VIP Exclusivos)**:
+  - Módulo WhatsApp restrito aos planos **`PRO`** e **`VIP`**.
+  - **Regra A (Downgrade/Bloqueio)**: Se a clínica for rebaixada para o plano `BASICO` ou tiver o status alterado para `BLOQUEADO`, a instância na Evolution API é desconectada automaticamente, preservando o histórico de conversas no banco.
+  - Ao atualizar plano para `PRO` ou `VIP`, a instância é provisionada automaticamente.
+
+#### 2. Endpoints do Superadmin (`backend/src/routes/superadmin.ts`)
+- Adicionadas rotas com permissão exclusiva `SUPERADMIN`:
+  - `GET /api/superadmin/whatsapp/status`: Saúde do servidor Evolution API e contadores consolidados.
+  - `GET /api/superadmin/whatsapp/instances`: Listagem consolidada de todas as clínicas com status no WhatsApp, número pareado, plano e métricas.
+  - `POST /api/superadmin/whatsapp/instances/:tenantId/provision`: Provisionamento manual/forçado de instância.
+  - `GET /api/superadmin/whatsapp/instances/:tenantId/qrcode`: Obtenção do QR Code para o Superadmin escanear na tela.
+  - `POST /api/superadmin/whatsapp/instances/:tenantId/restart`: Reinicialização de instância.
+  - `POST /api/superadmin/whatsapp/instances/:tenantId/disconnect`: Logout de sessão da instância.
+- Integrado `syncTenantWhatsAppInstance` nas rotas `PATCH /tenants/:id/plan` e `PATCH /tenants/:id/status`.
+
+#### 3. Endpoints da Clínica e Proteção de Planos (`backend/src/routes/whatsapp.ts`)
+- `GET /api/whatsapp/config`: Retorna `planEligible` e `tenantPlan` para validação no frontend.
+- `GET /api/whatsapp/qrcode`: Permite à própria clínica obter e escanear seu QR Code caso tenha plano PRO/VIP.
+- `GET /api/whatsapp/instance-status`: Consulta status atual da conexão.
+- `POST /api/whatsapp/restart`: Permite à clínica reiniciar sua conexão se necessário.
+
+#### 4. Frontend: Nova Aba "WhatsApp Multi-Clínica" no Painel Master (`/master`)
+- **Cockpit do Gateway**:
+  - Cards com status online/offline (porta 8080, versão, latência e indicador pulsante).
+  - Contagem de instâncias ativas vs desconectadas e clínicas elegíveis.
+  - Botão de atalho para abrir o **Evolution Manager nativo** (`http://localhost:8080/manager`).
+- **Tabela e Cards Responsivos de Instâncias**:
+  - Filtro em tempo real por nome/slug, filtro por plano e filtro por status de conexão.
+  - Badges de conexão (`🟢 Conectado`, `🟡 Aguardando QR Code`, `🔴 Desconectado`, `⚪ Não Provisionado`).
+  - Ações rápidas por clínica: **Ver QR Code na Tela**, **Reiniciar Conexão**, **Desconectar** e **Criar Instância**.
+- **Modal de Pareamento com QR Code**:
+  - Visualização da imagem base64 de alta resolução, instruções passo a passo para pareamento no WhatsApp e botão de atualização.
+
+#### 5. Frontend: Pareamento e Banner de Upgrade na Tela da Clínica (`/app/whatsapp`)
+- Adicionado banner de upgrade nos planos `TRIAL` e `BASICO`, informando que o módulo é exclusivo dos planos PRO e VIP.
+- Adicionado box de status de conexão na aba de Configurações da clínica com botão para **Escanear QR Code no Celular** e **Reiniciar Conexão**.
 
 ---
 

@@ -311,6 +311,22 @@ import {
       <!-- ABA 2: CONFIGURAÇÃO DO GATEWAY & INTELIGÊNCIA ARTIFICIAL      -->
       <!-- ============================================================== -->
       @if (activeTab() === 'configuracao') {
+        @if (!planEligible()) {
+          <div class="mb-6 p-4 sm:p-5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="size-11 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center flex-shrink-0">
+                <span class="material-icons text-2xl">workspace_premium</span>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Módulo WhatsApp & IA Exclusivo dos Planos PRO e VIP</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Sua clínica está no plano <strong class="text-amber-600 dark:text-amber-400 uppercase font-black">{{ tenantPlan() }}</strong>. Faça o upgrade para o plano PRO ou VIP para conectar seu número de WhatsApp e ativar respostas automáticas com IA.
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <!-- Gateway WhatsApp Evolution API (6 colunas) -->
           <div class="lg:col-span-6 space-y-6">
@@ -320,6 +336,41 @@ import {
                 <div>
                   <h3 class="text-sm font-bold text-slate-900 dark:text-white">Gateway Evolution API</h3>
                   <p class="text-xs text-slate-500">Conexão com a instância do WhatsApp para envio e recebimento</p>
+                </div>
+              </div>
+
+              <!-- Box de Conexão WhatsApp / Pareamento com QR Code -->
+              <div class="p-4 rounded-xl border"
+                [ngClass]="instanceStatus() === 'open' ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600'">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="size-2.5 rounded-full"
+                      [ngClass]="instanceStatus() === 'open' ? 'bg-emerald-500 animate-pulse' : (instanceStatus() === 'connecting' ? 'bg-amber-500' : 'bg-red-500')"></span>
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Status da Conexão:
+                      {{ instanceStatus() === 'open' ? 'Conectado (Online)' : (instanceStatus() === 'connecting' ? 'Aguardando Leitura do QR' : 'Desconectado') }}
+                    </span>
+                  </div>
+                  <button (click)="checkInstanceStatus()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs flex items-center gap-1" title="Atualizar status">
+                    <span class="material-icons text-sm" [class.animate-spin]="checkingInstanceStatus()">sync</span>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+                  {{ instanceStatus() === 'open' ? 'Seu WhatsApp está pareado e respondendo às famílias em tempo real.' : 'Para conectar seu aparelho à clínica, clique abaixo e escaneie o QR Code.' }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <button (click)="openQrModal()"
+                    [disabled]="!planEligible()"
+                    class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
+                    <span class="material-icons text-sm">qr_code_scanner</span>
+                    Escanear QR Code no Celular
+                  </button>
+                  <button (click)="restartConnection()"
+                    [disabled]="!planEligible()"
+                    class="px-3.5 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 disabled:opacity-40 text-slate-700 dark:text-white rounded-xl text-xs font-semibold flex items-center gap-1 transition-all">
+                    <span class="material-icons text-sm">restart_alt</span>
+                    Reiniciar
+                  </button>
                 </div>
               </div>
 
@@ -578,6 +629,78 @@ import {
           </div>
         </div>
       }
+
+      <!-- Modal de QR Code para a Clínica -->
+      @if (qrModalOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+              <div class="flex items-center gap-2.5">
+                <div class="size-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <span class="material-icons text-xl">qr_code_2</span>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white">Conectar WhatsApp da Clínica</h3>
+                  <p class="text-[11px] text-slate-500">Escaneie o código com o aplicativo do WhatsApp</p>
+                </div>
+              </div>
+              <button (click)="qrModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
+
+            <div class="text-center py-2 space-y-4">
+              @if (qrLoading()) {
+                <div class="py-12 space-y-3">
+                  <span class="material-icons animate-spin text-4xl text-emerald-500">sync</span>
+                  <p class="text-xs text-slate-400 font-medium">Obtendo código de pareamento...</p>
+                </div>
+              } @else if (qrData()?.state === 'open') {
+                <div class="p-6 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl space-y-2">
+                  <div class="size-14 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                    <span class="material-icons text-3xl">verified</span>
+                  </div>
+                  <h4 class="text-sm font-bold text-slate-900 dark:text-white">WhatsApp Conectado com Sucesso!</h4>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">
+                    Sua clínica já está pareada e o assistente de IA está pronto para atender.
+                  </p>
+                </div>
+              } @else if (qrData()?.base64) {
+                <div class="inline-block p-4 bg-white rounded-2xl shadow-xl mx-auto border border-slate-200">
+                  <img [src]="qrData()?.base64" alt="QR Code WhatsApp" class="size-56 object-contain mx-auto" />
+                </div>
+                <div class="space-y-1 text-xs text-slate-500 dark:text-slate-400 text-left max-w-xs mx-auto">
+                  <p class="font-semibold text-slate-700 dark:text-slate-300">Como conectar:</p>
+                  <ol class="text-[11px] list-decimal list-inside space-y-0.5">
+                    <li>Abra o WhatsApp no celular da clínica;</li>
+                    <li>Vá em <strong>Aparelhos Conectados</strong>;</li>
+                    <li>Aponte a câmera para este QR Code.</li>
+                  </ol>
+                </div>
+              } @else {
+                <div class="p-6 bg-slate-50 dark:bg-slate-700/50 rounded-2xl space-y-2">
+                  <span class="material-icons text-2xl text-amber-500">info</span>
+                  <p class="text-xs text-slate-600 dark:text-slate-300">
+                    {{ qrData()?.error || 'Aguardando o servidor gerar o código de pareamento...' }}
+                  </p>
+                </div>
+              }
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
+              <button (click)="refreshQrCode()" [disabled]="qrLoading()"
+                class="px-3.5 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                <span class="material-icons text-sm" [class.animate-spin]="qrLoading()">refresh</span>
+                Atualizar QR Code
+              </button>
+              <button (click)="qrModalOpen.set(false)"
+                class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                Concluir
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -588,6 +711,17 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
   private pollTimer: any = null;
 
   activeTab = signal<'atendimento' | 'configuracao' | 'historico'>('atendimento');
+
+  // Elegibilidade de Plano e Status
+  planEligible = signal<boolean>(true);
+  tenantPlan = signal<string>('PRO');
+  instanceStatus = signal<string>('close');
+  checkingInstanceStatus = signal(false);
+
+  // Pareamento QR Code
+  qrModalOpen = signal(false);
+  qrData = signal<any>(null);
+  qrLoading = signal(false);
 
   // Configuração
   config: WhatsAppConfig = {
@@ -744,6 +878,8 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
     this.whatsappService.getConfig().subscribe({
       next: (res: any) => {
         this.isConfigured.set(res.configured);
+        if (res.planEligible !== undefined) this.planEligible.set(res.planEligible);
+        if (res.tenantPlan) this.tenantPlan.set(res.tenantPlan);
         if (res.config) {
           this.config.apiUrl = res.config.apiUrl || '';
           this.config.phoneNumberId = res.config.phoneNumberId || '';
@@ -753,7 +889,52 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
           this.config.inactivityTimeoutMinutes = res.config.inactivityTimeoutMinutes ?? 15;
           this.config.inactivityMessage = res.config.inactivityMessage || '';
         }
+        if (this.planEligible()) {
+          this.checkInstanceStatus();
+        }
       },
+    });
+  }
+
+  checkInstanceStatus() {
+    this.checkingInstanceStatus.set(true);
+    this.whatsappService.getInstanceStatus().subscribe({
+      next: (res) => {
+        this.instanceStatus.set(res.state || 'close');
+        this.checkingInstanceStatus.set(false);
+      },
+      error: () => this.checkingInstanceStatus.set(false),
+    });
+  }
+
+  openQrModal() {
+    this.qrModalOpen.set(true);
+    this.refreshQrCode();
+  }
+
+  refreshQrCode() {
+    this.qrLoading.set(true);
+    this.whatsappService.getQrCode().subscribe({
+      next: (res) => {
+        this.qrData.set(res);
+        this.qrLoading.set(false);
+        if (res.state === 'open') {
+          this.instanceStatus.set('open');
+        }
+      },
+      error: (err) => {
+        this.qrData.set({ state: 'error', error: err?.error?.error || 'Erro ao carregar QR Code' });
+        this.qrLoading.set(false);
+      },
+    });
+  }
+
+  restartConnection() {
+    this.whatsappService.restartInstance().subscribe({
+      next: () => {
+        this.checkInstanceStatus();
+      },
+      error: () => {},
     });
   }
 

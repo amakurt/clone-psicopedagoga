@@ -94,4 +94,84 @@ export class SuperAdminService {
   }> {
     return this.api.post(`/superadmin/tenants/${tenantId}/impersonate`, {});
   }
+
+  // --- WhatsApp Gateway & Multi-Tenant (Evolution API) ---
+
+  getWhatsAppGatewayStatus(): Observable<EvolutionGatewayStatus> {
+    return this.api.get<EvolutionGatewayStatus>('/superadmin/whatsapp/status');
+  }
+
+  getWhatsAppInstances(): Observable<WhatsAppInstancesResponse> {
+    return this.api.get<WhatsAppInstancesResponse>('/superadmin/whatsapp/instances');
+  }
+
+  provisionWhatsAppInstance(tenantId: string): Observable<any> {
+    return this.api.post(`/superadmin/whatsapp/instances/${tenantId}/provision`, {});
+  }
+
+  getWhatsAppQrCode(tenantId: string): Observable<WhatsAppQrCodeResponse> {
+    return this.api.get<WhatsAppQrCodeResponse>(`/superadmin/whatsapp/instances/${tenantId}/qrcode`);
+  }
+
+  restartWhatsAppInstance(tenantId: string): Observable<any> {
+    return this.api.post(`/superadmin/whatsapp/instances/${tenantId}/restart`, {});
+  }
+
+  disconnectWhatsAppInstance(tenantId: string): Observable<any> {
+    return this.api.post(`/superadmin/whatsapp/instances/${tenantId}/disconnect`, {});
+  }
+}
+
+export interface EvolutionGatewayStatus {
+  health: {
+    online: boolean;
+    status: number | null;
+    version?: string;
+    managerUrl?: string;
+    latencyMs: number;
+    error?: string;
+  };
+  counts: {
+    total: number;
+    open: number;
+    close: number;
+    connecting: number;
+  };
+}
+
+export interface ClinicWhatsAppInstance {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  plan: string;
+  status: string;
+  eligible: boolean;
+  instanceName: string;
+  isProvisioned: boolean;
+  state: 'open' | 'close' | 'connecting' | 'not_provisioned' | 'not_found' | string;
+  ownerJid: string | null;
+  ownerPhone: string | null;
+  profileName: string | null;
+  profilePicUrl: string | null;
+  conversationsCount: number;
+  pacientesCount: number;
+  aiEnabled: boolean;
+}
+
+export interface WhatsAppInstancesResponse {
+  instances: ClinicWhatsAppInstance[];
+  totalTenants: number;
+  eligibleCount: number;
+  connectedCount: number;
+}
+
+export interface WhatsAppQrCodeResponse {
+  tenantId?: string;
+  tenantName?: string;
+  instanceName: string;
+  state: string;
+  base64?: string;
+  code?: string;
+  pairingCode?: string;
+  error?: string;
 }

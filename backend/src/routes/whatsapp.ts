@@ -12,7 +12,15 @@ const router = Router();
 // =========================================================================
 
 export { sendWhatsAppMessage } from '../services/whatsapp-client.service';
-import { sendWhatsAppMessage, normalizeApiUrl } from '../services/whatsapp-client.service';
+import {
+  sendWhatsAppMessage,
+  normalizeApiUrl,
+  isPlanWhatsAppEligible,
+  getEvolutionInstanceStatus,
+  getEvolutionQrCode,
+  restartEvolutionInstance,
+  syncTenantWhatsAppInstance,
+} from '../services/whatsapp-client.service';
 
 /**
  * Extrai texto e dados da mensagem a partir de diferentes formatos de payload (Evolution API v1, v2)
@@ -320,13 +328,20 @@ const sendBulkSchema = z.object({
 
 // --- Configuração ---
 router.get('/config', async (req, res) => {
-  const db = scoped(prisma, (req.user as any)?.tenantId);
+  const tenantId = (req.user as any)?.tenantId;
+  const tenant = tenantId ? await prisma.tenant.findUnique({ where: { id: tenantId } }) : null;
+  const planEligible = isPlanWhatsAppEligible(tenant?.plan);
+  const tenantPlan = tenant?.plan || 'TRIAL';
+
+  const db = scoped(prisma, tenantId);
   const config = await db.whatsAppConfig.findFirst();
   if (!config) {
-    return res.json({ configured: false });
+    return res.json({ configured: false, planEligible, tenantPlan });
   }
   res.json({
     configured: true,
+    planEligible,
+    tenantPlan,
     config: {
       apiUrl: config.apiUrl,
       phoneNumberId: config.phoneNumberId,
@@ -340,6 +355,72 @@ router.get('/config', async (req, res) => {
       webhookSecret: config.webhookSecret,
     },
   });
+});
+
+// Endpoint para a própria clínica buscar seu QR Code de pareamento (se PRO ou VIP)
+router.get('/qrcode', async (req, res) => {
+  try {
+    const tenantId = (req.user as any)?.tenantId;
+    const tenant = tenantId ? await prisma.tenant.findUnique({ where: { id: tenantId } }) : null;
+    if (!isPlanWhatsAppEligible(tenant?.plan)) {
+      return res.status(403).json({
+        error: 'O módulo WhatsApp está disponível exclusivamente nos planos PRO e VIP.',
+        plan: tenant?.plan || 'TRIAL',
+      });
+    }
+
+    const config = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+    let instanceName = config?.phoneNumberId;
+    if (!instanceName) {
+      const syncResult = await syncTenantWhatsAppInstance(tenantId);
+      instanceName = syncResult.instanceName;
+    }
+
+    if (!instanceName) {
+      return res.status(400).json({ error: 'Nenhuma instância configurada para esta clínica' });
+    }
+
+    const qr = await getEvolutionQrCode(instanceName);
+    return res.json(qr);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Erro ao carregar QR Code' });
+  }
+});
+
+// Endpoint para a clínica consultar status de conexão da sua instância
+router.get('/instance-status', async (req, res) => {
+  try {
+    const tenantId = (req.user as any)?.tenantId;
+    const config = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+    if (!config?.phoneNumberId) {
+      return res.json({ state: 'not_configured' });
+    }
+    const status = await getEvolutionInstanceStatus(config.phoneNumberId);
+    return res.json(status);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Erro ao consultar status' });
+  }
+});
+
+// Endpoint para a clínica reiniciar sua instância
+router.post('/restart', async (req, res) => {
+  try {
+    const tenantId = (req.user as any)?.tenantId;
+    const tenant = tenantId ? await prisma.tenant.findUnique({ where: { id: tenantId } }) : null;
+    if (!isPlanWhatsAppEligible(tenant?.plan)) {
+      return res.status(403).json({ error: 'Recurso disponível apenas nos planos PRO e VIP' });
+    }
+
+    const config = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+    if (!config?.phoneNumberId) {
+      return res.status(400).json({ error: 'Instância não configurada' });
+    }
+
+    const result = await restartEvolutionInstance(config.phoneNumberId);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Erro ao reiniciar instância' });
+  }
 });
 
 router.post('/config', validate(configSchema), async (req, res) => {

@@ -66,7 +66,30 @@ export class WhatsAppService {
   }
 
   getConfig() {
-    return this.api.get<{ configured: boolean; config?: Partial<WhatsAppConfig> }>(`${this.endpoint}/config`);
+    return this.api.get<{
+      configured: boolean;
+      planEligible?: boolean;
+      tenantPlan?: string;
+      config?: Partial<WhatsAppConfig>;
+    }>(`${this.endpoint}/config`);
+  }
+
+  getQrCode() {
+    return this.api.get<{
+      state: string;
+      base64?: string;
+      code?: string;
+      pairingCode?: string;
+      error?: string;
+    }>(`${this.endpoint}/qrcode`);
+  }
+
+  getInstanceStatus() {
+    return this.api.get<{ state: string }>(`${this.endpoint}/instance-status`);
+  }
+
+  restartInstance() {
+    return this.api.post<{ success: boolean; error?: string }>(`${this.endpoint}/restart`, {});
   }
 
   saveConfig(config: WhatsAppConfig) {
