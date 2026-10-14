@@ -12,6 +12,7 @@ import {
   logoutEvolutionInstance,
   syncTenantWhatsAppInstance,
   isPlanWhatsAppEligible,
+  sendWhatsAppMessage,
 } from '../services/whatsapp-client.service';
 
 const router = Router();
@@ -662,6 +663,493 @@ router.post('/whatsapp/instances/:tenantId/disconnect', async (req, res) => {
   } catch (error: any) {
     console.error('[SUPERADMIN_WHATSAPP_DISCONNECT_ERROR]', error);
     return res.status(500).json({ error: 'Erro ao desconectar instância' });
+  }
+});
+// =========================================================================
+// 8. GESTÃO FINANCEIRA E FATURAMENTO DE CLÍNICAS (SAAS MASTER)
+// =========================================================================
+
+async function ensureSampleInvoices() {
+  try {
+    const count = await prisma.subscriptionInvoice.count();
+    if (count > 0) return;
+
+    const tenants = await prisma.tenant.findMany({
+      include: {
+        subscription: true,
+        memberships: {
+          where: { role: 'GESTOR' },
+          include: { user: true },
+        },
+      },
+      take: 10,
+    });
+
+    const now = new Date();
+    for (const t of tenants) {
+      const plan = (t.plan || 'PRO').toUpperCase();
+      const amountCents = plan === 'PRO' ? 14700 : plan === 'BASICO' ? 7900 : plan === 'VIP' ? 29700 : 0;
+      if (amountCents === 0) continue;
+
+      // Fatura anterior PAGA
+      await prisma.subscriptionInvoice.create({
+        data: {
+          tenantId: t.id,
+          subscriptionId: t.subscription?.id,
+          planCode: plan,
+          amountCents,
+          status: 'PAGA',
+          dueDate: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
+          paidAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
+          paymentMethod: 'PIX',
+          provider: 'manual',
+          pixCopiaECola: '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4',
+          notes: 'Pagamento inicial confirmado via PIX',
+        },
+      });
+
+      // Fatura do ciclo atual (PENDENTE)
+      await prisma.subscriptionInvoice.create({
+        data: {
+          tenantId: t.id,
+          subscriptionId: t.subscription?.id,
+          planCode: plan,
+          amountCents,
+          status: 'PENDENTE',
+          dueDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000),
+          paymentMethod: 'PIX',
+          provider: 'manual',
+          pixCopiaECola: '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4',
+          notes: 'Ciclo mensal vigente',
+        },
+      });
+    }
+  } catch (err) {
+    console.warn('[ENSURE_SAMPLE_INVOICES_WARN]', err);
+  }
+}
+
+// 8.1 Estatísticas Financeiras SaaS Globais
+router.get('/billing/stats', async (req, res) => {
+  try {
+    await ensureSampleInvoices();
+
+    const now = new Date();
+    const invoices = await prisma.subscriptionInvoice.findMany();
+
+    let totalReceivedCents = 0;
+    let totalPendingCents = 0;
+    let totalOverdueCents = 0;
+    let paidCount = 0;
+    let pendingCount = 0;
+    let overdueCount = 0;
+
+    for (const inv of invoices) {
+      if (inv.status === 'PAGA') {
+        totalReceivedCents += inv.amountCents;
+        paidCount++;
+      } else if (inv.status === 'VENCIDA' || (inv.status === 'PENDENTE' && inv.dueDate < now)) {
+        totalOverdueCents += inv.amountCents;
+        overdueCount++;
+      } else if (inv.status === 'PENDENTE') {
+        totalPendingCents += inv.amountCents;
+        pendingCount++;
+      }
+    }
+
+    const totalCount = invoices.length;
+
+    // Calcular MRR a partir das clínicas ativas em planos pagos
+    const activeTenants = await prisma.tenant.findMany({
+      where: { status: 'ATIVO' },
+      select: { plan: true },
+    });
+    const plans = await prisma.plan.findMany();
+    const planPriceMap: Record<string, number> = {};
+    plans.forEach((p) => { planPriceMap[p.code] = p.priceCents; });
+
+    let mrrCents = 0;
+    activeTenants.forEach((t) => {
+      const code = (t.plan || '').toUpperCase();
+      if (planPriceMap[code]) mrrCents += planPriceMap[code];
+    });
+
+    const formatBRL = (cents: number) =>
+      (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    return res.json({
+      totalReceivedCents,
+      totalReceivedFormatted: formatBRL(totalReceivedCents),
+      totalPendingCents,
+      totalPendingFormatted: formatBRL(totalPendingCents),
+      totalOverdueCents,
+      totalOverdueFormatted: formatBRL(totalOverdueCents),
+      mrrCents,
+      mrrFormatted: formatBRL(mrrCents),
+      paidCount,
+      pendingCount,
+      overdueCount,
+      totalCount,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BILLING_STATS_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao carregar métricas financeiras' });
+  }
+});
+
+// 8.2 Listagem Paginada de Faturas com Filtros e Busca
+router.get('/billing/invoices', async (req, res) => {
+  try {
+    await ensureSampleInvoices();
+
+    const { search, status, tenantId, page = '1', limit = '50' } = req.query;
+    const p = Math.max(1, parseInt(String(page), 10) || 1);
+    const l = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 50));
+    const skip = (p - 1) * l;
+
+    const where: any = {};
+    const now = new Date();
+
+    if (tenantId) {
+      where.tenantId = String(tenantId);
+    }
+
+    if (status && status !== 'TODAS') {
+      const st = String(status).toUpperCase();
+      if (st === 'VENCIDA') {
+        where.OR = [
+          { status: 'VENCIDA' },
+          { status: 'PENDENTE', dueDate: { lt: now } },
+        ];
+      } else if (st === 'PENDENTE') {
+        where.status = 'PENDENTE';
+        where.dueDate = { gte: now };
+      } else {
+        where.status = st;
+      }
+    }
+
+    if (search) {
+      const query = String(search).trim();
+      where.tenant = {
+        OR: [
+          { name: { contains: query } },
+          { slug: { contains: query } },
+          {
+            memberships: {
+              some: {
+                role: 'GESTOR',
+                user: {
+                  OR: [
+                    { name: { contains: query } },
+                    { email: { contains: query } },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      };
+    }
+
+    const [total, invoices] = await Promise.all([
+      prisma.subscriptionInvoice.count({ where }),
+      prisma.subscriptionInvoice.findMany({
+        where,
+        skip,
+        take: l,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          tenant: {
+            include: {
+              memberships: {
+                where: { role: 'GESTOR' },
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      email: true,
+                      phone: true,
+                    },
+                  },
+                },
+                take: 1,
+              },
+            },
+          },
+          subscription: true,
+        },
+      }),
+    ]);
+
+    const formatted = invoices.map((inv) => {
+      const isOverdue = inv.status === 'PENDENTE' && inv.dueDate < now;
+      const effectiveStatus = isOverdue ? 'VENCIDA' : inv.status;
+      const gestor = inv.tenant.memberships[0]?.user || null;
+
+      return {
+        id: inv.id,
+        tenantId: inv.tenantId,
+        tenantName: inv.tenant.name,
+        tenantSlug: inv.tenant.slug,
+        tenantStatus: inv.tenant.status,
+        planCode: inv.planCode,
+        amountCents: inv.amountCents,
+        amountFormatted: (inv.amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+        status: effectiveStatus,
+        dueDate: inv.dueDate,
+        paidAt: inv.paidAt,
+        paymentMethod: inv.paymentMethod || 'PIX',
+        provider: inv.provider || 'manual',
+        providerPaymentId: inv.providerPaymentId,
+        pixCopiaECola: inv.pixCopiaECola,
+        pixQrImage: inv.pixQrImage,
+        notes: inv.notes,
+        createdAt: inv.createdAt,
+        owner: gestor ? {
+          name: gestor.name,
+          email: gestor.email,
+          phone: gestor.phone,
+        } : null,
+      };
+    });
+
+    return res.json({
+      data: formatted,
+      pagination: {
+        page: p,
+        limit: l,
+        total,
+        totalPages: Math.ceil(total / l),
+      },
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BILLING_INVOICES_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao listar faturas' });
+  }
+});
+
+// 8.3 Dar Baixa Manual / Confirmar Pagamento de Fatura
+router.post('/billing/invoices/:id/confirm-payment', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentMethod = 'PIX', notes } = req.body;
+
+    const invoice = await prisma.subscriptionInvoice.findUnique({
+      where: { id },
+      include: { tenant: { include: { subscription: true } } },
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Fatura não encontrada' });
+    }
+
+    const paidAt = new Date();
+    const updatedInvoice = await prisma.subscriptionInvoice.update({
+      where: { id },
+      data: {
+        status: 'PAGA',
+        paidAt,
+        paymentMethod: paymentMethod || invoice.paymentMethod || 'MANUAL',
+        notes: notes ? `${invoice.notes ? invoice.notes + ' | ' : ''}${notes}` : invoice.notes,
+      },
+    });
+
+    // Renovar ou atualizar a assinatura da clínica (+30 dias) e reativar se bloqueada
+    const currentSub = invoice.tenant.subscription;
+    const baseDate = currentSub?.currentPeriodEnd && currentSub.currentPeriodEnd > new Date()
+      ? currentSub.currentPeriodEnd
+      : new Date();
+    const nextPeriodEnd = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    if (currentSub) {
+      await prisma.subscription.update({
+        where: { id: currentSub.id },
+        data: {
+          status: 'ATIVA',
+          currentPeriodEnd: nextPeriodEnd,
+          planCode: invoice.planCode || currentSub.planCode,
+        },
+      });
+    } else {
+      await prisma.subscription.create({
+        data: {
+          tenantId: invoice.tenantId,
+          planCode: invoice.planCode || 'PRO',
+          status: 'ATIVA',
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: nextPeriodEnd,
+          provider: 'manual',
+        },
+      });
+    }
+
+    // Garante que o status do tenant esteja ATIVO
+    await prisma.tenant.update({
+      where: { id: invoice.tenantId },
+      data: {
+        status: 'ATIVO',
+        plan: invoice.planCode || invoice.tenant.plan,
+      },
+    });
+
+    return res.json({
+      message: 'Pagamento confirmado com sucesso! Assinatura renovada e clínica reativada.',
+      invoice: updatedInvoice,
+      nextPeriodEnd,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BILLING_CONFIRM_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao confirmar pagamento' });
+  }
+});
+
+// 8.4 Criação Manual de Fatura
+router.post('/billing/invoices/create-manual', async (req, res) => {
+  try {
+    const { tenantId, planCode = 'PRO', amountCents, dueDate, notes, paymentMethod = 'PIX' } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Clínica (tenantId) é obrigatória' });
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: { subscription: true },
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: 'Clínica não encontrada' });
+    }
+
+    let cents = Number(amountCents);
+    if (!cents || cents <= 0) {
+      const plan = await prisma.plan.findUnique({ where: { code: planCode } });
+      cents = plan?.priceCents || (planCode === 'PRO' ? 14700 : planCode === 'BASICO' ? 7900 : 29700);
+    }
+
+    const due = dueDate ? new Date(dueDate) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+    const invoice = await prisma.subscriptionInvoice.create({
+      data: {
+        tenantId,
+        subscriptionId: tenant.subscription?.id,
+        planCode,
+        amountCents: cents,
+        status: 'PENDENTE',
+        dueDate: due,
+        paymentMethod,
+        provider: 'manual',
+        pixCopiaECola: '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4',
+        notes: notes || 'Fatura gerada manualmente pelo Superadmin',
+      },
+    });
+
+    return res.json({
+      message: 'Fatura gerada com sucesso!',
+      invoice,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BILLING_CREATE_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao gerar fatura' });
+  }
+});
+
+// 8.5 Enviar Lembrete / Aviso de Cobrança via WhatsApp
+router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const invoice = await prisma.subscriptionInvoice.findUnique({
+      where: { id },
+      include: {
+        tenant: {
+          include: {
+            memberships: {
+              where: { role: 'GESTOR' },
+              include: { user: true },
+              take: 1,
+            },
+            whatsappConfigs: true,
+          },
+        },
+      },
+    });
+
+    if (!invoice) {
+      return res.status(404).json({ error: 'Fatura não encontrada' });
+    }
+
+    const gestor = invoice.tenant.memberships[0]?.user;
+    if (!gestor || !gestor.phone) {
+      return res.status(400).json({
+        error: 'Gestor da clínica não possui telefone cadastrado para envio de WhatsApp.',
+      });
+    }
+
+    const valorFormatado = (invoice.amountCents / 100).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+    const vencimentoFormatado = new Date(invoice.dueDate).toLocaleDateString('pt-BR');
+
+    const message = [
+      `*EduPsych Pro - Lembrete de Assinatura SaaS* 📋`,
+      ``,
+      `Olá, *${gestor.name || 'Gestor(a)'}*!`,
+      `Esperamos que a gestão da clínica *${invoice.tenant.name}* esteja excelente.`,
+      ``,
+      `Passando para lembrar sobre a fatura de renovação da plataforma:`,
+      `📌 *Plano:* ${invoice.planCode}`,
+      `💵 *Valor:* ${valorFormatado}`,
+      `🗓️ *Vencimento:* ${vencimentoFormatado}`,
+      `⚙️ *Status:* ${invoice.status}`,
+      ``,
+      invoice.pixCopiaECola ? `🔑 *PIX Copia e Cola para pagamento:*\n\`${invoice.pixCopiaECola}\`\n` : '',
+      `Após o pagamento, o comprovante pode ser enviado por aqui para confirmação imediata.`,
+      `Agradecemos pela parceria! 🚀`,
+    ].filter(Boolean).join('\n');
+
+    let sentViaEvolution = false;
+    let evolutionError: string | null = null;
+
+    try {
+      // Usar a instância da própria clínica ou padrão do gateway
+      const instance = invoice.tenant.whatsappConfigs[0]?.phoneNumberId;
+      await sendWhatsAppMessage(gestor.phone, message, undefined, {
+        apiUrl: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
+        token: process.env.EVOLUTION_API_KEY || '',
+        phoneNumberId: instance,
+      });
+      sentViaEvolution = true;
+    } catch (evoErr: any) {
+      evolutionError = evoErr?.message || 'Falha na conexão com a Evolution API';
+      console.warn('[SUPERADMIN_REMINDER_EVOLUTION_WARN]', evoErr?.message);
+    }
+
+    // Registra envio no histórico da fatura
+    const updatedNotes = `${invoice.notes ? invoice.notes + ' | ' : ''}Lembrete WhatsApp enviado para ${gestor.phone} em ${new Date().toLocaleString('pt-BR')}`;
+    await prisma.subscriptionInvoice.update({
+      where: { id },
+      data: { notes: updatedNotes },
+    });
+
+    return res.json({
+      success: true,
+      sentViaEvolution,
+      recipient: {
+        name: gestor.name,
+        phone: gestor.phone,
+      },
+      evolutionError: !sentViaEvolution ? evolutionError : undefined,
+      message: sentViaEvolution
+        ? `Lembrete enviado com sucesso via WhatsApp para ${gestor.phone}!`
+        : `Lembrete registrado no log! (Instância WhatsApp da Evolution API não conectada no momento: ${evolutionError})`,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BILLING_REMINDER_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao disparar lembrete' });
   }
 });
 

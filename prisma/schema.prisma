@@ -21,6 +21,7 @@ model Tenant {
 
   memberships Membership[]
   subscription Subscription?
+  invoices     SubscriptionInvoice[]
 
   pacientes        Paciente[]
   signatures       Signature[]
@@ -1038,6 +1039,31 @@ model Subscription {
   pixCopiaECola     String?
   pixQrImage        String?  // QR code em base64 (imagem png)
   pixExpiresAt      DateTime?
+  invoices          SubscriptionInvoice[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model SubscriptionInvoice {
+  id                String        @id @default(cuid())
+  tenantId          String
+  tenant            Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscriptionId    String?
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  planCode          String        @default("PRO") // TRIAL | BASICO | PRO | VIP
+  amountCents       Int           @default(0)
+  status            String        @default("PENDENTE") // PAGA | PENDENTE | VENCIDA | CANCELADA
+  dueDate           DateTime
+  paidAt            DateTime?
+  paymentMethod     String?       @default("PIX") // PIX | CARTAO | BOLETO | MANUAL
+  provider          String?       @default("manual") // asaas | mercadopago | manual | mock
+  providerPaymentId String?
+  pixCopiaECola     String?
+  pixQrImage        String?
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
 }

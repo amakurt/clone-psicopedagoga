@@ -4,6 +4,42 @@
 
 ---
 
+## Sessão 67 - 14/10/2026 — Gestão Financeira & Faturamento de Clínicas no Painel Master SaaS
+
+### O que foi feito
+
+#### 1. Modelagem de Dados no Prisma (`schema.prisma`)
+- **Novo Modelo `SubscriptionInvoice`**:
+  - Armazena histórico detalhado das faturas geradas para as clínicas parceiras: `tenantId`, `subscriptionId`, `planCode`, `amountCents`, `status` (`PAGA`, `PENDENTE`, `VENCIDA`, `CANCELADA`), `dueDate`, `paidAt`, `paymentMethod`, `provider`, `pixCopiaECola`, `notes`.
+  - Relacionamentos integrados com `Tenant` e `Subscription` com índices otimizados para busca e performance.
+  - Sincronização executada com `npx prisma db push` e `npx prisma generate`.
+
+#### 2. Endpoints no Backend (`backend/src/routes/superadmin.ts`)
+- **`GET /api/superadmin/billing/stats`**:
+  - Cockpit de métricas financeiras: Total Recebido, Total Pendente, Inadimplência/Vencidas, MRR Contratado e contagens por status.
+- **`GET /api/superadmin/billing/invoices`**:
+  - Listagem paginada de faturas com filtros por status (`TODAS`, `PENDENTE`, `PAGA`, `VENCIDA`), busca inteligente (nome da clínica, gestor, e-mail) e dados do proprietário da clínica.
+  - Auto-seeder inteligente para garantir faturas ativas no banco para acompanhamento imediato.
+- **`POST /api/superadmin/billing/invoices/:id/confirm-payment` (Baixa Manual)**:
+  - Permite ao Superadmin registrar pagamentos diretos (PIX/Transferência).
+  - Renova automaticamente a assinatura da clínica por +30 dias e reativa o status da clínica para `ATIVO` caso estivesse suspensa.
+- **`POST /api/superadmin/billing/invoices/create-manual`**:
+  - Emissão de novas faturas manuais avulsas para qualquer clínica cadastrada, com data de vencimento e valores customizados.
+- **`POST /api/superadmin/billing/invoices/:id/send-reminder` (Cobrança WhatsApp)**:
+  - Disparo de lembrete profissional de fatura com valor, vencimento e código PIX Copia e Cola formatado via Evolution API diretamente para o telefone do gestor da clínica.
+
+#### 3. Frontend no Painel Master (`superadmin-dashboard.component.ts` e `superadmin.service.ts`)
+- **Nova Aba "Financeiro & Faturamento SaaS"**:
+  - Integrada no seletor principal com badge dinâmico alertando sobre faturas vencidas.
+  - 4 Cockpit Cards estilizados com gradientes e iconografia moderna.
+  - Barra de busca com debounce e filtros de status.
+  - Tabela responsiva com badges de plano, status dinâmicos e botões de ação rápida (*Dar Baixa*, *Cobrar via WhatsApp*, *Copiar PIX*).
+  - Modal interativo de **Confirmação de Baixa Manual** e Modal de **Emissão de Fatura Manual**.
+- **Validação E2E no Navegador**:
+  - Testado via subagente com confirmação de baixa manual, emissão de nova fatura e disparo de lembretes.
+
+---
+
 ## Sessão 66 - 14/10/2026 — Correção de Redirecionamento de Rotas Clínicas (Role Guard e Permissões de Superadmin/Secretaria/Profissional)
 
 ### O que foi feito

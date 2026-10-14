@@ -120,6 +120,92 @@ export class SuperAdminService {
   disconnectWhatsAppInstance(tenantId: string): Observable<any> {
     return this.api.post(`/superadmin/whatsapp/instances/${tenantId}/disconnect`, {});
   }
+
+  // --- Gestão Financeira & Faturamento SaaS ---
+
+  getBillingStats(): Observable<BillingStats> {
+    return this.api.get<BillingStats>('/superadmin/billing/stats');
+  }
+
+  getInvoices(params?: {
+    search?: string;
+    status?: string;
+    tenantId?: string;
+    page?: number;
+    limit?: number;
+  }): Observable<InvoicesResponse> {
+    return this.api.get<InvoicesResponse>('/superadmin/billing/invoices', params);
+  }
+
+  confirmInvoicePayment(invoiceId: string, data?: { paymentMethod?: string; notes?: string }): Observable<any> {
+    return this.api.post(`/superadmin/billing/invoices/${invoiceId}/confirm-payment`, data || {});
+  }
+
+  createManualInvoice(data: {
+    tenantId: string;
+    planCode: string;
+    amountCents?: number;
+    dueDate?: string;
+    notes?: string;
+    paymentMethod?: string;
+  }): Observable<any> {
+    return this.api.post('/superadmin/billing/invoices/create-manual', data);
+  }
+
+  sendInvoiceReminder(invoiceId: string): Observable<any> {
+    return this.api.post(`/superadmin/billing/invoices/${invoiceId}/send-reminder`, {});
+  }
+}
+
+export interface BillingStats {
+  totalReceivedCents: number;
+  totalReceivedFormatted: string;
+  totalPendingCents: number;
+  totalPendingFormatted: string;
+  totalOverdueCents: number;
+  totalOverdueFormatted: string;
+  mrrCents: number;
+  mrrFormatted: string;
+  paidCount: number;
+  pendingCount: number;
+  overdueCount: number;
+  totalCount: number;
+}
+
+export interface SubscriptionInvoiceItem {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  tenantStatus: string;
+  planCode: string;
+  amountCents: number;
+  amountFormatted: string;
+  status: 'PAGA' | 'PENDENTE' | 'VENCIDA' | 'CANCELADA' | string;
+  dueDate: string;
+  paidAt: string | null;
+  paymentMethod: string;
+  provider: string;
+  providerPaymentId: string | null;
+  pixCopiaECola: string | null;
+  pixQrImage: string | null;
+  notes: string | null;
+  createdAt: string;
+  owner: {
+    name: string;
+    email: string;
+    phone: string | null;
+  } | null;
+}
+
+export interface InvoicesResponse {
+  data: SubscriptionInvoiceItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface EvolutionGatewayStatus {

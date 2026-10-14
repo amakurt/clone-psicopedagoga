@@ -10,6 +10,8 @@ import {
   EvolutionGatewayStatus,
   ClinicWhatsAppInstance,
   WhatsAppQrCodeResponse,
+  BillingStats,
+  SubscriptionInvoiceItem,
 } from '../../../core/services/superadmin.service';
 import { ToastService } from '../../../shared/components/toast.component';
 
@@ -76,6 +78,19 @@ import { ToastService } from '../../../shared/components/toast.component';
               <span class="size-2 rounded-full bg-emerald-400 animate-pulse" title="Gateway Online"></span>
             } @else if (gatewayStatus()) {
               <span class="size-2 rounded-full bg-red-400" title="Gateway Offline"></span>
+            }
+          </button>
+
+          <button
+            (click)="setTab('billing')"
+            [ngClass]="activeTab() === 'billing' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-lg shadow-amber-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
+            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            <span class="material-icons text-base">payments</span>
+            Financeiro & Faturamento SaaS
+            @if (billingStats()?.overdueCount) {
+              <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                {{ billingStats()?.overdueCount }} atrasada(s)
+              </span>
             }
           </button>
         </div>
@@ -994,6 +1009,556 @@ import { ToastService } from '../../../shared/components/toast.component';
         </div>
       }
 
+      <!-- ============================================================== -->
+      <!-- ABA 3: FINANCEIRO & FATURAMENTO SAAS (PAGAMENTOS DAS CLÍNICAS) -->
+      <!-- ============================================================== -->
+      @if (activeTab() === 'billing') {
+        <div class="space-y-6 animate-fadeIn">
+
+          <!-- Cockpit de Indicadores Financeiros Globais (4 Cards) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Card 1: Receita Confirmada / Paga -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Receita Recebida</span>
+                <div class="size-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <span class="material-icons text-lg">check_circle</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <span class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {{ billingStats()?.totalReceivedFormatted || 'R$ 0,00' }}
+                </span>
+                <p class="text-xs text-emerald-400 mt-1 font-semibold flex items-center gap-1">
+                  <span class="material-icons text-sm">verified</span>
+                  {{ billingStats()?.paidCount || 0 }} faturas quitadas
+                </p>
+              </div>
+            </div>
+
+            <!-- Card 2: A Receber (Ciclo Vigente) -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">A Receber (Ciclo)</span>
+                <div class="size-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+                  <span class="material-icons text-lg">schedule</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <span class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {{ billingStats()?.totalPendingFormatted || 'R$ 0,00' }}
+                </span>
+                <p class="text-xs text-cyan-400 mt-1 font-semibold flex items-center gap-1">
+                  <span class="material-icons text-sm">hourglass_top</span>
+                  {{ billingStats()?.pendingCount || 0 }} cobranças pendentes
+                </p>
+              </div>
+            </div>
+
+            <!-- Card 3: Inadimplência / Atrasadas -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Inadimplência</span>
+                <div class="size-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center border border-rose-500/20">
+                  <span class="material-icons text-lg">report_problem</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <span class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {{ billingStats()?.totalOverdueFormatted || 'R$ 0,00' }}
+                </span>
+                <p class="text-xs text-rose-400 mt-1 font-semibold flex items-center gap-1">
+                  <span class="material-icons text-sm">warning</span>
+                  {{ billingStats()?.overdueCount || 0 }} faturas vencidas
+                </p>
+              </div>
+            </div>
+
+            <!-- Card 4: MRR Ativo da Plataforma -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">MRR Contratado</span>
+                <div class="size-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                  <span class="material-icons text-lg">trending_up</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <span class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  {{ billingStats()?.mrrFormatted || 'R$ 0,00' }}
+                </span>
+                <p class="text-xs text-amber-400 mt-1 font-semibold flex items-center gap-1">
+                  <span class="material-icons text-sm">credit_card</span>
+                  Receita mensal recorrente
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Barra de Ações, Filtros e Busca -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+            
+            <!-- Campo de Busca -->
+            <div class="relative flex-1 max-w-md">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+              <input
+                type="text"
+                [(ngModel)]="billingSearch"
+                (ngModelChange)="loadBilling()"
+                placeholder="Buscar por clínica, gestor ou código..."
+                class="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500/50 transition-colors"
+              />
+              @if (billingSearch) {
+                <button
+                  (click)="billingSearch = ''; loadBilling()"
+                  class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                  <span class="material-icons text-base">close</span>
+                </button>
+              }
+            </div>
+
+            <!-- Filtros Rápidos de Status -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button
+                (click)="billingStatusFilter = 'TODAS'; loadBilling()"
+                [class]="billingStatusFilter === 'TODAS'
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'"
+                class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5">
+                Todas ({{ billingStats()?.totalCount || 0 }})
+              </button>
+
+              <button
+                (click)="billingStatusFilter = 'PENDENTE'; loadBilling()"
+                [class]="billingStatusFilter === 'PENDENTE'
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'"
+                class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5">
+                <span class="size-1.5 rounded-full bg-cyan-400"></span>
+                Pendentes ({{ billingStats()?.pendingCount || 0 }})
+              </button>
+
+              <button
+                (click)="billingStatusFilter = 'PAGA'; loadBilling()"
+                [class]="billingStatusFilter === 'PAGA'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'"
+                class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5">
+                <span class="size-1.5 rounded-full bg-emerald-400"></span>
+                Pagas ({{ billingStats()?.paidCount || 0 }})
+              </button>
+
+              <button
+                (click)="billingStatusFilter = 'VENCIDA'; loadBilling()"
+                [class]="billingStatusFilter === 'VENCIDA'
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'"
+                class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5">
+                <span class="size-1.5 rounded-full bg-rose-400"></span>
+                Vencidas ({{ billingStats()?.overdueCount || 0 }})
+              </button>
+            </div>
+
+            <!-- Botão Nova Fatura Manual -->
+            <button
+              (click)="openNewInvoiceModal()"
+              class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all shrink-0">
+              <span class="material-icons text-base">add_card</span>
+              Nova Fatura Manual
+            </button>
+
+          </div>
+
+          <!-- Tabela de Faturas das Clínicas -->
+          <div class="rounded-2xl bg-slate-900/60 border border-slate-800 overflow-hidden shadow-2xl">
+            @if (billingLoading()) {
+              <div class="py-16 text-center space-y-3">
+                <div class="size-10 rounded-full border-2 border-amber-500 border-t-transparent animate-spin mx-auto"></div>
+                <p class="text-xs text-slate-400 font-medium">Carregando cobranças e faturas...</p>
+              </div>
+            } @else if (filteredInvoices().length === 0) {
+              <div class="py-16 text-center space-y-3">
+                <div class="size-14 rounded-2xl bg-slate-800/80 text-slate-500 flex items-center justify-center mx-auto">
+                  <span class="material-icons text-2xl">receipt_long</span>
+                </div>
+                <h3 class="text-sm font-bold text-slate-200">Nenhuma fatura encontrada</h3>
+                <p class="text-xs text-slate-400 max-w-sm mx-auto">
+                  Não há cobranças que correspondam aos filtros selecionados. Você pode emitir uma fatura manual para qualquer clínica.
+                </p>
+                <button
+                  (click)="openNewInvoiceModal()"
+                  class="mt-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors inline-flex items-center gap-2">
+                  <span class="material-icons text-sm">add_card</span>
+                  Emitir Fatura Agora
+                </button>
+              </div>
+            } @else {
+              <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr class="border-b border-slate-800 bg-slate-950/40 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                      <th class="py-3.5 px-4">Clínica & Gestor</th>
+                      <th class="py-3.5 px-4">Plano</th>
+                      <th class="py-3.5 px-4">Valor</th>
+                      <th class="py-3.5 px-4">Vencimento</th>
+                      <th class="py-3.5 px-4">Status</th>
+                      <th class="py-3.5 px-4">Forma</th>
+                      <th class="py-3.5 px-4 text-right">Ações Rápidas</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                    @for (inv of filteredInvoices(); track inv.id) {
+                      <tr class="hover:bg-slate-800/30 transition-colors group">
+                        
+                        <!-- Clínica & Gestor -->
+                        <td class="py-3 px-4">
+                          <div class="flex items-center gap-3">
+                            <div class="size-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-cyan-500/20 border border-slate-700 flex items-center justify-center text-white font-extrabold text-xs shrink-0 shadow-inner">
+                              {{ inv.tenantName.substring(0, 2).toUpperCase() }}
+                            </div>
+                            <div class="min-w-0">
+                              <p class="font-bold text-white group-hover:text-amber-400 transition-colors truncate text-xs sm:text-sm">
+                                {{ inv.tenantName }}
+                              </p>
+                              <p class="text-[11px] text-slate-400 truncate">
+                                {{ inv.owner?.name || 'Gestor não atribuído' }} 
+                                @if (inv.owner?.email) {
+                                  <span class="text-slate-600">·</span> {{ inv.owner?.email }}
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <!-- Plano -->
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span
+                            [class]="getPlanBadgeClass(inv.planCode)"
+                            class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                            {{ inv.planCode }}
+                          </span>
+                        </td>
+
+                        <!-- Valor -->
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span class="font-extrabold text-white text-sm">
+                            {{ inv.amountFormatted }}
+                          </span>
+                        </td>
+
+                        <!-- Vencimento -->
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <div>
+                            <p class="font-semibold text-xs text-slate-200">
+                              {{ inv.dueDate | date:'dd/MM/yyyy' }}
+                            </p>
+                            @if (inv.paidAt) {
+                              <p class="text-[10px] text-emerald-400 flex items-center gap-0.5">
+                                <span class="material-icons text-[11px]">check</span> Pago em {{ inv.paidAt | date:'dd/MM' }}
+                              </p>
+                            } @else if (inv.status === 'VENCIDA') {
+                              <p class="text-[10px] text-rose-400 font-bold">
+                                Vencida
+                              </p>
+                            } @else {
+                              <p class="text-[10px] text-slate-400">
+                                A vencer
+                              </p>
+                            }
+                          </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span
+                            [class]="getInvoiceStatusBadgeClass(inv.status)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+                            @if (inv.status === 'PAGA') {
+                              <span class="size-1.5 rounded-full bg-emerald-400"></span>
+                            } @else if (inv.status === 'PENDENTE') {
+                              <span class="size-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                            } @else {
+                              <span class="size-1.5 rounded-full bg-rose-400 animate-pulse"></span>
+                            }
+                            {{ inv.status }}
+                          </span>
+                        </td>
+
+                        <!-- Forma / Provedor -->
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span class="text-xs text-slate-400 uppercase font-medium flex items-center gap-1">
+                            <span class="material-icons text-sm text-slate-500">payments</span>
+                            {{ inv.paymentMethod }}
+                          </span>
+                        </td>
+
+                        <!-- Ações Rápidas -->
+                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                          <div class="inline-flex items-center gap-1.5 justify-end">
+                            
+                            <!-- Botão Baixa Manual -->
+                            @if (inv.status !== 'PAGA') {
+                              <button
+                                (click)="openConfirmPaymentModal(inv)"
+                                class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all text-xs font-bold flex items-center gap-1 shadow-sm"
+                                title="Confirmar pagamento / Dar baixa manual">
+                                <span class="material-icons text-sm">verified</span>
+                                Dar Baixa
+                              </button>
+                            }
+
+                            <!-- Botão Cobrar via WhatsApp -->
+                            @if (inv.status !== 'PAGA') {
+                              <button
+                                (click)="sendWhatsAppReminder(inv)"
+                                [disabled]="reminderLoadingId() === inv.id"
+                                class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 transition-all text-xs font-bold flex items-center gap-1"
+                                title="Enviar lembrete amigável de cobrança via WhatsApp (Evolution API)">
+                                <span class="material-icons text-sm" [class.animate-spin]="reminderLoadingId() === inv.id">
+                                  {{ reminderLoadingId() === inv.id ? 'sync' : 'chat' }}
+                                </span>
+                                Cobrar
+                              </button>
+                            }
+
+                            <!-- Botão Copiar PIX Copia e Cola -->
+                            @if (inv.pixCopiaECola) {
+                              <button
+                                (click)="copyPixCode(inv.pixCopiaECola)"
+                                class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-slate-700/60"
+                                title="Copiar código PIX Copia e Cola">
+                                <span class="material-icons text-sm">content_copy</span>
+                              </button>
+                            }
+
+                          </div>
+                        </td>
+
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+
+      <!-- ============================================================== -->
+      <!-- MODAL: DAR BAIXA MANUAL / CONFIRMAR PAGAMENTO                 -->
+      <!-- ============================================================== -->
+      @if (confirmPaymentModalOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div class="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2 text-emerald-400">
+                <div class="size-8 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                  <span class="material-icons text-lg">verified</span>
+                </div>
+                <h3 class="font-bold text-white text-base">Confirmar Pagamento Manual</h3>
+              </div>
+              <button
+                (click)="confirmPaymentModalOpen.set(false)"
+                class="text-slate-500 hover:text-slate-300 p-1">
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
+
+            <!-- Resumo da Fatura -->
+            <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-400">Clínica:</span>
+                <span class="text-xs font-bold text-white">{{ selectedInvoiceForPay()?.tenantName }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-400">Plano:</span>
+                <span class="text-xs font-bold text-cyan-400">{{ selectedInvoiceForPay()?.planCode }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-400">Valor da Fatura:</span>
+                <span class="text-base font-black text-emerald-400">{{ selectedInvoiceForPay()?.amountFormatted }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-400">Vencimento Original:</span>
+                <span class="text-xs text-slate-300">{{ selectedInvoiceForPay()?.dueDate | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+
+            <!-- Forma de Pagamento e Notas -->
+            <div class="space-y-4 text-xs">
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1.5">Forma de Recebimento</label>
+                <div class="grid grid-cols-2 gap-2">
+                  @for (m of ['PIX', 'TRANSFERENCIA', 'CARTAO', 'DINHEIRO']; track m) {
+                    <button
+                      type="button"
+                      (click)="paymentMethodInput.set($any(m))"
+                      [class]="paymentMethodInput() === m
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'"
+                      class="py-2 px-3 rounded-xl border text-center transition-all">
+                      {{ m }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1.5">Observações / Comprovante (opcional)</label>
+                <textarea
+                  [(ngModel)]="paymentNotesInput"
+                  rows="2"
+                  placeholder="Ex: Pagamento confirmado via comprovante WhatsApp Banco Inter..."
+                  class="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 resize-none">
+                </textarea>
+              </div>
+
+              <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-300/90 space-y-1">
+                <p class="font-bold flex items-center gap-1">
+                  <span class="material-icons text-xs">info</span>
+                  Efeito Automático da Baixa:
+                </p>
+                <p>
+                  A fatura será marcada como <strong>PAGA</strong>, a assinatura da clínica será prorrogada por mais <strong>30 dias</strong> e a clínica será reativada caso estivesse suspensa.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                (click)="confirmPaymentModalOpen.set(false)"
+                class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                (click)="executeConfirmPayment()"
+                [disabled]="confirmPayLoading()"
+                class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
+                <span class="material-icons text-sm" [class.animate-spin]="confirmPayLoading()">
+                  {{ confirmPayLoading() ? 'sync' : 'verified' }}
+                </span>
+                Confirmar Baixa
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
+      <!-- ============================================================== -->
+      <!-- MODAL: NOVA FATURA MANUAL                                      -->
+      <!-- ============================================================== -->
+      @if (newInvoiceModalOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div class="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2 text-amber-400">
+                <div class="size-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                  <span class="material-icons text-lg">add_card</span>
+                </div>
+                <h3 class="font-bold text-white text-base">Nova Fatura Manual</h3>
+              </div>
+              <button
+                (click)="newInvoiceModalOpen.set(false)"
+                class="text-slate-500 hover:text-slate-300 p-1">
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+              
+              <!-- Seleção de Clínica -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Clínica Beneficiária *</label>
+                <select
+                  [(ngModel)]="newInvoiceTenantId"
+                  class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50">
+                  @for (t of tenants(); track t.id) {
+                    <option [value]="t.id">{{ t.name }} ({{ t.plan }})</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Seleção de Plano e Valor -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-400 font-semibold mb-1">Plano</label>
+                  <select
+                    [(ngModel)]="newInvoicePlan"
+                    (ngModelChange)="onNewInvoicePlanChange()"
+                    class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50">
+                    <option value="BASICO">Básico (R$ 79/mês)</option>
+                    <option value="PRO">Profissional (R$ 147/mês)</option>
+                    <option value="VIP">VIP (R$ 297/mês)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-slate-400 font-semibold mb-1">Valor (R$)</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="newInvoiceAmount"
+                    class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50 font-bold"
+                  />
+                </div>
+              </div>
+
+              <!-- Data de Vencimento -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Data de Vencimento</label>
+                <input
+                  type="date"
+                  [(ngModel)]="newInvoiceDueDate"
+                  class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                />
+              </div>
+
+              <!-- Observações -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Observações Internas</label>
+                <input
+                  type="text"
+                  [(ngModel)]="newInvoiceNotes"
+                  placeholder="Ex: Mensalidade referente ao ciclo Outubro/2026"
+                  class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                />
+              </div>
+
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                (click)="newInvoiceModalOpen.set(false)"
+                class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                (click)="executeCreateManualInvoice()"
+                [disabled]="createInvoiceLoading()"
+                class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-amber-500/20 flex items-center gap-1.5">
+                <span class="material-icons text-sm" [class.animate-spin]="createInvoiceLoading()">
+                  {{ createInvoiceLoading() ? 'sync' : 'add_card' }}
+                </span>
+                Gerar Fatura
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styles: [`
@@ -1017,7 +1582,7 @@ export class SuperAdminDashboardComponent implements OnInit {
   auth = inject(AuthService);
 
   // Navegação de Abas
-  activeTab = signal<'tenants' | 'whatsapp'>('tenants');
+  activeTab = signal<'tenants' | 'whatsapp' | 'billing'>('tenants');
 
   // Estado da Aba 1 (Clínicas & SaaS)
   loading = signal(false);
@@ -1047,6 +1612,31 @@ export class SuperAdminDashboardComponent implements OnInit {
   qrData = signal<WhatsAppQrCodeResponse | null>(null);
   qrLoading = signal(false);
 
+  // Estado da Aba 3 (Financeiro & Faturamento SaaS)
+  billingLoading = signal(false);
+  billingStats = signal<BillingStats | null>(null);
+  invoices = signal<SubscriptionInvoiceItem[]>([]);
+  billingSearch = '';
+  billingStatusFilter = 'TODAS';
+
+  // Modais de Faturamento
+  confirmPaymentModalOpen = signal(false);
+  selectedInvoiceForPay = signal<SubscriptionInvoiceItem | null>(null);
+  paymentMethodInput = signal<'PIX' | 'CARTAO' | 'BOLETO' | 'MANUAL'>('PIX');
+  paymentNotesInput = signal('');
+  confirmPayLoading = signal(false);
+
+  newInvoiceModalOpen = signal(false);
+  newInvoiceTenantId = signal('');
+  newInvoicePlan = signal('PRO');
+  newInvoiceAmount = signal(147);
+  newInvoiceDueDate = signal('');
+  newInvoiceNotes = signal('');
+  newInvoicePaymentMethod = signal('PIX');
+  createInvoiceLoading = signal(false);
+
+  reminderLoadingId = signal<string | null>(null);
+
   availablePlans = [
     { code: 'TRIAL', name: 'Trial 14 Dias', desc: 'Período gratuito de degustação', price: 'R$ 0,00' },
     { code: 'BASICO', name: 'Plano Básico', desc: 'Até 100 pacientes e 10 profissionais', price: 'R$ 149,00/mês' },
@@ -1061,20 +1651,29 @@ export class SuperAdminDashboardComponent implements OnInit {
       next: (res) => this.gatewayStatus.set(res),
       error: () => {},
     });
+    // Carrega estatísticas financeiras para pré-alimentar badge da aba
+    this.superAdminService.getBillingStats().subscribe({
+      next: (res) => this.billingStats.set(res),
+      error: () => {},
+    });
   }
 
-  setTab(tab: 'tenants' | 'whatsapp') {
+  setTab(tab: 'tenants' | 'whatsapp' | 'billing') {
     this.activeTab.set(tab);
     if (tab === 'whatsapp') {
       this.loadWhatsAppGateway();
+    } else if (tab === 'billing') {
+      this.loadBilling();
     }
   }
 
   refreshCurrentTab() {
     if (this.activeTab() === 'tenants') {
       this.loadAll();
-    } else {
+    } else if (this.activeTab() === 'whatsapp') {
       this.loadWhatsAppGateway();
+    } else if (this.activeTab() === 'billing') {
+      this.loadBilling();
     }
   }
 
@@ -1367,5 +1966,171 @@ export class SuperAdminDashboardComponent implements OnInit {
         this.toast.error(err?.error?.error || 'Erro ao provisionar instância');
       },
     });
+  }
+
+  // --- MÉTODOS DA ABA 3 (FINANCEIRO & FATURAMENTO SAAS) ---
+
+  loadBilling() {
+    this.billingLoading.set(true);
+    this.superAdminService.getBillingStats().subscribe({
+      next: (res) => this.billingStats.set(res),
+      error: () => this.toast.error('Erro ao carregar métricas de faturamento'),
+    });
+
+    this.superAdminService.getInvoices({
+      search: this.billingSearch,
+      status: this.billingStatusFilter,
+    }).subscribe({
+      next: (res) => {
+        this.invoices.set(res.data);
+        this.billingLoading.set(false);
+      },
+      error: () => {
+        this.toast.error('Erro ao listar faturas');
+        this.billingLoading.set(false);
+      },
+    });
+  }
+
+  filteredInvoices(): SubscriptionInvoiceItem[] {
+    let list = this.invoices();
+    if (this.billingSearch.trim()) {
+      const q = this.billingSearch.toLowerCase().trim();
+      list = list.filter(inv =>
+        inv.tenantName.toLowerCase().includes(q) ||
+        (inv.owner?.name || '').toLowerCase().includes(q) ||
+        (inv.owner?.email || '').toLowerCase().includes(q) ||
+        inv.id.toLowerCase().includes(q)
+      );
+    }
+    if (this.billingStatusFilter !== 'TODAS') {
+      list = list.filter(inv => inv.status === this.billingStatusFilter);
+    }
+    return list;
+  }
+
+  getInvoiceStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'PAGA':
+        return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+      case 'PENDENTE':
+        return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
+      case 'VENCIDA':
+        return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+      case 'CANCELADA':
+        return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+      default:
+        return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+    }
+  }
+
+  openConfirmPaymentModal(inv: SubscriptionInvoiceItem) {
+    this.selectedInvoiceForPay.set(inv);
+    this.paymentMethodInput.set('PIX');
+    this.paymentNotesInput.set('');
+    this.confirmPaymentModalOpen.set(true);
+  }
+
+  executeConfirmPayment() {
+    const inv = this.selectedInvoiceForPay();
+    if (!inv) return;
+
+    this.confirmPayLoading.set(true);
+    this.superAdminService.confirmInvoicePayment(inv.id, {
+      paymentMethod: this.paymentMethodInput(),
+      notes: this.paymentNotesInput(),
+    }).subscribe({
+      next: (res) => {
+        this.toast.success(res.message || 'Pagamento confirmado com sucesso!');
+        this.confirmPayLoading.set(false);
+        this.confirmPaymentModalOpen.set(false);
+        this.loadBilling();
+        this.loadAll();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao confirmar pagamento');
+        this.confirmPayLoading.set(false);
+      },
+    });
+  }
+
+  openNewInvoiceModal() {
+    if (this.tenants().length === 0) {
+      this.loadTenants();
+    }
+    const firstTenant = this.tenants()[0]?.id || '';
+    this.newInvoiceTenantId.set(firstTenant);
+    this.newInvoicePlan.set('PRO');
+    this.newInvoiceAmount.set(147);
+    const in5Days = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    this.newInvoiceDueDate.set(in5Days);
+    this.newInvoiceNotes.set('');
+    this.newInvoicePaymentMethod.set('PIX');
+    this.newInvoiceModalOpen.set(true);
+  }
+
+  onNewInvoicePlanChange() {
+    const p = this.newInvoicePlan();
+    if (p === 'PRO') this.newInvoiceAmount.set(147);
+    else if (p === 'BASICO') this.newInvoiceAmount.set(79);
+    else if (p === 'VIP') this.newInvoiceAmount.set(297);
+  }
+
+  executeCreateManualInvoice() {
+    if (!this.newInvoiceTenantId()) {
+      this.toast.error('Selecione a clínica para emitir a fatura');
+      return;
+    }
+
+    this.createInvoiceLoading.set(true);
+    const cents = Math.round(Number(this.newInvoiceAmount()) * 100);
+
+    this.superAdminService.createManualInvoice({
+      tenantId: this.newInvoiceTenantId(),
+      planCode: this.newInvoicePlan(),
+      amountCents: cents,
+      dueDate: this.newInvoiceDueDate(),
+      notes: this.newInvoiceNotes(),
+      paymentMethod: this.newInvoicePaymentMethod(),
+    }).subscribe({
+      next: () => {
+        this.toast.success('Fatura gerada com sucesso!');
+        this.createInvoiceLoading.set(false);
+        this.newInvoiceModalOpen.set(false);
+        this.loadBilling();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao gerar fatura');
+        this.createInvoiceLoading.set(false);
+      },
+    });
+  }
+
+  sendWhatsAppReminder(inv: SubscriptionInvoiceItem) {
+    this.reminderLoadingId.set(inv.id);
+    this.superAdminService.sendInvoiceReminder(inv.id).subscribe({
+      next: (res) => {
+        this.reminderLoadingId.set(null);
+        if (res.sentViaEvolution) {
+          this.toast.success(res.message);
+        } else {
+          this.toast.info(res.message);
+        }
+        this.loadBilling();
+      },
+      error: (err) => {
+        this.reminderLoadingId.set(null);
+        this.toast.error(err?.error?.error || 'Erro ao disparar lembrete via WhatsApp');
+      },
+    });
+  }
+
+  copyPixCode(code: string | null) {
+    if (!code) {
+      this.toast.error('Esta fatura não possui código PIX Copia e Cola registrado');
+      return;
+    }
+    navigator.clipboard.writeText(code);
+    this.toast.success('Código PIX Copia e Cola copiado para a área de transferência!');
   }
 }
