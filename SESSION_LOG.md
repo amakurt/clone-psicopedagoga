@@ -2,6 +2,43 @@
 
 ## Última Atualização: 14 de Outubro de 2026
 
+## Sessão 69 - 14/10/2026 — Preparação Completa para Deploy em Produção (Hostinger VPS KVM 2)
+
+### O que foi feito
+
+#### 1. Infraestrutura Docker para Produção (`docker-compose.prod.yml`)
+- Criação do stack orquestrado para a VPS:
+  - **PostgreSQL 16 Alpine**: Banco de dados relacional de produção com volume persistente NVMe (`postgres_data`) e healthcheck interno. Porta 5432 protegida localmente (`127.0.0.1`).
+  - **Evolution API v2.1.2**: Gateway oficial de WhatsApp multi-clínica conectado ao PostgreSQL, com volume persistente de instâncias (`evolution_instances`) e chave de autenticação master.
+  - Rede isolada em modo bridge (`edupsych-network`).
+
+#### 2. Suporte a PostgreSQL no Prisma
+- Criação de `backend/prisma/schema.postgres.prisma` com `provider = "postgresql"` pronto para migração automática na nuvem sem afetar o ambiente local de desenvolvimento.
+
+#### 3. Variáveis de Ambiente de Produção (`backend/.env.production.example`)
+- Arquivo template contendo todas as variáveis configuradas para a VPS: porta 3000, conexão PostgreSQL, JWT secret, session secret, URLs de produção, SMTP e chaves da Evolution API.
+
+#### 4. Servidor Web & Proxy Reverso Nginx (`deploy/nginx/edupsych.conf`)
+- Configuração profissional do Nginx:
+  - Roteamento SPA do Angular com suporte a HTML5 History Mode (`try_files $uri $uri/ /index.html`).
+  - Proxy reverso de alta performance para a API Express (`/api/` e `/uploads/` -> `http://127.0.0.1:3000`).
+  - Compressão GZIP nativa para carregamento ultra-rápido de assets e bundle JS/CSS.
+  - Cache de longo prazo para fontes e imagens.
+  - Suporte completo a HTTPS com Let's Encrypt (Certbot).
+
+#### 5. Script Automatizado de Deploy (`deploy-vps.sh`)
+- Script executável em lote para rodar na VPS com 1 comando:
+  - Instala dependências do Ubuntu 24.04 (Node.js 22 LTS, Docker, Nginx, PM2, Certbot).
+  - Inicializa os containers de banco de dados e WhatsApp.
+  - Compila e executa o backend Node com PM2 (configurado para autostart no boot).
+  - Compila o frontend Angular em modo produção e publica em `/var/www/edupsych/dist/browser`.
+  - Configura o Nginx e orienta a emissão do SSL com Certbot.
+
+#### 6. Documentação Executiva (`DEPLOY_HOSTINGER.md`)
+- Manual passo a passo detalhando comandos SSH, configuração DNS, execução do script de deploy e onboarding da 1ª cliente na plataforma.
+
+---
+
 ## Sessão 68 - 14/10/2026 — Cadastro e Configuração de Conta de Recebimento SaaS no Painel Master
 
 ### O que foi feito

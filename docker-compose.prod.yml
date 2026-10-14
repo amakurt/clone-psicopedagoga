@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 1. BANCO DE DADOS POSTGRESQL 16 (PRODUÇÃO)
+  # =========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: edupsych-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-edupsych}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edupsych_secret_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-edupsych_prod}
+    ports:
+      # Vinculado apenas a 127.0.0.1 (não exposto publicamente na internet)
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edupsych} -d ${POSTGRES_DB:-edupsych_prod}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - edupsych-network
+
+  # =========================================================================
+  # 2. EVOLUTION API V2 (GATEWAY WHATSAPP MULTI-CLÍNICA)
+  # =========================================================================
+  evolution-api:
+    image: atendai/evolution-api:v2.1.2
+    container_name: edupsych-evolution
+    restart: always
+    environment:
+      SERVER_PORT: 8080
+      SERVER_TYPE: http
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-edupsych_evolution_master_key_2026}
+      DATABASE_ENABLED: "true"
+      DATABASE_CONNECTION_URI: "postgresql://${POSTGRES_USER:-edupsych}:${POSTGRES_PASSWORD:-edupsych_secret_2026}@postgres:5432/${POSTGRES_DB:-edupsych_prod}?schema=evolution"
+      DATABASE_CONNECTION_CLIENT_NAME: "edupsych_evolution"
+      CONFIG_SESSION_PHONE_CLIENT: "EduPsych Pro"
+      CONFIG_SESSION_PHONE_NAME: "Chrome (Linux)"
+      QRCODE_LIMIT: 30
+      DEL_INSTANCE: "false"
+    ports:
+      # Vinculado apenas a 127.0.0.1 (acessado pelo backend ou proxy reverso seguro)
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - edupsych-network
+
+networks:
+  edupsych-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  evolution_instances:
+    driver: local
