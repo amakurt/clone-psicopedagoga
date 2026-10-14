@@ -164,7 +164,9 @@ export class AuthService {
 
   hasRole(...roles: string[]): boolean {
     const u = this.user();
-    return u && roles.includes(u.role);
+    if (!u) return false;
+    if (u.role === 'SUPERADMIN') return true;
+    return roles.includes(u.role);
   }
 
   updateUser(patch: any) {

@@ -4,6 +4,25 @@
 
 ---
 
+## Sessão 66 - 14/10/2026 — Correção de Redirecionamento de Rotas Clínicas (Role Guard e Permissões de Superadmin/Secretaria/Profissional)
+
+### O que foi feito
+
+#### 1. Correção no `roleGuard` (`src/app/core/guards/role.guard.ts`)
+- **Bypass de Superadmin**:
+  - `SUPERADMIN` agora possui acesso irrestrito automático a todas as rotas administrativas e clínicas da clínica ativa, impedindo redirecionamentos indevidos para `/app/dashboard`.
+- **Validação Específica de Papéis**:
+  - O redirecionamento exclusivo para o Portal da Família (`/guardian`) agora verifica explicitamente `auth.user()?.role === 'RESPONSAVEL'`, evitando conflitos de escopo.
+
+#### 2. Permissões Globais no `AuthService` (`src/app/core/services/auth.service.ts`)
+- O método `hasRole(...roles: string[])` foi atualizado para retornar `true` imediatamente quando o usuário autenticado for `SUPERADMIN`, garantindo que diretivas e componentes de interface exibam botões e abas clínicas de forma consistente.
+
+#### 3. Ampliação de Papéis nas Rotas Clínicas (`src/app/app.routes.ts`)
+- As rotas `responsaveis`, `escolas` e `encaminhamentos` agora autorizam expressamente os papéis `['GESTOR', 'PSICOPEDAGOGO', 'PROFISSIONAL', 'SECRETARIA']`.
+- Validado via teste automatizado em navegador: o acesso aos módulos **Responsáveis** (`/app/responsaveis`), **Agenda** (`/app/agenda`) e **Sala de Espera** (`/app/agenda/sala-espera`) funciona perfeitamente sem redirecionamentos.
+
+---
+
 ## Sessão 65 - 14/10/2026 — Modernização dos Formulários de Usuários, Responsáveis e Pacientes (Tailwind, Reset de Senha, Acesso ao Portal da Família e Triagem Clínica)
 
 ### O que foi feito

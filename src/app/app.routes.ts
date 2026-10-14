@@ -31,7 +31,7 @@ export const routes: Routes = [
         path: 'encaminhamentos', 
         loadChildren: () => import('./modules/encaminhamentos/encaminhamentos.routes').then(m => m.default),
         canActivate: [roleGuard],
-        data: { roles: ['GESTOR', 'PSICOPEDAGOGO'] }
+        data: { roles: ['GESTOR', 'PSICOPEDAGOGO', 'PROFISSIONAL', 'SECRETARIA'] }
       },
       { path: 'comunicacao', loadChildren: () => import('./modules/comunicacao/comunicacao.routes').then(m => m.default) },
       { 
@@ -47,13 +47,13 @@ export const routes: Routes = [
         path: 'responsaveis', 
         loadChildren: () => import('./modules/responsaveis/responsaveis.routes').then(m => m.default),
         canActivate: [roleGuard],
-        data: { roles: ['GESTOR', 'PSICOPEDAGOGO'] }
+        data: { roles: ['GESTOR', 'PSICOPEDAGOGO', 'PROFISSIONAL', 'SECRETARIA'] }
       },
       { 
         path: 'escolas', 
         loadChildren: () => import('./modules/escolas/escolas.routes').then(m => m.default),
         canActivate: [roleGuard],
-        data: { roles: ['GESTOR'] }
+        data: { roles: ['GESTOR', 'PSICOPEDAGOGO', 'PROFISSIONAL', 'SECRETARIA'] }
       },
       { path: 'agenda', loadChildren: () => import('./modules/agenda/agenda.routes').then(m => m.default) },
       { path: 'documentos', loadChildren: () => import('./modules/documentos/documentos.routes').then(m => m.default) },
