@@ -155,7 +155,7 @@ export const authorizeSuperAdmin = async (req: Request, res: Response, next: Nex
 
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user || (!roles.includes(req.user.role) && req.user.role !== 'SUPERADMIN')) {
       return res.status(403).json({ error: 'Acesso negado' });
     }
     next();
@@ -165,7 +165,7 @@ export const authorize = (...roles: string[]) => {
 export const checkPermission = (module: string, action: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) return res.status(401).json({ error: 'Não autenticado' });
-    if (req.user.role === 'GESTOR') return next();
+    if (req.user.role === 'GESTOR' || req.user.role === 'SUPERADMIN') return next();
 
     try {
       const prisma = (await import('../lib/prisma')).default;
