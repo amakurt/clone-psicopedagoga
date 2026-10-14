@@ -1031,6 +1031,15 @@ router.post('/billing/invoices/create-manual', async (req, res) => {
 
     const due = dueDate ? new Date(dueDate) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
 
+    // Buscar chave PIX configurada do SaaS
+    const saasConfig = await prisma.saaSBillingConfig.findUnique({
+      where: { id: 'saas_default_config' },
+    });
+
+    const defaultPix = saasConfig?.pixKey
+      ? `PIX: ${saasConfig.pixKey} (${saasConfig.beneficiaryName || 'EduPsych Pro'})`
+      : '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4';
+
     const invoice = await prisma.subscriptionInvoice.create({
       data: {
         tenantId,
@@ -1041,7 +1050,7 @@ router.post('/billing/invoices/create-manual', async (req, res) => {
         dueDate: due,
         paymentMethod,
         provider: 'manual',
-        pixCopiaECola: '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4',
+        pixCopiaECola: defaultPix,
         notes: notes || 'Fatura gerada manualmente pelo Superadmin',
       },
     });
@@ -1061,21 +1070,26 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const invoice = await prisma.subscriptionInvoice.findUnique({
-      where: { id },
-      include: {
-        tenant: {
-          include: {
-            memberships: {
-              where: { role: 'GESTOR' },
-              include: { user: true },
-              take: 1,
+    const [invoice, saasConfig] = await Promise.all([
+      prisma.subscriptionInvoice.findUnique({
+        where: { id },
+        include: {
+          tenant: {
+            include: {
+              memberships: {
+                where: { role: 'GESTOR' },
+                include: { user: true },
+                take: 1,
+              },
+              whatsappConfigs: true,
             },
-            whatsappConfigs: true,
           },
         },
-      },
-    });
+      }),
+      prisma.saaSBillingConfig.findUnique({
+        where: { id: 'saas_default_config' },
+      }),
+    ]);
 
     if (!invoice) {
       return res.status(404).json({ error: 'Fatura não encontrada' });
@@ -1094,6 +1108,20 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
     });
     const vencimentoFormatado = new Date(invoice.dueDate).toLocaleDateString('pt-BR');
 
+    // Montar detalhes da conta de recebimento configurada
+    const dadosRecebimento: string[] = [];
+    if (saasConfig?.pixKey) {
+      dadosRecebimento.push(`🔑 *Chave PIX (${saasConfig.pixKeyType || 'PIX'}):* \`${saasConfig.pixKey}\``);
+      if (saasConfig.beneficiaryName) {
+        dadosRecebimento.push(`👤 *Favorecido:* ${saasConfig.beneficiaryName}${saasConfig.beneficiaryDoc ? ` (${saasConfig.beneficiaryDoc})` : ''}`);
+      }
+      if (saasConfig.bankName) {
+        dadosRecebimento.push(`🏦 *Banco:* ${saasConfig.bankName} | Ag: ${saasConfig.bankAgency || '-'} | Conta: ${saasConfig.bankAccount || '-'}`);
+      }
+    } else if (invoice.pixCopiaECola) {
+      dadosRecebimento.push(`🔑 *PIX Copia e Cola para pagamento:*\n\`${invoice.pixCopiaECola}\``);
+    }
+
     const message = [
       `*EduPsych Pro - Lembrete de Assinatura SaaS* 📋`,
       ``,
@@ -1106,7 +1134,7 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
       `🗓️ *Vencimento:* ${vencimentoFormatado}`,
       `⚙️ *Status:* ${invoice.status}`,
       ``,
-      invoice.pixCopiaECola ? `🔑 *PIX Copia e Cola para pagamento:*\n\`${invoice.pixCopiaECola}\`\n` : '',
+      dadosRecebimento.length > 0 ? dadosRecebimento.join('\n') + '\n' : '',
       `Após o pagamento, o comprovante pode ser enviado por aqui para confirmação imediata.`,
       `Agradecemos pela parceria! 🚀`,
     ].filter(Boolean).join('\n');
@@ -1115,7 +1143,6 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
     let evolutionError: string | null = null;
 
     try {
-      // Usar a instância da própria clínica ou padrão do gateway
       const instance = invoice.tenant.whatsappConfigs[0]?.phoneNumberId;
       await sendWhatsAppMessage(gestor.phone, message, undefined, {
         apiUrl: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
@@ -1150,6 +1177,103 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
   } catch (error: any) {
     console.error('[SUPERADMIN_BILLING_REMINDER_ERROR]', error);
     return res.status(500).json({ error: 'Erro ao disparar lembrete' });
+  }
+});
+
+// 8.6 Obter Configurações de Recebimento SaaS
+router.get('/billing/config', async (req, res) => {
+  try {
+    let config = await prisma.saaSBillingConfig.findUnique({
+      where: { id: 'saas_default_config' },
+    });
+
+    if (!config) {
+      config = await prisma.saaSBillingConfig.create({
+        data: {
+          id: 'saas_default_config',
+          pixKeyType: 'CNPJ',
+          pixKey: '51.984.732/0001-40',
+          beneficiaryName: 'EduPsych Pro Tecnologia & Gestão Clínica LTDA',
+          beneficiaryDoc: '51.984.732/0001-40',
+          bankName: 'Nubank (260)',
+          bankAgency: '0001',
+          bankAccount: '1234567-8',
+          bankAccountType: 'CORRENTE',
+          gatewayProvider: 'none',
+          autoReminderMessage: 'Olá, {gestor}! Sua fatura do plano {plano} vence em {vencimento}. Chave PIX: {chave_pix}',
+        },
+      });
+    }
+
+    return res.json({
+      success: true,
+      config,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_GET_BILLING_CONFIG_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao buscar configurações de recebimento' });
+  }
+});
+
+// 8.7 Atualizar Configurações de Recebimento SaaS
+router.put('/billing/config', async (req, res) => {
+  try {
+    const {
+      pixKeyType,
+      pixKey,
+      beneficiaryName,
+      beneficiaryDoc,
+      bankName,
+      bankAgency,
+      bankAccount,
+      bankAccountType,
+      gatewayProvider,
+      gatewayApiKey,
+      gatewayWebhookSecret,
+      autoReminderMessage,
+    } = req.body;
+
+    const updated = await prisma.saaSBillingConfig.upsert({
+      where: { id: 'saas_default_config' },
+      update: {
+        pixKeyType: pixKeyType || 'CNPJ',
+        pixKey: pixKey || null,
+        beneficiaryName: beneficiaryName || null,
+        beneficiaryDoc: beneficiaryDoc || null,
+        bankName: bankName || null,
+        bankAgency: bankAgency || null,
+        bankAccount: bankAccount || null,
+        bankAccountType: bankAccountType || 'CORRENTE',
+        gatewayProvider: gatewayProvider || 'none',
+        gatewayApiKey: gatewayApiKey || null,
+        gatewayWebhookSecret: gatewayWebhookSecret || null,
+        autoReminderMessage: autoReminderMessage || null,
+      },
+      create: {
+        id: 'saas_default_config',
+        pixKeyType: pixKeyType || 'CNPJ',
+        pixKey: pixKey || null,
+        beneficiaryName: beneficiaryName || null,
+        beneficiaryDoc: beneficiaryDoc || null,
+        bankName: bankName || null,
+        bankAgency: bankAgency || null,
+        bankAccount: bankAccount || null,
+        bankAccountType: bankAccountType || 'CORRENTE',
+        gatewayProvider: gatewayProvider || 'none',
+        gatewayApiKey: gatewayApiKey || null,
+        gatewayWebhookSecret: gatewayWebhookSecret || null,
+        autoReminderMessage: autoReminderMessage || null,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: 'Configurações de recebimento salvas com sucesso!',
+      config: updated,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_PUT_BILLING_CONFIG_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao salvar configurações de recebimento' });
   }
 });
 

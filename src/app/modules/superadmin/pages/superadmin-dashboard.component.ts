@@ -12,6 +12,7 @@ import {
   WhatsAppQrCodeResponse,
   BillingStats,
   SubscriptionInvoiceItem,
+  SaaSBillingConfig,
 } from '../../../core/services/superadmin.service';
 import { ToastService } from '../../../shared/components/toast.component';
 
@@ -1015,6 +1016,66 @@ import { ToastService } from '../../../shared/components/toast.component';
       @if (activeTab() === 'billing') {
         <div class="space-y-6 animate-fadeIn">
 
+          <!-- Banner / Card de Status da Conta de Recebimento SaaS -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-amber-950/20 border border-slate-800 shadow-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex items-start gap-4 z-10">
+              <div class="size-12 sm:size-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/5">
+                <span class="material-icons text-2xl sm:text-3xl">account_balance</span>
+              </div>
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-base sm:text-lg font-black text-white tracking-tight">Conta de Recebimento SaaS</h3>
+                  @if (billingConfig()?.pixKey) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span class="material-icons text-xs">check_circle</span>
+                      PIX Configurado
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      <span class="material-icons text-xs">warning</span>
+                      Chave PIX Pendente
+                    </span>
+                  }
+                  @if (billingConfig()?.gatewayProvider && billingConfig()?.gatewayProvider !== 'none') {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 uppercase">
+                      <span class="material-icons text-xs">bolt</span>
+                      Gateway {{ billingConfig()?.gatewayProvider }}
+                    </span>
+                  }
+                </div>
+
+                <div class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                  @if (billingConfig()?.pixKey) {
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span>Chave PIX ({{ billingConfig()?.pixKeyType }}): <strong class="text-white font-mono bg-slate-950/70 px-2 py-0.5 rounded border border-slate-800">{{ billingConfig()?.pixKey }}</strong></span>
+                      <span class="text-slate-600 hidden sm:inline">•</span>
+                      <span>Favorecido: <strong class="text-slate-200">{{ billingConfig()?.beneficiaryName || 'EduPsych Pro' }}</strong></span>
+                      @if (billingConfig()?.bankName) {
+                        <span class="text-slate-600 hidden sm:inline">•</span>
+                        <span>{{ billingConfig()?.bankName }} (Ag: {{ billingConfig()?.bankAgency }} / Conta: {{ billingConfig()?.bankAccount }})</span>
+                      }
+                    </div>
+                  } @else {
+                    <p class="text-slate-400">
+                      Cadastre a Chave PIX e dados bancários da sua conta para que as clínicas recebam suas instruções de pagamento automaticamente nas faturas e mensagens de WhatsApp.
+                    </p>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 w-full lg:w-auto shrink-0 justify-end z-10">
+              <button
+                (click)="openConfigModal()"
+                class="w-full lg:w-auto px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all shadow-xl shadow-amber-500/20">
+                <span class="material-icons text-base">settings</span>
+                Configurar Conta de Recebimento
+              </button>
+            </div>
+          </div>
+
           <!-- Cockpit de Indicadores Financeiros Globais (4 Cards) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
@@ -1559,6 +1620,219 @@ import { ToastService } from '../../../shared/components/toast.component';
         </div>
       }
 
+      <!-- ============================================================== -->
+      <!-- MODAL: CONFIGURAÇÃO DE CONTA DE RECEBIMENTO SAAS                -->
+      <!-- ============================================================== -->
+      @if (configModalOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+          <div class="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-6 my-8">
+            
+            <!-- Cabeçalho do Modal -->
+            <div class="flex items-start justify-between pb-4 border-b border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="size-11 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400 shrink-0">
+                  <span class="material-icons text-2xl">account_balance</span>
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-white text-lg tracking-tight">Conta de Recebimento SaaS</h3>
+                  <p class="text-xs text-slate-400 mt-0.5">
+                    Dados utilizados para emissão de cobranças e lembretes automáticos de WhatsApp enviados às clínicas.
+                  </p>
+                </div>
+              </div>
+              <button
+                (click)="configModalOpen.set(false)"
+                class="text-slate-500 hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-800 transition-colors">
+                <span class="material-icons text-xl">close</span>
+              </button>
+            </div>
+
+            <div class="space-y-6 text-xs max-h-[65vh] overflow-y-auto pr-1 custom-scrollbar">
+
+              <!-- SEÇÃO 1: DADOS PIX (Cobrança Principal) -->
+              <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3.5">
+                <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                  <span class="material-icons text-base">qr_code_2</span>
+                  1. Chave PIX Direta (Essencial)
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Tipo de Chave *</label>
+                    <select
+                      [(ngModel)]="configPixKeyType"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50">
+                      <option value="CNPJ">CNPJ</option>
+                      <option value="CPF">CPF</option>
+                      <option value="EMAIL">E-mail</option>
+                      <option value="TELEFONE">Telefone</option>
+                      <option value="ALEATORIA">Chave Aleatória (EVP)</option>
+                    </select>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label class="block text-slate-400 font-semibold mb-1">Chave PIX *</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="configPixKey"
+                      placeholder="Ex: 51.984.732/0001-40 ou financeiro@clinica.com"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono focus:outline-none focus:border-amber-500/50"
+                    />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Nome do Favorecido / Razão Social *</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="configBeneficiaryName"
+                      placeholder="Ex: EduPsych Pro Gestão Ltda"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">CPF ou CNPJ do Favorecido</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="configBeneficiaryDoc"
+                      placeholder="Ex: 51.984.732/0001-40"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- SEÇÃO 2: DADOS BANCÁRIOS (TED / DEPÓSITO) -->
+              <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3.5">
+                <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
+                  <span class="material-icons text-base">account_balance</span>
+                  2. Dados da Conta Bancária (TED / Depósito)
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Banco</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="configBankName"
+                      placeholder="Ex: Nubank (260) ou Banco Inter (077)"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-slate-400 font-semibold mb-1">Agência</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="configBankAgency"
+                        placeholder="Ex: 0001"
+                        class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-slate-400 font-semibold mb-1">Conta com Dígito</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="configBankAccount"
+                        placeholder="Ex: 1234567-8"
+                        class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-slate-400 font-semibold mb-1">Tipo de Conta</label>
+                  <div class="flex items-center gap-3">
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input type="radio" [(ngModel)]="configBankAccountType" value="CORRENTE" class="accent-amber-500" />
+                      Conta Corrente (PJ / PF)
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-slate-300">
+                      <input type="radio" [(ngModel)]="configBankAccountType" value="POUPANCA" class="accent-amber-500" />
+                      Conta Poupança
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SEÇÃO 3: GATEWAY DE PAGAMENTO (AUTOMAÇÃO FUTURA) -->
+              <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3.5">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                    <span class="material-icons text-base">bolt</span>
+                    3. Gateway Automatizado (Asaas / Mercado Pago)
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                    Opcional
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Provedor Gateway</label>
+                    <select
+                      [(ngModel)]="configGatewayProvider"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50">
+                      <option value="none">Nenhum (PIX Manual Direto)</option>
+                      <option value="asaas">Asaas API</option>
+                      <option value="mercadopago">Mercado Pago</option>
+                    </select>
+                  </div>
+
+                  <div class="sm:col-span-2">
+                    <label class="block text-slate-400 font-semibold mb-1">Chave de API / Access Token</label>
+                    <input
+                      type="password"
+                      [(ngModel)]="configGatewayApiKey"
+                      placeholder="Token de produção ou sandbox do gateway"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono focus:outline-none focus:border-amber-500/50"
+                    />
+                  </div>
+                </div>
+
+                @if (configGatewayProvider() !== 'none') {
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Webhook Secret (Opcional)</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="configGatewayWebhookSecret"
+                      placeholder="Segredo para validação de retornos automáticos"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono focus:outline-none focus:border-amber-500/50"
+                    />
+                  </div>
+                }
+              </div>
+
+            </div>
+
+            <!-- Rodapé com Botões -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <button
+                type="button"
+                (click)="configModalOpen.set(false)"
+                class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                (click)="saveBillingConfig()"
+                [disabled]="savingConfigLoading()"
+                class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-black transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                <span class="material-icons text-base" [class.animate-spin]="savingConfigLoading()">
+                  {{ savingConfigLoading() ? 'sync' : 'save' }}
+                </span>
+                Salvar Configurações
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styles: [`
@@ -1615,9 +1889,25 @@ export class SuperAdminDashboardComponent implements OnInit {
   // Estado da Aba 3 (Financeiro & Faturamento SaaS)
   billingLoading = signal(false);
   billingStats = signal<BillingStats | null>(null);
+  billingConfig = signal<SaaSBillingConfig | null>(null);
   invoices = signal<SubscriptionInvoiceItem[]>([]);
   billingSearch = '';
   billingStatusFilter = 'TODAS';
+
+  // Configuração da Conta de Recebimento
+  configModalOpen = signal(false);
+  savingConfigLoading = signal(false);
+  configPixKeyType = signal<'CPF' | 'CNPJ' | 'EMAIL' | 'TELEFONE' | 'ALEATORIA' | string>('CNPJ');
+  configPixKey = signal('');
+  configBeneficiaryName = signal('');
+  configBeneficiaryDoc = signal('');
+  configBankName = signal('');
+  configBankAgency = signal('');
+  configBankAccount = signal('');
+  configBankAccountType = signal<'CORRENTE' | 'POUPANCA' | string>('CORRENTE');
+  configGatewayProvider = signal<'none' | 'asaas' | 'mercadopago' | string>('none');
+  configGatewayApiKey = signal('');
+  configGatewayWebhookSecret = signal('');
 
   // Modais de Faturamento
   confirmPaymentModalOpen = signal(false);
@@ -1972,6 +2262,7 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   loadBilling() {
     this.billingLoading.set(true);
+    this.loadBillingConfig();
     this.superAdminService.getBillingStats().subscribe({
       next: (res) => this.billingStats.set(res),
       error: () => this.toast.error('Erro ao carregar métricas de faturamento'),
@@ -2132,5 +2423,71 @@ export class SuperAdminDashboardComponent implements OnInit {
     }
     navigator.clipboard.writeText(code);
     this.toast.success('Código PIX Copia e Cola copiado para a área de transferência!');
+  }
+
+  loadBillingConfig() {
+    this.superAdminService.getBillingConfig().subscribe({
+      next: (res) => {
+        if (res.config) {
+          this.billingConfig.set(res.config);
+        }
+      },
+      error: () => console.warn('[LOAD_BILLING_CONFIG_WARN] Falha ao obter dados de recebimento'),
+    });
+  }
+
+  openConfigModal() {
+    const cfg = this.billingConfig();
+    if (cfg) {
+      this.configPixKeyType.set(cfg.pixKeyType || 'CNPJ');
+      this.configPixKey.set(cfg.pixKey || '');
+      this.configBeneficiaryName.set(cfg.beneficiaryName || '');
+      this.configBeneficiaryDoc.set(cfg.beneficiaryDoc || '');
+      this.configBankName.set(cfg.bankName || '');
+      this.configBankAgency.set(cfg.bankAgency || '');
+      this.configBankAccount.set(cfg.bankAccount || '');
+      this.configBankAccountType.set(cfg.bankAccountType || 'CORRENTE');
+      this.configGatewayProvider.set(cfg.gatewayProvider || 'none');
+      this.configGatewayApiKey.set(cfg.gatewayApiKey || '');
+      this.configGatewayWebhookSecret.set(cfg.gatewayWebhookSecret || '');
+    }
+    this.configModalOpen.set(true);
+  }
+
+  saveBillingConfig() {
+    if (!this.configPixKey().trim()) {
+      this.toast.error('Informe a Chave PIX para recebimento');
+      return;
+    }
+    if (!this.configBeneficiaryName().trim()) {
+      this.toast.error('Informe o nome do Favorecido / Razão Social');
+      return;
+    }
+
+    this.savingConfigLoading.set(true);
+    this.superAdminService.updateBillingConfig({
+      pixKeyType: this.configPixKeyType(),
+      pixKey: this.configPixKey().trim(),
+      beneficiaryName: this.configBeneficiaryName().trim(),
+      beneficiaryDoc: this.configBeneficiaryDoc().trim(),
+      bankName: this.configBankName().trim(),
+      bankAgency: this.configBankAgency().trim(),
+      bankAccount: this.configBankAccount().trim(),
+      bankAccountType: this.configBankAccountType(),
+      gatewayProvider: this.configGatewayProvider(),
+      gatewayApiKey: this.configGatewayApiKey().trim(),
+      gatewayWebhookSecret: this.configGatewayWebhookSecret().trim(),
+    }).subscribe({
+      next: (res) => {
+        this.toast.success(res.message || 'Configurações de recebimento salvas com sucesso!');
+        this.billingConfig.set(res.config);
+        this.savingConfigLoading.set(false);
+        this.configModalOpen.set(false);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao salvar configurações');
+        this.savingConfigLoading.set(false);
+      },
+    });
   }
 }

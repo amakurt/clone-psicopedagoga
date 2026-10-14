@@ -2,6 +2,53 @@
 
 ## Última Atualização: 14 de Outubro de 2026
 
+## Sessão 68 - 14/10/2026 — Cadastro e Configuração de Conta de Recebimento SaaS no Painel Master
+
+### O que foi feito
+
+#### 1. Modelagem no Banco de Dados (Prisma)
+- **Novo Modelo `SaaSBillingConfig`**:
+  - Tabela singleton (`saas_default_config`) para gerenciar as credenciais de recebimento do proprietário do SaaS:
+    - Dados PIX Diretos: `pixKeyType` (`CNPJ`, `CPF`, `EMAIL`, `TELEFONE`, `ALEATORIA`), `pixKey`, `beneficiaryName`, `beneficiaryDoc`.
+    - Dados Bancários para TED/Depósito: `bankName`, `bankAgency`, `bankAccount`, `bankAccountType` (`CORRENTE` ou `POUPANCA`).
+    - Integração com Gateways: `gatewayProvider` (`none`, `asaas`, `mercadopago`), `gatewayApiKey`, `gatewayWebhookSecret`.
+    - Template customizado de lembrete: `autoReminderMessage`.
+  - Sincronização executada via `prisma db push` e regeneração do Prisma Client no backend.
+
+#### 2. Endpoints e Automações no Backend (`backend/src/routes/superadmin.ts`)
+- **`GET /api/superadmin/billing/config`**:
+  - Retorna os dados cadastrados da conta do SaaS (ou inicializa os defaults caso a tabela esteja vazia).
+- **`PUT /api/superadmin/billing/config`**:
+  - Salva/atualiza com `upsert` os dados de chave PIX, favorecido, agência/conta e chaves de API do gateway.
+- **Injeção Dinâmica no Lembrete de WhatsApp (`POST /api/superadmin/billing/invoices/:id/send-reminder`)**:
+  - O disparo da mensagem via WhatsApp agora carrega dinamicamente a Chave PIX, o Nome do Favorecido e os dados bancários cadastrados na conta SaaS, garantindo que o gestor receba instruções exatas e atualizadas para pagamento.
+- **Injeção Dinâmica na Criação Manual de Fatura (`POST /api/superadmin/billing/invoices/create-manual`)**:
+  - Se a fatura for emitida sem código PIX customizado, utiliza como padrão a Chave PIX cadastrada na conta SaaS.
+
+#### 3. Frontend & Painel Master (`superadmin-dashboard.component.ts` e `superadmin.service.ts`)
+- **Card de Destaque na Aba Financeira**:
+  - Posicionado no topo da aba "Financeiro & Faturamento SaaS", exibe:
+    - Badge de status (`PIX Configurado` em verde ou `Chave PIX Pendente` em âmbar).
+    - Badge de Gateway ativo caso configurado (`Asaas` ou `Mercado Pago`).
+    - Exibição mono da Chave PIX, nome do Favorecido e banco/agência/conta.
+    - Botão de ação rápida `⚙️ Configurar Conta de Recebimento`.
+- **Modal de Configuração de Recebimento SaaS**:
+  - Modal com glassmorphism escuro e três seções bem delimitadas:
+    - *1. Chave PIX Direta (Essencial)*: Tipo de chave, chave PIX, nome do favorecido e documento.
+    - *2. Dados da Conta Bancária (TED / Depósito)*: Banco, agência, conta e tipo de conta (Corrente / Poupança).
+    - *3. Gateway Automatizado (Opcional)*: Provedor, Token/API Key e Webhook Secret.
+  - Feedback visual via Toast e atualização imediata do card e dos lembretes após salvar.
+
+#### 4. Validação E2E no Navegador
+- Executada automação ponta a ponta com `browser_subagent`:
+  - Navegação para `/master` e abertura da aba Financeiro.
+  - Abertura do modal de configuração de conta.
+  - Preenchimento e alteração da Chave PIX para `financeiro@edupsych.com.br`, Favorecido `EduPsych Pro Matriz SaaS` e Banco `Banco Inter (077)`.
+  - Salvamento com persistência no banco e fechamento automático do modal.
+  - Verificação visual da atualização imediata do card no topo da página.
+  - Disparo de lembrete de WhatsApp com confirmação do envio com os novos dados configurados.
+- Gravação salva: `verify_saas_receiving_account_1791988371480.webp`.
+
 ---
 
 ## Sessão 67 - 14/10/2026 — Gestão Financeira & Faturamento de Clínicas no Painel Master SaaS

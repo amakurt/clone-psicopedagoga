@@ -155,6 +155,31 @@ export class SuperAdminService {
   sendInvoiceReminder(invoiceId: string): Observable<any> {
     return this.api.post(`/superadmin/billing/invoices/${invoiceId}/send-reminder`, {});
   }
+
+  getBillingConfig(): Observable<{ success: boolean; config: SaaSBillingConfig }> {
+    return this.api.get<{ success: boolean; config: SaaSBillingConfig }>('/superadmin/billing/config');
+  }
+
+  updateBillingConfig(data: Partial<SaaSBillingConfig>): Observable<{ success: boolean; message: string; config: SaaSBillingConfig }> {
+    return this.api.put<{ success: boolean; message: string; config: SaaSBillingConfig }>('/superadmin/billing/config', data);
+  }
+}
+
+export interface SaaSBillingConfig {
+  id?: string;
+  pixKeyType: 'CPF' | 'CNPJ' | 'EMAIL' | 'TELEFONE' | 'ALEATORIA' | string;
+  pixKey: string;
+  beneficiaryName: string;
+  beneficiaryDoc: string;
+  bankName: string;
+  bankAgency: string;
+  bankAccount: string;
+  bankAccountType: 'CORRENTE' | 'POUPANCA' | string;
+  gatewayProvider: 'none' | 'asaas' | 'mercadopago' | string;
+  gatewayApiKey?: string;
+  gatewayWebhookSecret?: string;
+  autoReminderMessage?: string;
+  updatedAt?: string;
 }
 
 export interface BillingStats {

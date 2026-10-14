@@ -1067,3 +1067,21 @@ model SubscriptionInvoice {
   @@index([tenantId])
   @@index([status])
 }
+
+model SaaSBillingConfig {
+  id                    String   @id @default("saas_default_config")
+  pixKeyType            String?  @default("CNPJ") // CPF | CNPJ | EMAIL | TELEFONE | ALEATORIA
+  pixKey                String?
+  beneficiaryName       String?
+  beneficiaryDoc        String?
+  bankName              String?
+  bankAgency            String?
+  bankAccount           String?
+  bankAccountType       String?  @default("CORRENTE") // CORRENTE | POUPANCA
+  gatewayProvider       String?  @default("none") // none | asaas | mercadopago
+  gatewayApiKey         String?
+  gatewayWebhookSecret  String?
+  autoReminderMessage   String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
