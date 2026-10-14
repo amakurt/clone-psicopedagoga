@@ -25,6 +25,7 @@ const userUpdateSchema = z.object({
   email: z.string().email().optional(),
   role: z.enum(['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA', 'TERAPEUTA']).optional(),
   active: z.boolean().optional(),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres').optional().or(z.literal('')).nullable(),
   phone: z.string().optional(),
   registration: z.string().optional(),
   bio: z.string().optional(),
@@ -176,12 +177,15 @@ router.put('/:id', authorize('GESTOR'), validate(userUpdateSchema), async (req: 
     return res.status(404).json({ error: 'Usuário não encontrado nesta clínica' });
   }
 
-  const { name, email, role, active, phone, registration, bio, avatarUrl } = req.body;
+  const { name, email, role, active, password, phone, registration, bio, avatarUrl } = req.body;
   const updateData: any = {};
   if (name !== undefined) updateData.name = name;
   if (email !== undefined) updateData.email = email.toLowerCase().trim();
   if (role !== undefined) updateData.role = role;
   if (active !== undefined) updateData.active = active;
+  if (password && typeof password === 'string' && password.trim().length >= 6) {
+    updateData.password = await bcrypt.hash(password.trim(), 10);
+  }
   if (phone !== undefined) updateData.phone = phone;
   if (registration !== undefined) updateData.registration = registration;
   if (bio !== undefined) updateData.bio = bio;

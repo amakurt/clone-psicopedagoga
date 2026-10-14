@@ -26,6 +26,8 @@ model Tenant {
   signatures       Signature[]
   whatsappConfigs  WhatsAppConfig[]
   whatsappLogs     WhatsAppLog[]
+  whatsappConversations WhatsAppConversation[]
+  whatsappMessages      WhatsAppMessage[]
   responsibles     Responsible[]
   documentRequests DocumentRequest[]
   schools          School[]
@@ -55,6 +57,7 @@ model Tenant {
   nfse                 Nfse[]
   waitingRoom          WaitingRoom[]
   availabilities       Availability[]
+  screeningAssessments ScreeningAssessment[]
 }
 
 model Membership {
@@ -110,6 +113,7 @@ model User {
   signatures         Signature[]
   abaAssessments     ABAAssessment[]
   abaPrograms        ABAProgram[]
+  screeningAssessments ScreeningAssessment[]
   nfseIssued         Nfse[]
   verificationCodes  VerificationCode[]
   documentRequests   DocumentRequest[]
@@ -163,6 +167,10 @@ model Paciente {
   avatarUrl     String?
   status        String   @default("ATIVO")
   grade         String?
+  schoolShift   String?
+  diagnosis     String?
+  medications   String?
+  allergies     String?
   notes         String?
   active        Boolean  @default(true)
   accessCode    String?
@@ -198,8 +206,10 @@ model Paciente {
   frequencySheets   FrequencySheet[]
   interventionDocuments InterventionDocument[]
   whatsappLogs         WhatsAppLog[]
+  whatsappConversations WhatsAppConversation[]
   abaAssessments       ABAAssessment[]
   abaPrograms          ABAProgram[]
+  screeningAssessments ScreeningAssessment[]
   documentRequests     DocumentRequest[]
   nfse                 Nfse[]
   waitingRoom          WaitingRoom[]
@@ -258,6 +268,45 @@ model WhatsAppLog {
   paciente Paciente? @relation(fields: [patientId], references: [id])
 
   @@index([tenantId])
+}
+
+model WhatsAppConversation {
+  id            String    @id @default(cuid())
+  tenantId      String    @default("")
+  phone         String
+  contactName   String?
+  status        String    @default("ACTIVE") // ACTIVE | MUTED_BY_AGENT | MUTED_BY_HUMAN | CLOSED
+  mutedUntil    DateTime?
+  pacienteId    String?
+  responsibleId String?
+  lastMessageAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant   Tenant            @relation(fields: [tenantId], references: [id])
+  paciente Paciente?         @relation(fields: [pacienteId], references: [id])
+  messages WhatsAppMessage[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+  @@index([tenantId, phone])
+  @@index([tenantId, status])
+}
+
+model WhatsAppMessage {
+  id             String   @id @default(cuid())
+  tenantId       String   @default("")
+  conversationId String
+  sender         String   // 'USER' | 'AI' | 'HUMAN'
+  message        String
+  messageId      String?
+  createdAt      DateTime @default(now())
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id])
+  conversation WhatsAppConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([conversationId])
 }
 
 model Responsible {
@@ -433,6 +482,7 @@ model Sessao {
   summary         String?
   activities      String?
   instruments     String?
+  materials       String?
   sharedWithGuardian Boolean @default(false)
   startTime       String?
   endTime         String?
@@ -506,13 +556,15 @@ model Comunicacao {
 model FinanceiroSessao {
   id            String   @id @default(cuid())
   tenantId String @default("")
-  pacienteId    String
+  pacienteId    String?
   sessaoId      String?
   valor         Float
   status        String   @default("PENDENTE")
   tipo          String?
   description   String?
   category      String?
+  fornecedor    String?
+  dataVencimento DateTime?
   dataPagamento DateTime?
   paymentMethod String?
   pixCopiaECola String?
@@ -523,9 +575,9 @@ model FinanceiroSessao {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
-  paciente Paciente @relation(fields: [pacienteId], references: [id])
-  sessao   Sessao?  @relation(fields: [sessaoId], references: [id])
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  paciente Paciente? @relation(fields: [pacienteId], references: [id])
+  sessao   Sessao?   @relation(fields: [sessaoId], references: [id])
 
   @@index([tenantId])
 }
@@ -558,6 +610,7 @@ model Document {
   uploadedBy       String   @default("professional")
   fileUrl          String?
   isShared         Boolean  @default(false)
+  approvalFeedback String?
   signedAt         String?
   guardianSignedAt String?
   autorId          String?
@@ -649,6 +702,7 @@ model SessionRecord {
   summary            String
   activities         String
   instruments        String?
+  materials          String?
   observations       String
   sharedWithGuardian Boolean  @default(false)
   startTime          String?
@@ -683,6 +737,30 @@ model ABAAssessment {
   tenant       Tenant   @relation(fields: [tenantId], references: [id])
   paciente     Paciente @relation(fields: [patientId], references: [id])
   professional User     @relation(fields: [professionalId], references: [id])
+
+  @@index([tenantId])
+}
+
+model ScreeningAssessment {
+  id             String   @id @default(cuid())
+  tenantId       String   @default("")
+  pacienteId     String
+  profissionalId String
+  instrument     String   // MCHAT_R | SNAP_IV | ATA | ASRS_18 | HABILIDADES_SOCIAIS
+  respondent     String?  // informante: PAIS | PROFESSOR | AUTO | PROFISSIONAL
+  answers        String   // JSON: { itemId: value }
+  scores         String   // JSON: { total, max, dimensions: { id: { score, max, label } } }
+  riskLevel      String   // BAIXO | MODERADO | ELEVADO | ALTO
+  summary        String?  // interpretação clínica gerada
+  notes          String?
+  hidden         Boolean  @default(false) // oculto da lista (arquivado)
+  assessedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  paciente     Paciente @relation(fields: [pacienteId], references: [id])
+  profissional User     @relation(fields: [profissionalId], references: [id])
 
   @@index([tenantId])
 }
@@ -760,6 +838,8 @@ model InterventionPlan {
   frequency      String?
   duration       String?
   status         String   @default("RASCUNHO")
+  phase          String   @default("MONTAR") // MONTAR | ATIVAR | ACOMPANHAR | RENOVAR
+  phaseHistory   String?  // JSON array of phase transitions with dates
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -96,14 +96,27 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
               <option value="Mãe">Mãe</option>
               <option value="Pai">Pai</option>
               <option value="Avó/Avô">Avó/Avô</option>
+              <option value="Tio/Tia">Tio/Tia</option>
+              <option value="Tutor Legal">Tutor Legal</option>
               <option value="Outro">Outro</option>
             </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Data de Nascimento</label>
+            <input [(ngModel)]="form.birthDate" type="date"
+              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">CPF</label>
             <input [(ngModel)]="form.cpf" 
               class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="000.000.000-00" maxlength="14">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">RG</label>
+            <input [(ngModel)]="form.rg" 
+              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="00.000.000-0">
           </div>
           <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Email</label>
@@ -112,6 +125,55 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
               placeholder="email@exemplo.com">
           </div>
         </div>
+      </div>
+
+      <!-- Acesso ao Portal da Família (Guardian) -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-200 dark:border-slate-700">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <span class="material-icons">family_restroom</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-gray-900 dark:text-white">Acesso ao Portal da Família</h3>
+              <p class="text-xs text-gray-500 dark:text-slate-400">Permite ao responsável acompanhar relatórios, mensagens e prontuário online</p>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" [(ngModel)]="form.portalAccess" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-primary"></div>
+            <span class="ml-2 text-xs font-bold" [class]="form.portalAccess ? 'text-primary' : 'text-slate-400'">
+              {{ form.portalAccess ? 'Acesso Ativo' : 'Sem Acesso' }}
+            </span>
+          </label>
+        </div>
+
+        @if (form.portalAccess) {
+          <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 space-y-4 animate-in">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">E-mail de Login *</label>
+                <input [(ngModel)]="form.email" type="email"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary"
+                  placeholder="email@exemplo.com">
+                <p class="text-[11px] text-slate-500 mt-1">O e-mail informado será o usuário de login no portal.</p>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Senha de Acesso</label>
+                <input [(ngModel)]="form.portalPassword" type="password"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary"
+                  placeholder="Mínimo 6 caracteres (Padrão: 123456)">
+                <p class="text-[11px] text-slate-500 mt-1">Se deixar vazio, a senha padrão será <b>123456</b>.</p>
+              </div>
+            </div>
+            @if (form.userId) {
+              <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 pt-1">
+                <span class="material-icons text-sm">verified_user</span>
+                <span>Este responsável já possui usuário vinculado ativo no portal.</span>
+              </div>
+            }
+          </div>
+        }
       </div>
 
       <!-- Pacientes Vinculados -->
@@ -332,11 +394,16 @@ export class ResponsavelFormComponent implements OnInit {
   form: any = {
     name: '',
     relationship: '',
+    birthDate: '',
     cpf: '',
+    rg: '',
     phone: '',
     phoneIsWhatsApp: false,
     email: '',
     avatarUrl: null,
+    userId: null,
+    portalAccess: false,
+    portalPassword: '',
     address: {
       cep: '',
       street: '',
@@ -416,6 +483,11 @@ export class ResponsavelFormComponent implements OnInit {
         this.form = {
           ...this.form,
           ...res,
+          birthDate: res.birthDate || '',
+          rg: res.rg || '',
+          userId: res.userId || null,
+          portalAccess: !!res.userId,
+          portalPassword: '',
           avatarUrl: res.avatarUrl || null,
           phone: res.phones || res.phone || '',
           phoneIsWhatsApp: res.phoneIsWhatsApp || false,

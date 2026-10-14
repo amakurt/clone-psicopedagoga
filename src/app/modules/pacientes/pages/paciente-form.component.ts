@@ -117,6 +117,17 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
                 }
               </select>
             </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Turno Escolar</label>
+              <select class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                [(ngModel)]="form.schoolShift">
+                <option value="">Selecione o turno</option>
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Integral">Integral</option>
+                <option value="Noite">Noite</option>
+              </select>
+            </div>
             <div class="md:col-span-2">
               <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Responsável</label>
               <div class="flex gap-2">
@@ -165,6 +176,31 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
                   </div>
                 </div>
               }
+            </div>
+          </div>
+
+          <!-- Triagem & Dados Clínicos Iniciais -->
+          <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Triagem & Dados Clínicos Iniciais</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div class="md:col-span-2">
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Diagnóstico Prévio / Hipótese Diagnóstica</label>
+              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                [(ngModel)]="form.diagnosis" placeholder="Ex: TDAH tipo combinado, TEA Nível 1, Dislexia, Em Investigação...">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Medicamentos em Uso</label>
+              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                [(ngModel)]="form.medications" placeholder="Ex: Ritalina 10mg pela manhã, Nenhum...">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Alergias / Restrições</label>
+              <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                [(ngModel)]="form.allergies" placeholder="Ex: Glúten, Lactose, Corantes, Nenhuma...">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Queixa Principal / Observações Iniciais</label>
+              <textarea rows="3" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
+                [(ngModel)]="form.notes" placeholder="Resumo da queixa trazida pela família/escola ou observações para o acolhimento..."></textarea>
             </div>
           </div>
 
@@ -351,7 +387,8 @@ export class PacienteFormComponent implements OnInit {
   };
 
   form: any = {
-    name: '', birthDate: '', grade: '', active: true, schoolId: '', responsavelId: '',
+    name: '', birthDate: '', grade: '', schoolShift: '', active: true, schoolId: '', responsavelId: '',
+    diagnosis: '', medications: '', allergies: '', notes: '',
     cpf: '', rg: '', accessCode: '', 
     phone: '', phoneIsWhatsApp: false, 
     phone2: '', phone2IsWhatsApp: false,
@@ -554,6 +591,12 @@ export class PacienteFormComponent implements OnInit {
       cpf: this.form.cpf || '',
       birthDate: this.form.birthDate || '',
       grade: this.form.grade || '',
+      schoolShift: this.form.schoolShift || '',
+      schoolId: this.form.schoolId || '',
+      active: this.form.active !== undefined ? this.form.active : true,
+      diagnosis: this.form.diagnosis || '',
+      medications: this.form.medications || '',
+      allergies: this.form.allergies || '',
       notes: this.form.notes || '',
       accessCode: this.form.accessCode || '',
       responsavelId: this.form.responsavelId || '',

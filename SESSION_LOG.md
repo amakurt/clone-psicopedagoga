@@ -1,6 +1,44 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 13 de Outubro de 2026
+## Última Atualização: 14 de Outubro de 2026
+
+---
+
+## Sessão 65 - 14/10/2026 — Modernização dos Formulários de Usuários, Responsáveis e Pacientes (Tailwind, Reset de Senha, Acesso ao Portal da Família e Triagem Clínica)
+
+### O que foi feito
+
+#### 1. Formulário de Usuário / Colaborador (`user-form.component.ts` e `backend/src/routes/users.ts`)
+- **Modernização Visual Completa**:
+  - Eliminada a dependência legada do Angular Material (`mat-form-field`, `mat-select`, `mat-card`, `mat-input`).
+  - Interface reconstruída com Tailwind CSS de alta fidelidade, Glassmorphism e Dark Mode nativo.
+  - Manutenção e refinamento do componente de foto circular com zoom e recorte (`ImageCropperModalComponent`).
+- **Redefinição de Senha na Edição**:
+  - Campo opcional na edição com orientação clara ("Deixe em branco para manter a senha atual").
+  - Atualização do schema e da rota `PUT /api/users/:id` no backend com hasheamento seguro via bcrypt.
+- **Roles e Status Completo**:
+  - Inclusão do perfil `PROFISSIONAL` ao lado de `GESTOR`, `PSICOPEDAGOGO` e `SECRETARIA`.
+  - Toggle interativo para ativar/desativar conta do colaborador sem exclusão do banco (`active: true/false`).
+
+#### 2. Formulário e Detalhe de Responsáveis (`responsavel-form.component.ts`, `responsavel-detail.component.ts` e `backend/src/routes/responsaveis.ts`)
+- **Novos Campos Cadastrais**:
+  - Adicionados campos `Data de Nascimento` e `RG` no formulário e vinculados aos schemas do banco.
+- **Acesso ao Portal da Família (Guardian)**:
+  - Novo card de ativação de acesso ao portal do responsável.
+  - Criação/sincronização automática de usuário de login (`role: 'RESPONSAVEL'`) e senha personalizável (ou padrão 123456) via backend.
+- **Modernização da Tela de Detalhes (`responsavel-detail.component.ts`)**:
+  - Removido CSS inline e classes legadas (`.card`, `.btn`), adotando layout moderno com cards e Tailwind.
+  - **Correção de Bug**: Removido campo duplicado de CPF (antigas linhas 33 e 36).
+  - **Exibição dos Pacientes Vinculados**: Card dedicado listando as crianças com foto, série, telefone e link direto para o prontuário.
+
+#### 3. Formulário de Pacientes (`paciente-form.component.ts`, `backend/src/routes/pacientes.ts` e `schema.prisma`)
+- **Turno Escolar**:
+  - Adicionado campo `schoolShift` (Manhã, Tarde, Integral, Noite) integrado ao cadastro e agenda.
+- **Triagem e Dados Clínicos Iniciais**:
+  - Novos campos integrados: `Diagnóstico Prévio / Hipótese Diagnóstica` (`diagnosis`), `Medicamentos em Uso` (`medications`), `Alergias / Restrições` (`allergies`) e `Queixa Principal / Observações Iniciais` (`notes`).
+  - Sincronização do schema Prisma com `npx prisma db push` e `npx prisma generate`.
+- **Correção no Salvamento**:
+  - Inclusão de `schoolId`, `active`, `schoolShift`, `diagnosis`, `medications`, `allergies` no payload final de `save()`.
 
 ---
 

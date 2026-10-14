@@ -167,6 +167,10 @@ model Paciente {
   avatarUrl     String?
   status        String   @default("ATIVO")
   grade         String?
+  schoolShift   String?
+  diagnosis     String?
+  medications   String?
+  allergies     String?
   notes         String?
   active        Boolean  @default(true)
   accessCode    String?

@@ -23,6 +23,7 @@ export interface Responsible {
   cpf?: string;
   rg?: string;
   phones?: string;
+  phoneIsWhatsApp?: boolean;
   email?: string;
   avatarUrl?: string;
   cep?: string;
@@ -30,7 +31,12 @@ export interface Responsible {
   neighborhood?: string;
   number?: string;
   complement?: string;
+  city?: string;
+  state?: string;
   userId?: string;
+  portalAccess?: boolean;
+  portalPassword?: string;
+  patients?: Paciente[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -54,6 +60,9 @@ export interface Paciente {
   name: string;
   email?: string;
   phone?: string;
+  phoneIsWhatsApp?: boolean;
+  phone2?: string;
+  phone2IsWhatsApp?: boolean;
   cpf?: string;
   rg?: string;
   birthDate?: string;
@@ -63,6 +72,10 @@ export interface Paciente {
   avatarUrl?: string;
   status: 'ATIVO' | 'INATIVO';
   grade?: string;
+  schoolShift?: string;
+  diagnosis?: string;
+  medications?: string;
+  allergies?: string;
   notes?: string;
   active: boolean;
   accessCode?: string;
@@ -71,6 +84,8 @@ export interface Paciente {
   neighborhood?: string;
   number?: string;
   complement?: string;
+  city?: string;
+  state?: string;
   responsibleId?: string;
   schoolId?: string;
   responsible?: Responsible;
