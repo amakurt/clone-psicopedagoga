@@ -20,5 +20,9 @@ evolution-api/.env
 *.env.local
 backend/uploads/
 
+# Backups e logs temporarios
+session-backup/
+SESSION-NOTES.md
+
 # QR de pareamento da instancia WhatsApp (segredo)
 whatsapp-qr.png

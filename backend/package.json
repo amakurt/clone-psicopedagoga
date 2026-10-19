@@ -6,7 +6,11 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test:isolation": "tsx scripts/test-isolation.ts",
-    "test:superadmin": "tsx scripts/test-superadmin.ts"
+    "test:superadmin": "tsx scripts/test-superadmin.ts",
+    "db:sqlite": "cp prisma/schema.sqlite.prisma prisma/schema.prisma && npx prisma generate",
+    "db:postgres": "cp prisma/schema.postgres.prisma prisma/schema.prisma && npx prisma generate",
+    "db:push:sqlite": "npx prisma db push --schema=prisma/schema.sqlite.prisma",
+    "db:push:postgres": "npx prisma db push --schema=prisma/schema.postgres.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

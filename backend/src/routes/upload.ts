@@ -87,10 +87,52 @@ const upload = multer({
   }
 });
 
+function validateMagicBytes(filePath: string, ext: string): boolean {
+  try {
+    const buffer = Buffer.alloc(16);
+    const fd = fs.openSync(filePath, 'r');
+    fs.readSync(fd, buffer, 0, 16, 0);
+    fs.closeSync(fd);
+
+    switch (ext) {
+      case '.pdf':
+        return buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+      case '.png':
+        return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+      case '.jpg':
+      case '.jpeg':
+        return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+      case '.gif':
+        return buffer.toString('ascii', 0, 3) === 'GIF';
+      case '.webp':
+        return buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP';
+      case '.docx':
+      case '.xlsx':
+        return buffer[0] === 0x50 && buffer[1] === 0x4b && buffer[2] === 0x03 && buffer[3] === 0x04;
+      case '.doc':
+      case '.xls':
+        return buffer[0] === 0xd0 && buffer[1] === 0xcf && buffer[2] === 0x11 && buffer[3] === 0xe0;
+      case '.csv':
+        return !buffer.includes(0x00);
+      default:
+        return false;
+    }
+  } catch {
+    return false;
+  }
+}
+
 // Upload single file
 router.post('/', uploadLimiter, upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+  }
+
+  const filePath = path.join(uploadsDir, req.file.filename);
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  if (!validateMagicBytes(filePath, ext)) {
+    try { fs.unlinkSync(filePath); } catch {}
+    return res.status(400).json({ error: 'Conteúdo do arquivo não corresponde à sua extensão (assinatura binária inválida).' });
   }
 
   const fileUrl = `/api/uploads/${req.file.filename}`;
@@ -110,7 +152,20 @@ router.post('/multiple', uploadLimiter, upload.array('files', 5), (req, res) => 
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
   }
 
-  const files = (req.files as Express.Multer.File[]).map(file => ({
+  const uploadedFiles = req.files as Express.Multer.File[];
+  for (const file of uploadedFiles) {
+    const filePath = path.join(uploadsDir, file.filename);
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!validateMagicBytes(filePath, ext)) {
+      // Limpa todos os arquivos enviados neste lote
+      for (const f of uploadedFiles) {
+        try { fs.unlinkSync(path.join(uploadsDir, f.filename)); } catch {}
+      }
+      return res.status(400).json({ error: `Arquivo ${file.originalname} possui assinatura binária incompatível com sua extensão.` });
+    }
+  }
+
+  const files = uploadedFiles.map(file => ({
     filename: file.filename,
     originalName: file.originalname,
     size: file.size,

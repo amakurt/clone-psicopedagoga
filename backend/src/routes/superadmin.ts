@@ -1147,7 +1147,7 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
       await sendWhatsAppMessage(gestor.phone, message, undefined, {
         apiUrl: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
         token: process.env.EVOLUTION_API_KEY || '',
-        phoneNumberId: instance,
+        phoneNumberId: instance || undefined,
       });
       sentViaEvolution = true;
     } catch (evoErr: any) {

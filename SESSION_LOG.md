@@ -3028,4 +3028,44 @@ npm run start
 - `npx ng build --configuration development` (frontend) gerado com 100% de sucesso (código 0).
 - Servidores de desenvolvimento ativos e testados localmente.
 
+---
 
+## Sessão 36 - 19/10/2026 — Auditoria Estratégica, Limpeza de Repositório, Blindagem de Uploads e Dual-Engine SQLite/PostgreSQL
+
+### O que foi feito
+
+#### 1. Diagnóstico e Auditoria Estratégica do Sistema
+- Avaliação detalhada do ecossistema EduPsych Pro Clone em 3 pilares: O que falta para produção comercial, identificação de arquivos redundantes e auditoria estática de vulnerabilidades e segurança com `security_scan.py` e `npm audit`.
+
+#### 2. Passo 1: Limpeza Imediata do Repositório Git
+- **Remoção de Backups Antigos do Versionamento**: Removidos 23 arquivos JSON da pasta `session-backup/` do rastreamento do Git (`git rm -r --cached session-backup`). Além de pesar no clone, esses backups antigos continham credenciais e tokens de teste históricos.
+- **Atualização do `.gitignore`**: Adicionada regra estrita bloqueando a pasta `session-backup/` e notas temporárias de serem versionadas novamente no Git.
+- **Consolidação de Logs**: Removido o arquivo redundante `SESSION-NOTES.md`, consolidando o `SESSION_LOG.md` como o documento canônico oficial e completo de todo o histórico do projeto.
+
+#### 3. Passo 2: Blindagem de Segurança da API e Uploads
+- **Suporte a Proxy Reverso (Nginx / Hostinger VPS)**:
+  - Configurado `app.set('trust proxy', 1)` em `backend/src/index.ts`, permitindo que o `express-rate-limit` e os logs de auditoria capturem o IP real do cliente via cabeçalhos `X-Forwarded-For` quando o Node estiver atrás do Nginx/Caddy na VPS.
+- **Validação Estrita de Magic Bytes nos Uploads (`backend/src/routes/upload.ts`)**:
+  - Implementada a função `validateMagicBytes()` que inspeciona a assinatura binária dos primeiros 16 bytes do arquivo recebido antes de aceitá-lo no sistema.
+  - Suporte com validação real para: PDF (`%PDF`), PNG (`\x89PNG`), JPEG (`0xFF 0xD8 0xFF`), GIF (`GIF`), WebP (`RIFF...WEBP`), DOCX/XLSX (`PK\x03\x04`), DOC/XLS (OLE Compound File) e CSV (texto puro sem bytes NUL).
+  - Bloqueio imediato com remoção do disco (`fs.unlinkSync`) caso o arquivo tente burlar a extensão com conteúdo malicioso.
+- **Mitigação de CVEs com `npm audit fix`**:
+  - Resolvidas 8 vulnerabilidades no backend (incluindo falhas de DoS no `proxy-addr` e bypass de multipart no `multer`).
+- **Correção de Tipagem TypeScript**:
+  - Corrigido erro de tipagem estrita em `backend/src/routes/superadmin.ts` (`phoneNumberId: instance || undefined`).
+
+#### 4. Passo 3: Preparação do Banco para Produção (Dual-Engine SQLite & PostgreSQL)
+- **Estruturação dos Schemas Prisma**:
+  - Criado `backend/prisma/schema.sqlite.prisma` (padrão para desenvolvimento local).
+  - Alinhado com `backend/prisma/schema.postgres.prisma` (padrão para deploy na VPS Hostinger com container Docker PostgreSQL 16).
+- **Scripts de Alternância no `backend/package.json`**:
+  - `npm run db:sqlite`: Alterna o schema ativo para SQLite e gera o client Prisma.
+  - `npm run db:postgres`: Alterna o schema ativo para PostgreSQL e gera o client Prisma.
+  - `npm run db:push:sqlite`: Aplica alterações no SQLite local.
+  - `npm run db:push:postgres`: Aplica alterações no PostgreSQL de produção.
+
+#### 5. Validação e Testes
+- **Testes de Isolamento Multi-Tenant**: Executado `npm run test:isolation` no backend — 19/19 testes aprovados (100% de sucesso).
+- **Testes de SuperAdmin**: Executado `npm run test:superadmin` no backend — 6/6 testes aprovados (100% de sucesso).
+- **Compilação Backend**: `npx tsc --noEmit` e `npm run build` concluídos com 0 erros (código 0).
+- **Compilação Frontend Angular**: `npx ng build --configuration development` gerado com sucesso (código 0).

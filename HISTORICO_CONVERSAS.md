@@ -68,6 +68,29 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
 
 ---
 
+## 💬 Sessão: 19 de Outubro de 2026
+
+### 1. Interação do Usuário: Auditoria, Avaliação de Necessidades e Segurança
+- **Solicitação do Usuário:**  
+  *"você que está comigo nesse desenvolvimento a tanto tempo o que acha? falta algo? tem coisas sem necessidades e como. tá a segurança do sistema? (...) faça os três na mesma ordem sugerida"*
+- **Ações Realizadas:**
+  - **Passo 1 (Limpeza):**
+    - Remoção da pasta `session-backup/` do rastreamento do Git (`git rm -r --cached session-backup`), eliminando 23 JSONs legados com dados de histórico.
+    - Atualização do `.gitignore` bloqueando pastas de backup e notas temporárias.
+    - Remoção do arquivo duplicado `SESSION-NOTES.md` em favor do `SESSION_LOG.md`.
+  - **Passo 2 (Segurança & Uploads):**
+    - Configuração de `trust proxy` no Express para detecção correta de IP sob Nginx/VPS.
+    - Validação de *Magic Bytes* (assinatura binária) em `backend/src/routes/upload.ts` cobrindo PDFs, imagens (PNG/JPEG/GIF/WebP) e documentos Office/CSV.
+    - Correção de 8 vulnerabilidades via `npm audit fix` no backend.
+    - Correção de tipagem em `backend/src/routes/superadmin.ts`.
+  - **Passo 3 (Dual-Engine SQLite & PostgreSQL):**
+    - Criação de `backend/prisma/schema.sqlite.prisma` e alinhamento com `schema.postgres.prisma`.
+    - Novos scripts no `package.json` (`npm run db:sqlite`, `npm run db:postgres`, `npm run db:push:sqlite`, `npm run db:push:postgres`).
+    - Validação dos 19 testes de isolamento multi-tenant (`test:isolation`) e 6/6 de superadmin (`test:superadmin`).
+    - Compilação do Backend e Frontend com 100% de sucesso.
+
+---
+
 ## 🛠️ Arquitetura e Modelos de Dados do WhatsApp
 
 ### Tabelas Criadas / Atualizadas no Prisma (`backend/prisma/schema.prisma`):

@@ -14,6 +14,10 @@ import configurePassport from './config/passport';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configuração para proxy reverso (Nginx, Caddy, Cloudflare em produção)
+// Permite que rate-limit e logs capturem o IP real do cliente (X-Forwarded-For)
+app.set('trust proxy', 1);
+
 // Session configuration
 if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET não definido. Configure o backend/.env antes de subir o servidor.');
