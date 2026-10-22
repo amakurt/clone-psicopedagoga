@@ -1,6 +1,23 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 14 de Outubro de 2026
+## Última Atualização: 22 de Outubro de 2026
+
+## Sessão 70 - 22/10/2026 — Provisionamento Hostinger VPS KVM 2 & Blindagem de Deploy Automatizado
+
+### O que foi feito
+
+#### 1. Provisionamento da VPS Hostinger
+- Suporte e orientação técnica para a contratação e setup inicial do servidor **Hostinger VPS KVM 2** (2 vCPUs, 8 GB RAM, 100 GB NVMe).
+- Escolha da distribuição oficial **Ubuntu 24.04 LTS (64-bit)** em SO simples/puro, garantindo 100% de performance sem overhead de painéis pesados.
+- Teste de conectividade e validação da porta SSH (22) no IP `200.141.23.28`.
+
+#### 2. Blindagem e Otimização do Script de Deploy (`deploy-vps.sh`)
+- **Proteção de Memória com SWAP Automatizado:** Adicionada rotina de criação de 2 GB de SWAP (`/swapfile`) se o sistema não possuir swap ativo, prevenindo encerramentos inesperados por pico de memória (OOM Killer) durante builds ou operações pesadas.
+- **Geração Segura de Segredos Dinâmicos:** Integrada geração automática de chaves hexadecimais aleatórias de 32 bytes (`openssl rand -hex 32`) para `JWT_SECRET` e `SESSION_SECRET` ao inicializar o `.env` de produção.
+- **Sincronização de Credenciais:** Alinhado `backend/.env.production.example` com o `docker-compose.prod.yml` para evitar erros de autenticação na primeira migração do Prisma (`npx prisma db push`).
+- **Build Otimizado do Frontend:** Ajustado o comando para `npx ng build` nativo, compilando o bundle de produção direto para `/var/www/edupsych/dist/browser`.
+
+---
 
 ## Sessão 69 - 14/10/2026 — Preparação Completa para Deploy em Produção (Hostinger VPS KVM 2)
 

@@ -29,6 +29,19 @@ echo -e "\n${YELLOW}[1/8] Atualizando pacotes do sistema (Ubuntu)...${NC}"
 apt-get update -y && apt-get upgrade -y
 apt-get install -y curl wget git nginx certbot python3-certbot-nginx ca-certificates gnupg lsb-release
 
+# Configurar 2GB de SWAP de segurança se não houver swap configurado
+if [ $(swapon --show | wc -l) -le 1 ]; then
+  echo -e "\n${YELLOW}[SWAP] Configurando 2GB de arquivo SWAP para proteção de memória...${NC}"
+  fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  if ! grep -q "/swapfile" /etc/fstab; then
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  fi
+  echo -e "${GREEN}[✓] SWAP de 2GB configurado com sucesso.${NC}"
+fi
+
 # 3. Instalar Node.js 22 LTS se necessário
 if ! command -v node &> /dev/null; then
   echo -e "\n${YELLOW}[2/8] Instalando Node.js 22 LTS...${NC}"
@@ -70,6 +83,12 @@ cd "$ROOT_DIR/backend"
 if [ ! -f ".env" ]; then
   echo -e "${YELLOW}Criando backend/.env a partir do template de produção...${NC}"
   cp .env.production.example .env
+  if command -v openssl &> /dev/null; then
+    RAND_JWT=$(openssl rand -hex 32)
+    RAND_SESS=$(openssl rand -hex 32)
+    sed -i "s/edupsych_jwt_secret_production_key_2026/$RAND_JWT/g" .env
+    sed -i "s/edupsych_session_secret_production_key_2026/$RAND_SESS/g" .env
+  fi
 fi
 
 # Garantir uso do schema PostgreSQL para o Prisma
@@ -94,7 +113,7 @@ fi
 echo -e "\n${YELLOW}[7/8] Compilando o Frontend Angular em modo produção...${NC}"
 cd "$ROOT_DIR"
 npm install
-npm run build --configuration production
+npx ng build
 
 # Criar pasta pública do Nginx e copiar arquivos
 mkdir -p /var/www/edupsych
