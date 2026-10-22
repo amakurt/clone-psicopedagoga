@@ -25,7 +25,7 @@ function getTransporter() {
 }
 
 export function emailConfigured(): boolean {
-  return !!getTransporter();
+  return !!process.env.RESEND_API_KEY || !!getTransporter();
 }
 
 const FAKE_LOCAL_PARTS = ['test', 'teste', 'fake', 'demo', 'exemplo', 'example'];
@@ -55,9 +55,45 @@ export function isFakeEmail(to: string): boolean {
 }
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  const from = process.env.SMTP_FROM || process.env.RESEND_FROM || 'EduPsych Pro <contato@edupsychpro.tech>';
+
+  if (isFakeEmail(to)) {
+    console.log(`[DEV EMAIL] Destinatário fictício ignorado: ${to}`);
+    return false;
+  }
+
+  // 1. Envio prioritário e ultra-rápido via Resend REST API (porta 443 / HTTPS)
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from,
+          to: [to],
+          subject,
+          html,
+        }),
+      });
+
+      if (res.ok) {
+        console.log(`[RESEND EMAIL] E-mail despachado com sucesso para ${to}`);
+        return true;
+      }
+      const data: any = await res.json().catch(() => ({}));
+      console.warn(`[RESEND WARN] Falha Resend para ${to}:`, data?.message || res.statusText);
+    } catch (err: any) {
+      console.warn(`[RESEND ERROR] Falha de conexão Resend para ${to}:`, err?.message || err);
+    }
+  }
+
+  // 2. Fallback para Transporter SMTP clássico (Nodemailer)
   const t = getTransporter();
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'EduPsych Pro <no-reply@edupsych.local>';
-  if (!t || isFakeEmail(to)) {
+  if (!t) {
     console.log(`[DEV EMAIL] Para: ${to} | Assunto: ${subject}`);
     console.log(`[DEV EMAIL] HTML: ${html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}`);
     return false;

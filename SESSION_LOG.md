@@ -25,8 +25,9 @@
 - **`/resend-verification`:** Valida se o e-mail já foi confirmado e despacha novo token de ativação para a caixa de entrada.
 - **Preservação de Estado:** Ajustado `VerifyAccountComponent` para atualizar a sessão local (`AuthService.updateUser`) e reter a clínica ativa sem deslogar.
 
-#### 4. Suporte a Domínio Próprio Hostinger (SMTP)
-- Preparação da infraestrutura para uso das credenciais do domínio profissional `edupsychpro.tech` via `smtp.hostinger.com:465`.
+#### 4. Integração Oficial com Resend (Domínio Próprio `@edupsychpro.tech`)
+- Implementado suporte nativo ao **Resend REST API** em `backend/src/lib/email.ts` com fallback automático para SMTP clássico.
+- Disparos via HTTPS (porta 443) eliminando qualquer bloqueio de porta ou lentidão de conexão, com remetente oficial `EduPsych Pro <contato@edupsychpro.tech>`.
 
 ---
 
