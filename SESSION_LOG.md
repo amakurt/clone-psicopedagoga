@@ -18,6 +18,13 @@
 - **Build Otimizado do Frontend:** Ajustado o comando para `npx ng build` nativo, compilando o bundle de produção direto para `/var/www/edupsych/dist/browser`.
 - **Correção da Imagem Docker da Evolution API:** Atualizada a imagem em `docker-compose.prod.yml` de `atendai/evolution-api` (namespace legado) para a imagem oficial mantida `evoapicloud/evolution-api:v2.2.0`, permitindo o download público direto do Docker Hub sem bloqueio de pull.
 
+#### 3. Domínio Oficial, SSL HTTPS & Correções de Produção
+- **Registro do Domínio:** Registrado na Hostinger o domínio oficial **`edupsychpro.tech`**, com apontamento dos registros DNS do Tipo A (`@`, `app`) e CNAME (`www`) diretamente para o IP `200.141.23.28`.
+- **Certificado SSL Gratuito:** Emitido e instalado via Certbot para `edupsychpro.tech`, `app.edupsychpro.tech` e `www.edupsychpro.tech`, com redirecionamento automático para HTTPS seguro.
+- **Resolução de Mixed Content (Frontend):** Ajustada a propriedade `apiUrl` em `environment.ts` para utilizar caminho relativo `/api` fora da porta de desenvolvimento `4200`, eliminando tentativas de chamadas HTTP não criptografadas e adicionando `fileReplacements` em `angular.json`.
+- **Blindagem do Serviço de E-mail (SMTP):** `getTransporter()` atualizado para ignorar placeholders de configuração de e-mail e `sendEmail()` envolvido em `try/catch`, ativando automaticamente contas quando o SMTP não estiver configurado para não prender novos usuários.
+- **Ativação do Dono do SaaS (SuperAdmin):** Executado `node scripts/promote-superadmin.js amakurt@gmail.com` com sucesso, ativando a conta (`active: true`) com papel `SUPERADMIN` e acesso irrestrito ao painel master.
+
 ---
 
 ## Sessão 69 - 14/10/2026 — Preparação Completa para Deploy em Produção (Hostinger VPS KVM 2)
