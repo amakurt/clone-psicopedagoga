@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # =========================================================================
   # 1. BANCO DE DADOS POSTGRESQL 16 (PRODUÇÃO)
@@ -29,7 +27,7 @@ services:
   # 2. EVOLUTION API V2 (GATEWAY WHATSAPP MULTI-CLÍNICA)
   # =========================================================================
   evolution-api:
-    image: atendai/evolution-api:v2.1.2
+    image: evoapicloud/evolution-api:v2.2.0
     container_name: edupsych-evolution
     restart: always
     environment:

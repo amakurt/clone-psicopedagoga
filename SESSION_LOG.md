@@ -16,6 +16,7 @@
 - **Geração Segura de Segredos Dinâmicos:** Integrada geração automática de chaves hexadecimais aleatórias de 32 bytes (`openssl rand -hex 32`) para `JWT_SECRET` e `SESSION_SECRET` ao inicializar o `.env` de produção.
 - **Sincronização de Credenciais:** Alinhado `backend/.env.production.example` com o `docker-compose.prod.yml` para evitar erros de autenticação na primeira migração do Prisma (`npx prisma db push`).
 - **Build Otimizado do Frontend:** Ajustado o comando para `npx ng build` nativo, compilando o bundle de produção direto para `/var/www/edupsych/dist/browser`.
+- **Correção da Imagem Docker da Evolution API:** Atualizada a imagem em `docker-compose.prod.yml` de `atendai/evolution-api` (namespace legado) para a imagem oficial mantida `evoapicloud/evolution-api:v2.2.0`, permitindo o download público direto do Docker Hub sem bloqueio de pull.
 
 ---
 
