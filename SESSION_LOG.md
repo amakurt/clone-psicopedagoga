@@ -36,6 +36,31 @@
 
 ---
 
+### 💡 Backlog & Próximos Passos (Para Próxima Sessão / PC de Casa)
+
+#### 1. Personalização de Marca & Upload de Logomarca da Clínica (White-Label Clínico)
+- **Objetivo:** Permitir que clínicas e profissionais psicopedagogos personalizem o sistema e os documentos com a sua própria identidade visual e logomarca.
+- **Opções para o Usuário:**
+  - **Upload Direto no Sistema:** O próprio usuário faz upload da sua imagem/logo em `/app/configuracoes` (aba "Clínica").
+  - **Envio Assistido:** Botão alternativo *"Quer ajuda para recortar/otimizar sua logo? Clique aqui para enviar para nosso suporte"*.
+- **Pontos de Aplicação da Logomarca Personalizada:**
+  1. **Cabeçalhos de Documentos e Relatórios Oficiais (PDF):**
+     - Emissão de Laudos Psicopedagógicos e Neuropsicológicos.
+     - Relatórios de Evolução e Pareceres Clínicos.
+     - Declarações de Comparecimento, Encaminhamentos e Anamneses.
+     - Recibos Financeiros emitidos para os responsáveis.
+  2. **Portal do Responsável (`/guardian`):**
+     - Pai, mãe ou tutor visualiza a logomarca da clínica que atende a criança no topo do portal.
+  3. **Identidade Visual no App Interno:**
+     - Sidebar ou cabeçalho superior exibindo a marca própria da clínica contratante.
+- **Roteiro Técnico Previsto:**
+  - **Prisma Schema:** Adicionar campo `logoUrl String?` ao modelo `Clinic` (em `schema.prisma` e `schema.postgres.prisma`).
+  - **Backend API:** Rota `POST /api/clinic/logo` com upload seguro (multer) e redimensionamento/compressão, ou upload base64 otimizado.
+  - **Frontend:** Componente de preview, drag-and-drop e remoção de logo em `configuracoes.component.ts`.
+  - **PDF Exporter:** Injeção dinâmica da URL/base64 da logo nos templates de impressão (`html2pdf` e layouts de impressão).
+
+---
+
 ## Sessão 72 - 22/10/2026 — Novos Planos de Assinatura (Mensal, Semestral, Anual), Fim do Trial & Demonstração Interativa ao Vivo
 
 ### O que foi feito
