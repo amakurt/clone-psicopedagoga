@@ -131,7 +131,7 @@ if [ ! -f "/etc/nginx/sites-available/edupsych" ]; then
 server {
     listen 80;
     listen [::]:80;
-    server_name _;
+    server_name edupsychpro.tech app.edupsychpro.tech www.edupsychpro.tech _;
 
     client_max_body_size 50M;
 
