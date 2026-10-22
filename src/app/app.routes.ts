@@ -11,6 +11,8 @@ export const routes: Routes = [
   { path: 'auth/callback', loadComponent: () => import('./modules/auth/pages/callback/auth-callback.component').then(m => m.AuthCallbackComponent) },
   { path: 'auth/select-clinic', loadComponent: () => import('./modules/auth/pages/select-clinic/select-clinic.component').then(m => m.SelectClinicComponent) },
   { path: 'formulario/:token', loadComponent: () => import('./modules/formulario/formulario.component').then(m => m.PublicFormComponent) },
+  { path: 'termos', loadComponent: () => import('./modules/landing/pages/termos-de-uso.component').then(m => m.TermosDeUsoComponent) },
+  { path: 'privacidade', loadComponent: () => import('./modules/landing/pages/politica-privacidade.component').then(m => m.PoliticaPrivacidadeComponent) },
   {
     path: 'master',
     loadComponent: () => import('./modules/superadmin/pages/superadmin-dashboard.component').then(m => m.SuperAdminDashboardComponent),

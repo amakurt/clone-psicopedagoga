@@ -135,6 +135,27 @@ server {
 
     client_max_body_size 50M;
 
+    # Ocultar versão do Nginx
+    server_tokens off;
+
+    # Headers de Segurança
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Bloquear arquivos de mapa de fonte (Source Maps) contra engenharia reversa
+    location ~* \.map$ {
+        deny all;
+        return 404;
+    }
+
+    # Bloquear arquivos ocultos e sensíveis (.env, .git, etc.)
+    location ~ /\.(?!well-known) {
+        deny all;
+        return 404;
+    }
+
     root /var/www/edupsych/dist/browser;
     index index.html;
 

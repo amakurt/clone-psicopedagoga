@@ -2,6 +2,40 @@
 
 ## Última Atualização: 22 de Outubro de 2026
 
+## Sessão 73 - 22/10/2026 — Blindagem Anti-Engenharia Reversa (Anti-Clonagem), Supressão de Source Maps, Hardening Nginx & Proteção Jurídica (Termos de Uso e LGPD)
+
+### O que foi feito
+
+#### 1. Blindagem Anti-Engenharia Reversa & AI Code Scrapers (Ex: `rea` / Reverse Engineer Anything)
+- **Supressão Total de Source Maps (`angular.json`):**
+  - Desativada a geração de arquivos `.map` em builds de produção (`"sourceMap": false`).
+  - Ocultados nomes semânticos de chunks com minificação estrita (`"namedChunks": false` e `"optimization": true`), impedindo que ferramentas automatizadas de IA consigam ler o código-fonte TypeScript original do cliente.
+- **Ocultação de Fingerprinting de Servidor (`backend/src/index.ts` & `deploy-vps.sh`):**
+  - Desativado o cabeçalho `X-Powered-By: Express` via `app.disable('x-powered-by')`.
+  - Configurado `server_tokens off;` no Nginx para ocultar versão e dados do servidor web.
+- **Hardening de Segurança no Nginx (`deploy-vps.sh`):**
+  - **Bloqueio de Arquivos `.map`:** Adicionado bloco `location ~* \.map$ { deny all; return 404; }`.
+  - **Bloqueio de Arquivos Ocultos:** Adicionado bloco `location ~ /\.(?!well-known) { deny all; return 404; }` para proteger `.env`, `.git` e arquivos de configuração.
+  - **Cabeçalhos de Segurança HTTP:** Imposição de `X-Frame-Options SAMEORIGIN`, `X-Content-Type-Options nosniff`, `X-XSS-Protection "1; mode=block"` e `Referrer-Policy "strict-origin-when-cross-origin"`.
+
+#### 2. Termos de Uso e Proteção de Propriedade Intelectual (`/termos`)
+- **Criação da Página de Termos de Uso (`TermosDeUsoComponent`):**
+  - **Cláusula Explícita de Propriedade Intelectual & Proteção Anti-Clonagem:** Proibição formal de engenharia reversa, descompilação, desmontagem, scraping por agentes autônomos de IA ou ferramentas do tipo *Reverse Engineer Anything*, com fundamento na Lei de Software nº 9.609/1998 e Lei de Direitos Autorais nº 9.610/1998.
+  - Definição clara de que a infraestrutura backend, algoritmos de inteligência artificial clínica e fluxos de banco de dados são segredos de negócio inalienáveis.
+  - Disposições sobre contas, faturamento, pagamento via PIX, disponibilidade e cancelamento.
+
+#### 3. Política de Privacidade & Proteção de Dados LGPD (`/privacidade`)
+- **Criação da Página de Política de Privacidade (`PoliticaPrivacidadeComponent`):**
+  - Em conformidade integral com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 - LGPD).
+  - Regras específicas para proteção de dados sensíveis de saúde de crianças e adolescentes.
+  - Diretrizes para uso ético e seguro de inteligência artificial clínica (Gemini) sem treinamento em dados de pacientes reais.
+
+#### 4. Integração na Aplicação
+- **Roteamento Global (`app.routes.ts`):** Inclusão das rotas públicas `/termos` e `/privacidade`.
+- **Rodapé da Landing Page (`landing-page.component.ts`):** Vinculados os links do rodapé para as novas páginas legais, adicionando também link de contato direto.
+
+---
+
 ## Sessão 72 - 22/10/2026 — Novos Planos de Assinatura (Mensal, Semestral, Anual), Fim do Trial & Demonstração Interativa ao Vivo
 
 ### O que foi feito

@@ -399,11 +399,11 @@ import { environment } from '../../../environments/environment';
           </div>
 
           <div>
-            <h4 class="font-bold mb-4">Suporte</h4>
+            <h4 class="font-bold mb-4">Suporte & Legal</h4>
             <ul class="space-y-3">
-              <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Central de Ajuda</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Privacidade</a></li>
-              <li><a href="#" class="text-gray-400 hover:text-white transition-colors text-sm">Termos de Uso</a></li>
+              <li><a href="mailto:contato@edupsych.com.br" class="text-gray-400 hover:text-white transition-colors text-sm">Central de Ajuda</a></li>
+              <li><a routerLink="/privacidade" class="text-gray-400 hover:text-white transition-colors text-sm">Privacidade</a></li>
+              <li><a routerLink="/termos" class="text-gray-400 hover:text-white transition-colors text-sm">Termos de Uso</a></li>
             </ul>
           </div>
         </div>
