@@ -25,6 +25,10 @@
 - **Blindagem do Serviço de E-mail (SMTP):** `getTransporter()` atualizado para ignorar placeholders de configuração de e-mail e `sendEmail()` envolvido em `try/catch`, ativando automaticamente contas quando o SMTP não estiver configurado para não prender novos usuários.
 - **Ativação do Dono do SaaS (SuperAdmin):** Executado `node scripts/promote-superadmin.js amakurt@gmail.com` com sucesso, ativando a conta (`active: true`) com papel `SUPERADMIN` e acesso irrestrito ao painel master.
 
+#### 4. Integração Oficial de Faturamento com Asaas (Produção)
+- Configuração das credenciais oficiais de produção do Asaas: `ASAAS_API_KEY` ($aact_prod...), `ASAAS_ENV="production"` e Webhook seguro `ASAAS_WEBHOOK_TOKEN` apontando para `https://app.edupsychpro.tech/api/billing/webhook`.
+- Habilitada emissão de QR Code Pix e conciliação automática de assinaturas em tempo real via eventos do webhook Asaas v3.
+
 ---
 
 ## Sessão 69 - 14/10/2026 — Preparação Completa para Deploy em Produção (Hostinger VPS KVM 2)
