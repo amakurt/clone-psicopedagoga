@@ -17,7 +17,7 @@ async function promote() {
 
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { role: 'SUPERADMIN' },
+    data: { role: 'SUPERADMIN', active: true },
   });
 
   console.log(`✅ Sucesso! O usuário ${updated.name} (${updated.email}) agora é SUPERADMIN.`);

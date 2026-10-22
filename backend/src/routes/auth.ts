@@ -275,87 +275,135 @@ router.post('/login', strictLimiter, async (req, res) => {
 // Local register
 // register usa strictLimiter
 router.post('/register', strictLimiter, async (req, res) => {
-  const { name, email, password, role, phone } = req.body;
-  
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
-  }
-
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return res.status(400).json({ error: 'Email já cadastrado' });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      password: hashedPassword,
-      role: role || 'SECRETARIA',
-      phone: phone || null,
-      active: false,
+  try {
+    const { name, email, password, role, phone } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
     }
-  });
 
-  await ensureMembership(user);
-  await ensureResponsibleForUser(user);
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
+    }
 
-  const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
-  const channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ error: 'Email já cadastrado' });
+    }
 
-  res.status(201).json({
-    message: 'Conta criada. Enviamos um link de ativação para o seu email.',
-    needsVerification: true,
-    channel,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role }
-  });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const hasSmtp = emailConfigured();
+    
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: role || 'SECRETARIA',
+        phone: phone || null,
+        active: !hasSmtp, // se não há SMTP, ativa direto
+      }
+    });
+
+    await ensureMembership(user);
+    await ensureResponsibleForUser(user);
+
+    let channel = 'DEV';
+    if (hasSmtp) {
+      try {
+        const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
+        channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
+      } catch (err: any) {
+        console.warn('[AUTH] Falha ao enviar verificação, ativando conta:', err?.message);
+        await prisma.user.update({ where: { id: user.id }, data: { active: true } });
+        user.active = true;
+      }
+    }
+
+    const token = signToken(user);
+    const tenants = await getUserTenants(user.id);
+
+    res.status(201).json({
+      message: user.active ? 'Conta criada com sucesso!' : 'Conta criada. Enviamos um link de ativação para o seu email.',
+      needsVerification: !user.active,
+      channel,
+      token,
+      tenants,
+      user: buildUserPayload(user)
+    });
+  } catch (error: any) {
+    console.error('[REGISTER_ERROR]', error);
+    res.status(500).json({ error: error?.message || 'Erro ao criar conta' });
+  }
 });
 
 // Registro de nova clínica (self-service, fluxo de venda da landing)
 // Cria o Tenant da clínica + usuário GESTOR admin + subscription TRIAL 14d
 router.post('/register-clinic', strictLimiter, async (req, res) => {
-  const { name, email, password, clinicName, phone } = req.body;
+  try {
+    const { name, email, password, clinicName, phone } = req.body;
 
-  if (!name || !email || !password || !clinicName) {
-    return res.status(400).json({ error: 'Nome, email, senha e nome da clínica são obrigatórios' });
+    if (!name || !email || !password || !clinicName) {
+      return res.status(400).json({ error: 'Nome, email, senha e nome da clínica são obrigatórios' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ error: 'Email já cadastrado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const { tenant, user } = await createClinicWithAdmin({
+      name,
+      email,
+      password: hashedPassword,
+      clinicName,
+      phone,
+    });
+
+    const hasSmtp = emailConfigured();
+    let channel = 'DEV';
+
+    if (!hasSmtp) {
+      // Se ainda não há servidor SMTP configurado na VPS, ativa imediatamente
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { active: true },
+      });
+      user.active = true;
+    } else {
+      try {
+        const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
+        channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
+      } catch (err: any) {
+        console.warn('[AUTH] Falha ao enviar verificação da clínica, ativando conta:', err?.message);
+        await prisma.user.update({ where: { id: user.id }, data: { active: true } });
+        user.active = true;
+      }
+    }
+
+    console.log(`[AUTH] Clínica criada: ${tenant.name} (${tenant.slug}) | admin ${user.email} | trial 14d | ativo: ${user.active}`);
+
+    const token = signToken(user);
+    const tenants = await getUserTenants(user.id);
+
+    res.status(201).json({
+      message: user.active ? 'Cadastro realizado com sucesso!' : 'Clínica criada. Enviamos um link de ativação para o seu email.',
+      needsVerification: !user.active,
+      channel,
+      token,
+      tenant: buildTenantPayload(tenant, 'GESTOR'),
+      tenants,
+      user: buildUserPayload(user),
+    });
+  } catch (error: any) {
+    console.error('[REGISTER_CLINIC_ERROR]', error);
+    res.status(500).json({ error: error?.message || 'Erro ao criar conta da clínica' });
   }
-
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return res.status(400).json({ error: 'Email já cadastrado' });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const { tenant, user } = await createClinicWithAdmin({
-    name,
-    email,
-    password: hashedPassword,
-    clinicName,
-    phone,
-  });
-
-  const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
-  const channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
-
-  console.log(`[AUTH] Clínica criada: ${tenant.name} (${tenant.slug}) | admin ${user.email} | trial 14d`);
-
-  res.status(201).json({
-    message: 'Clínica criada. Enviamos um link de ativação para o seu email.',
-    needsVerification: true,
-    channel,
-    tenant: buildTenantPayload(tenant, 'GESTOR'),
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
-  });
 });
 
 // Verify account (link click or code)
