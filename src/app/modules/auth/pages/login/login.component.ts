@@ -355,7 +355,7 @@ register() {
         this.router.navigate(['/auth/verify'], { queryParams: { email: this.email } });
         return;
       }
-      this.auth.login(data.token, data.user);
+      this.auth.login(data.token, data.user, data.tenants, data.tenant);
       const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
       this.router.navigate([redirectPath]);
     })
