@@ -192,6 +192,29 @@ type NavItem = {
           </div>
         }
 
+        <!-- Banner de Modo Demonstração -->
+        @if (isDemoUser()) {
+          <div class="bg-gradient-to-r from-amber-600 via-amber-500 to-teal-700 text-white px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between gap-3 shadow-md z-40 shrink-0 border-b border-amber-400/40">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="material-icons text-white text-lg shrink-0">science</span>
+              <div class="truncate">
+                <span class="font-black text-amber-100">Modo Demonstração:</span>
+                <span class="ml-1 text-white">Você está explorando o EduPsych Pro com dados e pacientes simulados.</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'SEMESTRAL'}"
+                class="px-3 py-1 bg-white hover:bg-slate-50 text-slate-900 rounded-lg transition-all text-xs font-bold flex items-center gap-1 shadow-sm active:scale-95">
+                <span>Criar Conta Real</span>
+                <span class="material-icons text-xs">arrow_forward</span>
+              </a>
+              <button (click)="logoutDemo()" class="text-white/90 hover:text-white text-xs underline font-semibold px-2 py-1">
+                Sair
+              </button>
+            </div>
+          </div>
+        }
+
         <!-- Banner de Ativação Suave de E-mail (Soft Activation) -->
         @if (showActivationBanner()) {
           <div class="bg-gradient-to-r from-teal-900/90 via-[#007F80]/90 to-teal-950/90 text-white px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between gap-3 shadow-md z-40 shrink-0 border-b border-teal-500/30">
@@ -345,9 +368,15 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   bannerDismissed = signal(false);
   resendingEmail = signal(false);
 
+  isDemoUser = computed(() => {
+    const user = this.auth.user();
+    return user?.email === 'demo@edupsychpro.tech' || !!user?.isDemo;
+  });
+
   showActivationBanner = computed(() => {
     const user = this.auth.user();
     if (!user) return false;
+    if (this.isDemoUser()) return false;
     if (user.role === 'SUPERADMIN' || this.auth.isSuperAdmin()) return false;
     if (user.emailVerified) return false;
     if (this.bannerDismissed()) return false;
@@ -605,5 +634,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   dismissActivationBanner() {
     this.bannerDismissed.set(true);
+  }
+
+  logoutDemo() {
+    this.auth.logout();
+    this.router.navigate(['/']);
   }
 }

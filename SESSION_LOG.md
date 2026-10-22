@@ -2,6 +2,55 @@
 
 ## Última Atualização: 22 de Outubro de 2026
 
+## Sessão 72 - 22/10/2026 — Novos Planos de Assinatura (Mensal, Semestral, Anual), Fim do Trial & Demonstração Interativa ao Vivo
+
+### O que foi feito
+
+#### 1. Novo Modelo de Faturamento & Precificação Oficial
+- **Fim do Trial de 14 Dias:** Substituído o período de testes gratuito sem cobrança por um modelo transparente de assinatura com ativação direta ou degustação via demonstração ao vivo.
+- **Estruturação dos 3 Novos Ciclos de Assinatura:**
+  - **Plano Mensal:** R$ 127,00/mês — Sem fidelidade ou carência, pagamento mensal flexível via PIX.
+  - **Plano Semestral:** R$ 99,00/mês (total de R$ 594,00 por semestre) — Economia de 22%, badge "Mais Popular".
+  - **Plano Anual:** R$ 69,00/mês (total de R$ 828,00 por ano) — Economia de 45%, badge "Melhor Valor".
+  - **Acesso Ilimitado e Unificado:** Todos os 3 planos contam com todas as funcionalidades desbloqueadas (pacientes ilimitados, profissionais ilimitados, emissão de laudos com IA, integração WhatsApp, agenda com painel de TV e portal do responsável).
+- **Script de Migração do Banco (`backend/scripts/migrate-new-plans.ts`):**
+  - Desativação dos planos legados (`TRIAL`, `BASICO`, `PRO`).
+  - Cadastro/atualização de `MENSAL` (12700 centavos), `SEMESTRAL` (59400 centavos), `ANUAL` (82800 centavos) e `VIP` (0 centavos).
+- **Motor de Cobrança Asaas (`backend/src/lib/asaas.ts` & `billing.ts`):**
+  - Mapeamento nativo dos ciclos da API Asaas: `MONTHLY` (Mensal), `SEMIANNUALLY` (Semestral) e `YEARLY` (Anual).
+  - Cálculo exato de expiração e renovação com base na duração de cada ciclo (30, 180 e 365 dias).
+
+#### 2. Demonstração Interativa ao Vivo (Modo Demo em 1-Clique)
+- **Endpoint Especializado (`POST /api/auth/demo` em `backend/src/routes/auth.ts`):**
+  - Auto-provisionamento da clínica de testes `clinica-demo` com o perfil profissional da `Dra. Camila Monteiro`.
+  - Inclusão automática de 3 pacientes simulados com prontuários, evoluções e anamneses pré-cadastradas para exploração realista.
+  - Assinatura anual ativa para desbloqueio imediato de todas as telas clínicas.
+  - Retorno de token JWT autenticado permitindo acesso instantâneo sem necessidade de preenchimento de formulários ou senhas.
+- **Chamadas de Acesso na Landing Page (`LandingPageComponent`):**
+  - Inclusão do botão de ação primária **"Ver Demonstração ao Vivo"** na barra de navegação superior, menu mobile, Hero principal e ao final da seção de planos.
+  - Execução assíncrona com feedback visual e redirecionamento direto para `/app/dashboard`.
+- **Identificação Visual no Dashboard (`MainLayoutComponent`):**
+  - Banner superior fixo em tons âmbar/teal sinalizando: *"Modo Demonstração: Você está explorando o EduPsych Pro com dados e pacientes simulados"*.
+  - Acesso direto com 1 clique para **[Criar Minha Conta Real]** e botão **[Sair]**, suprimindo alertas irrelevantes de ativação de e-mail enquanto em modo demo.
+
+#### 3. Experiência de Cadastro & Vitrine de Preços
+- **Landing Page (`landing-page.component.ts`):**
+  - Vitrine `#planos` reformulada destacando os preços mensais equivalentes (R$ 127, R$ 99 e R$ 69), badges de desconto e lista de recursos inclusos.
+  - Links de cadastro parametrizados direcionando para o plano pré-selecionado (`/login?mode=register&plan=...`).
+- **Página de Login e Cadastro (`login.component.ts`):**
+  - Remoção de menções a trial gratuito de 14 dias.
+  - Envio do parâmetro `plan` selecionado para o backend no momento da criação da clínica (`/auth/register-clinic`).
+  - Redirecionamento automático pós-cadastro para o painel de faturamento/assinatura (`/app/plano`).
+- **Gerenciamento de Assinatura Interno (`plano.component.ts`):**
+  - Apresentação refinada dos cards com valor mensal e subtítulo do faturamento correspondente ao ciclo.
+  - Ocultação automática de planos administrativos (`VIP`) para assinantes convencionais.
+- **Painel SuperAdmin (`superadmin-dashboard.component.ts` & `superadmin.ts`):**
+  - Suporte completo às novas etiquetas visuais (`MENSAL`, `SEMESTRAL`, `ANUAL`) e valores pré-definidos para emissão de faturas avulsas.
+- **Desbloqueio de Módulos Restritos (`whatsapp-client.service.ts` & `whatsapp-config.component.ts`):**
+  - Atualizada a função `isPlanWhatsAppEligible` para liberar o WhatsApp e inteligência artificial aos planos `MENSAL`, `SEMESTRAL`, `ANUAL`, `PRO` e `VIP`.
+
+---
+
 ## Sessão 71 - 22/10/2026 — Fluxo de Ativação Suave de Conta (Soft Onboarding) & Banner de Verificação de E-mail
 
 ### O que foi feito

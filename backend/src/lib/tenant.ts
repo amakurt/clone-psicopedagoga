@@ -115,7 +115,11 @@ export async function ensureMembership(user: any) {
   });
 }
 
-const TRIAL_DAYS = 14;
+function getPlanDurationDays(planCode: string): number {
+  if (planCode === 'ANUAL') return 365;
+  if (planCode === 'SEMESTRAL') return 180;
+  return 30;
+}
 
 export function slugifyClinic(name: string): string {
   return name
@@ -138,25 +142,28 @@ export async function generateUniqueSlug(name: string): Promise<string> {
   return slug;
 }
 
-// Cria uma clínica nova (tenant) com seu admin GESTOR e trial de 14 dias
-// (fluxo de venda: landing -> register-clinic -> ativação -> login)
+// Cria uma clínica nova (tenant) com seu admin GESTOR e plano selecionado
+// (fluxo de venda: landing -> register-clinic -> ativação -> checkout)
 export async function createClinicWithAdmin(data: {
   name: string;
   email: string;
   password: string;
   clinicName: string;
   phone?: string;
+  planCode?: string;
 }) {
   const slug = await generateUniqueSlug(data.clinicName);
-  const trialEnd = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const planCode = data.planCode || 'MENSAL';
+  const durationDays = getPlanDurationDays(planCode);
+  const periodEnd = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
   const tenant = await prisma.tenant.create({
     data: {
       name: data.clinicName,
       slug,
-      plan: 'TRIAL',
+      plan: planCode,
       status: 'ATIVO',
-      trialEndsAt: trialEnd,
+      trialEndsAt: null,
     },
   });
 
@@ -179,10 +186,10 @@ export async function createClinicWithAdmin(data: {
   await prisma.subscription.create({
     data: {
       tenantId: tenant.id,
-      planCode: 'TRIAL',
-      status: 'TRIAL',
+      planCode,
+      status: 'PENDENTE',
       currentPeriodStart: new Date(),
-      currentPeriodEnd: trialEnd,
+      currentPeriodEnd: periodEnd,
     },
   });
 

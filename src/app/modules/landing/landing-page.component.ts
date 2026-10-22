@@ -1,6 +1,7 @@
-import { Component, signal, OnInit, HostListener } from '@angular/core';
+import { Component, signal, OnInit, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -29,8 +30,14 @@ import { environment } from '../../../environments/environment';
           </div>
 
           <div class="hidden md:flex items-center gap-3">
-            <a routerLink="/login" class="px-5 py-2 text-sm font-semibold text-gray-700 dark:text-slate-300 hover:text-primary transition-colors">Entrar</a>
-            <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25">Começar Agora</a>
+            <button (click)="openDemo()" [disabled]="loadingDemo()" 
+              class="px-4 py-2 border-2 border-primary/40 hover:border-primary text-primary hover:bg-primary/5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+              title="Acessar ambiente de teste com 1 clique">
+              <span class="material-icons text-base">visibility</span>
+              <span>{{ loadingDemo() ? 'Abrindo...' : 'Ver Demonstração' }}</span>
+            </button>
+            <a routerLink="/login" class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-slate-300 hover:text-primary transition-colors">Entrar</a>
+            <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'SEMESTRAL'}" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25">Começar Agora</a>
           </div>
 
           <button (click)="mobileMenu.set(!mobileMenu())" class="md:hidden p-2 text-gray-600 dark:text-slate-300">
@@ -47,8 +54,13 @@ import { environment } from '../../../environments/environment';
           <a href="#features" (click)="mobileMenu.set(false); scrollTo('features', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Para Profissionais</a>
           <a href="#parents" (click)="mobileMenu.set(false); scrollTo('parents', $event)" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Para Pais</a>
           <hr class="border-gray-200 dark:border-slate-700">
+          <button (click)="mobileMenu.set(false); openDemo()" [disabled]="loadingDemo()"
+            class="w-full py-2.5 border-2 border-primary/40 text-primary rounded-xl text-sm font-bold text-center flex items-center justify-center gap-2">
+            <span class="material-icons text-base">visibility</span>
+            <span>{{ loadingDemo() ? 'Abrindo Demonstração...' : 'Ver Demonstração ao Vivo' }}</span>
+          </button>
           <a routerLink="/login" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Entrar</a>
-          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="block py-3 bg-primary text-on-primary rounded-xl text-sm font-bold text-center">Começar Agora</a>
+          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'SEMESTRAL'}" class="block py-3 bg-primary text-on-primary rounded-xl text-sm font-bold text-center">Começar Agora</a>
         </div>
       }
     </nav>
@@ -82,14 +94,15 @@ import { environment } from '../../../environments/environment';
               A plataforma completa para psicopedagogos, terapeutas e pais acompanharem o desenvolvimento de crianças com TEA e necessidades especiais.
             </p>
 
-            <div class="mt-8 flex flex-wrap gap-4">
-              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="px-8 py-4 bg-primary hover:bg-primary-dark text-on-primary rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
-                Começar Agora Grátis
+            <div class="mt-8 flex flex-wrap items-center gap-4">
+              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'SEMESTRAL'}" class="px-8 py-4 bg-primary hover:bg-primary-dark text-on-primary rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
+                Começar Agora
                 <span class="material-icons">arrow_forward</span>
               </a>
-              <a href="#features" (click)="scrollTo('features', $event)" class="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-2xl font-bold text-base transition-all border border-gray-200 dark:border-slate-700">
-                Ver Funcionalidades
-              </a>
+              <button (click)="openDemo()" [disabled]="loadingDemo()" class="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-teal-700 dark:text-teal-300 rounded-2xl font-bold text-base transition-all border-2 border-primary/30 flex items-center gap-2 shadow-sm disabled:opacity-50">
+                <span class="material-icons text-primary">play_circle</span>
+                <span>{{ loadingDemo() ? 'Abrindo Demo...' : 'Ver Demonstração ao Vivo' }}</span>
+              </button>
             </div>
 
             <div class="mt-8 flex flex-wrap gap-3">
@@ -223,54 +236,86 @@ import { environment } from '../../../environments/environment';
             <span class="material-icons text-primary text-sm">workspace_premium</span>
             <span class="text-sm font-semibold text-primary">Planos e Preços</span>
           </span>
-          <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">Comece grátis, cresça quando quiser</h2>
-          <p class="mt-4 text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">14 dias de teste gratuito, sem cartão de crédito. Pague via PIX quando decidir assinar.</p>
+          <h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">Planos simples e transparentes</h2>
+          <p class="mt-4 text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">
+            Sem fidelidade no plano mensal ou economize até 45% nos ciclos semestral e anual. Todos os recursos clínicos desbloqueados em todos os planos.
+          </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          @for (plan of plans(); track plan.code) {
+        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+          @for (plan of visiblePlans(); track plan.code) {
             <div class="relative flex flex-col p-8 rounded-3xl border transition-all duration-300"
-              [class]="plan.code === 'BASICO'
-                ? 'bg-primary/5 dark:bg-primary/10 border-primary shadow-2xl shadow-primary/20 md:-mt-4 md:mb-4'
-                : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-xl'">
-              @if (plan.code === 'BASICO') {
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-on-primary text-xs font-bold rounded-full">
-                  MAIS POPULAR
+              [class]="plan.code === 'SEMESTRAL'
+                ? 'bg-primary/5 dark:bg-primary/10 border-primary shadow-2xl shadow-primary/20 md:-mt-4 md:mb-4 ring-2 ring-primary/30'
+                : (plan.code === 'ANUAL'
+                  ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/40 shadow-xl'
+                  : 'bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700 hover:shadow-xl')">
+              
+              @if (planBadge(plan)) {
+                <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 text-[11px] font-black uppercase tracking-wider rounded-full shadow-md whitespace-nowrap"
+                  [class]="plan.code === 'SEMESTRAL'
+                    ? 'bg-primary text-on-primary'
+                    : (plan.code === 'ANUAL' ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200')">
+                  {{ planBadge(plan) }}
                 </div>
               }
 
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ plan.name }}</h3>
-              <div class="mt-4 flex items-end gap-1">
-                <span class="text-4xl font-black text-gray-900 dark:text-white">{{ formatPrice(plan.priceCents) }}</span>
-                <span class="text-sm text-gray-500 dark:text-slate-400 mb-1">/mês</span>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white">{{ plan.name }}</h3>
+              
+              <div class="mt-4 flex items-baseline gap-1.5">
+                <span class="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white">{{ planMonthlyPrice(plan) }}</span>
+                <span class="text-sm font-bold text-gray-500 dark:text-slate-400">/mês</span>
               </div>
-              <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                {{ plan.code === 'TRIAL' ? 'Teste grátis por 14 dias' : 'Cobrança mensal via PIX' }}
+              
+              <p class="text-xs font-semibold text-primary dark:text-teal-400 mt-1 min-h-[1.25rem]">
+                {{ planBillingCycleText(plan) }}
               </p>
 
-              <ul class="mt-6 space-y-3 flex-1">
+              <hr class="my-6 border-gray-200 dark:border-slate-700">
+
+              <ul class="space-y-3 flex-1">
                 @for (feature of planFeatures(plan); track feature) {
-                  <li class="flex items-start gap-2 text-sm text-gray-600 dark:text-slate-300">
-                    <span class="material-icons text-primary text-base mt-0.5">check_circle</span>
-                    {{ feature }}
+                  <li class="flex items-start gap-2.5 text-sm text-gray-600 dark:text-slate-300">
+                    <span class="material-icons text-primary text-base mt-0.5 shrink-0">check_circle</span>
+                    <span>{{ feature }}</span>
                   </li>
                 }
               </ul>
 
-              <a routerLink="/login" [queryParams]="{mode: 'register', plan: plan.code}"
-                class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm transition-all"
-                [class]="plan.code === 'BASICO'
+              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: plan.code}"
+                class="mt-8 inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-bold text-sm transition-all shadow-md"
+                [class]="plan.code === 'SEMESTRAL'
                   ? 'bg-primary hover:bg-primary-dark text-on-primary shadow-lg shadow-primary/25'
-                  : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600'">
-                {{ plan.code === 'TRIAL' ? 'Começar Grátis' : 'Assinar ' + plan.name }}
+                  : (plan.code === 'ANUAL'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/25'
+                    : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-600')">
+                Assinar {{ plan.name }}
                 <span class="material-icons text-base">arrow_forward</span>
               </a>
             </div>
           }
         </div>
 
+        <!-- Banner Chamada para a Demonstração -->
+        <div class="mt-14 p-6 sm:p-8 bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-slate-800 dark:to-slate-800/80 rounded-3xl border border-teal-200/60 dark:border-slate-700 max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+              <span class="material-icons text-primary text-3xl">play_circle</span>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-900 dark:text-white text-base">Quer experimentar todas as funcionalidades agora?</h4>
+              <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">Acesse nosso ambiente de teste com 1 clique, com pacientes e laudos de exemplo prontos para você navegar.</p>
+            </div>
+          </div>
+          <button (click)="openDemo()" [disabled]="loadingDemo()"
+            class="px-6 py-3.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shrink-0 flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50">
+            <span class="material-icons text-lg">visibility</span>
+            <span>{{ loadingDemo() ? 'Abrindo Demonstração...' : 'Testar Demonstração Grátis' }}</span>
+          </button>
+        </div>
+
         <p class="mt-10 text-center text-sm text-gray-500 dark:text-slate-400">
-          Todos os planos incluem: prontuários, agenda, evoluções, laudos, portal do responsável, WhatsApp e suporte.
+          Pagamento via PIX instantâneo com ativação imediata. Todos os planos incluem prontuários, agenda, evoluções, laudos com IA, WhatsApp e suporte.
         </p>
       </div>
     </section>
@@ -380,8 +425,12 @@ import { environment } from '../../../environments/environment';
   `]
 })
 export class LandingPageComponent implements OnInit {
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   scrolled = signal(false);
   mobileMenu = signal(false);
+  loadingDemo = signal(false);
   plans = signal<any[]>([]);
 
   ngOnInit() {
@@ -391,6 +440,32 @@ export class LandingPageComponent implements OnInit {
       .catch(() => this.plans.set([]));
   }
 
+  visiblePlans() {
+    return this.plans().filter(p => p.code !== 'VIP' && p.active);
+  }
+
+  async openDemo() {
+    if (this.loadingDemo()) return;
+    this.loadingDemo.set(true);
+    try {
+      const res = await fetch(`${environment.apiUrl}/auth/demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Erro ao carregar ambiente de demonstração');
+      }
+      const data = await res.json();
+      this.auth.login(data.token, data.user, data.tenants, data.tenant);
+      this.router.navigate(['/app/dashboard']);
+    } catch (err: any) {
+      alert(err.message || 'Não foi possível iniciar a demonstração. Tente novamente.');
+    } finally {
+      this.loadingDemo.set(false);
+    }
+  }
+
   scrollTo(id: string, event?: Event) {
     event?.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -398,6 +473,27 @@ export class LandingPageComponent implements OnInit {
 
   formatPrice(cents: number) {
     return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  }
+
+  planMonthlyPrice(plan: any): string {
+    if (plan.code === 'MENSAL') return 'R$ 127';
+    if (plan.code === 'SEMESTRAL') return 'R$ 99';
+    if (plan.code === 'ANUAL') return 'R$ 69';
+    return this.formatPrice(plan.priceCents);
+  }
+
+  planBillingCycleText(plan: any): string {
+    if (plan.code === 'MENSAL') return 'Cobrança mensal flexível sem fidelidade';
+    if (plan.code === 'SEMESTRAL') return 'Faturamento semestral de R$ 594 (22% OFF)';
+    if (plan.code === 'ANUAL') return 'Faturamento anual de R$ 828 (45% OFF)';
+    return 'Cobrança recorrente via PIX';
+  }
+
+  planBadge(plan: any): string {
+    if (plan.code === 'MENSAL') return 'FLEXÍVEL';
+    if (plan.code === 'SEMESTRAL') return 'MAIS POPULAR • 22% OFF';
+    if (plan.code === 'ANUAL') return 'MELHOR VALOR • 45% OFF';
+    return '';
   }
 
   planFeatures(plan: any): string[] {

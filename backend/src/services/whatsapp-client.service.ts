@@ -145,7 +145,7 @@ export async function sendWhatsAppMessage(
 export function isPlanWhatsAppEligible(plan?: string | null): boolean {
   if (!plan) return false;
   const p = plan.trim().toUpperCase();
-  return p === 'PRO' || p === 'VIP';
+  return p === 'MENSAL' || p === 'SEMESTRAL' || p === 'ANUAL' || p === 'PRO' || p === 'VIP';
 }
 
 /**

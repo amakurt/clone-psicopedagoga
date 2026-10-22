@@ -318,9 +318,9 @@ import {
                 <span class="material-icons text-2xl">workspace_premium</span>
               </div>
               <div>
-                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Módulo WhatsApp & IA Exclusivo dos Planos PRO e VIP</h4>
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Módulo WhatsApp & IA</h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Sua clínica está no plano <strong class="text-amber-600 dark:text-amber-400 uppercase font-black">{{ tenantPlan() }}</strong>. Faça o upgrade para o plano PRO ou VIP para conectar seu número de WhatsApp e ativar respostas automáticas com IA.
+                  Sua clínica está no plano <strong class="text-amber-600 dark:text-amber-400 uppercase font-black">{{ tenantPlan() }}</strong>. Ative uma assinatura (Mensal, Semestral ou Anual) para conectar seu número de WhatsApp e ativar respostas automáticas com IA.
                 </p>
               </div>
             </div>

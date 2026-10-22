@@ -52,7 +52,13 @@ export async function getOrCreateCustomer(tenantId: string, tenantName: string) 
   return created;
 }
 
-export async function createSubscription(customerId: string, tenantId: string, planName: string, priceCents: number) {
+export async function createSubscription(
+  customerId: string,
+  tenantId: string,
+  planName: string,
+  priceCents: number,
+  cycle: 'MONTHLY' | 'SEMIANNUALLY' | 'YEARLY' = 'MONTHLY'
+) {
   const created = await asaasFetch('/subscriptions', {
     method: 'POST',
     body: JSON.stringify({
@@ -60,7 +66,7 @@ export async function createSubscription(customerId: string, tenantId: string, p
       billingType: 'PIX',
       value: priceCents / 100,
       nextDueDate: new Date().toISOString().split('T')[0],
-      cycle: 'MONTHLY',
+      cycle,
       description: `Assinatura ${planName} - EduPsych Pro`,
       externalReference: tenantId,
     }),

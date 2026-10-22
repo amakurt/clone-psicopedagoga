@@ -42,7 +42,7 @@ import { environment } from '../../../../../environments/environment';
           @if (isRegister() && selectedPlan()) {
             <div class="mb-5 p-3 bg-primary/5 border border-primary/20 rounded-xl text-sm text-slate-700 flex items-center gap-2">
               <span class="material-icons text-primary text-lg">workspace_premium</span>
-              Você escolheu o plano <strong>{{ selectedPlan() }}</strong> — comece o trial e pague ao assinar.
+              Você escolheu o plano <strong>{{ selectedPlan() }}</strong>. Conclua o cadastro para ativar sua clínica.
             </div>
           }
 
@@ -108,7 +108,7 @@ import { environment } from '../../../../../environments/environment';
                 @if (clinicNameError()) {
                   <p class="text-red-500 text-xs mt-1">{{ clinicNameError() }}</p>
                 }
-                <p class="text-xs text-slate-500 mt-1">Sua clínica terá 14 dias grátis, sem cartão.</p>
+                <p class="text-xs text-slate-500 mt-1">Sua clínica terá acesso completo a todas as ferramentas clínicas.</p>
               </div>
             }
 
@@ -333,6 +333,7 @@ register() {
           email: this.email,
           password: this.password,
           clinicName: this.clinicName,
+          plan: this.selectedPlan() || 'MENSAL',
         }
       : {
           name: this.name,
@@ -352,7 +353,9 @@ register() {
     })
     .then(data => {
       this.auth.login(data.token, data.user, data.tenants, data.tenant);
-      const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
+      const redirectPath = data.user?.role === 'RESPONSAVEL'
+        ? '/guardian'
+        : (this.selectedPlan() ? '/app/plano' : '/app/dashboard');
       this.router.navigate([redirectPath]);
     })
     .catch(err => {

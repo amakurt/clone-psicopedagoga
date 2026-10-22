@@ -16,7 +16,7 @@ import { z } from 'zod';
 const router = Router();
 
 const checkoutSchema = z.object({
-  planCode: z.enum(['TRIAL', 'BASICO', 'PRO']),
+  planCode: z.enum(['MENSAL', 'SEMESTRAL', 'ANUAL', 'VIP', 'TRIAL', 'BASICO', 'PRO']),
 });
 
 function safeCompareTokens(a: string, b: string): boolean {

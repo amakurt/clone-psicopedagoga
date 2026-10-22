@@ -341,7 +341,7 @@ router.post('/register', strictLimiter, async (req, res) => {
 // Cria o Tenant da clínica + usuário GESTOR admin + subscription TRIAL 14d
 router.post('/register-clinic', strictLimiter, async (req, res) => {
   try {
-    const { name, email, password, clinicName, phone } = req.body;
+    const { name, email, password, clinicName, phone, plan } = req.body;
 
     if (!name || !email || !password || !clinicName) {
       return res.status(400).json({ error: 'Nome, email, senha e nome da clínica são obrigatórios' });
@@ -363,6 +363,7 @@ router.post('/register-clinic', strictLimiter, async (req, res) => {
       password: hashedPassword,
       clinicName,
       phone,
+      planCode: plan || 'MENSAL',
     });
 
     const hasSmtp = emailConfigured();
@@ -724,6 +725,111 @@ router.put('/password', authenticate, async (req: any, res) => {
   await prisma.user.update({ where: { id: user.id }, data: { password: hashedPassword } });
 
   res.json({ message: 'Senha alterada com sucesso' });
+});
+
+// Sessão instantânea de demonstração (Live Demo interativo)
+router.post('/demo', async (req, res) => {
+  try {
+    const DEMO_EMAIL = 'demo@edupsychpro.tech';
+    const DEMO_SLUG = 'clinica-demo';
+
+    let tenant = await prisma.tenant.findUnique({ where: { slug: DEMO_SLUG } });
+    if (!tenant) {
+      tenant = await prisma.tenant.create({
+        data: {
+          name: 'Clínica Modelo EduPsych Pro',
+          slug: DEMO_SLUG,
+          plan: 'ANUAL',
+          status: 'ATIVO',
+          trialEndsAt: null,
+        },
+      });
+    }
+
+    let user = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: 'Dra. Camila Monteiro',
+          email: DEMO_EMAIL,
+          role: 'GESTOR',
+          active: true,
+          emailVerified: true,
+          clinicName: 'Clínica Modelo EduPsych Pro',
+          registration: 'ABPp 4829/SP',
+          bio: 'Psicopedagoga Clínica especialista em Neuropsicologia do Desenvolvimento e TEA.',
+          avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300',
+        },
+      });
+    }
+
+    await prisma.membership.upsert({
+      where: { tenantId_userId: { tenantId: tenant.id, userId: user.id } },
+      update: { role: 'GESTOR', active: true },
+      create: { tenantId: tenant.id, userId: user.id, role: 'GESTOR', active: true },
+    });
+
+    await prisma.subscription.upsert({
+      where: { tenantId: tenant.id },
+      update: { status: 'ATIVA', planCode: 'ANUAL' },
+      create: {
+        tenantId: tenant.id,
+        planCode: 'ANUAL',
+        status: 'ATIVA',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    // Garante pacientes simulados
+    const count = await prisma.paciente.count({ where: { tenantId: tenant.id } });
+    if (count === 0) {
+      await prisma.paciente.createMany({
+        data: [
+          {
+            tenantId: tenant.id,
+            name: 'Lucas Silva Meireles',
+            birthDate: '2018-05-14',
+            diagnosis: 'Transtorno do Espectro Autista (TEA Nível 1)',
+            status: 'ATIVO',
+            notes: 'Excelente engajamento com recursos visuais e jogos cognitivos. Foco atual em autorregulação e flexibilidade.',
+          },
+          {
+            tenantId: tenant.id,
+            name: 'Sofia Rodrigues Santos',
+            birthDate: '2016-11-20',
+            diagnosis: 'TDAH Tipo Misto + Desafios de Leitura/Dislexia',
+            status: 'ATIVO',
+            notes: 'Intervenção psicopedagógica semanal focada em funções executivas, atenção sustentada e consciência fonológica.',
+          },
+          {
+            tenantId: tenant.id,
+            name: 'Enzo Gabriel Castro',
+            birthDate: '2019-02-08',
+            diagnosis: 'Atraso Global do Desenvolvimento / Linguagem',
+            status: 'ATIVO',
+            notes: 'Fase de rastreio inicial e aplicação de protocolos lúdicos de estimulação cognitiva.',
+          },
+        ],
+      });
+    }
+
+    const token = signToken(user);
+    const tenants = await getUserTenants(user.id);
+    const tenantPayload = buildTenantPayload(tenant, 'GESTOR');
+
+    res.json({
+      token,
+      user: buildUserPayload(user),
+      tenant: tenantPayload,
+      tenants,
+      isDemo: true,
+      message: 'Bem-vindo à demonstração ao vivo do EduPsych Pro!',
+    });
+  } catch (error: any) {
+    console.error('[DEMO_SESSION_ERROR]', error);
+    res.status(500).json({ error: 'Erro ao iniciar sessão de demonstração' });
+  }
 });
 
 export default router;

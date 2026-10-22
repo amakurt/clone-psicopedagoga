@@ -16,6 +16,18 @@ function providerName() {
   return 'mock';
 }
 
+export function asaasCycleForPlan(planCode: string): 'MONTHLY' | 'SEMIANNUALLY' | 'YEARLY' {
+  if (planCode === 'ANUAL') return 'YEARLY';
+  if (planCode === 'SEMESTRAL') return 'SEMIANNUALLY';
+  return 'MONTHLY';
+}
+
+export function getPlanDurationDays(planCode: string): number {
+  if (planCode === 'ANUAL') return 365;
+  if (planCode === 'SEMESTRAL') return 180;
+  return 30;
+}
+
 export async function getPlan(code: string) {
   return prisma.plan.findUnique({ where: { code } });
 }
@@ -27,28 +39,26 @@ export async function getOrCreateSubscription(tenantId: string) {
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) throw new Error('Tenant não encontrado');
 
-  const end = tenant.trialEndsAt && tenant.trialEndsAt > new Date()
-    ? tenant.trialEndsAt
-    : new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const planCode = tenant.plan || 'MENSAL';
+  const durationDays = getPlanDurationDays(planCode);
+  const end = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
   sub = await prisma.subscription.create({
     data: {
       tenantId,
-      planCode: 'TRIAL',
-      status: 'TRIAL',
+      planCode,
+      status: tenant.status === 'ATIVO' ? 'ATIVA' : 'PENDENTE',
       currentPeriodStart: new Date(),
       currentPeriodEnd: end,
     },
   });
 
-  if (!tenant.trialEndsAt) {
-    await prisma.tenant.update({ where: { id: tenantId }, data: { trialEndsAt: end } });
-  }
   return sub;
 }
 
 export async function enforceTenantStatus(tenant: any) {
   if (tenant.status === 'BLOQUEADO') return;
+  if (tenant.plan === 'VIP') return; // VIP nunca expira
 
   const sub = tenant.subscription || await prisma.subscription.findUnique({ where: { tenantId: tenant.id } });
   if (!sub) {
@@ -60,8 +70,7 @@ export async function enforceTenantStatus(tenant: any) {
   const blocked =
     sub.status === 'BLOQUEADO' ||
     (sub.status === 'CANCELADA' && expired) ||
-    (sub.status !== 'ATIVA' && sub.status !== 'TRIAL' && expired) ||
-    (sub.planCode === 'TRIAL' && expired);
+    (sub.status !== 'ATIVA' && expired);
 
   if (blocked) {
     await prisma.tenant.update({ where: { id: tenant.id }, data: { status: 'BLOQUEADO' } });
@@ -101,7 +110,8 @@ async function createAsaasCheckout(tenantId: string, plan: any) {
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
 
   const customer = await getOrCreateCustomer(tenantId, tenant?.name || '');
-  const subscription = await createSubscription(customer.id, tenantId, plan.name, plan.priceCents);
+  const cycle = asaasCycleForPlan(plan.code);
+  const subscription = await createSubscription(customer.id, tenantId, plan.name, plan.priceCents, cycle);
   const payment = await getSubscriptionFirstPayment(subscription.id);
 
   let payload: string | null = null;
@@ -114,7 +124,7 @@ async function createAsaasCheckout(tenantId: string, plan: any) {
     expirationDate = pix.expirationDate;
   }
 
-  console.log(`[BILLING][ASAAS] Assinatura ${subscription.id} criada para ${tenantId}: ${plan.code} R$${(plan.priceCents / 100).toFixed(2)}`);
+  console.log(`[BILLING][ASAAS] Assinatura ${subscription.id} criada para ${tenantId}: ${plan.code} (${cycle}) R$${(plan.priceCents / 100).toFixed(2)}`);
 
   return {
     providerId: subscription.id,
@@ -136,6 +146,7 @@ export async function checkoutPlan(tenantId: string, planCode: string) {
 
   const provider = providerName();
   const now = new Date();
+  const durationDays = getPlanDurationDays(planCode);
   let providerData: any = { providerId: null, providerCustomerId: null, providerPaymentId: null, pixCopiaECola: null, pixQrImage: null, pixExpiresAt: null };
 
   if (provider === 'mock') {
@@ -160,7 +171,7 @@ export async function checkoutPlan(tenantId: string, planCode: string) {
       status: 'PENDENTE',
       provider,
       ...providerData,
-      currentPeriodEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+      currentPeriodEnd: new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000),
     },
     create: {
       tenantId,
@@ -169,7 +180,7 @@ export async function checkoutPlan(tenantId: string, planCode: string) {
       provider,
       ...providerData,
       currentPeriodStart: now,
-      currentPeriodEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+      currentPeriodEnd: new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000),
     },
   });
 
@@ -178,8 +189,9 @@ export async function checkoutPlan(tenantId: string, planCode: string) {
 
 export async function activateSubscription(tenantId: string, planCode?: string) {
   const existing = await prisma.subscription.findUnique({ where: { tenantId } });
-  if (!planCode) planCode = existing?.planCode || 'TRIAL';
+  if (!planCode) planCode = existing?.planCode || 'MENSAL';
 
+  const durationDays = getPlanDurationDays(planCode);
   const now = new Date();
   const base = existing?.currentPeriodEnd && existing.currentPeriodEnd > now
     ? existing.currentPeriodEnd
@@ -194,7 +206,7 @@ export async function activateSubscription(tenantId: string, planCode?: string) 
       pixQrImage: null,
       pixExpiresAt: null,
       currentPeriodStart: now,
-      currentPeriodEnd: new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000),
+      currentPeriodEnd: new Date(base.getTime() + durationDays * 24 * 60 * 60 * 1000),
     },
   });
   await prisma.tenant.update({ where: { id: tenantId }, data: { status: 'ATIVO', plan: planCode } });

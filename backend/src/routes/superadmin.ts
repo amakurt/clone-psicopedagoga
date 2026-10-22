@@ -328,9 +328,9 @@ router.patch('/tenants/:id/plan', async (req, res) => {
     const { id } = req.params;
     const { planCode } = req.body;
 
-    const validPlans = ['TRIAL', 'BASICO', 'PRO', 'VIP'];
+    const validPlans = ['MENSAL', 'SEMESTRAL', 'ANUAL', 'VIP', 'TRIAL', 'BASICO', 'PRO'];
     if (!validPlans.includes(planCode)) {
-      return res.status(400).json({ error: 'Plano inválido. Use TRIAL, BASICO, PRO ou VIP.' });
+      return res.status(400).json({ error: 'Plano inválido. Use MENSAL, SEMESTRAL, ANUAL ou VIP.' });
     }
 
     const tenant = await prisma.tenant.findUnique({
@@ -687,8 +687,8 @@ async function ensureSampleInvoices() {
 
     const now = new Date();
     for (const t of tenants) {
-      const plan = (t.plan || 'PRO').toUpperCase();
-      const amountCents = plan === 'PRO' ? 14700 : plan === 'BASICO' ? 7900 : plan === 'VIP' ? 29700 : 0;
+      const plan = (t.plan || 'MENSAL').toUpperCase();
+      const amountCents = plan === 'MENSAL' ? 12700 : plan === 'SEMESTRAL' ? 59400 : plan === 'ANUAL' ? 82800 : plan === 'PRO' ? 14700 : plan === 'BASICO' ? 7900 : plan === 'VIP' ? 29700 : 0;
       if (amountCents === 0) continue;
 
       // Fatura anterior PAGA
@@ -1026,7 +1026,7 @@ router.post('/billing/invoices/create-manual', async (req, res) => {
     let cents = Number(amountCents);
     if (!cents || cents <= 0) {
       const plan = await prisma.plan.findUnique({ where: { code: planCode } });
-      cents = plan?.priceCents || (planCode === 'PRO' ? 14700 : planCode === 'BASICO' ? 7900 : 29700);
+      cents = plan?.priceCents || (planCode === 'MENSAL' ? 12700 : planCode === 'SEMESTRAL' ? 59400 : planCode === 'ANUAL' ? 82800 : planCode === 'PRO' ? 14700 : planCode === 'BASICO' ? 7900 : 29700);
     }
 
     const due = dueDate ? new Date(dueDate) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);

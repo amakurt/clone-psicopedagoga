@@ -1928,9 +1928,9 @@ export class SuperAdminDashboardComponent implements OnInit {
   reminderLoadingId = signal<string | null>(null);
 
   availablePlans = [
-    { code: 'TRIAL', name: 'Trial 14 Dias', desc: 'Período gratuito de degustação', price: 'R$ 0,00' },
-    { code: 'BASICO', name: 'Plano Básico', desc: 'Até 100 pacientes e 10 profissionais', price: 'R$ 149,00/mês' },
-    { code: 'PRO', name: 'Plano Profissional', desc: 'WhatsApp + IA + Ilimitado', price: 'R$ 299,00/mês' },
+    { code: 'MENSAL', name: 'Plano Mensal', desc: 'R$ 127/mês (sem fidelidade)', price: 'R$ 127,00/mês' },
+    { code: 'SEMESTRAL', name: 'Plano Semestral', desc: 'Equivalente a R$ 99/mês (R$ 594 total)', price: 'R$ 594,00/semestre' },
+    { code: 'ANUAL', name: 'Plano Anual', desc: 'Equivalente a R$ 69/mês (R$ 828 total)', price: 'R$ 828,00/ano' },
     { code: 'VIP', name: 'VIP Vitalício', desc: 'Acesso permanente liberado com WhatsApp', price: 'Cortesia' },
   ];
 
@@ -2012,6 +2012,9 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   getPlanBadgeClass(plan: string): string {
     switch (plan) {
+      case 'MENSAL': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
+      case 'SEMESTRAL': return 'bg-teal-500/10 text-teal-400 border border-teal-500/20';
+      case 'ANUAL': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
       case 'TRIAL': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
       case 'BASICO': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
       case 'PRO': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
@@ -2362,7 +2365,10 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   onNewInvoicePlanChange() {
     const p = this.newInvoicePlan();
-    if (p === 'PRO') this.newInvoiceAmount.set(147);
+    if (p === 'MENSAL') this.newInvoiceAmount.set(127);
+    else if (p === 'SEMESTRAL') this.newInvoiceAmount.set(594);
+    else if (p === 'ANUAL') this.newInvoiceAmount.set(828);
+    else if (p === 'PRO') this.newInvoiceAmount.set(147);
     else if (p === 'BASICO') this.newInvoiceAmount.set(79);
     else if (p === 'VIP') this.newInvoiceAmount.set(297);
   }

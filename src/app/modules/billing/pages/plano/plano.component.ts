@@ -94,9 +94,10 @@ import { AuthService } from '../../../../core/services/auth.service';
                     : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm'">
                   <p class="font-bold text-slate-900 dark:text-white">{{ plan.name }}</p>
                   <p class="text-2xl font-black mt-2 text-slate-900 dark:text-white">
-                    {{ plan.priceCents ? 'R$ ' + (plan.priceCents / 100).toFixed(2) : 'Grátis' }}
+                    {{ planDisplayPrice(plan) }}
                     <span class="text-sm font-semibold text-slate-500">/mês</span>
                   </p>
+                  <p class="text-xs text-primary dark:text-teal-400 font-semibold mt-0.5">{{ planCycleSubtitle(plan) }}</p>
                   <p class="text-xs text-slate-500 mt-1">{{ plan.maxPacientes >= 100000 ? 'Pacientes ilimitados' : plan.maxPacientes + ' pacientes' }} · {{ plan.maxProfissionais >= 1000 ? 'Profissionais ilimitados' : plan.maxProfissionais + ' profissionais' }}</p>
                   <div class="mt-4 text-sm text-slate-600 dark:text-slate-300 space-y-1 flex-1">
                     @for (feature of planFeatures(plan); track feature) {
@@ -112,7 +113,7 @@ import { AuthService } from '../../../../core/services/auth.service';
                       : 'bg-primary hover:bg-primary-dark text-on-primary'"
                     [disabled]="plan.code === currentPlan()?.code || loading()"
                     (click)="subscribe(plan)">
-                    {{ plan.code === currentPlan()?.code ? 'Plano atual' : (plan.priceCents ? 'Assinar' : 'Iniciar trial') }}
+                    {{ plan.code === currentPlan()?.code ? 'Plano atual' : 'Assinar ' + plan.name }}
                   </button>
                 </div>
               }
@@ -210,7 +211,10 @@ export class PlanoComponent implements OnInit, OnDestroy {
       error: () => this.error.set('Erro ao carregar informações do plano'),
     });
     this.billing.getPlans().subscribe({
-      next: (res: any) => this.plans.set(res.data || []),
+      next: (res: any) => {
+        const all = res.data || [];
+        this.plans.set(all.filter((p: any) => p.code !== 'VIP' || this.currentPlan()?.code === 'VIP'));
+      },
     });
   }
 
@@ -278,6 +282,20 @@ export class PlanoComponent implements OnInit, OnDestroy {
   usagePercent(value: number, max: number) {
     if (!max) return 0;
     return Math.min(100, Math.round((value / max) * 100));
+  }
+
+  planDisplayPrice(plan: any): string {
+    if (plan.code === 'MENSAL') return 'R$ 127,00';
+    if (plan.code === 'SEMESTRAL') return 'R$ 99,00';
+    if (plan.code === 'ANUAL') return 'R$ 69,00';
+    return plan.priceCents ? 'R$ ' + (plan.priceCents / 100).toFixed(2) : 'Grátis';
+  }
+
+  planCycleSubtitle(plan: any): string {
+    if (plan.code === 'MENSAL') return 'Faturamento mensal sem fidelidade';
+    if (plan.code === 'SEMESTRAL') return 'Faturamento semestral de R$ 594 (22% OFF)';
+    if (plan.code === 'ANUAL') return 'Faturamento anual de R$ 828 (45% OFF)';
+    return '';
   }
 
   planFeatures(plan: any) {
