@@ -167,7 +167,8 @@ export async function createClinicWithAdmin(data: {
       password: data.password,
       role: 'GESTOR',
       phone: data.phone || null,
-      active: false,
+      active: true,
+      emailVerified: false,
     },
   });
 

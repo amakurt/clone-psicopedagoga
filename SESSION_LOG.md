@@ -2,6 +2,34 @@
 
 ## Última Atualização: 22 de Outubro de 2026
 
+## Sessão 71 - 22/10/2026 — Fluxo de Ativação Suave de Conta (Soft Onboarding) & Banner de Verificação de E-mail
+
+### O que foi feito
+
+#### 1. Arquitetura de "Soft Onboarding" (Zero Bloqueio no Cadastro)
+- **Novo Campo no Prisma:** Adicionado `emailVerified Boolean @default(false)` ao modelo `User` em todos os esquemas (`schema.prisma`, `schema.postgres.prisma`, `schema.sqlite.prisma`).
+- **Acesso Imediato:** Ajustados os fluxos de criação de conta (`/register`, `/register-clinic` e `createClinicWithAdmin` em `tenant.ts`) para que novos psicopedagogos e gestores sejam criados com `active: true`. Nenhum usuário fica travado em tela de bloqueio após o cadastro.
+- **Disparo Não-Bloqueante:** O envio do link e código de ativação pelo Nodemailer ocorre em background. Se houver qualquer lentidão de rede ou timeout SMTP, a conta permanece criada e ativa sem erro 500 para o usuário final.
+- **Login Instantâneo:** Ao submeter o formulário de cadastro, o token JWT e a sessão do tenant são gerados e salvos, navegando o usuário direto para o `/app/dashboard`.
+
+#### 2. Banner de Verificação de E-mail no Dashboard (`MainLayoutComponent`)
+- **Design Exclusivo EduPsych:** Banner integrado no topo da aplicação com gradiente corporativo (`teal-900` / `#007F80`), ícone animado e tipografia legível (respeitando integralmente a proibição de tons roxos/violetas).
+- **Ações Rápidas:**
+  - Mensagem contextual informando o e-mail de destino.
+  - Botão **[Reenviar E-mail]** com spinner animado e notificação via Toast ao reenviar.
+  - Botão de dispensa rápida `(X)` para o usuário navegar livremente sem obstrução visual.
+  - Ocultação automática quando o e-mail já estiver confirmado (`emailVerified === true`) ou para o SuperAdmin.
+
+#### 3. Endpoints de Verificação e Reenvio (`backend/src/routes/auth.ts`)
+- **`/verify-account`:** Valida token criptográfico ou código de 6 dígitos, atualizando `emailVerified = true`.
+- **`/resend-verification`:** Valida se o e-mail já foi confirmado e despacha novo token de ativação para a caixa de entrada.
+- **Preservação de Estado:** Ajustado `VerifyAccountComponent` para atualizar a sessão local (`AuthService.updateUser`) e reter a clínica ativa sem deslogar.
+
+#### 4. Suporte a Domínio Próprio Hostinger (SMTP)
+- Preparação da infraestrutura para uso das credenciais do domínio profissional `edupsychpro.tech` via `smtp.hostinger.com:465`.
+
+---
+
 ## Sessão 70 - 22/10/2026 — Provisionamento Hostinger VPS KVM 2 & Blindagem de Deploy Automatizado
 
 ### O que foi feito

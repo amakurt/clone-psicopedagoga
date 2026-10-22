@@ -4,6 +4,7 @@ export interface User {
   email: string;
   role: 'GESTOR' | 'PSICOPEDAGOGO' | 'SECRETARIA' | 'RESPONSAVEL';
   active: boolean;
+  emailVerified?: boolean;
   avatarUrl?: string;
   phone?: string;
   registration?: string;

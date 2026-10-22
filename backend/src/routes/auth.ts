@@ -60,7 +60,8 @@ function buildUserPayload(user: any) {
     phoneIsWhatsApp: user.phoneIsWhatsApp,
     registration: user.registration,
     bio: user.bio,
-    hasPassword: !!user.password
+    hasPassword: !!user.password,
+    emailVerified: !!user.emailVerified
   };
 }
 
@@ -301,7 +302,8 @@ router.post('/register', strictLimiter, async (req, res) => {
         password: hashedPassword,
         role: role || 'SECRETARIA',
         phone: phone || null,
-        active: !hasSmtp, // se não há SMTP, ativa direto
+        active: true, // Soft activation: usuário sempre ativo para acesso imediato
+        emailVerified: false,
       }
     });
 
@@ -314,9 +316,7 @@ router.post('/register', strictLimiter, async (req, res) => {
         const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
         channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
       } catch (err: any) {
-        console.warn('[AUTH] Falha ao enviar verificação, ativando conta:', err?.message);
-        await prisma.user.update({ where: { id: user.id }, data: { active: true } });
-        user.active = true;
+        console.warn('[AUTH] Falha ao enviar verificação:', err?.message);
       }
     }
 
@@ -324,8 +324,8 @@ router.post('/register', strictLimiter, async (req, res) => {
     const tenants = await getUserTenants(user.id);
 
     res.status(201).json({
-      message: user.active ? 'Conta criada com sucesso!' : 'Conta criada. Enviamos um link de ativação para o seu email.',
-      needsVerification: !user.active,
+      message: 'Conta criada com sucesso!',
+      needsVerification: false,
       channel,
       token,
       tenants,
@@ -368,21 +368,12 @@ router.post('/register-clinic', strictLimiter, async (req, res) => {
     const hasSmtp = emailConfigured();
     let channel = 'DEV';
 
-    if (!hasSmtp) {
-      // Se ainda não há servidor SMTP configurado na VPS, ativa imediatamente
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { active: true },
-      });
-      user.active = true;
-    } else {
+    if (hasSmtp) {
       try {
         const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
         channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
       } catch (err: any) {
-        console.warn('[AUTH] Falha ao enviar verificação da clínica, ativando conta:', err?.message);
-        await prisma.user.update({ where: { id: user.id }, data: { active: true } });
-        user.active = true;
+        console.warn('[AUTH] Falha ao enviar verificação da clínica:', err?.message);
       }
     }
 
@@ -392,8 +383,8 @@ router.post('/register-clinic', strictLimiter, async (req, res) => {
     const tenants = await getUserTenants(user.id);
 
     res.status(201).json({
-      message: user.active ? 'Cadastro realizado com sucesso!' : 'Clínica criada. Enviamos um link de ativação para o seu email.',
-      needsVerification: !user.active,
+      message: 'Cadastro realizado com sucesso!',
+      needsVerification: false,
       channel,
       token,
       tenant: buildTenantPayload(tenant, 'GESTOR'),
@@ -421,20 +412,23 @@ router.post('/verify-account', strictLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Link ou código inválido ou expirado' });
   }
 
-  if (user.active) {
-    return res.json({ message: 'Conta já ativada', alreadyActive: true });
+  if (user.emailVerified) {
+    return res.json({ message: 'E-mail já confirmado!', alreadyActive: true, user: buildUserPayload(user) });
   }
 
   const record = await verifyCodeAndToken(user.id, 'ACCOUNT_ACTIVATION', token, code);
   if (!record) {
-    return res.status(400).json({ error: 'Código inválido ou expirado' });
+    return res.status(400).json({ error: 'Código ou link inválido ou expirado' });
   }
 
   await invalidateVerificationCodes(user.id, 'ACCOUNT_ACTIVATION');
-  await prisma.user.update({ where: { id: user.id }, data: { active: true } });
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerified: true, active: true },
+  });
 
-  const authToken = signToken(user);
-  res.json({ message: 'Conta ativada com sucesso', token: authToken, user: buildUserPayload(user) });
+  const authToken = signToken(updatedUser);
+  res.json({ message: 'E-mail confirmado com sucesso!', token: authToken, user: buildUserPayload(updatedUser) });
 });
 
 // Resend activation link/code
@@ -450,14 +444,14 @@ router.post('/resend-verification', strictLimiter, async (req, res) => {
     return res.status(404).json({ error: 'Usuário não encontrado' });
   }
 
-  if (user.active) {
-    return res.status(400).json({ error: 'Conta já ativada' });
+  if (user.emailVerified) {
+    return res.status(400).json({ error: 'E-mail já confirmado anteriormente.' });
   }
 
   const { code, token } = await createVerificationRecord(user, 'ACCOUNT_ACTIVATION', 'EMAIL', 60 * 24);
   const channel = await sendVerificationMessage(user, code, token, 'ACCOUNT_ACTIVATION');
 
-  res.json({ message: 'Link de ativação reenviado', channel });
+  res.json({ message: 'Link de confirmação reenviado com sucesso', channel });
 });
 
 // Forgot password - send code/link to email or WhatsApp

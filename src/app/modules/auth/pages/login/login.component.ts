@@ -351,10 +351,6 @@ register() {
       return res.json();
     })
     .then(data => {
-      if (data.needsVerification) {
-        this.router.navigate(['/auth/verify'], { queryParams: { email: this.email } });
-        return;
-      }
       this.auth.login(data.token, data.user, data.tenants, data.tenant);
       const redirectPath = data.user?.role === 'RESPONSAVEL' ? '/guardian' : '/app/dashboard';
       this.router.navigate([redirectPath]);

@@ -157,11 +157,13 @@ export class VerifyAccountComponent {
   }
 
   onSuccess(d: any) {
-    this.success.set('Conta ativada com sucesso!');
-    this.status.set('Bem-vindo ao EduPsych Pro');
+    this.success.set(d.message || 'E-mail confirmado com sucesso!');
+    this.status.set('Sua conta está totalmente verificada');
     this.loading.set(false);
     if (d.token && d.user) {
-      this.auth.login(d.token, d.user);
+      this.auth.login(d.token, d.user, this.auth.tenants(), this.auth.tenant());
+    } else {
+      this.auth.updateUser({ emailVerified: true });
     }
   }
 

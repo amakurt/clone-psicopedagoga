@@ -84,6 +84,7 @@ model User {
   password      String?
   role          String   @default("SECRETARIA")
   active        Boolean  @default(true)
+  emailVerified Boolean  @default(false)
   avatarUrl     String?
   phone         String?
   phoneIsWhatsApp Boolean @default(false)

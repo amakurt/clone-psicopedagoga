@@ -1,12 +1,13 @@
-import { Component, inject, signal, OnInit, OnDestroy, WritableSignal } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { ToastComponent } from '../../shared/components/toast.component';
+import { ToastComponent, ToastService } from '../../shared/components/toast.component';
 import { NotificationDropdownComponent } from '../../shared/components/notification-dropdown.component';
 import { ChatFloatingComponent } from '../../shared/components/chat-floating.component';
+import { environment } from '../../../environments/environment';
 
 type NavItem = {
   id: string;
@@ -191,6 +192,34 @@ type NavItem = {
           </div>
         }
 
+        <!-- Banner de Ativação Suave de E-mail (Soft Activation) -->
+        @if (showActivationBanner()) {
+          <div class="bg-gradient-to-r from-teal-900/90 via-[#007F80]/90 to-teal-950/90 text-white px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between gap-3 shadow-md z-40 shrink-0 border-b border-teal-500/30">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="material-icons text-teal-300 text-lg shrink-0">mark_email_unread</span>
+              <div class="truncate">
+                <span class="font-bold text-white">Confirme seu e-mail:</span>
+                <span class="ml-1 text-teal-100">Enviamos um link de ativação para <strong>{{ auth.user()?.email }}</strong>.</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button
+                (click)="resendActivationEmail()"
+                [disabled]="resendingEmail()"
+                class="px-3 py-1 bg-white hover:bg-teal-50 text-teal-900 rounded-lg transition-all text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50">
+                <span class="material-icons text-xs" [class.animate-spin]="resendingEmail()">{{ resendingEmail() ? 'sync' : 'send' }}</span>
+                <span>{{ resendingEmail() ? 'Enviando...' : 'Reenviar E-mail' }}</span>
+              </button>
+              <button
+                (click)="dismissActivationBanner()"
+                class="p-1 text-teal-200 hover:text-white rounded-lg transition-colors"
+                title="Fechar aviso">
+                <span class="material-icons text-base">close</span>
+              </button>
+            </div>
+          </div>
+        }
+
         <!-- Header Superior -->
         <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 lg:px-8 shrink-0 z-30">
           
@@ -311,6 +340,19 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   theme = inject(ThemeService);
   private api = inject(ApiService);
   private router = inject(Router);
+  private toast = inject(ToastService);
+
+  bannerDismissed = signal(false);
+  resendingEmail = signal(false);
+
+  showActivationBanner = computed(() => {
+    const user = this.auth.user();
+    if (!user) return false;
+    if (user.role === 'SUPERADMIN' || this.auth.isSuperAdmin()) return false;
+    if (user.emailVerified) return false;
+    if (this.bannerDismissed()) return false;
+    return true;
+  });
 
   sidebarOpen = signal(true);
   mobileSidebarOpen = signal(false);
@@ -539,5 +581,29 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   toggleDarkMode() {
     this.theme.toggleDarkMode();
+  }
+
+  async resendActivationEmail() {
+    const email = this.auth.user()?.email;
+    if (!email) return;
+    this.resendingEmail.set(true);
+    try {
+      const res = await fetch(`${environment.apiUrl}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao reenviar e-mail');
+      this.toast.show('E-mail de confirmação reenviado com sucesso! Verifique sua caixa de entrada.', 'success');
+    } catch (err: any) {
+      this.toast.show(err.message || 'Falha ao reenviar e-mail.', 'error');
+    } finally {
+      this.resendingEmail.set(false);
+    }
+  }
+
+  dismissActivationBanner() {
+    this.bannerDismissed.set(true);
   }
 }
