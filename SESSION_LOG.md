@@ -23,6 +23,24 @@
 - Criação do script `update-vps.sh` para execução direta na VPS Hostinger via SSH.
 - Atualização limpa em segundos: executa `git pull`, `npx prisma db push --accept-data-loss` (PostgreSQL), compilação rápida do backend e restart do PM2 sem executar `apt-get upgrade` pesado (evitando travamentos por esgotamento de CPU/RAM).
 
+#### 4. Manutenção & Limpeza de Arquivos Temporários
+- Removidos arquivos de log locais e obsoletos (`backend-test2.log`, `backend.log`, `frontend.log`, `teste-start.log`, `whatsapp-qr.png`).
+- Ambiente local e repositório 100% limpos e sincronizados com a `main`.
+
+---
+
+### 💡 Próximos Passos (Para Retorno da Sessão)
+1. **No Terminal da VPS (`ssh root@200.141.23.28`):**
+   - Executar o comando único para baixar o script e atualizar o servidor:
+     ```bash
+     cd /root/clone-psicopedagoga && git pull origin main && bash update-vps.sh
+     ```
+2. **Liberar Acesso da Colega:**
+   - Enviar o link oficial com degustação de 7 dias ativada:
+     `https://app.edupsychpro.tech/login?mode=register&type=professional&plan=TRIAL`
+3. **Validar Cadastro:**
+   - Confirmar se o cadastro dela concluiu com sucesso e ela acessou diretamente o dashboard com o plano anual liberado.
+
 ---
 
 ## Sessão 74 - 22/10/2026 — Implementação de White-Label Clínico, Upload de Logomarca & Timbrado Oficial em PDFs e Portal do Responsável
