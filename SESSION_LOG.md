@@ -1,6 +1,29 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 22 de Outubro de 2026
+## Última Atualização: 23 de Outubro de 2026
+
+## Sessão 75 - 23/10/2026 — Blindagem de Cadastro, Suporte a Trial de 7 Dias Gratuito & Script de Atualização Rápida para VPS (update-vps.sh)
+
+### O que foi feito
+
+#### 1. Blindagem de Cadastro & Resiliência de Vínculo (`backend/src/lib/tenant.ts`)
+- **Fallback Seguro em `ensureMembership`:**
+  - Eliminado o lançamento de erro 500 caso a clínica `clinica-principal` não exista no banco.
+  - Implementado encadeamento de fallback: busca a clínica principal -> busca a primeira clínica criada -> se não houver nenhuma, instancia dinamicamente uma clínica padrão ativa com plano ANUAL.
+- **Suporte Nativo a Período de Degustação (`planCode: 'TRIAL'`):**
+  - Implementada verificação automática em `createClinicWithAdmin`: quando a clínica é cadastrada com o parâmetro `planCode: 'TRIAL'`, recebe automaticamente 7 dias de degustação com plano `ANUAL` (100% dos recursos clínicos liberados) e status `ATIVO`, sem ficar com assinatura pendente ou bloqueada.
+
+#### 2. Experiência de Cadastro da Colega no Frontend (`login.component.ts`)
+- **Banner de Trial de 7 Dias:**
+  - Quando a rota é acessada com `plan=TRIAL`, exibe feedback visual amigável: *"Você terá 7 dias de degustação gratuita com todos os recursos liberados."*
+- **Entrada Direta sem Tela de Bloqueio/Cobrança:**
+  - Ao concluir o cadastro via trial, o usuário é redirecionado diretamente para o `/app/dashboard`, permitindo uso imediato das funcionalidades sem redirecionamento para o checkout do Asaas.
+
+#### 3. Script de Atualização Rápida para Produção (`update-vps.sh`)
+- Criação do script `update-vps.sh` para execução direta na VPS Hostinger via SSH.
+- Atualização limpa em segundos: executa `git pull`, `npx prisma db push --accept-data-loss` (PostgreSQL), compilação rápida do backend e restart do PM2 sem executar `apt-get upgrade` pesado (evitando travamentos por esgotamento de CPU/RAM).
+
+---
 
 ## Sessão 74 - 22/10/2026 — Implementação de White-Label Clínico, Upload de Logomarca & Timbrado Oficial em PDFs e Portal do Responsável
 

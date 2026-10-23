@@ -108,7 +108,23 @@ export async function ensureMembership(user: any) {
     tenantId = main?.id;
   }
 
-  if (!tenantId) throw new Error('Nenhuma clínica disponível para vincular o usuário');
+  if (!tenantId) {
+    const anyTenant = await prisma.tenant.findFirst({ orderBy: { createdAt: 'asc' } });
+    tenantId = anyTenant?.id;
+  }
+
+  // Criação automática de clínica padrão como fallback resiliente
+  if (!tenantId) {
+    const fallbackTenant = await prisma.tenant.create({
+      data: {
+        name: 'Clínica Principal',
+        slug: 'clinica-principal',
+        plan: 'ANUAL',
+        status: 'ATIVO',
+      },
+    });
+    tenantId = fallbackTenant.id;
+  }
 
   return prisma.membership.create({
     data: { tenantId, userId: user.id, role: user.role || 'SECRETARIA' },
@@ -116,6 +132,7 @@ export async function ensureMembership(user: any) {
 }
 
 function getPlanDurationDays(planCode: string): number {
+  if (planCode === 'TRIAL') return 7;
   if (planCode === 'ANUAL') return 365;
   if (planCode === 'SEMESTRAL') return 180;
   return 30;
@@ -143,7 +160,7 @@ export async function generateUniqueSlug(name: string): Promise<string> {
 }
 
 // Cria uma clínica nova (tenant) com seu admin GESTOR e plano selecionado
-// (fluxo de venda: landing -> register-clinic -> ativação -> checkout)
+// (fluxo de venda: landing -> register-clinic -> ativação -> checkout ou trial de 7 dias)
 export async function createClinicWithAdmin(data: {
   name: string;
   email: string;
@@ -154,6 +171,7 @@ export async function createClinicWithAdmin(data: {
 }) {
   const slug = await generateUniqueSlug(data.clinicName);
   const planCode = data.planCode || 'MENSAL';
+  const isTrial = planCode === 'TRIAL';
   const durationDays = getPlanDurationDays(planCode);
   const periodEnd = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
@@ -161,9 +179,9 @@ export async function createClinicWithAdmin(data: {
     data: {
       name: data.clinicName,
       slug,
-      plan: planCode,
+      plan: isTrial ? 'ANUAL' : planCode, // No trial, libera 100% dos recursos clínicos
       status: 'ATIVO',
-      trialEndsAt: null,
+      trialEndsAt: isTrial ? periodEnd : null,
     },
   });
 
@@ -186,8 +204,8 @@ export async function createClinicWithAdmin(data: {
   await prisma.subscription.create({
     data: {
       tenantId: tenant.id,
-      planCode,
-      status: 'PENDENTE',
+      planCode: isTrial ? 'ANUAL' : planCode,
+      status: isTrial ? 'TRIAL' : 'PENDENTE',
       currentPeriodStart: new Date(),
       currentPeriodEnd: periodEnd,
     },

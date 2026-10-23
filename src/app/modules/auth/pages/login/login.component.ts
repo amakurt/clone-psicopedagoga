@@ -42,7 +42,11 @@ import { environment } from '../../../../../environments/environment';
           @if (isRegister() && selectedPlan()) {
             <div class="mb-5 p-3 bg-primary/5 border border-primary/20 rounded-xl text-sm text-slate-700 flex items-center gap-2">
               <span class="material-icons text-primary text-lg">workspace_premium</span>
-              Você escolheu o plano <strong>{{ selectedPlan() }}</strong>. Conclua o cadastro para ativar sua clínica.
+              @if (selectedPlan() === 'TRIAL') {
+                <span>Você terá <strong>7 dias de degustação gratuita</strong> com todos os recursos liberados.</span>
+              } @else {
+                <span>Você escolheu o plano <strong>{{ selectedPlan() }}</strong>. Conclua o cadastro para ativar sua clínica.</span>
+              }
             </div>
           }
 
@@ -353,9 +357,10 @@ register() {
     })
     .then(data => {
       this.auth.login(data.token, data.user, data.tenants, data.tenant);
+      const isPaidPlanPending = this.selectedPlan() && this.selectedPlan() !== 'TRIAL';
       const redirectPath = data.user?.role === 'RESPONSAVEL'
         ? '/guardian'
-        : (this.selectedPlan() ? '/app/plano' : '/app/dashboard');
+        : (isPaidPlanPending ? '/app/plano' : '/app/dashboard');
       this.router.navigate([redirectPath]);
     })
     .catch(err => {
