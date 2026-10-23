@@ -7,6 +7,7 @@
     "start": "node dist/index.js",
     "test:isolation": "tsx scripts/test-isolation.ts",
     "test:superadmin": "tsx scripts/test-superadmin.ts",
+    "clean:personal-data": "tsx scripts/clean-personal-data.ts",
     "db:sqlite": "cp prisma/schema.sqlite.prisma prisma/schema.prisma && npx prisma generate",
     "db:postgres": "cp prisma/schema.postgres.prisma prisma/schema.prisma && npx prisma generate",
     "db:push:sqlite": "npx prisma db push --schema=prisma/schema.sqlite.prisma",

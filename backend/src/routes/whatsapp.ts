@@ -329,21 +329,52 @@ const sendBulkSchema = z.object({
 // --- Configuração ---
 router.get('/config', async (req, res) => {
   const tenantId = (req.user as any)?.tenantId;
+  const isDemo =
+    (req.user as any)?.email === 'demo@edupsychpro.tech' ||
+    (req.user as any)?.tenant?.slug === 'clinica-demo' ||
+    Boolean((req.user as any)?.isDemo);
+
   const tenant = tenantId ? await prisma.tenant.findUnique({ where: { id: tenantId } }) : null;
   const planEligible = isPlanWhatsAppEligible(tenant?.plan);
   const tenantPlan = tenant?.plan || 'TRIAL';
 
+  if (isDemo) {
+    return res.json({
+      configured: true,
+      planEligible: true,
+      tenantPlan: 'PRO',
+      isDemo: true,
+      config: {
+        apiUrl: 'https://evoapi.suaclinica.com.br',
+        phoneNumberId: 'clinica-demo',
+        hasToken: true,
+        aiEnabled: true,
+        aiPrompt: 'Você é a assistente virtual da Clínica EduPsych Demo. Responda com cordialidade e acolhimento.',
+        hasGeminiKey: false,
+        autoMuteHours: 4,
+        inactivityTimeoutMinutes: 15,
+        inactivityMessage: 'Seu atendimento foi pausado por inatividade. Caso precise de algo mais, basta responder aqui!',
+        webhookSecret: null,
+      },
+    });
+  }
+
   const db = scoped(prisma, tenantId);
   const config = await db.whatsAppConfig.findFirst();
   if (!config) {
-    return res.json({ configured: false, planEligible, tenantPlan });
+    return res.json({ configured: false, planEligible, tenantPlan, isDemo: false });
   }
+
+  // Sanitiza a apiUrl garantindo que credenciais embutidas nunca sejam expostas
+  const sanitizedApiUrl = normalizeApiUrl(config.apiUrl);
+
   res.json({
     configured: true,
     planEligible,
     tenantPlan,
+    isDemo: false,
     config: {
-      apiUrl: config.apiUrl,
+      apiUrl: sanitizedApiUrl,
       phoneNumberId: config.phoneNumberId,
       hasToken: !!config.token,
       aiEnabled: config.aiEnabled,
@@ -361,6 +392,20 @@ router.get('/config', async (req, res) => {
 router.get('/qrcode', async (req, res) => {
   try {
     const tenantId = (req.user as any)?.tenantId;
+    const isDemo =
+      (req.user as any)?.email === 'demo@edupsychpro.tech' ||
+      (req.user as any)?.tenant?.slug === 'clinica-demo' ||
+      Boolean((req.user as any)?.isDemo);
+
+    if (isDemo) {
+      return res.json({
+        state: 'open',
+        status: 'connected',
+        message: 'Instância conectada no ambiente de demonstração.',
+        simulated: true,
+      });
+    }
+
     const tenant = tenantId ? await prisma.tenant.findUnique({ where: { id: tenantId } }) : null;
     if (!isPlanWhatsAppEligible(tenant?.plan)) {
       return res.status(403).json({
@@ -390,6 +435,15 @@ router.get('/qrcode', async (req, res) => {
 // Endpoint para a clínica consultar status de conexão da sua instância
 router.get('/instance-status', async (req, res) => {
   try {
+    const isDemo =
+      (req.user as any)?.email === 'demo@edupsychpro.tech' ||
+      (req.user as any)?.tenant?.slug === 'clinica-demo' ||
+      Boolean((req.user as any)?.isDemo);
+
+    if (isDemo) {
+      return res.json({ state: 'open', status: 'connected', simulated: true });
+    }
+
     const tenantId = (req.user as any)?.tenantId;
     const config = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
     if (!config?.phoneNumberId) {
@@ -405,6 +459,15 @@ router.get('/instance-status', async (req, res) => {
 // Endpoint para a clínica reiniciar sua instância
 router.post('/restart', async (req, res) => {
   try {
+    const isDemo =
+      (req.user as any)?.email === 'demo@edupsychpro.tech' ||
+      (req.user as any)?.tenant?.slug === 'clinica-demo' ||
+      Boolean((req.user as any)?.isDemo);
+
+    if (isDemo) {
+      return res.json({ success: true, simulated: true, message: 'Instância reiniciada (Modo Demonstração)' });
+    }
+
     const tenantId = (req.user as any)?.tenantId;
     const tenant = tenantId ? await prisma.tenant.findUnique({ where: { id: tenantId } }) : null;
     if (!isPlanWhatsAppEligible(tenant?.plan)) {
@@ -424,6 +487,28 @@ router.post('/restart', async (req, res) => {
 });
 
 router.post('/config', validate(configSchema), async (req, res) => {
+  const isDemo =
+    (req.user as any)?.email === 'demo@edupsychpro.tech' ||
+    (req.user as any)?.tenant?.slug === 'clinica-demo' ||
+    Boolean((req.user as any)?.isDemo);
+
+  if (isDemo) {
+    return res.json({
+      success: true,
+      simulated: true,
+      message: 'Configuração simulada com sucesso no ambiente de demonstração.',
+      config: {
+        apiUrl: 'https://evoapi.suaclinica.com.br',
+        phoneNumberId: 'clinica-demo',
+        hasToken: true,
+        aiEnabled: req.body.aiEnabled ?? true,
+        aiPrompt: req.body.aiPrompt ?? '',
+        autoMuteHours: req.body.autoMuteHours ?? 4,
+        inactivityTimeoutMinutes: req.body.inactivityTimeoutMinutes ?? 15,
+      },
+    });
+  }
+
   const db = scoped(prisma, (req.user as any)?.tenantId);
   const {
     apiUrl,
@@ -804,6 +889,19 @@ router.get('/history', async (req, res) => {
 });
 
 router.post('/test', async (req, res) => {
+  const isDemo =
+    (req.user as any)?.email === 'demo@edupsychpro.tech' ||
+    (req.user as any)?.tenant?.slug === 'clinica-demo' ||
+    Boolean((req.user as any)?.isDemo);
+
+  if (isDemo) {
+    return res.json({
+      success: true,
+      simulated: true,
+      message: 'Simulação de envio concluída com sucesso no ambiente de demonstração!',
+    });
+  }
+
   const { phone, apiUrl, token, phoneNumberId } = req.body;
   if (!phone) {
     return res.status(400).json({ error: 'Telefone é obrigatório' });

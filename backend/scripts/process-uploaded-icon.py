@@ -2,10 +2,11 @@ import os
 import base64
 from PIL import Image, ImageDraw, ImageFont
 
-SRC_PATH = "/Users/amauri/.gemini/antigravity-ide/brain/17773ed4-f4f1-4d53-803f-25785247e5a5/.user_uploaded/media_1790693193514.jpg"
+SRC_PATH = os.path.join(os.path.dirname(__file__), "source-icon.jpg")
 
 if not os.path.exists(SRC_PATH):
-    raise FileNotFoundError(f"Source image not found: {SRC_PATH}")
+    print(f"Source image not found (skipped): {SRC_PATH}")
+    exit(0)
 
 print("Loading original image...")
 img = Image.open(SRC_PATH).convert("RGBA")

@@ -18,6 +18,12 @@ export class AuthService {
 
   isLoggedIn = computed(() => !!this.token);
 
+  isDemo = computed(() => {
+    const u = this.user();
+    const t = this.tenant();
+    return u?.email === 'demo@edupsychpro.tech' || Boolean(u?.isDemo) || t?.slug === 'clinica-demo';
+  });
+
   isSuperAdmin = computed(() => {
     if (this.user()?.role === 'SUPERADMIN') return true;
     if (this.isImpersonating()) {

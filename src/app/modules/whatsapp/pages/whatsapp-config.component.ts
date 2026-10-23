@@ -1,6 +1,7 @@
-import { Component, inject, signal, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   WhatsAppService,
   WhatsAppConfig,
@@ -311,6 +312,24 @@ import {
       <!-- ABA 2: CONFIGURAÇÃO DO GATEWAY & INTELIGÊNCIA ARTIFICIAL      -->
       <!-- ============================================================== -->
       @if (activeTab() === 'configuracao') {
+        @if (isDemo()) {
+          <div class="mb-6 p-4 sm:p-5 bg-gradient-to-r from-blue-500/10 via-emerald-500/5 to-transparent border border-blue-500/20 dark:border-blue-500/30 rounded-2xl flex items-center gap-3">
+            <div class="size-11 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+              <span class="material-icons text-2xl">verified_user</span>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                Ambiente de Demonstração Interativo
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Modo Seguro</span>
+              </h4>
+              <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                Os dados de conexão exibidos abaixo são fictícios e padronizados para proteção total de privacidade e segurança.
+                Você pode interagir e testar o funcionamento livremente sem expor nem alterar credenciais reais.
+              </p>
+            </div>
+          </div>
+        }
+
         @if (!planEligible()) {
           <div class="mb-6 p-4 sm:p-5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -377,21 +396,24 @@ import {
               <div>
                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">URL da API (Evolution API)</label>
                 <input [(ngModel)]="config.apiUrl"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  [disabled]="isDemo()"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-700/60"
                   placeholder="https://evoapi.suaclinica.com.br">
               </div>
 
               <div>
                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Token de Autenticação (apikey)</label>
                 <input [(ngModel)]="config.token" type="password"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  [disabled]="isDemo()"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-700/60"
                   placeholder="Seu token de autenticação da Evolution API">
               </div>
 
               <div>
                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nome da Instância (Phone Number ID)</label>
                 <input [(ngModel)]="config.phoneNumberId"
-                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  [disabled]="isDemo()"
+                  class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:opacity-75 disabled:bg-slate-100 dark:disabled:bg-slate-700/60"
                   placeholder="Ex: clinica-principal">
               </div>
 
@@ -706,6 +728,8 @@ import {
 })
 export class WhatsAppComponent implements OnInit, OnDestroy {
   private whatsappService = inject(WhatsAppService);
+  auth = inject(AuthService);
+  isDemo = computed(() => this.auth.isDemo());
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef;
   private pollTimer: any = null;
@@ -889,6 +913,11 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
           this.config.inactivityTimeoutMinutes = res.config.inactivityTimeoutMinutes ?? 15;
           this.config.inactivityMessage = res.config.inactivityMessage || '';
         }
+        if (this.isDemo() || res.isDemo) {
+          this.config.apiUrl = 'https://evoapi.suaclinica.com.br';
+          this.config.phoneNumberId = 'clinica-demo';
+          this.config.token = '••••••••••••••••';
+        }
         if (this.planEligible()) {
           this.checkInstanceStatus();
         }
@@ -940,6 +969,16 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
 
   saveAllConfig() {
     this.savingConfig.set(true);
+    if (this.isDemo()) {
+      setTimeout(() => {
+        this.savingConfig.set(false);
+        this.isConfigured.set(true);
+        this.testMessage.set('Configurações salvas com sucesso (Ambiente de Demonstração)!');
+        this.testSuccess.set(true);
+      }, 400);
+      return;
+    }
+
     this.whatsappService.saveConfig(this.config).subscribe({
       next: () => {
         this.savingConfig.set(false);
@@ -968,6 +1007,14 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
     if (!this.testPhone) return;
     this.testMessage.set('Enviando mensagem de teste...');
     this.testSuccess.set(false);
+
+    if (this.isDemo()) {
+      setTimeout(() => {
+        this.testMessage.set('✅ Simulação de teste concluída com sucesso no ambiente de demonstração!');
+        this.testSuccess.set(true);
+      }, 500);
+      return;
+    }
 
     this.whatsappService
       .sendTest(this.testPhone, {

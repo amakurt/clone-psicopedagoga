@@ -216,7 +216,7 @@
 - **Certificado SSL Gratuito:** Emitido e instalado via Certbot para `edupsychpro.tech`, `app.edupsychpro.tech` e `www.edupsychpro.tech`, com redirecionamento automático para HTTPS seguro.
 - **Resolução de Mixed Content (Frontend):** Ajustada a propriedade `apiUrl` em `environment.ts` para utilizar caminho relativo `/api` fora da porta de desenvolvimento `4200`, eliminando tentativas de chamadas HTTP não criptografadas e adicionando `fileReplacements` em `angular.json`.
 - **Blindagem do Serviço de E-mail (SMTP):** `getTransporter()` atualizado para ignorar placeholders de configuração de e-mail e `sendEmail()` envolvido em `try/catch`, ativando automaticamente contas quando o SMTP não estiver configurado para não prender novos usuários.
-- **Ativação do Dono do SaaS (SuperAdmin):** Executado `node scripts/promote-superadmin.js amakurt@gmail.com` com sucesso, ativando a conta (`active: true`) com papel `SUPERADMIN` e acesso irrestrito ao painel master.
+- **Ativação do Dono do SaaS (SuperAdmin):** Executado `node scripts/promote-superadmin.js admin@edupsychpro.tech` com sucesso, ativando a conta (`active: true`) com papel `SUPERADMIN` e acesso irrestrito ao painel master.
 
 #### 4. Integração Oficial de Faturamento com Asaas (Produção)
 - Configuração das credenciais oficiais de produção do Asaas: `ASAAS_API_KEY` ($aact_prod...), `ASAAS_ENV="production"` e Webhook seguro `ASAAS_WEBHOOK_TOKEN` apontando para `https://app.edupsychpro.tech/api/billing/webhook`.
@@ -2437,7 +2437,7 @@ Implementado padrão híbrido moderno em todas as listagens de dados do sistema:
 - Credenciais reais (Client ID + Secret) adicionadas ao `backend/.env`
 - Fluxo completo validado: botão "Continuar com Google" → escolha de conta → callback → dashboard
 - Cria usuário com role `PSICOPEDAGOGO`, avatar do Google e `SocialAccount` (não cria duplicata)
-- Usuário criado: Iarlley Oliveira (iarlley.oliveira@gmail.com)
+- Usuário criado: Usuário Modelo (usuario@edupsych.com)
 - Google Console: origem JS `http://localhost:4200` e redirect `http://localhost:3000/api/auth/google/callback`
 
 #### 4. Senha para contas criadas via Google
@@ -3291,3 +3291,44 @@ npm run start
 - **Testes de SuperAdmin**: Executado `npm run test:superadmin` no backend — 6/6 testes aprovados (100% de sucesso).
 - **Compilação Backend**: `npx tsc --noEmit` e `npm run build` concluídos com 0 erros (código 0).
 - **Compilação Frontend Angular**: `npx ng build --configuration development` gerado com sucesso (código 0).
+
+---
+
+## Sessão 11 - 23/10/2026 (Madrugada)
+
+### O que foi feito
+
+#### 1. Expurgamento Total de Dados Pessoais & Credenciais
+- **Remoção de Credenciais SMTP**: Eliminados e-mail pessoal e senha de aplicativo do arquivo `backend/.env`. Substituídos por placeholders padronizados e seguros (`SMTP_FROM="EduPsych Pro <suporte@edupsychpro.tech>"`).
+- **Higienização do Banco de Dados Local (`backend/prisma/dev.db`)**: Atualizados e anonimizados registros de usuários com e-mails ou nomes pessoais, substituindo-os por contas de modelo e teste seguro (`profissional.modelo@edupsych.com` e `responsavel.modelo@edupsych.com`).
+- **Anonimização de Logs Históricos**: Higienizadas menções históricas a e-mails e caminhos locais absolutos de desenvolvimento em `SESSION_LOG.md` e scripts utilitários (`process-uploaded-icon.py`).
+
+#### 2. Blindagem e Higienização de URLs na API do WhatsApp
+- **Remoção Automática de Credenciais embutidas (`normalizeApiUrl`)**: Atualizada a função utilitária em `backend/src/services/whatsapp-client.service.ts` utilizando o construtor `URL` nativo para expurgar obrigatoriamente quaisquer dados de autenticação embutidos no formato `http(s)://usuario:senha@dominio` (`parsed.username = ''; parsed.password = ''`).
+- **Higienização nos Endpoints de Leitura e Escrita (`backend/src/routes/whatsapp.ts`)**:
+  - `GET /whatsapp/config`: Higieniza a URL com `normalizeApiUrl` antes de retornar ao frontend, garantindo que mesmo registros legados nunca exponham credenciais na rede.
+  - `POST /whatsapp/config`: Normaliza e higieniza a URL antes de salvar qualquer registro no banco de dados.
+
+#### 3. Proteção Completa do Modo Demonstração (Demo Sandbox)
+- **Eliminação de Exposição na Conta Demo**:
+  - `GET /whatsapp/config`: Ao detectar sessão demo (`demo@edupsychpro.tech`, tenant `clinica-demo` ou `isDemo`), retorna estritamente dados mockados seguros (`https://evoapi.suaclinica.com.br`, `phoneNumberId: 'clinica-demo'`) sem consultar ou exibir credenciais reais salvas.
+  - `POST /whatsapp/config`: Em modo demo, simula a persistência e responde com sucesso sem gravar ou sobrescrever configurações no banco.
+  - `GET /whatsapp/qrcode`, `GET /whatsapp/instance-status` e `POST /whatsapp/restart`: Respondem com status simulado e conectado em modo demo.
+  - `POST /whatsapp/test`: Em modo demo, simula o envio com sucesso sem realizar chamadas externas ou expor dados.
+  - `POST /auth/demo`: No login demo, remove preventivamente qualquer `WhatsAppConfig` associado ao tenant demo.
+  - `sendWhatsAppMessage`: Curto-circuito que previne envios reais se o tenant for a clínica demo (`clinica-demo`).
+
+#### 4. Frontend: Interface Segura e Informativa
+- **Sinalizador `isDemo` no `AuthService`**: Adicionada propriedade computada `isDemo` no serviço global de autenticação.
+- **Banner de Modo Seguro no WhatsApp (`whatsapp-config.component.ts`)**: Exibição de aviso explicativo informando que os parâmetros de conexão no ambiente de demonstração são ilustrativos e operam em sandbox.
+- **Bloqueio de Edição Sensível no Demo**: Desativação visual e operacional dos campos de URL, Token e ID de Instância para usuários demo, com feedback simulado imediato nos botões de salvar e testar.
+
+#### 5. Script de Higienização de Produção (`clean:personal-data`)
+- **Criado `backend/scripts/clean-personal-data.ts`**: Script automatizado para execução no ambiente de deploy / VPS que localiza e expurga registros residuais da demo, remove credenciais de URLs de API e anonimiza contas pessoais.
+- **Atalho no `package.json`**: Adicionado comando `npm run clean:personal-data` no backend.
+
+#### 6. Validação e Testes
+- **Script de Limpeza**: Executado com sucesso via `npm run clean:personal-data` (código 0).
+- **Compilação Backend**: Executado `npm run build` no backend com sucesso (código 0).
+- **Compilação Frontend**: Executado `npx ng build` com sucesso (código 0).
+

@@ -759,6 +759,9 @@ router.post('/demo', async (req, res) => {
       });
     }
 
+    // SEGURANÇA & PRIVACIDADE: O ambiente de demonstração JAMAIS deve reter credenciais reais de WhatsApp
+    await prisma.whatsAppConfig.deleteMany({ where: { tenantId: tenant.id } });
+
     let user = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
     if (!user) {
       user = await prisma.user.create({

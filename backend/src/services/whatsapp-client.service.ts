@@ -2,7 +2,7 @@ import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 
 /**
- * Normaliza uma URL garantindo protocolo http/https e removendo barras finais
+ * Normaliza uma URL garantindo protocolo http/https, removendo credenciais e barras finais
  */
 export function normalizeApiUrl(url: string): string {
   let cleaned = (url || '').trim();
@@ -12,6 +12,13 @@ export function normalizeApiUrl(url: string): string {
       ? `http://${cleaned}`
       : `https://${cleaned}`;
   }
+  try {
+    const parsed = new URL(cleaned);
+    // Remove qualquer credencial (usuário/senha/email) embutida na URL
+    parsed.username = '';
+    parsed.password = '';
+    cleaned = parsed.toString();
+  } catch {}
   return cleaned.replace(/\/+$/, '');
 }
 
@@ -24,6 +31,13 @@ export async function sendWhatsAppMessage(
   tenantId?: string,
   overrideConfig?: { apiUrl?: string; token?: string; phoneNumberId?: string }
 ) {
+  if (tenantId) {
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } });
+    if (tenant?.slug === 'clinica-demo') {
+      return { ok: true, status: 200, data: { simulated: true, message: 'Mensagem simulada em modo demonstração.' } };
+    }
+  }
+
   const db = scoped(prisma, tenantId);
   const configRecord = await db.whatsAppConfig.findFirst();
 
