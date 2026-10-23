@@ -98,6 +98,7 @@ cp prisma/schema.postgres.prisma prisma/schema.prisma
 npm install
 npx prisma generate
 npx prisma db push --accept-data-loss
+npm run clean:personal-data || true
 npm run build
 
 # Iniciar ou reiniciar backend no PM2
