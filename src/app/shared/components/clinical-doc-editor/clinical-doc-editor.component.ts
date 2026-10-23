@@ -175,26 +175,51 @@ declare var html2pdf: any;
         <div #printableArea id="clinical-a4-sheet"
           class="clinical-a4-sheet bg-white text-slate-900 w-full max-w-[820px] min-h-[1050px] shadow-2xl p-8 sm:p-12 rounded-sm transition-all font-sans relative border border-slate-200 block">
           
-          <!-- 1. Official Header Timbrado (Rendered when active) -->
+          <!-- 1. Official Header Timbrado (White-Label com Logo e Dados da Clínica) -->
           @if (showLetterhead()) {
-            <div class="letterhead-header border-b-2 border-slate-200 pb-5 mb-6 select-none">
-              <div class="flex items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
+            <div class="letterhead-header border-b-2 border-slate-300 pb-5 mb-6 select-none">
+              <div class="flex items-center justify-between gap-6">
+                <!-- Lado Esquerdo: Logomarca da Clínica (White-Label) -->
+                <div class="flex items-center gap-3 shrink-0">
                   @if (clinicLogo) {
-                    <img [src]="clinicLogo" alt="Logo Clínica" class="h-12 w-auto max-w-[160px] object-contain rounded-lg shrink-0" crossorigin="anonymous" />
+                    <img [src]="clinicLogo" alt="Logomarca da Clínica"
+                         class="h-14 sm:h-16 w-auto max-w-[220px] object-contain rounded-lg shrink-0"
+                         crossorigin="anonymous" />
                   } @else {
-                    <img src="/favicon-96x96.png" alt="EduPsych Pro" class="w-12 h-12 rounded-xl object-contain shadow-sm shrink-0" crossorigin="anonymous" />
+                    <div class="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-xl shrink-0">
+                      {{ getClinicInitials(clinicName) }}
+                    </div>
+                    <div>
+                      <h2 class="text-base font-extrabold text-slate-900 tracking-tight leading-tight uppercase">
+                        {{ clinicName || 'EduPsych Pro • Centro Clínico' }}
+                      </h2>
+                      <p class="text-[11px] text-slate-500 font-medium">Clínica Psicopedagógica & Neuropsicologia</p>
+                    </div>
                   }
-                  <div>
-                    <h2 class="text-base font-extrabold text-slate-900 tracking-tight leading-tight uppercase">
-                      {{ clinicName || 'EduPsych Pro • Centro de Neuroaprendizagem' }}
-                    </h2>
-                    <p class="text-[11px] text-slate-500 font-medium">Clínica Especializada em Psicopedagogia, ABA e Desenvolvimento Infantil</p>
-                  </div>
                 </div>
-                <div class="text-right text-[10px] text-slate-400 font-mono hidden sm:block">
-                  <p>Documento Clínico Oficial</p>
-                  <p>Autenticação Segura</p>
+
+                <!-- Lado Direito: Dados Oficiais da Clínica (Timbrado Profissional) -->
+                <div class="text-right text-xs text-slate-600 space-y-0.5">
+                  <h3 class="text-sm font-black text-slate-900 tracking-tight uppercase">
+                    {{ clinicName || 'Clínica Especializada' }}
+                  </h3>
+                  @if (clinicCnpj) {
+                    <p class="text-[11px] text-slate-500 font-mono">CNPJ: {{ clinicCnpj }}</p>
+                  }
+                  @if (clinicAddress) {
+                    <p class="text-[11px] text-slate-500 max-w-xs ml-auto leading-tight">{{ clinicAddress }}</p>
+                  }
+                  <div class="flex items-center justify-end gap-3 text-[11px] text-slate-500 pt-0.5">
+                    @if (clinicPhone) {
+                      <span>Tel: {{ clinicPhone }}</span>
+                    }
+                    @if (clinicEmail) {
+                      <span>{{ clinicEmail }}</span>
+                    }
+                  </div>
+                  <div class="text-[10px] text-primary font-bold uppercase tracking-wider pt-1">
+                    Documento Clínico Oficial
+                  </div>
                 </div>
               </div>
 
@@ -464,6 +489,10 @@ export class ClinicalDocEditorComponent implements OnInit, OnChanges {
   @Input() paciente: any = null;
   @Input() clinicName: string = '';
   @Input() clinicLogo: string = '';
+  @Input() clinicCnpj: string = '';
+  @Input() clinicPhone: string = '';
+  @Input() clinicEmail: string = '';
+  @Input() clinicAddress: string = '';
   @Input() professionalName: string = '';
   @Input() professionalSpecialty: string = '';
   @Input() professionalRegistry: string = '';
@@ -482,6 +511,11 @@ export class ClinicalDocEditorComponent implements OnInit, OnChanges {
 
   currentDate: string = '';
 
+  getClinicInitials(name: string): string {
+    if (!name) return 'EP';
+    return name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+  }
+
   ngOnInit() {
     const now = new Date();
     this.currentDate = now.toLocaleDateString('pt-BR', {
@@ -494,12 +528,56 @@ export class ClinicalDocEditorComponent implements OnInit, OnChanges {
     if (!this.professionalName && user?.name) {
       this.professionalName = user.name;
     }
-    const tenant = this.auth.tenant();
+    const tenant: any = this.auth.tenant();
     if (!this.clinicName && tenant?.name) {
       this.clinicName = tenant.name;
     }
     if (!this.clinicLogo && tenant?.logoUrl) {
       this.clinicLogo = tenant.logoUrl;
+    }
+    if (!this.clinicCnpj && tenant?.cnpj) {
+      this.clinicCnpj = tenant.cnpj;
+    }
+    if (!this.clinicPhone && tenant?.phone) {
+      this.clinicPhone = tenant.phone;
+    }
+    if (!this.clinicEmail && tenant?.email) {
+      this.clinicEmail = tenant.email;
+    }
+    if (!this.clinicAddress && tenant?.address) {
+      if (typeof tenant.address === 'object') {
+        const addr = tenant.address;
+        const parts = [
+          addr.street ? `${addr.street}${addr.number ? ', ' + addr.number : ''}` : '',
+          addr.neighborhood || '',
+          addr.city ? `${addr.city}${addr.state ? ' - ' + addr.state : ''}` : ''
+        ].filter(Boolean);
+        this.clinicAddress = parts.join(' • ');
+      } else {
+        this.clinicAddress = String(tenant.address);
+      }
+    }
+
+    // Fallback adicional do cache local se ainda faltar dados
+    if (!this.clinicCnpj || !this.clinicAddress || !this.clinicPhone) {
+      const saved = localStorage.getItem('clinic_config');
+      if (saved) {
+        try {
+          const cfg = JSON.parse(saved);
+          if (!this.clinicCnpj && cfg.cnpj) this.clinicCnpj = cfg.cnpj;
+          if (!this.clinicPhone && cfg.phone) this.clinicPhone = cfg.phone;
+          if (!this.clinicEmail && cfg.email) this.clinicEmail = cfg.email;
+          if (!this.clinicAddress && cfg.address) {
+            const a = cfg.address;
+            const parts = [
+              a.street ? `${a.street}${a.number ? ', ' + a.number : ''}` : '',
+              a.neighborhood || '',
+              a.city ? `${a.city}${a.state ? ' - ' + a.state : ''}` : ''
+            ].filter(Boolean);
+            this.clinicAddress = parts.join(' • ');
+          }
+        } catch {}
+      }
     }
   }
 

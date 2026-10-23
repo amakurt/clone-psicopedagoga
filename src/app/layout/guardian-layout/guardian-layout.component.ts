@@ -29,18 +29,26 @@ import { ThemeService } from '@core/services/theme.service';
         [class.translate-x-0]="mobileMenuOpen()"
         [class.-translate-x-full]="!mobileMenuOpen()">
         
-        <!-- Drawer Header -->
+        <!-- Drawer Header (White-Label) -->
         <div class="p-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <span class="material-icons text-2xl">family_restroom</span>
-            </div>
-            <div>
-              <h2 class="font-bold text-sm text-gray-900 dark:text-white leading-tight">Portal da Família</h2>
-              <p class="text-[11px] text-gray-500 dark:text-slate-400">EduPsych Pro</p>
+          <div class="flex items-center gap-3 min-w-0">
+            @if (auth.tenant()?.logoUrl) {
+              <div class="h-10 w-auto max-w-[120px] flex items-center shrink-0">
+                <img [src]="auth.tenant()?.logoUrl" [alt]="auth.tenant()?.name || 'Clínica'" class="max-h-9 w-auto object-contain">
+              </div>
+            } @else {
+              <div class="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <span class="material-icons text-2xl">family_restroom</span>
+              </div>
+            }
+            <div class="min-w-0">
+              <h2 class="font-bold text-sm text-gray-900 dark:text-white leading-tight truncate">
+                {{ auth.tenant()?.name || 'Portal da Família' }}
+              </h2>
+              <p class="text-[11px] text-gray-500 dark:text-slate-400">Portal do Responsável</p>
             </div>
           </div>
-          <button (click)="closeMobileMenu()" class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+          <button (click)="closeMobileMenu()" class="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0">
             <span class="material-icons text-xl">close</span>
           </button>
         </div>
@@ -129,13 +137,22 @@ import { ThemeService } from '@core/services/theme.service';
                 <span class="material-icons text-2xl">menu</span>
               </button>
 
-              <div class="flex items-center gap-2 sm:gap-3">
-                <div class="size-9 sm:size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                  <span class="material-icons text-xl sm:text-2xl">family_restroom</span>
-                </div>
+              <div class="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                @if (auth.tenant()?.logoUrl) {
+                  <div class="h-9 sm:h-11 w-auto max-w-[140px] sm:max-w-[200px] flex items-center shrink-0">
+                    <img [src]="auth.tenant()?.logoUrl" [alt]="auth.tenant()?.name || 'Clínica'" class="max-h-8 sm:max-h-10 w-auto object-contain">
+                  </div>
+                  <div class="h-6 w-px bg-gray-200 dark:bg-slate-700 hidden sm:block"></div>
+                } @else {
+                  <div class="size-9 sm:size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <span class="material-icons text-xl sm:text-2xl">family_restroom</span>
+                  </div>
+                }
                 <div class="min-w-0">
-                  <h1 class="text-sm sm:text-lg font-bold text-gray-900 dark:text-white truncate">Portal da Família</h1>
-                  <p class="hidden sm:block text-xs text-gray-500 dark:text-slate-400 truncate">Acompanhamento do seu filho</p>
+                  <h1 class="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate leading-tight">
+                    {{ auth.tenant()?.name || 'Portal da Família' }}
+                  </h1>
+                  <p class="hidden sm:block text-[11px] text-gray-500 dark:text-slate-400 truncate">Portal do Responsável • Acompanhamento</p>
                 </div>
               </div>
             </div>
@@ -264,6 +281,17 @@ import { ThemeService } from '@core/services/theme.service';
       <main class="flex-1 max-w-7xl w-full mx-auto flex flex-col min-h-0" [class]="isChatRoute() ? 'p-2 sm:p-6 lg:p-8 pb-16 sm:pb-24 lg:pb-8 overflow-hidden' : 'p-3 sm:p-6 lg:p-8 pb-20 sm:pb-24 lg:pb-8'">
         <router-outlet></router-outlet>
       </main>
+
+      <!-- White-Label Footer (Tecnologia EduPsych Pro) -->
+      @if (!isChatRoute()) {
+        <footer class="py-4 text-center text-xs text-gray-400 dark:text-slate-500 border-t border-gray-100 dark:border-slate-800 select-none pb-20 lg:pb-4">
+          <p class="inline-flex items-center gap-1.5 font-medium">
+            <span>{{ auth.tenant()?.name || 'Clínica' }}</span>
+            <span>•</span>
+            <span class="text-gray-400/80">Tecnologia EduPsych Pro</span>
+          </p>
+        </footer>
+      }
 
       <!-- Mobile Bottom Navigation Bar (Fixed) -->
       <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-gray-200 dark:border-slate-800 px-2 py-1 shadow-lg">

@@ -36,18 +36,27 @@ import { FormsModule } from '@angular/forms';
             <!-- Canvas with live transform -->
             <canvas #cropCanvas class="absolute pointer-events-none"></canvas>
 
-            <!-- Circular Mask Overlay -->
+            <!-- Mask Overlay (Circle for avatars, Rect for logos) -->
             <div class="absolute inset-0 pointer-events-none">
               <svg class="w-full h-full" viewBox="0 0 320 320">
                 <defs>
                   <mask id="cropper-hole-mask">
                     <rect width="320" height="320" fill="white" />
-                    <circle cx="160" cy="160" r="140" fill="black" />
+                    @if (cropShape === 'circle') {
+                      <circle cx="160" cy="160" r="140" fill="black" />
+                    } @else {
+                      <rect x="20" y="105" width="280" height="110" rx="10" fill="black" />
+                    }
                   </mask>
                 </defs>
                 <rect width="320" height="320" fill="rgba(15, 23, 42, 0.65)" mask="url(#cropper-hole-mask)" />
-                <circle cx="160" cy="160" r="140" fill="none" stroke="rgba(255, 255, 255, 0.9)" stroke-width="2" stroke-dasharray="6 4" />
-                <circle cx="160" cy="160" r="140" fill="none" stroke="var(--color-primary, #007F80)" stroke-width="2" opacity="0.6" />
+                @if (cropShape === 'circle') {
+                  <circle cx="160" cy="160" r="140" fill="none" stroke="rgba(255, 255, 255, 0.9)" stroke-width="2" stroke-dasharray="6 4" />
+                  <circle cx="160" cy="160" r="140" fill="none" stroke="var(--color-primary, #007F80)" stroke-width="2" opacity="0.6" />
+                } @else {
+                  <rect x="20" y="105" width="280" height="110" rx="10" fill="none" stroke="rgba(255, 255, 255, 0.9)" stroke-width="2" stroke-dasharray="6 4" />
+                  <rect x="20" y="105" width="280" height="110" rx="10" fill="none" stroke="var(--color-primary, #007F80)" stroke-width="2" opacity="0.6" />
+                }
               </svg>
             </div>
 
@@ -92,12 +101,13 @@ import { FormsModule } from '@angular/forms';
                 </button>
               </div>
 
-              <!-- Mini circular preview -->
+              <!-- Mini preview -->
               <div class="flex items-center gap-2">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Prévia:</span>
-                <div class="size-10 rounded-full overflow-hidden ring-2 ring-primary shadow-sm bg-slate-800 flex items-center justify-center">
+                <div [class]="cropShape === 'circle' ? 'size-10 rounded-full' : 'w-16 h-8 rounded-lg'"
+                     class="overflow-hidden ring-2 ring-primary shadow-sm bg-slate-800 flex items-center justify-center p-0.5">
                   @if (previewUrl()) {
-                    <img [src]="previewUrl()" class="size-full object-cover">
+                    <img [src]="previewUrl()" class="size-full object-contain">
                   }
                 </div>
               </div>
@@ -124,6 +134,8 @@ import { FormsModule } from '@angular/forms';
 export class ImageCropperModalComponent implements AfterViewInit, OnChanges {
   @Input() imageSrc: string = '';
   @Input() title: string = 'Ajustar Foto do Paciente';
+  @Input() cropShape: 'circle' | 'rect' = 'circle';
+  @Input() mimeType: 'image/jpeg' | 'image/png' = 'image/jpeg';
   @Output() cropped = new EventEmitter<string>();
   @Output() cancelled = new EventEmitter<void>();
 
@@ -173,13 +185,20 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges {
     this.offsetX = 0;
     this.offsetY = 0;
 
-    // Scale so smallest dimension covers the crop circle (diameter = cropRadius * 2)
-    const cropDiameter = this.cropRadius * 2;
-    const scaleX = cropDiameter / this.imageElement.width;
-    const scaleY = cropDiameter / this.imageElement.height;
-    const initialFit = Math.max(scaleX, scaleY);
-    this.minZoom = Math.max(0.2, initialFit * 0.7);
-    this.maxZoom = Math.max(4, initialFit * 4);
+    // Scale so dimension covers the crop area
+    let initialFit = 1;
+    if (this.cropShape === 'rect') {
+      const scaleX = 280 / this.imageElement.width;
+      const scaleY = 110 / this.imageElement.height;
+      initialFit = Math.max(scaleX, scaleY);
+    } else {
+      const cropDiameter = this.cropRadius * 2;
+      const scaleX = cropDiameter / this.imageElement.width;
+      const scaleY = cropDiameter / this.imageElement.height;
+      initialFit = Math.max(scaleX, scaleY);
+    }
+    this.minZoom = Math.max(0.1, initialFit * 0.5);
+    this.maxZoom = Math.max(5, initialFit * 4);
     this.zoom = initialFit;
 
     this.draw();
@@ -277,20 +296,30 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges {
   private generateCroppedDataUrl(outputSize = 400): string | null {
     if (!this.imageElement) return null;
 
+    const isRect = this.cropShape === 'rect';
+    const targetMime = isRect ? (this.mimeType || 'image/png') : this.mimeType;
+
     const outCanvas = document.createElement('canvas');
-    outCanvas.width = outputSize;
-    outCanvas.height = outputSize;
+    let outWidth = outputSize;
+    let outHeight = outputSize;
+    let ratio = 1;
+
+    if (isRect) {
+      outWidth = 560;
+      outHeight = 220;
+      ratio = outWidth / 280; // 280px is rect width in viewport
+    } else {
+      const cropDiameter = this.cropRadius * 2;
+      ratio = outputSize / cropDiameter;
+    }
+
+    outCanvas.width = outWidth;
+    outCanvas.height = outHeight;
     const outCtx = outCanvas.getContext('2d');
     if (!outCtx) return null;
 
-    // Scale ratio between output size and viewport crop diameter
-    const cropDiameter = this.cropRadius * 2;
-    const ratio = outputSize / cropDiameter;
-
     outCtx.save();
-    // Center of output
-    outCtx.translate(outputSize / 2, outputSize / 2);
-    // Apply user translation scaled by ratio
+    outCtx.translate(outWidth / 2, outHeight / 2);
     outCtx.translate(this.offsetX * ratio, this.offsetY * ratio);
     outCtx.rotate((this.rotation * Math.PI) / 180);
     outCtx.scale(this.zoom * ratio, this.zoom * ratio);
@@ -302,7 +331,7 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges {
     outCtx.drawImage(this.imageElement, -w / 2, -h / 2, w, h);
     outCtx.restore();
 
-    return outCanvas.toDataURL('image/jpeg', 0.9);
+    return outCanvas.toDataURL(targetMime, targetMime === 'image/jpeg' ? 0.9 : undefined);
   }
 
   confirmCrop() {

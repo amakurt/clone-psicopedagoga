@@ -8,7 +8,32 @@ import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate, authorize } from '../middleware';
 
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const PUBLIC_ALLOWED_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif']);
+
 const router = Router();
+
+// Rota pública para logomarcas de clínicas, timbrados e avatares (permite tags <img> e html2pdf sem falha de autenticação/CORS)
+router.get('/public/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename as string);
+  const ext = path.extname(filename).toLowerCase();
+  if (!PUBLIC_ALLOWED_EXTENSIONS.has(ext)) {
+    return res.status(403).json({ error: 'Tipo de arquivo público não permitido' });
+  }
+  const filePath = path.join(uploadsDir, filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Arquivo não encontrado' });
+  }
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(filePath);
+});
+
 router.use(authenticate);
 
 const uploadLimiter = rateLimit({
@@ -45,12 +70,6 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/csv'
 ]);
-
-// Configure multer storage
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

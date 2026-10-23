@@ -52,12 +52,18 @@ type NavItem = {
         <div class="p-4 sm:p-6 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 lg:border-b-0"
           [class.lg:justify-center]="!sidebarOpen()" [class.lg:px-4]="!sidebarOpen()">
           <div class="flex items-center gap-3">
-            <img src="/favicon-96x96.png" alt="EduPsych Pro" class="size-10 rounded-xl shadow-md shrink-0 object-contain">
+            @if (auth.tenant()?.logoUrl) {
+              <img [src]="auth.tenant()?.logoUrl" [alt]="auth.tenant()?.name || 'Clínica'" class="size-10 rounded-xl shadow-md shrink-0 object-contain bg-white dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700">
+            } @else {
+              <img src="/favicon-96x96.png" alt="EduPsych Pro" class="size-10 rounded-xl shadow-md shrink-0 object-contain">
+            }
             <div class="overflow-hidden transition-all duration-300" 
               [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()" 
               [class.lg:w-auto]="sidebarOpen()" [class.lg:opacity-100]="sidebarOpen()">
-              <h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight whitespace-nowrap">EduPsych Pro</h1>
-              <p class="text-primary text-xs font-semibold tracking-wide uppercase whitespace-nowrap">Gestão Clínica</p>
+              <h1 class="text-slate-900 dark:text-white text-sm font-black leading-tight whitespace-nowrap truncate max-w-[160px]" [title]="auth.tenant()?.name || 'EduPsych Pro'">
+                {{ auth.tenant()?.name || 'EduPsych Pro' }}
+              </h1>
+              <p class="text-primary text-[11px] font-bold tracking-wide uppercase whitespace-nowrap">Gestão Clínica</p>
             </div>
           </div>
 

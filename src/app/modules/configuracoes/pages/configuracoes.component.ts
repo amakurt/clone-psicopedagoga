@@ -234,22 +234,119 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
         </div>
       }
 
-      <!-- Clinic Tab -->
+      <!-- Clinic Tab (White-Label) -->
       @if (activeTab() === 'clinica') {
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+          
+          <!-- Seção 1: Logomarca da Clínica & Identidade Visual (White-Label) -->
           <div class="p-8">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Dados da Clínica</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <div class="md:col-span-2">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome da Clínica</label>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <span class="text-[10px] font-black text-primary uppercase tracking-[0.2em] bg-primary/10 px-2.5 py-1 rounded-lg">White-Label Clínico</span>
+                <h3 class="text-lg font-black text-slate-900 dark:text-white mt-2">Logomarca da Clínica</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sua marca oficial nos Laudos em PDF, no Portal da Família do Responsável e em todos os documentos.</p>
+              </div>
+            </div>
+
+            <!-- Preview Card com Fundo Quadriculado Transparente -->
+            <div class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl ring-1 ring-slate-200/80 dark:ring-slate-700/60">
+              <div class="flex flex-col md:flex-row items-center gap-6">
+                
+                <!-- Display do Logo -->
+                <div class="w-full md:w-80 h-32 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center p-4 relative overflow-hidden bg-white dark:bg-slate-900 shadow-inner"
+                     style="background-image: radial-gradient(#94a3b8 1px, transparent 1px); background-size: 14px 14px;">
+                  @if (clinicLogoPreview()) {
+                    <img [src]="clinicLogoPreview()" alt="Logo da Clínica" class="max-h-24 max-w-full object-contain filter drop-shadow-sm">
+                  } @else {
+                    <div class="text-center p-4">
+                      <span class="material-icons text-3xl text-slate-400">domain</span>
+                      <p class="text-xs font-bold text-slate-500 mt-1">Nenhuma logomarca cadastrada</p>
+                      <p class="text-[10px] text-slate-400">Clique ao lado para adicionar</p>
+                    </div>
+                  }
+                </div>
+
+                <!-- Ações e Orientações -->
+                <div class="flex-1 space-y-3">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" (change)="onClinicLogoFileChange($event)" #clinicLogoInput>
+                    
+                    <button type="button" (click)="clinicLogoInput.click()" [disabled]="uploadingLogo()"
+                      class="px-4 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-on-primary transition-all flex items-center gap-2 shadow-md shadow-primary/20 active:scale-95 disabled:opacity-50">
+                      <span class="material-icons text-base">cloud_upload</span>
+                      <span>{{ clinicLogoPreview() ? 'Trocar Logomarca' : 'Carregar Logomarca' }}</span>
+                    </button>
+
+                    @if (clinicLogoPreview()) {
+                      <button type="button" (click)="openLogoCropperWithCurrent()"
+                        class="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5 active:scale-95 ring-1 ring-slate-200 dark:ring-slate-700" title="Ajustar proporção retangular e zoom">
+                        <span class="material-icons text-base">crop</span>
+                        <span>Ajustar Enquadramento</span>
+                      </button>
+
+                      <button type="button" (click)="removeClinicLogo()" [disabled]="uploadingLogo()"
+                        class="px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all flex items-center gap-1 active:scale-95" title="Remover logomarca">
+                        <span class="material-icons text-base">delete</span>
+                        <span>Remover</span>
+                      </button>
+                    }
+                  </div>
+
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+                    <p class="flex items-center gap-1.5">
+                      <span class="material-icons text-emerald-600 text-sm">check_circle</span>
+                      <span><b>Formato recomendado:</b> PNG com fundo transparente ou SVG (dimensão recomendada: horizontal 3:1).</span>
+                    </p>
+                    <p class="flex items-center gap-1.5">
+                      <span class="material-icons text-emerald-600 text-sm">check_circle</span>
+                      <span><b>Aplicação imediata:</b> Cabeçalhos de laudos em PDF, Portal do Responsável e sistema clínico.</span>
+                    </p>
+                  </div>
+
+                  <!-- Botão de Ajuda Humanizada para recortar logo -->
+                  <div class="pt-2">
+                    <a href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20para%20otimizar%20e%20ajustar%20a%20logomarca%20da%20minha%20cl%C3%ADnica%20no%20EduPsych%20Pro" target="_blank"
+                       class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-primary dark:text-slate-400 transition-colors">
+                      <span class="material-icons text-sm text-emerald-500">support_agent</span>
+                      <span>Precisa de ajuda para recortar ou transparentar a sua logo? Fale com o suporte</span>
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal de Crop Retangular da Logo da Clínica -->
+          @if (showLogoCropperModal() && rawLogoImageToCrop()) {
+            <app-image-cropper-modal
+              [imageSrc]="rawLogoImageToCrop()!"
+              title="Ajustar Logomarca da Clínica (White-Label)"
+              cropShape="rect"
+              mimeType="image/png"
+              (cropped)="onLogoCropped($event)"
+              (cancelled)="closeLogoCropper()" />
+          }
+
+          <!-- Seção 2: Dados Oficiais da Clínica -->
+          <div class="p-8">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Dados Oficiais da Clínica</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome da Clínica / Consultório</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                  [(ngModel)]="clinicForm.name" placeholder="Nome da clínica">
+                  [(ngModel)]="clinicForm.name" placeholder="Ex: Clínica NeuroSaber Psicopedagogia">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">CNPJ (Opcional - Timbrado em Laudos/Recibos)</label>
+                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
+                  [(ngModel)]="clinicForm.cnpj" placeholder="00.000.000/0000-00">
               </div>
             </div>
 
             <app-address-form 
               [address]="clinicForm.address" 
-              label="Endereço da Clínica"
+              label="Endereço da Clínica (Timbrado em Documentos)"
               (addressChange)="onClinicAddressChange($event)">
             </app-address-form>
 
@@ -258,22 +355,26 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
                 <app-phone-input 
                   [phone]="clinicForm.phone" 
                   [isWhatsApp]="clinicForm.phoneIsWhatsApp"
-                  label="Telefone da Clínica"
+                  label="Telefone / WhatsApp da Clínica"
                   (phoneChange)="onClinicPhoneChange($event)">
                 </app-phone-input>
               </div>
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Email</label>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">E-mail Institucional da Clínica</label>
                 <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                   [(ngModel)]="clinicForm.email" placeholder="contato@clinica.com" type="email">
               </div>
             </div>
           </div>
 
-          <div class="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95"
+          <div class="p-8 bg-slate-50/50 dark:bg-slate-800/20 flex justify-end">
+            <button class="px-8 py-3 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
+              [disabled]="savingClinic()"
               (click)="saveClinic()">
-              Salvar Clínica
+              @if (savingClinic()) {
+                <span class="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              }
+              <span>Salvar Dados da Clínica</span>
             </button>
           </div>
         </div>
@@ -437,6 +538,14 @@ export class ConfiguracoesComponent implements OnInit {
   avatarPreview = signal<string | null>(null);
   showCropperModal = signal(false);
   rawImageToCrop = signal<string | null>(null);
+  
+  // White-Label & Logomarca da Clínica
+  clinicLogoPreview = signal<string | null>(null);
+  showLogoCropperModal = signal(false);
+  rawLogoImageToCrop = signal<string | null>(null);
+  savingClinic = signal(false);
+  uploadingLogo = signal(false);
+
   showToast = signal(false);
   toastMessage = signal('');
   hasPassword = signal(true);
@@ -460,6 +569,7 @@ export class ConfiguracoesComponent implements OnInit {
   passwordForm = { current: '', newPassword: '', confirm: '' };
   clinicForm: any = { 
     name: '', 
+    cnpj: '',
     phone: '', 
     phoneIsWhatsApp: false,
     email: '',
@@ -492,15 +602,42 @@ export class ConfiguracoesComponent implements OnInit {
 
     this.loadAvailabilities();
 
-    const savedClinic = localStorage.getItem('clinic_config');
-    if (savedClinic) {
-      const parsed = JSON.parse(savedClinic);
-      this.clinicForm = {
-        ...this.clinicForm,
-        ...parsed,
-        address: parsed.address || this.clinicForm.address
-      };
-    }
+    // Carregar dados oficiais e logomarca da clínica via API
+    this.api.get<any>('/clinic').subscribe({
+      next: (clinic) => {
+        if (clinic) {
+          this.clinicForm = {
+            name: clinic.name || this.auth.tenant()?.name || '',
+            cnpj: clinic.cnpj || '',
+            phone: clinic.phone || '',
+            phoneIsWhatsApp: !!clinic.phoneIsWhatsApp,
+            email: clinic.email || '',
+            address: clinic.address || { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' }
+          };
+          if (clinic.logoUrl) {
+            this.clinicLogoPreview.set(clinic.logoUrl);
+          }
+        }
+      },
+      error: () => {
+        const savedClinic = localStorage.getItem('clinic_config');
+        if (savedClinic) {
+          try {
+            const parsed = JSON.parse(savedClinic);
+            this.clinicForm = {
+              ...this.clinicForm,
+              ...parsed,
+              address: parsed.address || this.clinicForm.address
+            };
+          } catch {}
+        }
+        const tenant = this.auth.tenant();
+        if (tenant) {
+          if (!this.clinicForm.name && tenant.name) this.clinicForm.name = tenant.name;
+          if (tenant.logoUrl) this.clinicLogoPreview.set(tenant.logoUrl);
+        }
+      }
+    });
   }
 
   getInitials(name: string): string {
@@ -628,9 +765,93 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
+  onClinicLogoFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        this.toast.warning('A logomarca deve ter no máximo 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.rawLogoImageToCrop.set(e.target.result);
+        this.showLogoCropperModal.set(true);
+      };
+      reader.readAsDataURL(file);
+      input.value = '';
+    }
+  }
+
+  openLogoCropperWithCurrent() {
+    if (this.clinicLogoPreview()) {
+      this.rawLogoImageToCrop.set(this.clinicLogoPreview());
+      this.showLogoCropperModal.set(true);
+    }
+  }
+
+  onLogoCropped(croppedDataUrl: string) {
+    this.clinicLogoPreview.set(croppedDataUrl);
+    this.showLogoCropperModal.set(false);
+    this.saveClinicLogo(croppedDataUrl);
+  }
+
+  closeLogoCropper() {
+    this.showLogoCropperModal.set(false);
+  }
+
+  saveClinicLogo(logoBase64: string) {
+    this.uploadingLogo.set(true);
+    this.api.post<any>('/clinic/logo', { logoBase64 }).subscribe({
+      next: (res) => {
+        this.uploadingLogo.set(false);
+        if (res?.logoUrl) {
+          this.clinicLogoPreview.set(res.logoUrl);
+          this.auth.updateTenant({ logoUrl: res.logoUrl });
+        }
+        this.toast.success('Logomarca da clínica salva com sucesso!');
+      },
+      error: () => {
+        this.uploadingLogo.set(false);
+        this.toast.error('Erro ao salvar logomarca da clínica');
+      }
+    });
+  }
+
+  removeClinicLogo() {
+    if (!confirm('Deseja realmente remover a logomarca da clínica?')) return;
+    this.uploadingLogo.set(true);
+    this.api.delete<any>('/clinic/logo').subscribe({
+      next: () => {
+        this.uploadingLogo.set(false);
+        this.clinicLogoPreview.set(null);
+        this.auth.updateTenant({ logoUrl: null });
+        this.toast.success('Logomarca removida com sucesso!');
+      },
+      error: () => {
+        this.uploadingLogo.set(false);
+        this.toast.error('Erro ao remover logomarca');
+      }
+    });
+  }
+
   saveClinic() {
-    localStorage.setItem('clinic_config', JSON.stringify(this.clinicForm));
-    this.showNotification('Dados da clínica salvos!');
+    this.savingClinic.set(true);
+    this.api.put<any>('/clinic', this.clinicForm).subscribe({
+      next: (res) => {
+        this.savingClinic.set(false);
+        if (res?.tenant) {
+          this.auth.updateTenant(res.tenant);
+        }
+        localStorage.setItem('clinic_config', JSON.stringify(this.clinicForm));
+        this.toast.success('Dados da clínica salvos com sucesso!');
+      },
+      error: () => {
+        this.savingClinic.set(false);
+        localStorage.setItem('clinic_config', JSON.stringify(this.clinicForm));
+        this.toast.success('Dados da clínica salvos (modo local)!');
+      }
+    });
   }
 
   saveNotifications() {

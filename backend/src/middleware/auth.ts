@@ -93,6 +93,15 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return res.status(403).json({ error: 'Assinatura da clínica vencida ou bloqueada. Entre em contato com o suporte.' });
     }
 
+    let parsedAddress = null;
+    if (membership.tenant.address) {
+      try {
+        parsedAddress = typeof membership.tenant.address === 'string' ? JSON.parse(membership.tenant.address) : membership.tenant.address;
+      } catch {
+        parsedAddress = membership.tenant.address;
+      }
+    }
+
     req.user = {
       id: user.id,
       name: user.name,
@@ -108,6 +117,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         status: membership.tenant.status,
         logoUrl: membership.tenant.logoUrl,
         colors: membership.tenant.colors,
+        phone: membership.tenant.phone,
+        email: membership.tenant.email,
+        cnpj: membership.tenant.cnpj,
+        address: parsedAddress,
       },
     };
     next();

@@ -11,6 +11,10 @@ export interface TenantInfo {
   status: string;
   logoUrl?: string | null;
   colors?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  cnpj?: string | null;
+  address?: any;
 }
 
 declare global {

@@ -66,6 +66,15 @@ function buildUserPayload(user: any) {
 }
 
 function buildTenantPayload(tenant: any, role: string) {
+  let parsedAddress = null;
+  if (tenant.address) {
+    try {
+      parsedAddress = typeof tenant.address === 'string' ? JSON.parse(tenant.address) : tenant.address;
+    } catch {
+      parsedAddress = tenant.address;
+    }
+  }
+
   return {
     id: tenant.id,
     name: tenant.name,
@@ -74,6 +83,10 @@ function buildTenantPayload(tenant: any, role: string) {
     status: tenant.status,
     logoUrl: tenant.logoUrl,
     colors: tenant.colors,
+    phone: tenant.phone || null,
+    email: tenant.email || null,
+    cnpj: tenant.cnpj || null,
+    address: parsedAddress,
     role,
   };
 }

@@ -2,7 +2,51 @@
 
 ## Última Atualização: 22 de Outubro de 2026
 
-## Sessão 73 - 22/10/2026 — Blindagem Anti-Engenharia Reversa (Anti-Clonagem), Supressão de Source Maps, Hardening Nginx & Proteção Jurídica (Termos de Uso e LGPD)
+## Sessão 74 - 22/10/2026 — Implementação de White-Label Clínico, Upload de Logomarca & Timbrado Oficial em PDFs e Portal do Responsável
+
+### O que foi feito
+
+#### 1. Banco de Dados & Schemas Prisma
+- **Expansão do Modelo `Tenant`:**
+  - Adicionados campos opcionais `phone`, `email`, `cnpj` e `address` nos schemas Prisma (`schema.prisma`, `schema.sqlite.prisma`, `schema.postgres.prisma` e `prisma/schema.prisma`).
+  - Sincronização executada com sucesso via `npx prisma db push` e `npx prisma generate`.
+  - Atualizada a tipagem `TenantInfo` em `backend/src/types/index.ts` e inclusão dos campos no middleware de autenticação (`auth.ts`) e no `buildTenantPayload`.
+
+#### 2. Endpoints Backend de Gestão da Clínica & Upload Público (`/api/clinic` & `/api/uploads`)
+- **Novo Módulo de Rotas (`backend/src/routes/clinic.ts`):**
+  - `GET /api/clinic`: Consulta os dados cadastrais completos da clínica do tenant autenticado.
+  - `PUT /api/clinic`: Atualiza dados cadastrais (nome, telefone, email, CNPJ, endereço estruturado) da clínica.
+  - `POST /api/clinic/logo`: Processamento de upload de logomarca com suporte duplo (Multipart form-data via Multer e Base64 Data URL pré-recortado), validação de MIME types seguros e gravação no diretório de uploads.
+  - `DELETE /api/clinic/logo`: Exclusão da logomarca antiga com limpeza do arquivo em disco e atualização no banco.
+- **Rota Pública para Ativos Visuais (`backend/src/routes/upload.ts`):**
+  - Adicionada rota `GET /api/uploads/public/:filename` antes da autenticação com headers CORS permissivos (`Access-Control-Allow-Origin: *`, `Cross-Origin-Resource-Policy: cross-origin`), permitindo que tags `<img>` e o gerador de PDF (`html2pdf.js`) carreguem logomarcas sem falhas de autenticação ou segurança de canvas.
+- **Registro no Roteador Global (`backend/src/routes/index.ts`):** Rota `/clinic` montada no Express.
+
+#### 3. Frontend: Upload de Logomarca & Ajuste Retangular na Tela de Configurações
+- **Suporte a Recorte Retangular no `ImageCropperModalComponent`:**
+  - Adicionado suporte ao input `cropShape: 'circle' | 'rect'` e `mimeType: 'image/png' | 'image/jpeg'`.
+  - Enquadrador retangular com proporção horizontal (~2.7:1), máscara vetorial SVG com linhas tracejadas e preservação de transparência em PNG.
+- **Aba "Clínica" em `ConfiguracoesComponent`:**
+  - Card de preview da logomarca com padrão quadriculado de transparência.
+  - Botões para Carregar Logomarca, Ajustar Enquadramento e Remover Logomarca.
+  - Botão de assistência humanizada direcionando para suporte via WhatsApp para auxílio na vetorização/recorte de logomarca.
+  - Formulário completo com Nome da Clínica, CNPJ oficial, Endereço, Telefone/WhatsApp e E-mail.
+  - Sincronização com a API backend e atualização reativa do estado global no `AuthService.tenant`.
+
+#### 4. Cabeçalho Timbrado Oficial em PDFs & Documentos Clínicos (`ClinicalDocEditorComponent`)
+- **Layout Profissional Conforme Diretrizes Médicas/Clínicas:**
+  - Lado esquerdo: Logomarca da clínica em alta resolução com dimensionamento proporcional (max-h-16).
+  - Lado direito: Bloco estruturado com Nome da Clínica em destaque, CNPJ, endereço completo, telefones de contato e selo "Documento Clínico Oficial".
+  - Fallback elegante: Caso a clínica ainda não possua logo, renderiza um brasão minimalista com as iniciais da clínica.
+  - Propagação automática para Laudos, Relatórios de Evolução, Anamneses, Encaminhamentos e Acordos Terapêuticos.
+
+#### 5. White-Label no Portal do Responsável (`GuardianLayoutComponent`)
+- **Customização Completa da Identidade da Família:**
+  - Cabeçalho desktop e gaveta mobile do portal do responsável exibindo a logomarca da clínica que atende a criança e o nome da clínica em destaque.
+  - Rodapé discreto no final da página com a assinatura "Tecnologia EduPsych Pro".
+  - Barra lateral do app interno (`MainLayoutComponent`) também sincronizada exibindo a logomarca e nome da clínica no topo do menu.
+
+---
 
 ### O que foi feito
 

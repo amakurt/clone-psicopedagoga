@@ -43,6 +43,7 @@ import relatoriosRoutes from './relatorios';
 import insightsRoutes from './insights';
 import sessionPlannerRoutes from './session-planner';
 import superadminRoutes from './superadmin';
+import clinicRoutes from './clinic';
 
 const router = Router();
 
@@ -92,5 +93,6 @@ router.use('/relatorios', relatoriosRoutes);
 router.use('/insights', insightsRoutes);
 router.use('/session-planner', sessionPlannerRoutes);
 router.use('/superadmin', superadminRoutes);
+router.use('/clinic', clinicRoutes);
 
 export default router;

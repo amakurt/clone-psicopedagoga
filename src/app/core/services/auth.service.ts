@@ -175,4 +175,15 @@ export class AuthService {
     this.user.set(next);
     sessionStorage.setItem(this.userKey, JSON.stringify(next));
   }
+
+  updateTenant(patch: any) {
+    const current = this.tenant() || {};
+    const next = { ...current, ...patch };
+    this.tenant.set(next);
+    sessionStorage.setItem(this.tenantKey, JSON.stringify(next));
+
+    const list = this.tenants().map(t => t.id === next.id ? { ...t, ...next } : t);
+    this.tenants.set(list);
+    sessionStorage.setItem(this.tenantsKey, JSON.stringify(list));
+  }
 }
