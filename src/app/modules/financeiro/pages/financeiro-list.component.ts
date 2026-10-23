@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import QRCode from 'qrcode';
 import { ApiService } from '@core/services/api.service';
+import { AuthService } from '@core/services/auth.service';
 import { escapeHtml } from '@core/utils/escape';
 import { ToastService } from '@shared/components/toast.component';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
@@ -655,6 +656,7 @@ declare var html2pdf: any;
 export class FinanceiroListComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private auth = inject(AuthService);
 
   items = signal<any[]>([]);
   pacientes = signal<any[]>([]);
@@ -964,11 +966,18 @@ export class FinanceiroListComponent implements OnInit {
       ? (item.fornecedor || item.description || 'Despesa Geral') 
       : (escapeHtml(item.paciente?.name) || '—');
 
+    const tenant = this.auth.tenant();
+    const clinicName = tenant?.name || 'EduPsych Pro';
+    const logoUrl = tenant?.logoUrl || '';
+
     const receiptHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #007F80; margin: 0;">EduPsych Pro</h1>
-          <p style="color: #666; margin: 5px 0 0;">${docTitle}</p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px;">
+          ${logoUrl ? `<img src="${logoUrl}" alt="${clinicName}" style="max-height: 50px; max-width: 160px; object-fit: contain;">` : ''}
+          <div style="text-align: ${logoUrl ? 'left' : 'center'};">
+            <h1 style="color: #007F80; margin: 0; font-size: 22px;">${clinicName}</h1>
+            <p style="color: #666; margin: 4px 0 0; font-size: 13px;">${docTitle}</p>
+          </div>
         </div>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px;">
@@ -981,7 +990,7 @@ export class FinanceiroListComponent implements OnInit {
           <tr><td style="padding: 8px 0; color: #666; font-size: 16px;">Valor:</td><td style="padding: 8px 0; font-size: 16px; font-weight: bold; color: ${item.type === 'receita' ? '#10B981' : '#EF4444'};">R$ ${(parseFloat(item.value) || 0).toFixed(2)}</td></tr>
         </table>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
-        <p style="text-align: center; color: #999; font-size: 12px;">Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
+        <p style="text-align: center; color: #999; font-size: 12px;">Documento gerado em ${new Date().toLocaleString('pt-BR')} — ${clinicName}</p>
       </div>
     `;
 
@@ -1005,12 +1014,18 @@ export class FinanceiroListComponent implements OnInit {
     const now = new Date();
     const monthName = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     const data = this.filteredItems();
+    const tenant = this.auth.tenant();
+    const clinicName = tenant?.name || 'EduPsych Pro';
+    const logoUrl = tenant?.logoUrl || '';
 
     const reportHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #007F80; margin: 0;">EduPsych Pro</h1>
-          <h2 style="color: #333; margin: 10px 0 0;">Relatório Financeiro - ${monthName}</h2>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px;">
+          ${logoUrl ? `<img src="${logoUrl}" alt="${clinicName}" style="max-height: 55px; max-width: 180px; object-fit: contain;">` : ''}
+          <div style="text-align: ${logoUrl ? 'left' : 'center'};">
+            <h1 style="color: #007F80; margin: 0; font-size: 22px;">${clinicName}</h1>
+            <h2 style="color: #333; margin: 4px 0 0; font-size: 16px;">Relatório Financeiro - ${monthName}</h2>
+          </div>
         </div>
         <div style="display: flex; gap: 15px; margin-bottom: 30px;">
           <div style="flex: 1; padding: 15px; background: #D1FAE5; border-radius: 12px; text-align: center;">

@@ -46,6 +46,18 @@
   - Rodapé discreto no final da página com a assinatura "Tecnologia EduPsych Pro".
   - Barra lateral do app interno (`MainLayoutComponent`) também sincronizada exibindo a logomarca e nome da clínica no topo do menu.
 
+#### 6. White-Label Universal em Todos os Exportadores Secundários de PDF & Impressões
+- **Recibos Financeiros e Relatório Mensal (`FinanceiroListComponent`):**
+  - Comprovantes de pagamento de pacientes e despesas exibem a logomarca da clínica e Razão Social em vez de título genérico.
+  - Relatório financeiro mensal formatado com branding da clínica.
+- **Portal da Família - Evoluções Compartilhadas (`GuardianEvolutionsComponent`):**
+  - PDF exportado pelos responsáveis familiares traz a logomarca e nome da clínica que acompanha a criança.
+- **Ficha de Frequência e Relatório Comparativo (`EvolucoesListComponent` & `EvolucaoComparativaComponent`):**
+  - Ficha de presença com dados da clínica e substituição de nomes estáticos pelo nome real do profissional logado (`auth.user()?.name`).
+  - Relatório de evolução comparativa timbrado.
+- **DRE, Protocolos TEA, Avaliação ABA e LGPD (`FinanceiroDreComponent`, `ProtocolosListComponent`, `ProtocoloDetailComponent`, `AbaAssessmentComponent`, `ConsentLogComponent`, `ConsentFormComponent`):**
+  - Todos os relatórios de avaliação de protocolos, demonstrativos contábeis e termos de consentimento LGPD padronizados com o cabeçalho dinâmico contendo a logomarca e dados da clínica.
+
 ---
 
 ### O que foi feito

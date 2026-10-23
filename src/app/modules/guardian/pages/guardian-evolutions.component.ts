@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { GuardianService } from '../services/guardian.service';
+import { AuthService } from '@core/services/auth.service';
 import { SessionRecord } from '@core/models';
 import { escapeHtml } from '@core/utils/escape';
 
@@ -182,6 +183,7 @@ declare var html2pdf: any;
 })
 export class GuardianEvolutionsComponent implements OnInit {
   private guardianService = inject(GuardianService);
+  private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
 
   records = signal<SessionRecord[]>([]);
@@ -226,10 +228,17 @@ export class GuardianEvolutionsComponent implements OnInit {
 
   exportToPdf() {
     const data = this.filteredRecords();
+    const tenant = this.auth.tenant();
+    const clinicName = tenant?.name || 'EduPsych Pro';
+    const logoUrl = tenant?.logoUrl || '';
+
     let html = `<div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 30px;">
-      <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #007F80; padding-bottom: 15px;">
-        <h1 style="color: #007F80; margin: 0;">EduPsych Pro</h1>
-        <h2 style="color: #333; margin: 5px 0 0;">Evoluções Compartilhadas</h2>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px; border-bottom: 3px solid #007F80; padding-bottom: 15px;">
+        ${logoUrl ? `<img src="${logoUrl}" alt="${clinicName}" style="max-height: 55px; max-width: 180px; object-fit: contain;">` : ''}
+        <div style="text-align: ${logoUrl ? 'left' : 'center'};">
+          <h1 style="color: #007F80; margin: 0; font-size: 22px;">${clinicName}</h1>
+          <h2 style="color: #333; margin: 4px 0 0; font-size: 16px;">Evoluções Compartilhadas</h2>
+        </div>
       </div>`;
 
     for (const r of data) {
@@ -250,7 +259,7 @@ export class GuardianEvolutionsComponent implements OnInit {
       </div>`;
     }
 
-    html += `<p style="text-align: center; color: #999; font-size: 11px; margin-top: 20px;">Exportado em ${new Date().toLocaleString('pt-BR')}</p></div>`;
+    html += `<p style="text-align: center; color: #999; font-size: 11px; margin-top: 20px;">Exportado em ${new Date().toLocaleString('pt-BR')} — ${clinicName}</p></div>`;
 
     if (typeof html2pdf !== 'undefined') {
       const element = document.createElement('div');

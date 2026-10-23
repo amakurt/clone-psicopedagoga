@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { escapeHtml } from '../../../core/utils/escape';
 import { Chart, registerables } from 'chart.js';
 
@@ -106,6 +107,7 @@ declare var html2pdf: any;
 })
 export class EvolucaoComparativaComponent implements OnInit, AfterViewInit {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
 
   @ViewChild('barChart') barChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('lineChart') lineChartRef!: ElementRef<HTMLCanvasElement>;
@@ -304,11 +306,18 @@ export class EvolucaoComparativaComponent implements OnInit, AfterViewInit {
     const p1Avg = this.calculateAverages(this.period1Data());
     const p2Avg = this.calculateAverages(this.period2Data());
 
+    const tenant = this.auth.tenant();
+    const clinicName = tenant?.name || 'EduPsych Pro';
+    const logoUrl = tenant?.logoUrl || '';
+
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 40px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #007F80; margin: 0;">EduPsych Pro</h1>
-          <h2 style="color: #333; margin: 10px 0 0;">Relatório de Evolução Comparativa</h2>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px;">
+          ${logoUrl ? `<img src="${logoUrl}" alt="${clinicName}" style="max-height: 55px; max-width: 180px; object-fit: contain;">` : ''}
+          <div style="text-align: ${logoUrl ? 'left' : 'center'};">
+            <h1 style="color: #007F80; margin: 0; font-size: 22px;">${clinicName}</h1>
+            <h2 style="color: #333; margin: 4px 0 0; font-size: 16px;">Relatório de Evolução Comparativa</h2>
+          </div>
         </div>
         <hr style="border: 1px solid #eee; margin: 20px 0;">
         <table style="width: 100%; font-size: 14px; margin-bottom: 20px;">
@@ -349,7 +358,7 @@ export class EvolucaoComparativaComponent implements OnInit, AfterViewInit {
           </tr>
         </table>
         <hr style="border: 1px solid #eee; margin: 30px 0 20px;">
-        <p style="text-align: center; color: #999; font-size: 11px;">Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
+        <p style="text-align: center; color: #999; font-size: 11px;">Documento gerado em ${new Date().toLocaleString('pt-BR')} — ${clinicName}</p>
       </div>
     `;
 

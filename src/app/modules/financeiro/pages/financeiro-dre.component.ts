@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@core/services/api.service';
+import { AuthService } from '@core/services/auth.service';
 
 declare var html2pdf: any;
 
@@ -208,6 +209,7 @@ declare var html2pdf: any;
 })
 export class FinanceiroDreComponent implements OnInit {
   private api = inject(ApiService);
+  private auth = inject(AuthService);
 
   selectedMonth = signal(new Date().getMonth() + 1);
   selectedYear = signal(new Date().getFullYear());
@@ -338,10 +340,19 @@ export class FinanceiroDreComponent implements OnInit {
   }
 
   exportPDF() {
+    const tenant = this.auth.tenant();
+    const clinicName = tenant?.name || 'EduPsych Pro';
+    const logoUrl = tenant?.logoUrl || '';
+
     const html = `
       <div style="font-family: Arial; max-width: 800px; margin: 0 auto; padding: 30px;">
-        <h1 style="color: #007F80; text-align: center;">EduPsych Pro - DRE</h1>
-        <h2 style="text-align: center; color: #666;">${this.getMonthName()}/${this.selectedYear()}</h2>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
+          ${logoUrl ? `<img src="${logoUrl}" alt="${clinicName}" style="max-height: 50px; max-width: 160px; object-fit: contain;">` : ''}
+          <div style="text-align: ${logoUrl ? 'left' : 'center'};">
+            <h1 style="color: #007F80; margin: 0; font-size: 22px;">${clinicName}</h1>
+            <p style="color: #666; margin: 4px 0 0; font-size: 14px;">Demonstração do Resultado (DRE) — ${this.getMonthName()}/${this.selectedYear()}</p>
+          </div>
+        </div>
         <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><b>Receita Bruta</b></td><td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">R$ ${this.dreReceitaBruta().toFixed(2)}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">(-) Impostos</td><td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee; color: #ef4444;">R$ ${this.dreImpostos().toFixed(2)}</td></tr>
@@ -353,7 +364,7 @@ export class FinanceiroDreComponent implements OnInit {
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">Outras</td><td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee; color: #666;">R$ ${this.dreOutrasDespesas().toFixed(2)}</td></tr>
           <tr style="background: #f8fafc;"><td style="padding: 12px; font-size: 16px;"><b>= Lucro / (Prejuízo)</b></td><td style="text-align: right; padding: 12px; font-size: 16px; font-weight: bold; color: ${this.dreLucro() >= 0 ? '#059669' : '#ef4444'};">R$ ${this.dreLucro().toFixed(2)}</td></tr>
         </table>
-        <p style="text-align: center; color: #999; font-size: 11px; margin-top: 20px;">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+        <p style="text-align: center; color: #999; font-size: 11px; margin-top: 20px;">Gerado em ${new Date().toLocaleString('pt-BR')} — ${clinicName}</p>
       </div>
     `;
     if (typeof html2pdf !== 'undefined') {
