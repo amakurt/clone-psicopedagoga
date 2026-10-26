@@ -1,8 +1,10 @@
 # Histórico da Sessão e Registro de Continuidade
 
-> **Data da Sessão:** 08 de Outubro de 2026  
-> **Status:** Todas as alterações funcionais, testadas e compiladas com sucesso.  
-> **Repositório:** `https://github.com/amakurt/clone-psicopedagoga.git` (Branch: `main`)
+> **Data da Sessão:** 26 de Outubro de 2026  
+> **Status:** Tudo commitado, sincronizado no GitHub e pronto para continuidade em casa.  
+> **Repositório:** `https://github.com/amakurt/clone-psicopedagoga.git` (Branch: `main`)  
+> **Último Commit:** `737e2f3` - `feat(contact): configure official whatsapp, instagram and floating button`  
+> **Produção Hostinger:** `https://edupsychpro.tech` / `https://app.edupsychpro.tech` (IP: `200.141.23.28`)
 
 ---
 
