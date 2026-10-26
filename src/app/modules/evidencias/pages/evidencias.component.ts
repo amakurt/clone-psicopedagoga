@@ -1,7 +1,8 @@
-import { Component, signal, computed, effect, OnInit } from '@angular/core';
+import { Component, signal, computed, effect, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { escapeHtml } from '../../../core/utils/escape';
+import { DialogService } from '../../../shared/services/dialog.service';
 
 declare var html2pdf: any;
 
@@ -98,6 +99,7 @@ interface EvidenceItem {
   `
 })
 export class EvidenciasComponent implements OnInit {
+  private dialog = inject(DialogService);
   activeTab = signal('citacoes');
   searchTerm = '';
 
@@ -219,7 +221,7 @@ export class EvidenciasComponent implements OnInit {
   exportAllFavorites() {
     const favItems = this.allItems.filter(i => i.favorite);
     if (favItems.length === 0) {
-      alert('Nenhum item favorito para exportar.');
+      this.dialog.warning('Nenhum item favorito para exportar.', 'Evidências Favoritas');
       return;
     }
     const html = `

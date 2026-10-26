@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { EvolucoesService } from '../services/evolucoes.service';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-evolucao-form',
@@ -73,6 +74,7 @@ import { ToastService } from '@shared/components/toast.component';
 })
 export class EvolucaoFormComponent implements OnInit {
   private service = inject(EvolucoesService); private api = inject(ApiService); private route = inject(ActivatedRoute); private toast = inject(ToastService);
+  private dialog = inject(DialogService);
   isEdit = false; id = ''; saving = signal(false); pacientes = signal<any[]>([]); records = signal<any[]>([]); editingId = signal('');
   form: any = { pacienteId: '', date: '', summary: '', activities: '', observations: '', clinicalEvolution: '', conduct: '', focus: 0, engagement: 0, skillProgress: 0, behavior: 0 };
   metrics = [
@@ -113,8 +115,13 @@ export class EvolucaoFormComponent implements OnInit {
     this.editingId.set('');
     this.form = { pacienteId: this.form.pacienteId, date: '', summary: '', activities: '', observations: '', clinicalEvolution: '', conduct: '', focus: 0, engagement: 0, skillProgress: 0, behavior: 0 };
   }
-  deleteRecord(r: any) {
-    if (!confirm(`Excluir a evolução de ${r.date}?`)) return;
+  async deleteRecord(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir a evolução de ${r.date}?`,
+      'Excluir Evolução',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.api.delete(`/session-records/${r.id}`).subscribe({
       next: () => { this.toast.success('Evolução excluída'); this.loadRecords(); },
       error: () => this.toast.error('Erro ao excluir evolução')

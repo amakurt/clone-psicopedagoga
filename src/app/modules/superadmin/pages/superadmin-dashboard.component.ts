@@ -15,6 +15,7 @@ import {
   SaaSBillingConfig,
 } from '../../../core/services/superadmin.service';
 import { ToastService } from '../../../shared/components/toast.component';
+import { DialogService } from '../../../shared/services/dialog.service';
 
 @Component({
   selector: 'app-superadmin-dashboard',
@@ -1852,6 +1853,7 @@ import { ToastService } from '../../../shared/components/toast.component';
 export class SuperAdminDashboardComponent implements OnInit {
   private superAdminService = inject(SuperAdminService);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
   private router = inject(Router);
   auth = inject(AuthService);
 
@@ -2035,13 +2037,19 @@ export class SuperAdminDashboardComponent implements OnInit {
       : 'bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white';
   }
 
-  toggleStatus(t: TenantListItem) {
+  async toggleStatus(t: TenantListItem) {
     const nextStatus = t.status === 'ATIVO' ? 'BLOQUEADO' : 'ATIVO';
-    const confirmMsg = nextStatus === 'BLOQUEADO'
+    const isBlocking = nextStatus === 'BLOQUEADO';
+    const confirmMsg = isBlocking
       ? `Tem certeza que deseja BLOQUEAR o acesso da clínica "${t.name}"? O WhatsApp dela também será desconectado.`
       : `Deseja DESBLOQUEAR e reativar o acesso da clínica "${t.name}"?`;
 
-    if (!confirm(confirmMsg)) return;
+    const confirmed = await this.dialog.confirm(
+      confirmMsg,
+      isBlocking ? 'Bloquear Clínica' : 'Desbloquear Clínica',
+      { confirmText: isBlocking ? 'Bloquear' : 'Desbloquear', dangerMode: isBlocking }
+    );
+    if (!confirmed) return;
 
     this.superAdminService.updateStatus(t.id, nextStatus).subscribe({
       next: () => {
@@ -2106,10 +2114,13 @@ export class SuperAdminDashboardComponent implements OnInit {
     });
   }
 
-  impersonate(t: TenantListItem) {
-    if (!confirm(`Entrar no modo suporte como a clínica "${t.name}"? Você visualizará o sistema como o gestor da clínica.`)) {
-      return;
-    }
+  async impersonate(t: TenantListItem) {
+    const confirmed = await this.dialog.confirm(
+      `Entrar no modo suporte como a clínica "${t.name}"? Você visualizará o sistema como o gestor da clínica.`,
+      'Modo Suporte (Impersonate)',
+      { confirmText: 'Entrar no Suporte', dangerMode: false }
+    );
+    if (!confirmed) return;
 
     this.superAdminService.impersonate(t.id).subscribe({
       next: (res) => {
@@ -2217,10 +2228,13 @@ export class SuperAdminDashboardComponent implements OnInit {
     });
   }
 
-  restartInstance(inst: ClinicWhatsAppInstance) {
-    if (!confirm(`Deseja reiniciar a instância "${inst.instanceName}" da clínica ${inst.tenantName}?`)) {
-      return;
-    }
+  async restartInstance(inst: ClinicWhatsAppInstance) {
+    const confirmed = await this.dialog.confirm(
+      `Deseja reiniciar a instância "${inst.instanceName}" da clínica ${inst.tenantName}?`,
+      'Reiniciar Instância WhatsApp',
+      { confirmText: 'Reiniciar', dangerMode: false }
+    );
+    if (!confirmed) return;
 
     this.superAdminService.restartWhatsAppInstance(inst.tenantId).subscribe({
       next: () => {
@@ -2233,10 +2247,13 @@ export class SuperAdminDashboardComponent implements OnInit {
     });
   }
 
-  disconnectInstance(inst: ClinicWhatsAppInstance) {
-    if (!confirm(`Tem certeza que deseja desconectar (logout) o WhatsApp da clínica ${inst.tenantName}? A sessão será encerrada no aparelho.`)) {
-      return;
-    }
+  async disconnectInstance(inst: ClinicWhatsAppInstance) {
+    const confirmed = await this.dialog.confirm(
+      `Tem certeza que deseja desconectar (logout) o WhatsApp da clínica ${inst.tenantName}? A sessão será encerrada no aparelho.`,
+      'Desconectar WhatsApp',
+      { confirmText: 'Desconectar', dangerMode: true }
+    );
+    if (!confirmed) return;
 
     this.superAdminService.disconnectWhatsAppInstance(inst.tenantId).subscribe({
       next: () => {

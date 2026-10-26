@@ -8,6 +8,7 @@ import { AddressFormComponent, Address } from '@core/components/address-form.com
 import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.component';
 import { ToastService } from '@shared/components/toast.component';
 import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-configuracoes',
@@ -534,6 +535,7 @@ export class ConfiguracoesComponent implements OnInit {
   auth = inject(AuthService);
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
   activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'disponibilidade' | 'recebimento'>('perfil');
   avatarPreview = signal<string | null>(null);
   showCropperModal = signal(false);
@@ -818,8 +820,13 @@ export class ConfiguracoesComponent implements OnInit {
     });
   }
 
-  removeClinicLogo() {
-    if (!confirm('Deseja realmente remover a logomarca da clínica?')) return;
+  async removeClinicLogo() {
+    const confirmed = await this.dialog.confirm(
+      'Deseja realmente remover a logomarca da clínica?',
+      'Remover Logomarca',
+      { confirmText: 'Remover', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.uploadingLogo.set(true);
     this.api.delete<any>('/clinic/logo').subscribe({
       next: () => {

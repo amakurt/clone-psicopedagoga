@@ -2,6 +2,7 @@ import { Component, signal, OnInit, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { DialogService } from '../../shared/services/dialog.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -427,6 +428,7 @@ import { environment } from '../../../environments/environment';
 export class LandingPageComponent implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private dialog = inject(DialogService);
 
   scrolled = signal(false);
   mobileMenu = signal(false);
@@ -460,7 +462,13 @@ export class LandingPageComponent implements OnInit {
       this.auth.login(data.token, data.user, data.tenants, data.tenant);
       this.router.navigate(['/app/dashboard']);
     } catch (err: any) {
-      alert(err.message || 'Não foi possível iniciar a demonstração. Tente novamente.');
+      console.error('[DEMO_ERROR]', err);
+      const isConnectionError = !err?.message || err.message.includes('fetch') || err.message.includes('NetworkError');
+      const friendlyMsg = isConnectionError
+        ? 'Não foi possível conectar ao servidor da demonstração. Verifique se o backend está ativo ou tente novamente em instantes.'
+        : (err.message || 'Não foi possível iniciar a demonstração. Tente novamente.');
+
+      this.dialog.error(friendlyMsg, 'Ambiente de Demonstração');
     } finally {
       this.loadingDemo.set(false);
     }

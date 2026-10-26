@@ -3373,3 +3373,63 @@ npm run start
 - **Compilação Backend**: Executado `npm run build` no backend com sucesso (código 0).
 - **Compilação Frontend**: Executado `npx ng build` com sucesso (código 0).
 
+---
+
+## Sessão 37 - 26/10/2026 — Padronização Universal de Modais e Resolução de Erro no 'Ver Demonstração'
+
+### O que foi feito
+
+#### 1. Diagnóstico do Problema no "Ver Demonstração"
+- **Causa Raiz Identificada:**
+  1. No componente da landing page (`src/app/modules/landing/landing-page.component.ts`), o método `openDemo()` chamava diretamente o `alert(...)` nativo do navegador ao interceptar exceções de conexão ou de resposta da API (`alert(err.message || ...)`).
+  2. Em desenvolvimento local ou quando o backend não estava inicializado na porta 3000, o `fetch` falhava com `TypeError: Failed to fetch`, gerando a janela nativa do browser (`localhost:4200 diz: Failed to fetch`).
+  3. No arquivo `src/environments/environment.ts`, a verificação de porta estava restrita estritamente a `port === '4200'`, falhando na resolução da URL da API caso o app rodasse em portas alternativas de desenvolvimento local.
+
+#### 2. Criação do Sistema Universal de Modais (`DialogService` & `GlobalDialogComponent`)
+- **`DialogService` (`src/app/shared/services/dialog.service.ts`):**
+  - Serviço reativo `@Injectable({ providedIn: 'root' })` baseado em Signals e Promises.
+  - Suporte completo a 5 tipos de diálogos clínicos: `info`, `warning`, `error`, `success` e `confirm`.
+  - Métodos utilitários:
+    - `alert(messageOrOptions, title?, type?)`: exibe alerta formatado e resolve Promise ao fechar.
+    - `error(message, title?)`, `warning(message, title?)`, `success(message, title?)`, `info(message, title?)`.
+    - `confirm(message, title?, options?)`: exibe modal de confirmação assíncrona retornando `Promise<boolean>` (`true` ao confirmar, `false` ao cancelar).
+  - Suporte a personalização de botões, modo destrutivo (`dangerMode`), cancelamento por tecla Escape e clique no backdrop.
+
+- **`GlobalDialogComponent` (`src/app/shared/components/global-dialog.component.ts`):**
+  - Componente visual standalone com design system premium:
+    - Backdrop blur escuro (`bg-slate-950/60 backdrop-blur-sm`).
+    - Animação suave de entrada (`animate-scale-up`).
+    - Card com cantos arredondados (`rounded-3xl`), suporte a tema escuro/claro e borda sutil.
+    - Barra de acento superior e badge de ícone contextual por tipo (vermelho para erro/perigo, âmbar para aviso, esmeralda para sucesso/confirmação, azul para info).
+    - Tipografia polida com quebra de linha inteligente (`whitespace-pre-line`).
+    - Botões padronizados com micro-interações táteis (`active:scale-95`).
+
+#### 3. Montagem Raiz e Blindagem contra Alertas Nativos
+- **`AppComponent` (`src/app/app.component.ts`):**
+  - Montados os componentes `<app-toast />` e `<app-global-dialog />` no componente raiz da aplicação.
+  - Desse modo, qualquer página (landing page, login, portal do responsável, painel interno ou superadmin) tem acesso imediato e confiável a notificações toast e modais padronizadas.
+  - Implementado **monkey-patch seguro de `window.alert`**:
+    - Caso qualquer script ou biblioteca de terceiros invoque `window.alert(...)`, o popup nativo do navegador é sumariamente interceptado e redirecionado para a nossa modal estilizada do `DialogService`.
+  - Removida a duplicata do `<app-toast />` em `main-layout.component.ts`.
+
+#### 4. Refatoração Completa de Todos os `alert()` e `confirm()` do Código
+- Substituição de 100% dos popups nativos por chamadas reativas padronizadas:
+  - **Landing Page (`landing-page.component.ts`)**: `openDemo()` com mensagem acolhedora, explicativa e feedback via `this.dialog.error(...)`.
+  - **WhatsApp Config (`whatsapp-config.component.ts`)**: erro de encerramento via `this.dialog.error(...)`.
+  - **Evidências (`evidencias.component.ts`)**: aviso de favoritos via `this.dialog.warning(...)`.
+  - **Configurações (`configuracoes.component.ts`)**: remoção de logomarca via `await this.dialog.confirm(...)`.
+  - **Laudos (`laudo-form.component.ts`)**: exclusão de laudo via `await this.dialog.confirm(...)`.
+  - **Agenda (`agenda-form.component.ts`)**: exclusão de agendamento via `await this.dialog.confirm(...)`.
+  - **Rastreios (`rastreio-form.component.ts` e `rastreios-list.component.ts`)**: confirmação de itens pendentes e exclusão de triagens via `await this.dialog.confirm(...)`.
+  - **Prontuário (`prontuario.component.ts`)**: exclusão de anotações via `await this.dialog.confirm(...)`.
+  - **Evoluções (`evolucao-form.component.ts`)**: exclusão de evolução via `await this.dialog.confirm(...)`.
+  - **Anamnese (`anamnese-form.component.ts`)**: exclusão de ficha de anamnese via `await this.dialog.confirm(...)`.
+  - **Diário de Sessão (`diario-sessao.component.ts`)**: exclusão de diário via `await this.dialog.confirm(...)`.
+  - **Frequência (`frequencia-form.component.ts`)**: exclusão de ficha de frequência via `await this.dialog.confirm(...)`.
+  - **SuperAdmin (`superadmin-dashboard.component.ts`)**: bloqueio/desbloqueio de clínicas, modo suporte (impersonate), reinício de instância WhatsApp e desconexão de instância via `await this.dialog.confirm(...)`.
+
+#### 5. Validação Técnica
+- **Compilação Backend**: `npm run build` (`tsc`) executado com sucesso (código 0).
+- **Compilação Frontend**: `npx ng build --configuration development` gerado com 100% de sucesso sem nenhum erro (código 0).
+- **Endpoint de Demonstração**: `POST /api/auth/demo` testado via requisição HTTP direta, retornando token JWT, dados do gestor modelo e tenant demo ativos.
+

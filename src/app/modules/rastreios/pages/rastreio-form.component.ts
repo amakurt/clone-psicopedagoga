@@ -7,6 +7,7 @@ import { RastreioService } from '../services/rastreio.service';
 import { ApiService } from '@core/services/api.service';
 import { AuthService } from '@core/services/auth.service';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 Chart.register(...registerables);
 
@@ -160,6 +161,7 @@ export class RastreioFormComponent implements OnInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
 
   saving = signal(false);
   pacientes = signal<any[]>([]);
@@ -407,21 +409,31 @@ export class RastreioFormComponent implements OnInit {
     this.def.set(null);
   }
 
-  deleteRecord(r: any) {
-    if (!confirm(`Excluir o rastreio de ${new Date(r.assessedAt).toLocaleDateString('pt-BR')}?`)) return;
+  async deleteRecord(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir o rastreio de ${new Date(r.assessedAt).toLocaleDateString('pt-BR')}?`,
+      'Excluir Rastreio',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.service.delete(r.id).subscribe({
       next: () => { this.toast.success('Rastreio excluído'); this.loadRecords(); },
       error: () => this.toast.error('Erro ao excluir rastreio')
     });
   }
 
-  save() {
+  async save() {
     if (!this.form.pacienteId) return this.toast.warning('Selecione um paciente');
     if (!this.form.instrument) return this.toast.warning('Selecione um instrumento');
     const answered = this.answeredCount();
     if (answered === 0) return this.toast.warning('Responda pelo menos um item');
     if (answered < (this.def()?.items.length || 0)) {
-      if (!confirm(`Apenas ${answered} de ${this.def()!.items.length} itens respondidos. Salvar mesmo assim?`)) return;
+      const confirmed = await this.dialog.confirm(
+        `Apenas ${answered} de ${this.def()!.items.length} itens respondidos. Salvar mesmo assim?`,
+        'Itens Pendentes',
+        { confirmText: 'Salvar mesmo assim', dangerMode: false }
+      );
+      if (!confirmed) return;
     }
     this.saving.set(true);
     const payload = {

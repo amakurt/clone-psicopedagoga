@@ -8,6 +8,7 @@ import { AuthService } from '@core/services/auth.service';
 import { SignatureModalComponent } from '@shared/components/signature-modal.component';
 import { ToastService } from '@shared/components/toast.component';
 import { ClinicalDocEditorComponent } from '@shared/components/clinical-doc-editor/clinical-doc-editor.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-laudo-form',
@@ -244,6 +245,7 @@ export class LaudoFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
 
   isEdit = false;
   id = '';
@@ -379,8 +381,13 @@ export class LaudoFormComponent implements OnInit {
     };
   }
 
-  deleteRecord(r: any) {
-    if (!confirm(`Excluir o laudo "${r.titulo}"?`)) return;
+  async deleteRecord(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir o laudo "${r.titulo}"?`,
+      'Excluir Laudo',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.api.delete(`/laudos/${r.id}`).subscribe({
       next: () => {
         this.toast.success('Laudo excluído');

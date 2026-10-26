@@ -4,7 +4,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/rou
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { ToastComponent, ToastService } from '../../shared/components/toast.component';
+import { ToastService } from '../../shared/components/toast.component';
 import { NotificationDropdownComponent } from '../../shared/components/notification-dropdown.component';
 import { ChatFloatingComponent } from '../../shared/components/chat-floating.component';
 import { environment } from '../../../environments/environment';
@@ -23,7 +23,7 @@ type NavItem = {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ToastComponent, NotificationDropdownComponent, ChatFloatingComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, NotificationDropdownComponent, ChatFloatingComponent],
   template: `
     <div class="flex h-screen overflow-hidden" [class.dark]="theme.isDarkMode()">
       
@@ -353,7 +353,6 @@ type NavItem = {
         </div>
       </main>
     </div>
-    <app-toast />
     <app-chat-floating />
   `,
   styles: [`

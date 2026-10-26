@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-frequencia-form',
@@ -200,6 +201,7 @@ export class FrequenciaFormComponent implements OnInit {
   private api = inject(ApiService);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
 
   saving = signal(false);
   patients = signal<any[]>([]);
@@ -250,8 +252,13 @@ export class FrequenciaFormComponent implements OnInit {
     };
   }
 
-  deleteRecord(r: any) {
-    if (!confirm(`Excluir a ficha de ${r.date}?`)) return;
+  async deleteRecord(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir a ficha de ${r.date}?`,
+      'Excluir Ficha de Frequência',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.api.delete(`/frequency-sheets/${r.id}`).subscribe({
       next: () => {
         this.toast.success('Ficha excluída');

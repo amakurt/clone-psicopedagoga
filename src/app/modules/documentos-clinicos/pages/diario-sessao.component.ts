@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 import { MaterialPickerModalComponent } from '@shared/components/material-picker-modal.component';
 import { MateriaisService } from '../../biblioteca/services/materiais.service';
 import { MaterialTerapeutico } from '@core/data/materiais-reais.data';
@@ -311,6 +312,7 @@ import { MaterialTerapeutico } from '@core/data/materiais-reais.data';
 export class DiarioSessaoComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
   private route = inject(ActivatedRoute);
   materiaisService = inject(MateriaisService);
 
@@ -418,8 +420,13 @@ export class DiarioSessaoComponent implements OnInit {
     };
   }
 
-  deleteRecord(r: any) {
-    if (!confirm(`Excluir o diário da sessão ${r.sessionNumber} (${r.date})?`)) return;
+  async deleteRecord(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir o diário da sessão ${r.sessionNumber} (${r.date})?`,
+      'Excluir Diário de Sessão',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.api.delete(`/session-diaries/${r.id}`).subscribe({
       next: () => {
         this.toast.success('Diário excluído');

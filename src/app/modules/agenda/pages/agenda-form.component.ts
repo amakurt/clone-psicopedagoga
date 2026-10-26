@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AgendaService } from '../services/agenda.service';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-agenda-form',
@@ -183,6 +184,7 @@ export class AgendaFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
 
   isEdit = false;
   id = '';
@@ -326,8 +328,13 @@ export class AgendaFormComponent implements OnInit {
     };
   }
 
-  deleteRecord(r: any) {
-    if (!confirm(`Excluir a consulta de ${r.date} (${r.startTime})?`)) return;
+  async deleteRecord(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir a consulta de ${r.date} (${r.startTime})?`,
+      'Excluir Consulta',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.api.delete(`/appointments/${r.id}`).subscribe({
       next: () => {
         this.toast.success('Consulta excluída');

@@ -6,6 +6,7 @@ import { AnamneseService } from '../services/anamnese.service';
 import { ApiService } from '@core/services/api.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-anamnese-form',
@@ -377,6 +378,7 @@ export class AnamneseFormComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
 
   isEdit = false;
   id = '';
@@ -484,8 +486,13 @@ export class AnamneseFormComponent implements OnInit {
     this.currentStep.set(0);
   }
 
-  deleteRecord(r: any) {
-    if (!confirm(`Excluir a anamnese de ${r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR') : '—'}?`)) return;
+  async deleteRecord(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir a anamnese de ${r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR') : '—'}?`,
+      'Excluir Anamnese',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.api.delete(`/anamneses/${r.id}`).subscribe({
       next: () => { this.toast.success('Anamnese excluída'); this.loadRecords(); },
       error: () => this.toast.error('Erro ao excluir anamnese')

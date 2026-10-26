@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit, OnDestroy, ViewChild, Elem
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 import {
   WhatsAppService,
   WhatsAppConfig,
@@ -728,6 +729,7 @@ import {
 })
 export class WhatsAppComponent implements OnInit, OnDestroy {
   private whatsappService = inject(WhatsAppService);
+  private dialog = inject(DialogService);
   auth = inject(AuthService);
   isDemo = computed(() => this.auth.isDemo());
 
@@ -1150,7 +1152,10 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.closingLoading.set(false);
-        alert('Erro ao encerrar atendimento: ' + (err?.error?.error || err?.message || 'Erro desconhecido'));
+        this.dialog.error(
+          'Erro ao encerrar atendimento: ' + (err?.error?.error || err?.message || 'Erro desconhecido'),
+          'Atendimento WhatsApp'
+        );
       },
     });
   }

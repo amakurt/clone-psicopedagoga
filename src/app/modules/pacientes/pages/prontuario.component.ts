@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-prontuario',
@@ -53,6 +54,7 @@ export class ProntuarioComponent implements OnInit {
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
   pacienteId = '';
   entries = signal<any[]>([]);
   editingId = signal('');
@@ -93,8 +95,13 @@ export class ProntuarioComponent implements OnInit {
     });
   }
 
-  deleteEntry(entry: any) {
-    if (!confirm(`Excluir a anotação "${entry.titulo}"?`)) return;
+  async deleteEntry(entry: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir a anotação "${entry.titulo}"?`,
+      'Excluir Anotação',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.api.delete(`/prontuarios/${entry.id}`).subscribe({
       next: () => {
         this.toast.success('Anotação excluída');

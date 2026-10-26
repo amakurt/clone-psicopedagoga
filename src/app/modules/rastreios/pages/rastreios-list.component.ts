@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { RastreioService } from '../services/rastreio.service';
 import { ToastService } from '@shared/components/toast.component';
+import { DialogService } from '@shared/services/dialog.service';
 
 @Component({
   selector: 'app-rastreios-list',
@@ -124,6 +125,7 @@ import { ToastService } from '@shared/components/toast.component';
 export class RastreiosListComponent implements OnInit {
   private service = inject(RastreioService);
   private toast = inject(ToastService);
+  private dialog = inject(DialogService);
 
   loading = signal(true);
   records = signal<any[]>([]);
@@ -224,8 +226,13 @@ export class RastreiosListComponent implements OnInit {
     else this.hideAll();
   }
 
-  remove(r: any) {
-    if (!confirm(`Excluir o rastreio de ${r.paciente?.name || '—'} (${new Date(r.assessedAt).toLocaleDateString('pt-BR')})?`)) return;
+  async remove(r: any) {
+    const confirmed = await this.dialog.confirm(
+      `Excluir o rastreio de ${r.paciente?.name || '—'} (${new Date(r.assessedAt).toLocaleDateString('pt-BR')})?`,
+      'Excluir Rastreio',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
     this.service.delete(r.id).subscribe({
       next: () => { this.toast.success('Rastreio excluído'); this.load(); },
       error: () => this.toast.error('Erro ao excluir rastreio')

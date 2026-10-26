@@ -1741,16 +1741,32 @@ function getIconLabel(iconName: string): string {
   return iconName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
+import { GlobalDialogComponent } from './shared/components/global-dialog.component';
+import { ToastComponent } from './shared/components/toast.component';
+import { DialogService } from './shared/services/dialog.service';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
-  template: `<router-outlet />`,
+  imports: [RouterOutlet, GlobalDialogComponent, ToastComponent],
+  template: `
+    <router-outlet />
+    <app-toast />
+    <app-global-dialog />
+  `,
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
   private tooltip: HTMLDivElement | null = null;
   private currentIcon: HTMLElement | null = null;
   private destroyFns: (() => void)[] = [];
+
+  constructor(private dialogService: DialogService) {
+    if (typeof window !== 'undefined') {
+      window.alert = (message?: any) => {
+        this.dialogService.alert(String(message ?? ''), 'Atenção', 'warning');
+      };
+    }
+  }
 
   ngAfterViewInit() {
     this.createTooltip();
