@@ -2,6 +2,39 @@
 
 ## Última Atualização: 26 de Outubro de 2026
 
+## Sessão 77 - 26/10/2026 — Correção CORS em Produção (Ver Demonstração), Fluxo de Escolha de Planos na Landing Page e Modal de Vídeo Tour
+
+### O que foi feito
+
+#### 1. Correção Definitiva de CORS na Demonstração ao Vivo (`backend/src/index.ts`)
+- **Identificação da Causa Raiz:** Ao acessar pelo domínio principal `https://edupsychpro.tech`, o backend na VPS estava configurado apenas com `FRONTEND_URL="https://app.edupsychpro.tech"`. A requisição disparava rejeição com erro de CORS e código 500 no endpoint `/api/auth/demo`.
+- **Solução Implementada:** Configurado regex permissivo e estrito no CORS do Express (`/^https?:\/\/(.+\.)?edupsychpro\.tech(:\d+)?$/`), aceitando transparentemente tanto o domínio raiz (`edupsychpro.tech`) quanto qualquer subdomínio (`app.`, `www.`, etc.) em HTTP e HTTPS.
+- **Refinamento de Detecção em `environment.ts`:** Ajustada a flag `isDevLocal` para considerar estritamente `localhost`, `127.0.0.1`, porta `4200` e domínios `.local`, evitando falsos positivos de ambiente local em produção.
+
+#### 2. Fluxo Otimizado de Conversão e Escolha de Planos na Landing Page (`landing-page.component.ts`)
+- **Redirecionamento Suave para `#planos`:**
+  - Os botões "Começar Agora" da barra de navegação superior (desktop e mobile), do Hero e do banner pré-rodapé agora executam rolagem suave (`scrollIntoView`) diretamente para a seção `#planos`.
+  - Evita que o usuário caia diretamente na tela de cadastro com plano pré-selecionado sem antes visualizar os preços e benefícios.
+- **Banner de Degustação 7 Dias Grátis:**
+  - Adicionado card de destaque no topo da seção de planos: *"Experimente 7 dias totalmente grátis • Sem cartão de crédito"*.
+  - Botão de ação direciona para a criação de conta com `plan=TRIAL`, liberando 100% dos recursos clínicos imediatamente sem cobrança.
+- **Resiliência e Fallback de Planos:**
+  - Implementada lista estática de fallback dos planos (Mensal, Semestral, Anual) caso a API de faturamento demore a responder, garantindo renderização instantânea da vitrine de preços.
+
+#### 3. Modal de Apresentação & Vídeo Tour Interativo
+- **Botão "Vídeo Tour (2 min)":** Adicionado no hero e no banner de demonstração da landing page.
+- **Modal Personalizado com Backdrop Blur:** Exibe visão geral multimídia dos 4 pilares do sistema (Prontuários & Anamneses, Laudos com IA, Lembretes WhatsApp e Portal da Família), com atalhos para teste da demonstração ao vivo ou cadastro imediato em 7 dias grátis.
+
+#### 4. Melhoria no Formulário de Cadastro (`login.component.ts`)
+- **Indicação do Plano Escolhido:** Card dinâmico informando se o usuário está criando a conta via 7 Dias Grátis (`TRIAL`) ou através de um dos planos anuais/semestrais/mensais.
+- **Botão "Trocar Plano":** Permite ao usuário retornar à página de planos caso mude de ideia antes de finalizar o cadastro.
+- **Fallback Inteligente para Trial:** Se o usuário entrar no cadastro de profissional sem parâmetro de plano, o sistema assume automaticamente o `TRIAL` de 7 dias gratuitos em vez de vincular previamente a um plano com fatura pendente.
+
+#### 5. Conformidade com Diretrizes de Design
+- Substituídos estilos residuais roxos por tons harmoniosos de `sky`/`teal` nos mockups e cards da landing page (em conformidade com a Purple Ban).
+
+---
+
 ## Sessão 76 - 26/10/2026 — Eliminação Global de Modais Nativas, Sistema de Backup & Rollback de Clínicas no Painel Master e Deploy na VPS Hostinger
 
 ### O que foi feito

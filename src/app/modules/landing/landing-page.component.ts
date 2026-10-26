@@ -38,7 +38,7 @@ import { environment } from '../../../environments/environment';
               <span>{{ loadingDemo() ? 'Abrindo...' : 'Ver Demonstração' }}</span>
             </button>
             <a routerLink="/login" class="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-slate-300 hover:text-primary transition-colors">Entrar</a>
-            <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'SEMESTRAL'}" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25">Começar Agora</a>
+            <button (click)="scrollTo('planos', $event)" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25 cursor-pointer">Começar Agora</button>
           </div>
 
           <button (click)="mobileMenu.set(!mobileMenu())" class="md:hidden p-2 text-gray-600 dark:text-slate-300">
@@ -61,7 +61,7 @@ import { environment } from '../../../environments/environment';
             <span>{{ loadingDemo() ? 'Abrindo Demonstração...' : 'Ver Demonstração ao Vivo' }}</span>
           </button>
           <a routerLink="/login" class="block py-2 text-sm font-semibold text-gray-600 dark:text-slate-300">Entrar</a>
-          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'SEMESTRAL'}" class="block py-3 bg-primary text-on-primary rounded-xl text-sm font-bold text-center">Começar Agora</a>
+          <button (click)="mobileMenu.set(false); scrollTo('planos', $event)" class="w-full py-3 bg-primary text-on-primary rounded-xl text-sm font-bold text-center">Começar Agora</button>
         </div>
       }
     </nav>
@@ -95,14 +95,18 @@ import { environment } from '../../../environments/environment';
               A plataforma completa para psicopedagogos, terapeutas e pais acompanharem o desenvolvimento de crianças com TEA e necessidades especiais.
             </p>
 
-            <div class="mt-8 flex flex-wrap items-center gap-4">
-              <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'SEMESTRAL'}" class="px-8 py-4 bg-primary hover:bg-primary-dark text-on-primary rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2">
-                Começar Agora
+            <div class="mt-8 flex flex-wrap items-center gap-3">
+              <button (click)="scrollTo('planos', $event)" class="px-7 py-4 bg-primary hover:bg-primary-dark text-on-primary rounded-2xl font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center gap-2 cursor-pointer">
+                <span>Começar Agora</span>
                 <span class="material-icons">arrow_forward</span>
-              </a>
-              <button (click)="openDemo()" [disabled]="loadingDemo()" class="px-8 py-4 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-teal-700 dark:text-teal-300 rounded-2xl font-bold text-base transition-all border-2 border-primary/30 flex items-center gap-2 shadow-sm disabled:opacity-50">
-                <span class="material-icons text-primary">play_circle</span>
-                <span>{{ loadingDemo() ? 'Abrindo Demo...' : 'Ver Demonstração ao Vivo' }}</span>
+              </button>
+              <button (click)="openDemo()" [disabled]="loadingDemo()" class="px-6 py-4 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-teal-700 dark:text-teal-300 rounded-2xl font-bold text-base transition-all border-2 border-primary/30 flex items-center gap-2 shadow-sm disabled:opacity-50">
+                <span class="material-icons text-primary">visibility</span>
+                <span>{{ loadingDemo() ? 'Abrindo Demo...' : 'Ver Demonstração' }}</span>
+              </button>
+              <button (click)="openVideoModal()" class="px-6 py-4 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-2xl font-bold text-base transition-all border border-slate-300 dark:border-slate-700 flex items-center gap-2 shadow-sm">
+                <span class="material-icons text-rose-500">smart_display</span>
+                <span>Vídeo Tour (2 min)</span>
               </button>
             </div>
 
@@ -178,8 +182,8 @@ import { environment } from '../../../environments/environment';
               </div>
               <div class="p-3 bg-gray-50 dark:bg-slate-700 rounded-xl">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                    <span class="material-icons text-purple-600 text-sm">trending_up</span>
+                  <div class="w-8 h-8 bg-sky-100 dark:bg-sky-900/30 rounded-lg flex items-center justify-center">
+                    <span class="material-icons text-sky-600 text-sm">trending_up</span>
                   </div>
                   <div class="flex-1">
                     <div class="h-3 bg-gray-200 dark:bg-slate-600 rounded w-20 mb-1"></div>
@@ -241,6 +245,27 @@ import { environment } from '../../../environments/environment';
           <p class="mt-4 text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">
             Sem fidelidade no plano mensal ou economize até 45% nos ciclos semestral e anual. Todos os recursos clínicos desbloqueados em todos os planos.
           </p>
+        </div>
+
+        <!-- Banner 7 Dias Grátis -->
+        <div class="mb-12 max-w-4xl mx-auto p-6 sm:p-8 bg-gradient-to-r from-teal-500/10 via-primary/10 to-emerald-500/10 dark:from-slate-800 dark:to-slate-800 rounded-3xl border-2 border-primary/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-primary/5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-md">
+              <span class="material-icons text-3xl">verified</span>
+            </div>
+            <div>
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-primary text-xs font-black uppercase rounded-full mb-1">
+                Sem cartão de crédito
+              </div>
+              <h3 class="text-xl font-black text-gray-900 dark:text-white">Experimente 7 dias totalmente grátis</h3>
+              <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">Crie sua conta agora, explore todos os módulos e só assine se amar a plataforma.</p>
+            </div>
+          </div>
+          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'TRIAL'}"
+            class="px-7 py-3.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-black transition-all shrink-0 flex items-center gap-2 shadow-lg shadow-primary/25 cursor-pointer">
+            <span>Iniciar Teste Grátis</span>
+            <span class="material-icons text-base">arrow_forward</span>
+          </a>
         </div>
 
         <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
@@ -308,11 +333,18 @@ import { environment } from '../../../environments/environment';
               <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">Acesse nosso ambiente de teste com 1 clique, com pacientes e laudos de exemplo prontos para você navegar.</p>
             </div>
           </div>
-          <button (click)="openDemo()" [disabled]="loadingDemo()"
-            class="px-6 py-3.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shrink-0 flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50">
-            <span class="material-icons text-lg">visibility</span>
-            <span>{{ loadingDemo() ? 'Abrindo Demonstração...' : 'Testar Demonstração Grátis' }}</span>
-          </button>
+          <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <button (click)="openVideoModal()"
+              class="px-5 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 rounded-xl text-sm font-bold transition-all flex items-center gap-2">
+              <span class="material-icons text-rose-500 text-base">smart_display</span>
+              <span>Ver Vídeo</span>
+            </button>
+            <button (click)="openDemo()" [disabled]="loadingDemo()"
+              class="px-6 py-3.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50">
+              <span class="material-icons text-lg">visibility</span>
+              <span>{{ loadingDemo() ? 'Abrindo Demonstração...' : 'Testar Demonstração Grátis' }}</span>
+            </button>
+          </div>
         </div>
 
         <p class="mt-10 text-center text-sm text-gray-500 dark:text-slate-400">
@@ -355,11 +387,11 @@ import { environment } from '../../../environments/environment';
         <!-- CTA Banner -->
         <div class="mt-16 bg-gradient-to-r from-primary to-primary-dark rounded-3xl p-8 md:p-12 text-center text-white">
           <h3 class="text-2xl md:text-3xl font-black mb-4">Pronto para transformar sua clínica?</h3>
-          <p class="text-white/80 mb-8 max-w-xl mx-auto">Comece a usar o EduPsych Pro hoje mesmo e leve seu atendimento para o próximo nível.</p>
-          <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-dark rounded-2xl font-bold hover:bg-gray-100 transition-all shadow-lg">
-            Começar Agora
+          <p class="text-white/80 mb-8 max-w-xl mx-auto">Escolha o plano ideal para a sua rotina ou experimente 7 dias grátis.</p>
+          <button (click)="scrollTo('planos', $event)" class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-dark rounded-2xl font-bold hover:bg-gray-100 transition-all shadow-lg cursor-pointer">
+            Escolher Meu Plano & Começar
             <span class="material-icons">arrow_forward</span>
-          </a>
+          </button>
         </div>
       </div>
     </section>
@@ -395,7 +427,7 @@ import { environment } from '../../../environments/environment';
               <li><a href="#features" (click)="scrollTo('features', $event)" class="text-gray-400 hover:text-white transition-colors text-sm">Funcionalidades</a></li>
               <li><a href="#planos" (click)="scrollTo('planos', $event)" class="text-gray-400 hover:text-white transition-colors text-sm">Planos</a></li>
               <li><a href="#testimonials" (click)="scrollTo('testimonials', $event)" class="text-gray-400 hover:text-white transition-colors text-sm">Depoimentos</a></li>
-              <li><a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional'}" class="text-gray-400 hover:text-white transition-colors text-sm">Criar Conta</a></li>
+              <li><a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'TRIAL'}" class="text-gray-400 hover:text-white transition-colors text-sm">Criar Conta (7 Dias Grátis)</a></li>
             </ul>
           </div>
 
@@ -419,6 +451,92 @@ import { environment } from '../../../environments/environment';
         </div>
       </div>
     </footer>
+
+    <!-- Video Tour Modal -->
+    @if (videoModalOpen()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+        (click)="closeVideoModal()">
+        <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+          (click)="$event.stopPropagation()">
+          
+          <!-- Header Modal -->
+          <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <span class="material-icons text-xl">smart_display</span>
+              </div>
+              <div>
+                <h3 class="text-base font-black text-slate-900 dark:text-white">Vídeo Tour do EduPsych Pro</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Conheça os principais recursos em 2 minutos</p>
+              </div>
+            </div>
+            <button (click)="closeVideoModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition-colors">
+              <span class="material-icons text-xl">close</span>
+            </button>
+          </div>
+
+          <!-- Video Presentation Showcase -->
+          <div class="p-6 md:p-8 space-y-6">
+            <div class="relative rounded-2xl overflow-hidden bg-slate-950 aspect-video flex flex-col items-center justify-center text-center p-6 border border-slate-800">
+              <div class="w-20 h-20 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-4 ring-8 ring-primary/10 animate-pulse">
+                <span class="material-icons text-4xl">play_arrow</span>
+              </div>
+              <h4 class="text-xl font-bold text-white mb-2">Visão Geral dos Módulos Clínicos</h4>
+              <p class="text-sm text-slate-300 max-w-md">
+                Prontuários eletrônicos intuitivos, criação de PEI orientada por IA, relatórios de evolução automática e área exclusiva para a família.
+              </p>
+              <div class="mt-6 inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/10 backdrop-blur rounded-full text-xs font-semibold text-white/90">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                Demonstração Interativa Disponível com 1 Clique
+              </div>
+            </div>
+
+            <!-- Features Highlights -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span class="material-icons text-primary text-xl">folder_shared</span>
+                <p class="font-bold text-xs text-slate-800 dark:text-white mt-1">Prontuários & Anamneses</p>
+                <p class="text-[11px] text-slate-500">Histórico completo e seguro</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span class="material-icons text-primary text-xl">auto_awesome</span>
+                <p class="font-bold text-xs text-slate-800 dark:text-white mt-1">Laudos com IA</p>
+                <p class="text-[11px] text-slate-500">Relatórios em minutos</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span class="material-icons text-primary text-xl">chat</span>
+                <p class="font-bold text-xs text-slate-800 dark:text-white mt-1">WhatsApp Integrado</p>
+                <p class="text-[11px] text-slate-500">Lembretes automáticos</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                <span class="material-icons text-primary text-xl">family_restroom</span>
+                <p class="font-bold text-xs text-slate-800 dark:text-white mt-1">Portal da Família</p>
+                <p class="text-[11px] text-slate-500">Engajamento dos pais</p>
+              </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <button (click)="closeVideoModal(); scrollTo('planos', $event)" class="text-xs font-semibold text-slate-500 hover:text-primary transition-colors cursor-pointer">
+                Ver tabela completa de planos
+              </button>
+              <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button (click)="closeVideoModal(); openDemo()" [disabled]="loadingDemo()"
+                  class="flex-1 sm:flex-initial px-5 py-2.5 border-2 border-primary/40 hover:border-primary text-primary hover:bg-primary/5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50">
+                  <span class="material-icons text-base">visibility</span>
+                  <span>{{ loadingDemo() ? 'Abrindo...' : 'Testar Demonstração ao Vivo' }}</span>
+                </button>
+                <a routerLink="/login" [queryParams]="{mode: 'register', type: 'professional', plan: 'TRIAL'}" (click)="closeVideoModal()"
+                  class="flex-1 sm:flex-initial px-6 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md shadow-primary/20">
+                  <span>Criar Conta (7 Dias Grátis)</span>
+                  <span class="material-icons text-sm">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     :host { display: block; }
@@ -433,17 +551,78 @@ export class LandingPageComponent implements OnInit {
   scrolled = signal(false);
   mobileMenu = signal(false);
   loadingDemo = signal(false);
+  videoModalOpen = signal(false);
   plans = signal<any[]>([]);
 
+  private defaultPlans = [
+    {
+      code: 'MENSAL',
+      name: 'Plano Mensal',
+      priceCents: 12700,
+      active: true,
+      features: JSON.stringify([
+        'Pacientes e atendimentos ilimitados',
+        'Prontuários e anamneses 100% digitais',
+        'Agenda com confirmação e lembretes WhatsApp',
+        'Elaboração de laudos, PEI e relatórios',
+        'Acesso exclusivo ao Portal dos Pais',
+        'Sem fidelidade ou carência (cancele a qualquer momento)'
+      ])
+    },
+    {
+      code: 'SEMESTRAL',
+      name: 'Plano Semestral',
+      priceCents: 9900,
+      active: true,
+      features: JSON.stringify([
+        'Tudo do Plano Mensal incluído',
+        'Economia de 22% (R$ 99/mês faturado semestralmente)',
+        'Assistente de IA para redação de laudos e pareceres',
+        'Modelos prontos de anamnese, PEI e escalas',
+        'Suporte prioritário via WhatsApp',
+        'Treinamento e onboarding guiado para a clínica'
+      ])
+    },
+    {
+      code: 'ANUAL',
+      name: 'Plano Anual',
+      priceCents: 6900,
+      active: true,
+      features: JSON.stringify([
+        'Tudo do Plano Semestral incluído',
+        'Super economia de 45% (R$ 69/mês faturado anualmente)',
+        'IA ilimitada para geração de laudos e devolutivas',
+        'Exportação profissional em PDF com logotipo personalizado',
+        'Acesso antecipado a todos os novos recursos e módulos',
+        'Consultoria de implantação e migração de prontuários'
+      ])
+    }
+  ];
+
   ngOnInit() {
+    this.plans.set(this.defaultPlans);
     fetch(`${environment.apiUrl}/billing/plans`)
       .then(res => res.ok ? res.json() : { data: [] })
-      .then((data: any) => this.plans.set(data?.data || []))
-      .catch(() => this.plans.set([]));
+      .then((data: any) => {
+        if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
+          this.plans.set(data.data);
+        }
+      })
+      .catch(() => {
+        // Keeps default plans fallback
+      });
   }
 
   visiblePlans() {
     return this.plans().filter(p => p.code !== 'VIP' && p.active);
+  }
+
+  openVideoModal() {
+    this.videoModalOpen.set(true);
+  }
+
+  closeVideoModal() {
+    this.videoModalOpen.set(false);
   }
 
   async openDemo() {
@@ -534,8 +713,8 @@ export class LandingPageComponent implements OnInit {
       icon: 'bar_chart',
       title: 'Relatórios em Segundos',
       description: 'Gere relatórios de evolução, financeiros e estatísticos com um único clique.',
-      bgClass: 'bg-purple-100 dark:bg-purple-900/30',
-      iconClass: 'text-purple-600'
+      bgClass: 'bg-sky-100 dark:bg-sky-900/30',
+      iconClass: 'text-sky-600'
     }
   ];
 
@@ -589,3 +768,4 @@ export class LandingPageComponent implements OnInit {
     this.scrolled.set(window.scrollY > 20);
   }
 }
+

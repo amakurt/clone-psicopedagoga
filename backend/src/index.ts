@@ -54,19 +54,23 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // Em ambiente de desenvolvimento, permitir localhost e IPs de rede local
-    if (process.env.NODE_ENV !== 'production') {
-      if (
-        /^http:\/\/localhost(:\d+)?$/.test(origin) ||
-        /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
-        /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
-        /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
-        /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?$/.test(origin)
-      ) {
-        return callback(null, true);
-      }
+    // Permitir sempre todos os subdomínios e domínios principais do EduPsych Pro
+    if (/^https?:\/\/(.+\.)?edupsychpro\.tech(:\d+)?$/.test(origin)) {
+      return callback(null, true);
     }
 
+    // Permitir sempre localhost e IPs de rede local
+    if (
+      /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
+      /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
+      /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
+      /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(:\d+)?$/.test(origin)
+    ) {
+      return callback(null, true);
+    }
+
+    console.warn(`[CORS_BLOCKED] Origem não autorizada: ${origin}`);
     callback(new Error(`Bloqueado por CORS: ${origin}`));
   },
   credentials: true

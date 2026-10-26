@@ -39,14 +39,26 @@ import { environment } from '../../../../../environments/environment';
 
         <!-- Form -->
         <div class="px-10 pb-10">
-          @if (isRegister() && selectedPlan()) {
-            <div class="mb-5 p-3 bg-primary/5 border border-primary/20 rounded-xl text-sm text-slate-700 flex items-center gap-2">
-              <span class="material-icons text-primary text-lg">workspace_premium</span>
-              @if (selectedPlan() === 'TRIAL') {
-                <span>Você terá <strong>7 dias de degustação gratuita</strong> com todos os recursos liberados.</span>
-              } @else {
-                <span>Você escolheu o plano <strong>{{ selectedPlan() }}</strong>. Conclua o cadastro para ativar sua clínica.</span>
-              }
+          @if (isRegister() && selectedRole() !== 'RESPONSAVEL') {
+            <div class="mb-5 p-3.5 bg-primary/5 border border-primary/20 rounded-xl text-sm text-slate-700 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <span class="material-icons text-lg">workspace_premium</span>
+                </div>
+                <div>
+                  <p class="font-bold text-[11px] text-primary uppercase tracking-wider">Plano Selecionado</p>
+                  @if (selectedPlan() === 'TRIAL') {
+                    <p class="text-xs text-slate-800 font-semibold">7 Dias de Degustação Gratuita</p>
+                  } @else if (selectedPlan()) {
+                    <p class="text-xs text-slate-800 font-semibold">Plano {{ selectedPlan() }}</p>
+                  } @else {
+                    <p class="text-xs text-slate-800 font-semibold">7 Dias de Degustação Gratuita</p>
+                  }
+                </div>
+              </div>
+              <a routerLink="/" fragment="planos" class="text-xs font-bold text-primary hover:underline shrink-0">
+                Trocar plano
+              </a>
             </div>
           }
 
@@ -200,7 +212,11 @@ export class LoginComponent {
     const plan = this.route.snapshot.queryParamMap.get('plan');
     const type = this.route.snapshot.queryParamMap.get('type');
     if (mode === 'register') this.isRegister.set(true);
-    if (plan) this.selectedPlan.set(plan);
+    if (plan) {
+      this.selectedPlan.set(plan);
+    } else if (mode === 'register') {
+      this.selectedPlan.set('TRIAL');
+    }
     this.contracting.set(!!plan || type === 'professional');
     if (this.contracting()) this.selectedRole.set('PSICOPEDAGOGO');
   }
@@ -337,7 +353,7 @@ register() {
           email: this.email,
           password: this.password,
           clinicName: this.clinicName,
-          plan: this.selectedPlan() || 'MENSAL',
+          plan: this.selectedPlan() || 'TRIAL',
         }
       : {
           name: this.name,
