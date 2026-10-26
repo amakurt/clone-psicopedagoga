@@ -3496,3 +3496,27 @@ npm run start
 - **Compilação Frontend**: `npx ng build --configuration development` gerado com 100% de sucesso sem nenhum erro (código 0).
 - **Endpoint de Demonstração**: `POST /api/auth/demo` testado via requisição HTTP direta, retornando token JWT, dados do gestor modelo e tenant demo ativos.
 
+---
+
+## Sessão 38 - 26/10/2026 — Canais Oficiais de Contato, Botão Flutuante de WhatsApp e Alinhamento Go-To-Market
+
+### O que foi feito
+
+#### 1. Integração dos Canais Reais de Atendimento
+- **Botão Flutuante de WhatsApp na Landing Page (`landing-page.component.ts`):**
+  - Implementado botão flutuante posicionado no canto inferior direito (`fixed bottom-6 right-6 z-40`).
+  - Badge pulsante de status online em verde esmeralda com micro-animação contínua.
+  - Ícone vetorial oficial do WhatsApp em SVG de alta fidelidade e texto chamativo *"Tirar Dúvidas"*.
+  - Link direto para a API do WhatsApp com o número oficial do gestor (`(85) 98801-4049` / `5585988014049`) e mensagem pré-formatada:  
+    *"Olá! Conheci o EduPsych Pro e gostaria de tirar uma dúvida sobre a plataforma."*
+- **Rodapé da Landing Page:**
+  - Link oficial do perfil do Instagram (`https://www.instagram.com/amauricostacastro/`) com efeito hover diferenciado.
+  - Canal direto de suporte via WhatsApp oficial `(85) 98801-4049` e e-mail de contato `amakurt@gmail.com`.
+- **Módulo Interno de Configurações (`configuracoes.component.ts`):**
+  - Atualizado link de suporte e assistência de logomarca da clínica para direcionar ao WhatsApp oficial `5585988014049`.
+
+#### 2. Validação Técnica
+- Verificação estática de tipos TypeScript concluída com sucesso (`npx tsc --noEmit`, 0 erros).
+- Servidores locais ativos e responsivos em `http://localhost:4200` e `http://localhost:3000`.
+
+

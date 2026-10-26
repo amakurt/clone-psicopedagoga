@@ -409,13 +409,19 @@ import { environment } from '../../../environments/environment';
             </div>
             <p class="text-gray-400 max-w-sm leading-relaxed">A tecnologia a serviço do desenvolvimento humano.</p>
             <div class="flex gap-4 mt-6">
-              <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center transition-colors">
+              <a href="https://www.instagram.com/amauricostacastro/" target="_blank" rel="noopener noreferrer"
+                class="w-10 h-10 bg-gray-800 hover:bg-rose-600 rounded-xl flex items-center justify-center transition-colors"
+                title="Siga no Instagram @amauricostacastro">
                 <span class="material-icons text-lg">photo_camera</span>
               </a>
-              <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center transition-colors">
-                <span class="material-icons text-lg">business</span>
+              <a href="https://wa.me/5585988014049?text=Ol%C3%A1!%20Gostaria%20de%20falar%20sobre%20o%20EduPsych%20Pro." target="_blank" rel="noopener noreferrer"
+                class="w-10 h-10 bg-gray-800 hover:bg-emerald-600 rounded-xl flex items-center justify-center transition-colors"
+                title="Fale no WhatsApp (85) 98801-4049">
+                <span class="material-icons text-lg">chat</span>
               </a>
-              <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center transition-colors">
+              <a href="mailto:amakurt@gmail.com"
+                class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center transition-colors"
+                title="E-mail: amakurt@gmail.com">
                 <span class="material-icons text-lg">mail</span>
               </a>
             </div>
@@ -432,9 +438,21 @@ import { environment } from '../../../environments/environment';
           </div>
 
           <div>
-            <h4 class="font-bold mb-4">Suporte & Legal</h4>
+            <h4 class="font-bold mb-4">Suporte & Contato</h4>
             <ul class="space-y-3">
-              <li><a href="mailto:contato@edupsych.com.br" class="text-gray-400 hover:text-white transition-colors text-sm">Central de Ajuda</a></li>
+              <li>
+                <a href="https://wa.me/5585988014049?text=Ol%C3%A1!%20Preciso%20de%20suporte%20com%20o%20EduPsych%20Pro." target="_blank" rel="noopener noreferrer"
+                  class="text-gray-400 hover:text-emerald-400 transition-colors text-sm flex items-center gap-1.5">
+                  <span class="material-icons text-emerald-400 text-sm">chat</span>
+                  <span>(85) 98801-4049</span>
+                </a>
+              </li>
+              <li>
+                <a href="mailto:amakurt@gmail.com" class="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                  <span class="material-icons text-sm">mail</span>
+                  <span>amakurt&#64;gmail.com</span>
+                </a>
+              </li>
               <li><a routerLink="/privacidade" class="text-gray-400 hover:text-white transition-colors text-sm">Privacidade</a></li>
               <li><a routerLink="/termos" class="text-gray-400 hover:text-white transition-colors text-sm">Termos de Uso</a></li>
             </ul>
@@ -537,6 +555,22 @@ import { environment } from '../../../environments/environment';
         </div>
       </div>
     }
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/5585988014049?text=Ol%C3%A1!%20Conheci%20o%20EduPsych%20Pro%20e%20gostaria%20de%20tirar%20uma%20d%C3%BAvida%20sobre%20a%20plataforma."
+       target="_blank"
+       rel="noopener noreferrer"
+       class="fixed bottom-6 right-6 z-40 group flex items-center gap-2.5 bg-emerald-500 hover:bg-emerald-600 text-white pl-3.5 pr-4 py-3 rounded-full shadow-2xl shadow-emerald-500/40 hover:shadow-emerald-500/60 hover:scale-105 active:scale-95 transition-all duration-300"
+       title="Falar com suporte no WhatsApp">
+      <span class="relative flex h-3 w-3">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+      </span>
+      <svg class="w-6 h-6 fill-current shrink-0" viewBox="0 0 24 24">
+        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.072-2.112-.513-1.619-.669-2.663-2.316-2.744-2.424-.08-.108-.654-.87-.654-1.659 0-.788.414-1.176.56-1.332.146-.156.32-.196.427-.196.107 0 .213.002.306.007.098.005.23-.037.36.275.133.32.454 1.107.494 1.187.04.08.067.174.013.281-.053.107-.08.174-.16.268-.08.093-.168.208-.24.281-.08.08-.163.167-.07.327.093.16.413.682.886 1.103.609.542 1.123.71 1.283.79.16.08.253.067.347-.04.093-.107.4-.467.507-.627.107-.16.213-.133.36-.08.147.053.934.44 1.094.52.16.08.267.12.307.187.04.067.04.387-.104.792zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.301C8.423 21.498 10.158 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.583 0-3.076-.442-4.359-1.21l-.312-.187-2.923.767.78-2.85-.205-.327C4.168 15.11 3.75 13.593 3.75 12c0-4.549 3.701-8.25 8.25-8.25 4.549 0 8.25 3.701 8.25 8.25 0 4.549-3.701 8.25-8.25 8.25z"/>
+      </svg>
+      <span class="text-xs sm:text-sm font-bold tracking-wide">Tirar Dúvidas</span>
+    </a>
   `,
   styles: [`
     :host { display: block; }

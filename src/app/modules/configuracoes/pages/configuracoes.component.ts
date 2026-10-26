@@ -306,7 +306,7 @@ import { DialogService } from '@shared/services/dialog.service';
 
                   <!-- Botão de Ajuda Humanizada para recortar logo -->
                   <div class="pt-2">
-                    <a href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20para%20otimizar%20e%20ajustar%20a%20logomarca%20da%20minha%20cl%C3%ADnica%20no%20EduPsych%20Pro" target="_blank"
+                    <a href="https://wa.me/5585988014049?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20para%20otimizar%20e%20ajustar%20a%20logomarca%20da%20minha%20cl%C3%ADnica%20no%20EduPsych%20Pro" target="_blank"
                        class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-primary dark:text-slate-400 transition-colors">
                       <span class="material-icons text-sm text-emerald-500">support_agent</span>
                       <span>Precisa de ajuda para recortar ou transparentar a sua logo? Fale com o suporte</span>
