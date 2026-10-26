@@ -1,8 +1,38 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 23 de Outubro de 2026
+## Última Atualização: 26 de Outubro de 2026
 
-## Sessão 75 - 23/10/2026 — Blindagem de Cadastro, Suporte a Trial de 7 Dias Gratuito & Script de Atualização Rápida para VPS (update-vps.sh)
+## Sessão 76 - 26/10/2026 — Eliminação Global de Modais Nativas, Sistema de Backup & Rollback de Clínicas no Painel Master e Deploy na VPS Hostinger
+
+### O que foi feito
+
+#### 1. Padronização Global de Modais & Eliminação de Popups Nativos do Navegador
+- **Serviço Reativo Global `DialogService` (`dialog.service.ts`):**
+  - Métodos `alert()`, `confirm()`, `error()`, `warning()`, `success()`, `info()` com suporte a `Promise<boolean>` ou `Promise<void>`.
+  - Componente modal global moderno `<app-global-dialog />` com backdrop blur, animações suaves, foco por teclado (`Escape` / `Enter`), badges coloridas sem uso de roxo (obedecendo à diretriz visual).
+  - Monkey-patch defensivo em `window.alert` no `AppComponent` para capturar qualquer alerta residual de bibliotecas de terceiros.
+- **Refatoração Completa do Sistema:**
+  - Substituídos 100% dos `window.alert` e `window.confirm` legados por chamadas limpas ao `DialogService` em todos os módulos (Landing Page, Configurações, WhatsApp, Evidências, Laudos, Agenda, Rastreios, Prontuário, Evoluções, Anamnese, Diários de Sessão, Frequência e SuperAdmin).
+  - Corrigida a resolução de ambiente local em `environment.ts` (`isDevLocal`) e o endpoint `/api/auth/demo` para carregamento instantâneo da demonstração clínica.
+
+#### 2. Sistema Completo de Backup, Rollback & Proteção de Clínicas (Multi-Tenant Safeguard)
+- **Serviço de Backup no Backend (`backend/src/services/backup.service.ts`):**
+  - `exportTenantBackup(tenantId)`: Gera snapshot portátil e estruturado em JSON com todos os dados da clínica (dados cadastrais, equipe, pacientes, responsáveis, prontuários, evoluções, laudos, sessões, agendamentos, anamneses, diários, frequências, rastreios e finanças).
+  - `restoreTenantBackup(tenantId, payload)`: Executa restauração atômica em transação Prisma (`prisma.$transaction`) com salvaguarda preventiva automática (gera snapshot pré-rollback antes de aplicar qualquer alteração).
+  - `listSavedBackups()`: Monitora arquivos de snapshots e pre-restores salvos em disco no servidor com metadados de tamanho e data.
+  - `generateDatabaseDump()`: Suporte unificado para dump global do banco de dados (PostgreSQL via Docker KVM em produção ou SQLite local).
+- **Rotas de SuperAdmin (`backend/src/routes/superadmin.ts`):**
+  - `GET /api/superadmin/tenants/:id/backup/export` (Download direto de snapshot JSON da clínica).
+  - `POST /api/superadmin/tenants/:id/backup/restore` (Restauração com rollback preventivo).
+  - `GET /api/superadmin/backups/list` (Listagem de snapshots no servidor).
+  - `GET /api/superadmin/backups/download/:filename` (Download de arquivos do servidor).
+  - `GET /api/superadmin/backups/db-dump` (Dump global do banco de dados).
+- **Interface Master no Frontend (`superadmin-dashboard.component.ts`):**
+  - Nova aba **"Backups & Recuperação"** com cockpit de proteção, download de Dump Global em 1 clique, tabela de clínicas com botões dedicados de "Fazer Backup" e "Restaurar / Rollback", e histórico de snapshots em disco.
+  - Botões de Backup e Rollback adicionados diretamente à tabela de clínicas e cards mobile.
+  - Modal de Restauração com leitor de arquivo JSON, preview de dados e confirmação em modal personalizada.
+
+---
 
 ### O que foi feito
 

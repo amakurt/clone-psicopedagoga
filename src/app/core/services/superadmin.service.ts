@@ -163,6 +163,36 @@ export class SuperAdminService {
   updateBillingConfig(data: Partial<SaaSBillingConfig>): Observable<{ success: boolean; message: string; config: SaaSBillingConfig }> {
     return this.api.put<{ success: boolean; message: string; config: SaaSBillingConfig }>('/superadmin/billing/config', data);
   }
+
+  // --- Backups & Rollback Multi-Clínica ---
+
+  exportClinicBackup(tenantId: string): Observable<Blob> {
+    return this.api.getBlob(`/superadmin/tenants/${tenantId}/backup/export`);
+  }
+
+  restoreClinicBackup(tenantId: string, backupData: any): Observable<any> {
+    return this.api.post(`/superadmin/tenants/${tenantId}/backup/restore`, backupData);
+  }
+
+  listSavedBackups(): Observable<{ success: boolean; files: SavedBackupFile[] }> {
+    return this.api.get<{ success: boolean; files: SavedBackupFile[] }>('/superadmin/backups/list');
+  }
+
+  downloadBackupFile(filename: string): Observable<Blob> {
+    return this.api.getBlob(`/superadmin/backups/download/${filename}`);
+  }
+
+  downloadDatabaseDump(): Observable<Blob> {
+    return this.api.getBlob('/superadmin/backups/db-dump');
+  }
+}
+
+export interface SavedBackupFile {
+  filename: string;
+  type: 'tenant_backup' | 'pre_restore';
+  sizeBytes: number;
+  sizeFormatted: string;
+  createdAt: string;
 }
 
 export interface SaaSBillingConfig {

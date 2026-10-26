@@ -23,6 +23,8 @@ backend/uploads/
 # Backups e logs temporarios
 session-backup/
 SESSION-NOTES.md
+backups/
+backend/backups/
 
 # QR de pareamento da instancia WhatsApp (segredo)
 whatsapp-qr.png

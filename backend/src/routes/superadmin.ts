@@ -14,6 +14,14 @@ import {
   isPlanWhatsAppEligible,
   sendWhatsAppMessage,
 } from '../services/whatsapp-client.service';
+import {
+  exportTenantBackup,
+  restoreTenantBackup,
+  listSavedBackups,
+  generateDatabaseDump,
+} from '../services/backup.service';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
@@ -1274,6 +1282,104 @@ router.put('/billing/config', async (req, res) => {
   } catch (error: any) {
     console.error('[SUPERADMIN_PUT_BILLING_CONFIG_ERROR]', error);
     return res.status(500).json({ error: 'Erro ao salvar configurações de recebimento' });
+  }
+});
+
+// =========================================================================
+// 9. BACKUP, ROLLBACK & SEGURANÇA DE CLÍNICAS (MULTI-TENANT SAFEGUARD)
+// =========================================================================
+
+// 9.1 Exportar Snapshot Completo da Clínica (JSON)
+router.get('/tenants/:id/backup/export', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const backupData = await exportTenantBackup(id);
+
+    const safeSlug = backupData.tenant.slug.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `backup_${safeSlug}_${timestamp}.json`;
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.send(JSON.stringify(backupData, null, 2));
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BACKUP_EXPORT_ERROR]', error);
+    return res.status(500).json({ error: error.message || 'Erro ao exportar backup da clínica' });
+  }
+});
+
+// 9.2 Restaurar Snapshot / Rollback de Clínica
+router.post('/tenants/:id/backup/restore', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const backupPayload = req.body;
+
+    if (!backupPayload || !backupPayload.data) {
+      return res.status(400).json({ error: 'Payload de backup inválido ou vazio.' });
+    }
+
+    const result = await restoreTenantBackup(id, backupPayload);
+    return res.json(result);
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BACKUP_RESTORE_ERROR]', error);
+    return res.status(500).json({ error: error.message || 'Erro ao restaurar backup da clínica' });
+  }
+});
+
+// 9.3 Listar Todos os Backups Locais Salvos no Servidor
+router.get('/backups/list', async (req, res) => {
+  try {
+    const files = listSavedBackups();
+    return res.json({ success: true, files });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BACKUP_LIST_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao listar backups salvos no servidor' });
+  }
+});
+
+// 9.4 Download de Arquivo de Backup Específico do Servidor
+router.get('/backups/download/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const safeFilename = path.basename(filename); // Evita path traversal
+
+    const backupsDir = path.resolve(process.cwd(), 'backups');
+    const preRestoreDir = path.resolve(backupsDir, 'pre-restore');
+
+    let targetPath = path.join(backupsDir, safeFilename);
+    if (!fs.existsSync(targetPath)) {
+      targetPath = path.join(preRestoreDir, safeFilename);
+    }
+
+    if (!fs.existsSync(targetPath)) {
+      return res.status(404).json({ error: 'Arquivo de backup não encontrado no servidor.' });
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    return res.sendFile(targetPath);
+  } catch (error: any) {
+    console.error('[SUPERADMIN_BACKUP_FILE_DOWNLOAD_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao baixar arquivo de backup' });
+  }
+});
+
+// 9.5 Dump Global do Banco de Dados (PostgreSQL / SQLite)
+router.get('/backups/db-dump', async (req, res) => {
+  try {
+    const dump = await generateDatabaseDump();
+
+    if (dump.type === 'sql') {
+      res.setHeader('Content-Type', 'application/sql');
+    } else {
+      res.setHeader('Content-Type', 'application/octet-stream');
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${dump.filename}"`);
+    return res.send(dump.buffer);
+  } catch (error: any) {
+    console.error('[SUPERADMIN_DB_DUMP_ERROR]', error);
+    return res.status(500).json({ error: error.message || 'Erro ao gerar dump global do banco de dados' });
   }
 });
 

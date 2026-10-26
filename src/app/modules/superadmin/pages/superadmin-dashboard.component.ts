@@ -13,6 +13,7 @@ import {
   BillingStats,
   SubscriptionInvoiceItem,
   SaaSBillingConfig,
+  SavedBackupFile,
 } from '../../../core/services/superadmin.service';
 import { ToastService } from '../../../shared/components/toast.component';
 import { DialogService } from '../../../shared/services/dialog.service';
@@ -92,6 +93,19 @@ import { DialogService } from '../../../shared/services/dialog.service';
             @if (billingStats()?.overdueCount) {
               <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
                 {{ billingStats()?.overdueCount }} atrasada(s)
+              </span>
+            }
+          </button>
+
+          <button
+            (click)="setTab('backup')"
+            [ngClass]="activeTab() === 'backup' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 shadow-lg shadow-rose-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
+            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            <span class="material-icons text-base">security</span>
+            Backups & Recuperação
+            @if (savedBackups().length) {
+              <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                {{ savedBackups().length }}
               </span>
             }
           </button>
@@ -335,6 +349,22 @@ import { DialogService } from '../../../shared/services/dialog.service';
                                 <span class="material-icons text-base">grade</span>
                               </button>
 
+                              <!-- Exportar Backup JSON -->
+                              <button
+                                (click)="exportClinic(t)"
+                                class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-colors"
+                                title="Exportar Backup da Clínica (JSON)">
+                                <span class="material-icons text-base">cloud_download</span>
+                              </button>
+
+                              <!-- Restaurar / Rollback -->
+                              <button
+                                (click)="openRestoreModal(t)"
+                                class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 transition-colors"
+                                title="Restaurar / Rollback desta Clínica">
+                                <span class="material-icons text-base">settings_backup_restore</span>
+                              </button>
+
                               <!-- Bloquear / Desbloquear -->
                               <button
                                 (click)="toggleStatus(t)"
@@ -414,6 +444,18 @@ import { DialogService } from '../../../shared/services/dialog.service';
                           [ngClass]="getStatusButtonClass(t.status)">
                           <span class="material-icons text-sm">{{ t.status === 'ATIVO' ? 'lock' : 'lock_open' }}</span>
                           {{ t.status === 'ATIVO' ? 'Bloquear' : 'Liberar' }}
+                        </button>
+                        <button
+                          (click)="exportClinic(t)"
+                          class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+                          <span class="material-icons text-sm text-emerald-400">cloud_download</span>
+                          Backup
+                        </button>
+                        <button
+                          (click)="openRestoreModal(t)"
+                          class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+                          <span class="material-icons text-sm text-rose-400">settings_backup_restore</span>
+                          Rollback
                         </button>
                       </div>
 
@@ -1413,6 +1455,264 @@ import { DialogService } from '../../../shared/services/dialog.service';
       }
 
       <!-- ============================================================== -->
+      <!-- ABA 4: BACKUPS, SEGURANÇA & ROLLBACK MULTI-TENANT             -->
+      <!-- ============================================================== -->
+      @if (activeTab() === 'backup') {
+        <div class="space-y-6 animate-fadeIn">
+          
+          <!-- Cockpit de Proteção (4 Cards) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Card 1: Dump Global do Banco -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Banco Global</span>
+                <div class="size-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center border border-rose-500/20">
+                  <span class="material-icons text-lg">storage</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <p class="text-2xl sm:text-3xl font-black text-white tracking-tight">PostgreSQL</p>
+                <p class="text-xs text-rose-400 font-medium mt-1">Docker KVM / SQLite Local</p>
+              </div>
+            </div>
+
+            <!-- Card 2: Clínicas no SaaS -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Clínicas no SaaS</span>
+                <div class="size-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/20">
+                  <span class="material-icons text-lg">domain</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <p class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ tenants().length }}</p>
+                <p class="text-xs text-slate-400 font-medium mt-1">Snapshots isolados por Tenant</p>
+              </div>
+            </div>
+
+            <!-- Card 3: Snapshots Salvos no Servidor -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Snapshots em Disco</span>
+                <div class="size-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <span class="material-icons text-lg">folder_zip</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <p class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ savedBackups().length }}</p>
+                <p class="text-xs text-emerald-400 font-medium mt-1">Backups e Pre-Restores</p>
+              </div>
+            </div>
+
+            <!-- Card 4: Salvaguarda Pré-Rollback -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800/60 p-5 border border-slate-800 shadow-xl">
+              <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Blindagem Preventiva</span>
+                <div class="size-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                  <span class="material-icons text-lg">history</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <p class="text-xl sm:text-2xl font-black text-amber-300 tracking-tight">Ativa (100%)</p>
+                <p class="text-xs text-slate-400 font-medium mt-1">Snapshot preventivo automático</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bloco 1: Ações Rápidas de Segurança Global -->
+          <div class="rounded-3xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="size-10 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center border border-rose-500/20">
+                  <span class="material-icons text-xl">backup</span>
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-white text-base">Dump Global do Banco de Dados</h3>
+                  <p class="text-slate-400 text-xs mt-0.5">
+                    Exporta o banco inteiro (PostgreSQL em produção ou SQLite local) para armazenamento externo frio.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                (click)="downloadDbDump()"
+                [disabled]="dbDumpLoading()"
+                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-600/20 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap">
+                <span class="material-icons text-base" [class.animate-spin]="dbDumpLoading()">
+                  {{ dbDumpLoading() ? 'sync' : 'download' }}
+                </span>
+                Baixar Dump Completo (.sql)
+              </button>
+            </div>
+          </div>
+
+          <!-- Bloco 2: Gestão de Snapshots por Clínica -->
+          <div class="rounded-3xl bg-slate-900/80 border border-slate-800 p-6 space-y-5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 class="font-extrabold text-white text-base flex items-center gap-2">
+                  <span class="material-icons text-cyan-400 text-lg">medical_services</span>
+                  Backups e Restauração Isolada por Clínica
+                </h3>
+                <p class="text-slate-400 text-xs mt-0.5">
+                  Gere snapshots portáteis (.json) por clínica para salvar dados de pacientes, prontuários, laudos e agendamentos.
+                </p>
+              </div>
+
+              <div class="relative w-full md:w-72">
+                <span class="material-icons absolute left-3 top-2.5 text-slate-500 text-sm">search</span>
+                <input
+                  type="text"
+                  [(ngModel)]="backupClinicSearch"
+                  placeholder="Buscar clínica..."
+                  class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
+            </div>
+
+            <!-- Lista de Clínicas para Backup -->
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left text-xs">
+                <thead class="text-slate-500 uppercase tracking-wider text-[10px] bg-slate-950/60 border-y border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4">Clínica / Gestor</th>
+                    <th class="py-3 px-4">Plano</th>
+                    <th class="py-3 px-4">Volume Clínico</th>
+                    <th class="py-3 px-4 text-right">Ações de Segurança</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60">
+                  @for (t of filteredBackupTenants(); track t.id) {
+                    <tr class="hover:bg-slate-800/30 transition-colors">
+                      <td class="py-3 px-4">
+                        <p class="font-bold text-white text-sm">{{ t.name }}</p>
+                        <p class="text-slate-500 text-[11px] font-mono">{{ t.slug }} · {{ t.owner?.email || 'Sem email' }}</p>
+                      </td>
+                      <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="getPlanBadgeClass(t.plan)">
+                          {{ t.plan }}
+                        </span>
+                      </td>
+                      <td class="py-3 px-4">
+                        <span class="text-slate-300 font-semibold">{{ t.stats.pacientes }} pacientes</span>
+                        <span class="text-slate-500 text-[11px]"> · {{ t.stats.sessoes }} sessões</span>
+                      </td>
+                      <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            (click)="exportClinic(t)"
+                            class="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 border border-emerald-500/30 font-bold transition-all flex items-center gap-1.5 shadow-sm">
+                            <span class="material-icons text-sm">cloud_download</span>
+                            Fazer Backup
+                          </button>
+
+                          <button
+                            type="button"
+                            (click)="openRestoreModal(t)"
+                            class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/30 font-bold transition-all flex items-center gap-1.5 shadow-sm">
+                            <span class="material-icons text-sm">settings_backup_restore</span>
+                            Restaurar / Rollback
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Bloco 3: Arquivos Armazenados no Servidor -->
+          <div class="rounded-3xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-extrabold text-white text-base flex items-center gap-2">
+                  <span class="material-icons text-emerald-400 text-lg">inventory_2</span>
+                  Histórico de Snapshots no Servidor
+                </h3>
+                <p class="text-slate-400 text-xs mt-0.5">
+                  Snapshots salvos automaticamente na pasta do servidor durante exportações e antes de rollbacks.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                (click)="loadBackups()"
+                class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 transition-colors">
+                <span class="material-icons text-sm" [class.animate-spin]="backupLoading()">refresh</span>
+                Atualizar Lista
+              </button>
+            </div>
+
+            @if (savedBackups().length === 0) {
+              <div class="p-8 text-center rounded-2xl bg-slate-950/40 border border-slate-800/80 text-slate-500 text-xs">
+                Nenhum snapshot armazenado no disco do servidor ainda.
+              </div>
+            } @else {
+              <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left text-xs">
+                  <thead class="text-slate-500 uppercase tracking-wider text-[10px] bg-slate-950/60 border-y border-slate-800">
+                    <tr>
+                      <th class="py-3 px-4">Nome do Arquivo</th>
+                      <th class="py-3 px-4">Tipo</th>
+                      <th class="py-3 px-4">Tamanho</th>
+                      <th class="py-3 px-4">Data / Hora</th>
+                      <th class="py-3 px-4 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800/60">
+                    @for (file of savedBackups(); track file.filename) {
+                      <tr class="hover:bg-slate-800/30 transition-colors">
+                        <td class="py-3 px-4 font-mono text-slate-200">
+                          {{ file.filename }}
+                        </td>
+                        <td class="py-3 px-4">
+                          @if (file.type === 'pre_restore') {
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              Pre-Rollback Preventivo
+                            </span>
+                          } @else {
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              Snapshot Clínica
+                            </span>
+                          }
+                        </td>
+                        <td class="py-3 px-4 text-slate-400 font-mono">
+                          {{ file.sizeFormatted }}
+                        </td>
+                        <td class="py-3 px-4 text-slate-400">
+                          {{ file.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            (click)="downloadBackupFile(file)"
+                            class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1 ml-auto transition-colors">
+                            <span class="material-icons text-sm">download</span>
+                            Baixar
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+          </div>
+
+        </div>
+      }
+
+      <!-- ============================================================== -->
       <!-- MODAL: DAR BAIXA MANUAL / CONFIRMAR PAGAMENTO                 -->
       <!-- ============================================================== -->
       @if (confirmPaymentModalOpen()) {
@@ -1834,6 +2134,105 @@ import { DialogService } from '../../../shared/services/dialog.service';
         </div>
       }
 
+      <!-- ============================================================== -->
+      <!-- MODAL: RESTAURAR SNAPSHOT / ROLLBACK DE CLÍNICA                -->
+      <!-- ============================================================== -->
+      @if (restoreModalOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div class="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-2 text-rose-400">
+                <div class="size-8 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+                  <span class="material-icons text-lg">settings_backup_restore</span>
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-base">Restauração & Rollback de Clínica</h3>
+                  <p class="text-xs text-slate-400">Alvo: {{ selectedTenantForRestore()?.name }}</p>
+                </div>
+              </div>
+              <button
+                (click)="restoreModalOpen.set(false)"
+                class="text-slate-500 hover:text-slate-300 p-1">
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
+
+            <!-- Aviso de Segurança Preventiva -->
+            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-1.5">
+              <div class="flex items-center gap-2 font-bold text-amber-400">
+                <span class="material-icons text-base">shield</span>
+                Blindagem Preventiva Automática
+              </div>
+              <p>
+                Antes de aplicar qualquer alteração, o sistema gerará <strong>automaticamente um snapshot de segurança</strong> da clínica atual no servidor. Se houver qualquer engano, você poderá reverter.
+              </p>
+            </div>
+
+            <div class="space-y-4 text-xs">
+              
+              <!-- Seletor de Arquivo -->
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1.5">Selecione o arquivo de backup (.json) *</label>
+                <input
+                  type="file"
+                  accept=".json"
+                  (change)="onFileSelected($event)"
+                  class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-cyan-300 hover:file:bg-slate-700 cursor-pointer"
+                />
+              </div>
+
+              <!-- Preview dos dados do arquivo selecionado -->
+              @if (restoreFileJson()) {
+                <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Resumo do Arquivo</span>
+                  <div class="grid grid-cols-2 gap-2 text-slate-300">
+                    <div>
+                      <span class="text-slate-500 block text-[10px]">Clínica Original:</span>
+                      <strong class="text-white">{{ restoreFileJson()?.tenant?.name }}</strong>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 block text-[10px]">Data do Snapshot:</span>
+                      <strong>{{ restoreFileJson()?.exportedAt | date:'dd/MM/yyyy HH:mm' }}</strong>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 block text-[10px]">Total de Pacientes:</span>
+                      <strong class="text-emerald-400">{{ restoreFileJson()?.summary?.totalPacientes || 0 }}</strong>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 block text-[10px]">Total de Prontuários:</span>
+                      <strong class="text-cyan-400">{{ restoreFileJson()?.summary?.totalProntuarios || 0 }}</strong>
+                    </div>
+                  </div>
+                </div>
+              }
+
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <button
+                type="button"
+                (click)="restoreModalOpen.set(false)"
+                class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                (click)="executeRestore()"
+                [disabled]="!restoreFileJson() || restoreLoading()"
+                class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-lg shadow-rose-600/20 flex items-center gap-1.5">
+                <span class="material-icons text-sm" [class.animate-spin]="restoreLoading()">
+                  {{ restoreLoading() ? 'sync' : 'restore' }}
+                </span>
+                Executar Rollback
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styles: [`
@@ -1858,7 +2257,7 @@ export class SuperAdminDashboardComponent implements OnInit {
   auth = inject(AuthService);
 
   // Navegação de Abas
-  activeTab = signal<'tenants' | 'whatsapp' | 'billing'>('tenants');
+  activeTab = signal<'tenants' | 'whatsapp' | 'billing' | 'backup'>('tenants');
 
   // Estado da Aba 1 (Clínicas & SaaS)
   loading = signal(false);
@@ -1929,6 +2328,17 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   reminderLoadingId = signal<string | null>(null);
 
+  // Estado da Aba 4 (Backups & Rollback Multi-Clínica)
+  backupLoading = signal(false);
+  dbDumpLoading = signal(false);
+  savedBackups = signal<SavedBackupFile[]>([]);
+  backupClinicSearch = '';
+  restoreModalOpen = signal(false);
+  selectedTenantForRestore = signal<TenantListItem | null>(null);
+  restoreFileJson = signal<any | null>(null);
+  restoreFileName = signal('');
+  restoreLoading = signal(false);
+
   availablePlans = [
     { code: 'MENSAL', name: 'Plano Mensal', desc: 'R$ 127/mês (sem fidelidade)', price: 'R$ 127,00/mês' },
     { code: 'SEMESTRAL', name: 'Plano Semestral', desc: 'Equivalente a R$ 99/mês (R$ 594 total)', price: 'R$ 594,00/semestre' },
@@ -1948,14 +2358,18 @@ export class SuperAdminDashboardComponent implements OnInit {
       next: (res) => this.billingStats.set(res),
       error: () => {},
     });
+    // Carrega arquivos de backup salvos
+    this.loadBackups();
   }
 
-  setTab(tab: 'tenants' | 'whatsapp' | 'billing') {
+  setTab(tab: 'tenants' | 'whatsapp' | 'billing' | 'backup') {
     this.activeTab.set(tab);
     if (tab === 'whatsapp') {
       this.loadWhatsAppGateway();
     } else if (tab === 'billing') {
       this.loadBilling();
+    } else if (tab === 'backup') {
+      this.loadBackups();
     }
   }
 
@@ -1966,6 +2380,8 @@ export class SuperAdminDashboardComponent implements OnInit {
       this.loadWhatsAppGateway();
     } else if (this.activeTab() === 'billing') {
       this.loadBilling();
+    } else if (this.activeTab() === 'backup') {
+      this.loadBackups();
     }
   }
 
@@ -2510,6 +2926,150 @@ export class SuperAdminDashboardComponent implements OnInit {
       error: (err) => {
         this.toast.error(err?.error?.error || 'Erro ao salvar configurações');
         this.savingConfigLoading.set(false);
+      },
+    });
+  }
+
+  // =========================================================================
+  // MÉTODOS DA ABA 4: BACKUPS, SEGURANÇA & ROLLBACK MULTI-TENANT
+  // =========================================================================
+
+  private triggerFileDownload(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  filteredBackupTenants(): TenantListItem[] {
+    const q = this.backupClinicSearch.toLowerCase().trim();
+    if (!q) return this.tenants();
+    return this.tenants().filter((t) =>
+      t.name.toLowerCase().includes(q) ||
+      t.slug.toLowerCase().includes(q) ||
+      (t.owner?.email || '').toLowerCase().includes(q)
+    );
+  }
+
+  loadBackups() {
+    this.backupLoading.set(true);
+    this.superAdminService.listSavedBackups().subscribe({
+      next: (res) => {
+        this.savedBackups.set(res.files || []);
+        this.backupLoading.set(false);
+      },
+      error: () => {
+        this.backupLoading.set(false);
+      },
+    });
+  }
+
+  exportClinic(t: TenantListItem) {
+    this.toast.info(`Gerando snapshot seguro da clínica "${t.name}"...`);
+    this.superAdminService.exportClinicBackup(t.id).subscribe({
+      next: (blob) => {
+        const safeSlug = t.slug.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const filename = `backup_${safeSlug}_${timestamp}.json`;
+        this.triggerFileDownload(blob, filename);
+        this.toast.success(`Backup da clínica "${t.name}" gerado com sucesso!`);
+        this.loadBackups();
+      },
+      error: (err) => {
+        this.toast.error('Erro ao exportar backup da clínica');
+        console.error(err);
+      },
+    });
+  }
+
+  downloadDbDump() {
+    this.dbDumpLoading.set(true);
+    this.toast.info('Gerando dump global do banco de dados...');
+    this.superAdminService.downloadDatabaseDump().subscribe({
+      next: (blob) => {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const filename = `edupsych_dump_${timestamp}.sql`;
+        this.triggerFileDownload(blob, filename);
+        this.toast.success('Dump global do banco de dados baixado com sucesso!');
+        this.dbDumpLoading.set(false);
+      },
+      error: (err) => {
+        this.toast.error('Erro ao gerar dump do banco');
+        this.dbDumpLoading.set(false);
+        console.error(err);
+      },
+    });
+  }
+
+  downloadBackupFile(file: SavedBackupFile) {
+    this.superAdminService.downloadBackupFile(file.filename).subscribe({
+      next: (blob) => {
+        this.triggerFileDownload(blob, file.filename);
+        this.toast.success(`Download de ${file.filename} concluído!`);
+      },
+      error: () => this.toast.error('Erro ao baixar arquivo do servidor'),
+    });
+  }
+
+  openRestoreModal(t: TenantListItem) {
+    this.selectedTenantForRestore.set(t);
+    this.restoreFileJson.set(null);
+    this.restoreFileName.set('');
+    this.restoreModalOpen.set(true);
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    this.restoreFileName.set(file.name);
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        if (!json || !json.data) {
+          this.toast.error('Arquivo de backup inválido: formato não reconhecido.');
+          this.restoreFileJson.set(null);
+          return;
+        }
+        this.restoreFileJson.set(json);
+        this.toast.success(`Arquivo "${file.name}" carregado e validado com sucesso!`);
+      } catch (err) {
+        this.toast.error('Erro ao processar JSON: arquivo inválido ou corrompido.');
+        this.restoreFileJson.set(null);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  async executeRestore() {
+    const t = this.selectedTenantForRestore();
+    const data = this.restoreFileJson();
+    if (!t || !data) return;
+
+    const confirmed = await this.dialog.confirm(
+      `ATENÇÃO: Você está prestes a aplicar um rollback completo na clínica "${t.name}". Todos os dados atuais da clínica serão substituídos pelos registros do snapshot. Um snapshot de segurança preventivo será criado automaticamente no servidor antes de aplicar. Deseja prosseguir com a restauração?`,
+      'Confirmar Rollback da Clínica'
+    );
+
+    if (!confirmed) return;
+
+    this.restoreLoading.set(true);
+    this.superAdminService.restoreClinicBackup(t.id, data).subscribe({
+      next: (res) => {
+        this.toast.success(res.message || 'Rollback concluído com sucesso!');
+        this.restoreModalOpen.set(false);
+        this.restoreLoading.set(false);
+        this.loadAll();
+        this.loadBackups();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao executar rollback');
+        this.restoreLoading.set(false);
       },
     });
   }

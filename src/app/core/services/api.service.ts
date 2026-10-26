@@ -34,4 +34,8 @@ export class ApiService {
   delete<T = any>(path: string) {
     return this.http.delete<T>(`${this.baseUrl}${path}`);
   }
+
+  getBlob(path: string) {
+    return this.http.get(`${this.baseUrl}${path}`, { responseType: 'blob' });
+  }
 }
