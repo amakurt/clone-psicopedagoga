@@ -68,7 +68,7 @@ import { RouterModule } from '@angular/router';
 
         <!-- Footer -->
         <div class="mt-12 pt-6 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <p>© 2026 EduPsych Pro. Todos os direitos reservados.</p>
+          <p>© 2026 AVA Systems. Todos os direitos reservados.</p>
           <div class="flex gap-4">
             <a routerLink="/termos" class="hover:text-primary transition-colors underline">Termos de Uso</a>
             <a routerLink="/" class="hover:text-primary transition-colors underline">Página Inicial</a>

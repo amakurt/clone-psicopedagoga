@@ -409,18 +409,22 @@ import { environment } from '../../../environments/environment';
             </div>
             <p class="text-gray-400 max-w-sm leading-relaxed">A tecnologia a serviço do desenvolvimento humano.</p>
             <div class="flex gap-4 mt-6">
-              <a href="https://www.instagram.com/amauricostacastro/" target="_blank" rel="noopener noreferrer"
-                class="w-10 h-10 bg-gray-800 hover:bg-rose-600 rounded-xl flex items-center justify-center transition-colors"
-                title="Siga no Instagram @amauricostacastro">
-                <span class="material-icons text-lg">photo_camera</span>
+              <a href="https://www.instagram.com/avasystemsbr/" target="_blank" rel="noopener noreferrer"
+                class="w-10 h-10 bg-gray-800 hover:bg-rose-600 rounded-xl flex items-center justify-center transition-colors text-white"
+                title="Siga no Instagram @avasystemsbr">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
               </a>
               <a href="https://wa.me/5585988014049?text=Ol%C3%A1!%20Gostaria%20de%20falar%20sobre%20o%20EduPsych%20Pro." target="_blank" rel="noopener noreferrer"
-                class="w-10 h-10 bg-gray-800 hover:bg-emerald-600 rounded-xl flex items-center justify-center transition-colors"
+                class="w-10 h-10 bg-gray-800 hover:bg-emerald-600 rounded-xl flex items-center justify-center transition-colors text-white"
                 title="Fale no WhatsApp (85) 98801-4049">
-                <span class="material-icons text-lg">chat</span>
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.072-2.112-.513-1.619-.669-2.663-2.316-2.744-2.424-.08-.108-.654-.87-.654-1.659 0-.788.414-1.176.56-1.332.146-.156.32-.196.427-.196.107 0 .213.002.306.007.098.005.23-.037.36.275.133.32.454 1.107.494 1.187.04.08.067.174.013.281-.053.107-.08.174-.16.268-.08.093-.168.208-.24.281-.08.08-.163.167-.07.327.093.16.413.682.886 1.103.609.542 1.123.71 1.283.79.16.08.253.067.347-.04.093-.107.4-.467.507-.627.107-.16.213-.133.36-.08.147.053.934.44 1.094.52.16.08.267.12.307.187.04.067.04.387-.104.792zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.301C8.423 21.498 10.158 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.583 0-3.076-.442-4.359-1.21l-.312-.187-2.923.767.78-2.85-.205-.327C4.168 15.11 3.75 13.593 3.75 12c0-4.549 3.701-8.25 8.25-8.25 4.549 0 8.25 3.701 8.25 8.25 0 4.549-3.701 8.25-8.25 8.25z"/>
+                </svg>
               </a>
               <a href="mailto:amakurt@gmail.com"
-                class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center transition-colors"
+                class="w-10 h-10 bg-gray-800 hover:bg-primary rounded-xl flex items-center justify-center transition-colors text-white"
                 title="E-mail: amakurt@gmail.com">
                 <span class="material-icons text-lg">mail</span>
               </a>
@@ -442,13 +446,24 @@ import { environment } from '../../../environments/environment';
             <ul class="space-y-3">
               <li>
                 <a href="https://wa.me/5585988014049?text=Ol%C3%A1!%20Preciso%20de%20suporte%20com%20o%20EduPsych%20Pro." target="_blank" rel="noopener noreferrer"
-                  class="text-gray-400 hover:text-emerald-400 transition-colors text-sm flex items-center gap-1.5">
-                  <span class="material-icons text-emerald-400 text-sm">chat</span>
+                  class="text-gray-400 hover:text-emerald-400 transition-colors text-sm flex items-center gap-2">
+                  <svg class="w-4 h-4 fill-emerald-400 shrink-0" viewBox="0 0 24 24">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.072-2.112-.513-1.619-.669-2.663-2.316-2.744-2.424-.08-.108-.654-.87-.654-1.659 0-.788.414-1.176.56-1.332.146-.156.32-.196.427-.196.107 0 .213.002.306.007.098.005.23-.037.36.275.133.32.454 1.107.494 1.187.04.08.067.174.013.281-.053.107-.08.174-.16.268-.08.093-.168.208-.24.281-.08.08-.163.167-.07.327.093.16.413.682.886 1.103.609.542 1.123.71 1.283.79.16.08.253.067.347-.04.093-.107.4-.467.507-.627.107-.16.213-.133.36-.08.147.053.934.44 1.094.52.16.08.267.12.307.187.04.067.04.387-.104.792zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.301C8.423 21.498 10.158 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.25c-1.583 0-3.076-.442-4.359-1.21l-.312-.187-2.923.767.78-2.85-.205-.327C4.168 15.11 3.75 13.593 3.75 12c0-4.549 3.701-8.25 8.25-8.25 4.549 0 8.25 3.701 8.25 8.25 0 4.549-3.701 8.25-8.25 8.25z"/>
+                  </svg>
                   <span>(85) 98801-4049</span>
                 </a>
               </li>
               <li>
-                <a href="mailto:amakurt@gmail.com" class="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1.5">
+                <a href="https://www.instagram.com/avasystemsbr/" target="_blank" rel="noopener noreferrer"
+                  class="text-gray-400 hover:text-rose-400 transition-colors text-sm flex items-center gap-2">
+                  <svg class="w-4 h-4 fill-rose-400 shrink-0" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                  <span>&#64;avasystemsbr</span>
+                </a>
+              </li>
+              <li>
+                <a href="mailto:amakurt@gmail.com" class="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2">
                   <span class="material-icons text-sm">mail</span>
                   <span>amakurt&#64;gmail.com</span>
                 </a>
@@ -462,7 +477,7 @@ import { environment } from '../../../environments/environment';
         <hr class="border-gray-800 my-12">
 
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-          <p class="text-gray-400 text-sm">2024 EduPsych Pro. Todos os direitos reservados.</p>
+          <p class="text-gray-400 text-sm">© {{ currentYear }} AVA Systems. Todos os direitos reservados.</p>
           <p class="text-gray-400 text-sm flex items-center gap-1">
             Feito com <span class="material-icons text-red-500 text-sm">favorite</span> para quem cuida de crianças especiais
           </p>
@@ -582,6 +597,7 @@ export class LandingPageComponent implements OnInit {
   private router = inject(Router);
   private dialog = inject(DialogService);
 
+  readonly currentYear = new Date().getFullYear();
   scrolled = signal(false);
   mobileMenu = signal(false);
   loadingDemo = signal(false);

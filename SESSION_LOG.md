@@ -1,6 +1,20 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 26 de Outubro de 2026
+## Última Atualização: 28 de Outubro de 2026
+
+## Sessão 78 - 28/10/2026 — Atualização Visual do Rodapé: Ícones Oficiais SVG de WhatsApp e Instagram, Link da AVA Systems e Copyright Oficial
+
+### O que foi feito
+
+#### 1. Modernização dos Ícones de Redes Sociais no Rodapé (`landing-page.component.ts`)
+- **Substituição de Ícone Genérico por SVG Oficial do WhatsApp:** Substituído o ícone genérico de mensagem (`material-icons: chat`) pelo SVG vetorial oficial do WhatsApp tanto nos botões de mídia social quanto no item da lista de Suporte & Contato.
+- **Ícone e Link Oficial do Instagram AVA Systems:** Substituído o ícone genérico de câmera (`material-icons: photo_camera`) pelo SVG vetorial oficial do Instagram com transição para tons de rose, direcionando para `https://www.instagram.com/avasystemsbr/` com menção `&#64;avasystemsbr`.
+
+#### 2. Atualização dos Direitos Reservados para AVA Systems
+- **Rodapé Principal da Landing Page:** Atualizado o copyright para `© {{ currentYear }} AVA Systems. Todos os direitos reservados.`, com propriedade reativa `currentYear` no componente.
+- **Páginas Institucionais:** Atualizado o copyright para `© 2026 AVA Systems. Todos os direitos reservados.` nas páginas de Política de Privacidade (`politica-privacidade.component.ts`) e Termos de Uso (`termos-de-uso.component.ts`).
+
+---
 
 ## Sessão 77 - 26/10/2026 — Correção CORS em Produção (Ver Demonstração), Fluxo de Escolha de Planos na Landing Page e Modal de Vídeo Tour
 
