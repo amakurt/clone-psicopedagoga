@@ -381,6 +381,153 @@ import { DialogService } from '@shared/services/dialog.service';
         </div>
       }
 
+      <!-- Inteligência Artificial (Google Gemini) Tab -->
+      @if (activeTab() === 'ia') {
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+          <div class="p-8">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="size-10 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-inner">
+                <span class="material-icons text-xl">smart_toy</span>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">Inteligência Artificial (Google Gemini)</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Leitor Inteligente de Fichas (OCR de caligrafia) e Assistente Virtual</p>
+              </div>
+            </div>
+
+            <!-- Card Informativo / 100% Gratuito -->
+            <div class="my-6 p-5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/50 text-teal-900 dark:text-teal-200 space-y-3">
+              <div class="flex items-center gap-2 font-bold text-sm text-teal-800 dark:text-teal-300">
+                <span class="material-icons text-lg">verified</span>
+                <span>Cota Gratuita Exclusiva da sua Clínica (1.500 leituras/dia)</span>
+              </div>
+              <p class="text-xs leading-relaxed">
+                Cada clínica conecta sua própria chave gratuita da Google para garantir autonomia total, privacidade e ausência de limites compartilhados.
+                No <b>Google AI Studio</b>, a criação da chave é <b>100% gratuita</b>, não pede cartão de crédito e fica pronta em menos de 1 minuto.
+              </p>
+              <div class="flex flex-wrap items-center gap-2 pt-1">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-200 text-[11px] font-bold">
+                  <span class="material-icons text-xs">check</span> Sem cartão de crédito
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-200 text-[11px] font-bold">
+                  <span class="material-icons text-xs">check</span> 1.500 leituras/dia grátis
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-200 text-[11px] font-bold">
+                  <span class="material-icons text-xs">check</span> Leitura de letra manuscrita
+                </span>
+              </div>
+            </div>
+
+            <!-- Status Atual da Chave -->
+            <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="size-11 rounded-xl flex items-center justify-center shrink-0"
+                  [class]="aiHasKey() ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'">
+                  <span class="material-icons text-2xl">{{ aiHasKey() ? 'key' : 'key_off' }}</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-bold text-slate-900 dark:text-white">Status da Conexão:</span>
+                    @if (aiHasKey()) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+                        Ativa & Operacional
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                        Pendente de Configuração
+                      </span>
+                    }
+                  </div>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {{ aiHasKey() ? 'Chave configurada: ' + aiKeyMasked() : 'Nenhuma chave ativa no momento para esta clínica.' }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                @if (aiHasKey()) {
+                  <button type="button" (click)="toggleAiKeyInput()"
+                    class="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 transition-all flex items-center gap-1.5 active:scale-95">
+                    <span class="material-icons text-sm">edit</span>
+                    <span>Alterar</span>
+                  </button>
+                  <button type="button" (click)="removeAiKey()"
+                    class="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all flex items-center gap-1" title="Remover chave">
+                    <span class="material-icons text-sm">delete</span>
+                  </button>
+                } @else {
+                  <button type="button" (click)="showAiKeyInput.set(true)"
+                    class="px-5 py-2.5 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20 transition-all flex items-center gap-1.5 active:scale-95">
+                    <span class="material-icons text-sm">add_link</span>
+                    <span>Configurar Agora</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Formulário de inserção / alteração de chave -->
+            @if (showAiKeyInput() || !aiHasKey()) {
+              <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-6">
+                <!-- Passo 1: Abrir o Google -->
+                <div class="space-y-2">
+                  <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                    Passo 1: Gerar sua Chave Gratuita no Google
+                  </span>
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+                      class="px-5 py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-teal-600/20 transition-all active:scale-95 w-fit">
+                      <span class="material-icons text-base">vpn_key</span>
+                      <span>1. Abrir Google AI Studio (1 minuto)</span>
+                      <span class="material-icons text-sm opacity-70">open_in_new</span>
+                    </a>
+                    <p class="text-xs text-slate-500">
+                      Faça login com seu Gmail, clique em <b>"Create API key"</b> e copie o código (começa com <code>AIzaSy...</code>).
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Passo 2: Colar no sistema -->
+                <div class="space-y-2">
+                  <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest block">
+                    Passo 2: Inserir a Chave Copiada
+                  </span>
+                  <div class="relative max-w-xl">
+                    <input [type]="showAiPassword() ? 'text' : 'password'"
+                      [(ngModel)]="aiKeyInput"
+                      placeholder="Cole aqui a chave (ex: AIzaSy...)"
+                      class="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-xs font-mono font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-teal-600 outline-none transition-all">
+                    <button type="button" (click)="showAiPassword.set(!showAiPassword())"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 size-7 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                      <span class="material-icons text-base">{{ showAiPassword() ? 'visibility_off' : 'visibility' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <button type="button" (click)="saveAiKey()" [disabled]="savingAiKey() || !aiKeyInput.trim()"
+                    class="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-xs shadow-lg shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+                    @if (savingAiKey()) {
+                      <span class="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      <span>Validando e Salvando...</span>
+                    } @else {
+                      <span class="material-icons text-sm">save</span>
+                      <span>Salvar e Ativar Chave</span>
+                    }
+                  </button>
+
+                  @if (aiHasKey()) {
+                    <button type="button" (click)="showAiKeyInput.set(false)"
+                      class="px-4 py-3 rounded-2xl text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                      Cancelar
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Notifications Tab -->
       @if (activeTab() === 'notificacoes') {
         <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
@@ -536,7 +683,7 @@ export class ConfiguracoesComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private dialog = inject(DialogService);
-  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'notificacoes' | 'disponibilidade' | 'recebimento'>('perfil');
+  activeTab = signal<'perfil' | 'seguranca' | 'clinica' | 'ia' | 'notificacoes' | 'disponibilidade' | 'recebimento'>('perfil');
   avatarPreview = signal<string | null>(null);
   showCropperModal = signal(false);
   rawImageToCrop = signal<string | null>(null);
@@ -547,6 +694,14 @@ export class ConfiguracoesComponent implements OnInit {
   rawLogoImageToCrop = signal<string | null>(null);
   savingClinic = signal(false);
   uploadingLogo = signal(false);
+
+  // Gestão de Inteligência Artificial (Google Gemini)
+  aiHasKey = signal(false);
+  aiKeyMasked = signal('');
+  aiKeyInput = '';
+  showAiKeyInput = signal(false);
+  showAiPassword = signal(false);
+  savingAiKey = signal(false);
 
   showToast = signal(false);
   toastMessage = signal('');
@@ -561,6 +716,7 @@ export class ConfiguracoesComponent implements OnInit {
     { id: 'perfil' as const, label: 'Perfil' },
     { id: 'seguranca' as const, label: 'Segurança' },
     { id: 'clinica' as const, label: 'Clínica' },
+    { id: 'ia' as const, label: 'Inteligência Artificial' },
     { id: 'notificacoes' as const, label: 'Notificações' },
     { id: 'disponibilidade' as const, label: 'Disponibilidade' },
     { id: 'recebimento' as const, label: 'Recebimento' },
@@ -603,6 +759,7 @@ export class ConfiguracoesComponent implements OnInit {
     }
 
     this.loadAvailabilities();
+    this.loadAiKeyStatus();
 
     // Carregar dados oficiais e logomarca da clínica via API
     this.api.get<any>('/clinic').subscribe({
@@ -924,5 +1081,73 @@ export class ConfiguracoesComponent implements OnInit {
     this.toastMessage.set(message);
     this.showToast.set(true);
     setTimeout(() => this.showToast.set(false), 3000);
+  }
+
+  loadAiKeyStatus() {
+    this.api.get<any>('/ai-ocr/has-key').subscribe({
+      next: (res) => {
+        if (res && res.hasKey) {
+          this.aiHasKey.set(true);
+          this.aiKeyMasked.set(res.keyMasked || '••••••••');
+        } else {
+          this.aiHasKey.set(false);
+          this.aiKeyMasked.set('');
+        }
+      },
+      error: () => {
+        this.aiHasKey.set(false);
+        this.aiKeyMasked.set('');
+      }
+    });
+  }
+
+  toggleAiKeyInput() {
+    this.aiKeyInput = '';
+    this.showAiKeyInput.set(!this.showAiKeyInput());
+  }
+
+  saveAiKey() {
+    const key = this.aiKeyInput.trim();
+    if (!key) {
+      this.toast.error('Informe a chave de API do Google Gemini.');
+      return;
+    }
+
+    this.savingAiKey.set(true);
+    this.api.post<any>('/ai-ocr/save-key', { geminiKey: key }).subscribe({
+      next: (res) => {
+        this.savingAiKey.set(false);
+        this.toast.success(res?.message || 'Chave do Google Gemini configurada com sucesso!');
+        this.aiHasKey.set(true);
+        this.aiKeyMasked.set(res?.keyMasked || '••••••••');
+        this.showAiKeyInput.set(false);
+        this.aiKeyInput = '';
+      },
+      error: (err) => {
+        this.savingAiKey.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao validar chave com o Google.');
+      }
+    });
+  }
+
+  async removeAiKey() {
+    const confirmed = await this.dialog.confirm(
+      'Tem certeza que deseja desconectar a chave de IA da sua clínica? O leitor de fichas e o assistente de IA ficarão inativos até você cadastrar uma nova chave.',
+      'Remover Chave de IA',
+      { confirmText: 'Remover', cancelText: 'Cancelar', dangerMode: true }
+    );
+    if (confirmed) {
+      this.api.delete<any>('/ai-ocr/key').subscribe({
+        next: () => {
+          this.toast.success('Chave de IA removida.');
+          this.aiHasKey.set(false);
+          this.aiKeyMasked.set('');
+          this.showAiKeyInput.set(true);
+        },
+        error: (err) => {
+          this.toast.error(err?.error?.error || 'Erro ao remover chave.');
+        }
+      });
+    }
   }
 }

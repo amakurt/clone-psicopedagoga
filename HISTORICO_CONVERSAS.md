@@ -2,13 +2,27 @@
 
 > **Repositório:** `https://github.com/amakurt/clone-psicopedagoga.git`  
 > **Branch Principal:** `main`  
-> **Última Atualização:** 08 de Outubro de 2026
+> **Última Atualização:** 03 de Novembro de 2026
 
 ---
 
 ## 📌 Sumário Executivo
 
 Este documento consolida o histórico cronológico de conversas, decisões técnicas, arquitetura implementada e procedimentos de teste do projeto **EduPsych Pro Clone**.
+
+---
+
+## 💬 Sessão 80: 03 de Novembro de 2026
+
+### 1. Interação do Usuário: Configuração de Chave de IA Própria por Clínica
+- **Solicitação do Usuário:**  
+  *"Não encontrei esse caminho da opção B e outra coisa Ideal pra não gastar meu limite seria pedir pra profissional criar um api key propria"*
+- **Decisões & Implementações:**
+  - **Isolamento de Cota de IA:** Removido o fallback automático para a chave mestra ou global do SaaS. Cada clínica opera com sua própria chave gratuita da Google (1.500 leituras/dia grátis sem cartão de crédito).
+  - **Assistente na Modal de Escaneamento (`app-ficha-scanner-modal`):** Se a conta da clínica (como a "Vilma NeuroAPP") não tiver chave configurada, a modal exibe diretamente os 2 passos com botão para o Google AI Studio e campo para colar a chave, prosseguindo com o escaneamento sem perda da foto capturada.
+  - **Nova Aba em Configurações (`/app/configuracoes`):** Criada a aba dedicada "Inteligência Artificial (Google Gemini)", permitindo cadastrar, testar, alterar ou desconectar a chave da clínica a qualquer momento.
+  - **Endpoints:** `GET /api/ai-ocr/has-key`, `POST /api/ai-ocr/save-key`, `DELETE /api/ai-ocr/key` e `POST /api/ai-ocr/scan`.
+  - **Validação:** Backend e frontend compilados com 100% de sucesso.
 
 ---
 

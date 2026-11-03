@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter, inject, signal, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
 
@@ -59,7 +60,7 @@ export interface ScanResult {
 @Component({
   selector: 'app-ficha-scanner-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden flex flex-col max-h-[92vh]" (click)="$event.stopPropagation()">
@@ -88,8 +89,76 @@ export interface ScanResult {
         <!-- Body / Content -->
         <div class="p-6 flex flex-col items-center justify-center overflow-y-auto">
 
+          <!-- Estado 0: Configuração de Chave de API Google Gemini (quando ausente ou em edição) -->
+          @if (showKeySetup()) {
+            <div class="w-full space-y-4">
+              <div class="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+                <div class="flex items-center gap-2 font-bold text-sm">
+                  <span class="material-icons text-base text-amber-600 dark:text-amber-400">key</span>
+                  <span>Configuração de Chave Gratuita da IA</span>
+                </div>
+                <p class="leading-relaxed">
+                  Para ler fichas com IA sem custos adicionais, cada clínica utiliza sua própria chave gratuita do <b>Google Gemini</b>. O Google oferece <b>1.500 leituras gratuitas por dia</b> sem exigir cartão de crédito.
+                </p>
+              </div>
+
+              <!-- Passo 1: Link para criar -->
+              <div class="space-y-1.5">
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                  Passo 1: Gerar chave gratuita no Google
+                </label>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+                  class="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+                  <span class="material-icons text-sm">open_in_new</span>
+                  <span>Abrir Google AI Studio (1 minuto)</span>
+                </a>
+                <p class="text-[11px] text-slate-500">
+                  Faça login com seu Gmail, clique em <b>"Create API key"</b> e copie o código gerado.
+                </p>
+              </div>
+
+              <!-- Passo 2: Colar chave -->
+              <div class="space-y-1.5 pt-2">
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+                  Passo 2: Cole sua chave do Google Gemini
+                </label>
+                <div class="relative">
+                  <input [type]="showPassword() ? 'text' : 'password'"
+                    [(ngModel)]="apiKeyInput"
+                    placeholder="Ex: AIzaSy..."
+                    class="w-full px-4 py-2.5 pr-11 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-mono font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-teal-600 outline-none transition-all">
+                  <button type="button" (click)="showPassword.set(!showPassword())"
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 size-7 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <span class="material-icons text-base">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Botão Salvar Chave -->
+              <div class="pt-2 flex flex-col gap-2">
+                <button type="button" (click)="saveKeyAndContinue()" [disabled]="savingKey() || !apiKeyInput().trim()"
+                  class="w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50">
+                  @if (savingKey()) {
+                    <span class="size-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                    <span>Validando e Salvando...</span>
+                  } @else {
+                    <span class="material-icons text-sm">check</span>
+                    <span>Salvar Chave & Continuar</span>
+                  }
+                </button>
+
+                @if (hasKey()) {
+                  <button type="button" (click)="showKeySetup.set(false)"
+                    class="text-[11px] font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-center py-1">
+                    Cancelar e voltar ao scanner
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Estado 1: Carregando / Processando IA -->
-          @if (processing()) {
+          @else if (processing()) {
             <div class="w-full py-12 flex flex-col items-center justify-center text-center space-y-4">
               <div class="relative size-20">
                 <div class="absolute inset-0 rounded-full border-4 border-teal-200 dark:border-teal-900 animate-pulse"></div>
@@ -135,30 +204,44 @@ export interface ScanResult {
 
           <!-- Estado 3: Escolha de método (Câmera ou Galeria/Arquivo) -->
           @else {
-            <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-              <!-- Opção 1: Câmera Fotográfica -->
-              <button type="button" (click)="cameraInput.click()"
-                class="group p-6 rounded-2xl border-2 border-dashed border-teal-300 dark:border-teal-800/80 hover:border-teal-500 bg-teal-50/40 dark:bg-teal-950/20 hover:bg-teal-50 dark:hover:bg-teal-950/40 flex flex-col items-center text-center gap-3 transition-all active:scale-[0.98]">
-                <div class="size-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/20 group-hover:scale-110 transition-transform">
-                  <span class="material-icons text-2xl">photo_camera</span>
-                </div>
-                <div>
-                  <span class="block text-sm font-bold text-slate-800 dark:text-white">Tirar Foto com a Câmera</span>
-                  <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">Ideal para smartphone, tablet ou webcam</span>
-                </div>
-              </button>
+            <div class="w-full space-y-4 py-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Opção 1: Câmera Fotográfica -->
+                <button type="button" (click)="cameraInput.click()"
+                  class="group p-6 rounded-2xl border-2 border-dashed border-teal-300 dark:border-teal-800/80 hover:border-teal-500 bg-teal-50/40 dark:bg-teal-950/20 hover:bg-teal-50 dark:hover:bg-teal-950/40 flex flex-col items-center text-center gap-3 transition-all active:scale-[0.98]">
+                  <div class="size-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-600/20 group-hover:scale-110 transition-transform">
+                    <span class="material-icons text-2xl">photo_camera</span>
+                  </div>
+                  <div>
+                    <span class="block text-sm font-bold text-slate-800 dark:text-white">Tirar Foto com a Câmera</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">Ideal para smartphone, tablet ou webcam</span>
+                  </div>
+                </button>
 
-              <!-- Opção 2: Enviar Arquivo / Galeria -->
-              <button type="button" (click)="fileInput.click()"
-                class="group p-6 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-400 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex flex-col items-center text-center gap-3 transition-all active:scale-[0.98]">
-                <div class="size-14 rounded-2xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                  <span class="material-icons text-2xl">cloud_upload</span>
+                <!-- Opção 2: Enviar Arquivo / Galeria -->
+                <button type="button" (click)="fileInput.click()"
+                  class="group p-6 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-400 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex flex-col items-center text-center gap-3 transition-all active:scale-[0.98]">
+                  <div class="size-14 rounded-2xl bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <span class="material-icons text-2xl">cloud_upload</span>
+                  </div>
+                  <div>
+                    <span class="block text-sm font-bold text-slate-800 dark:text-white">Enviar Imagem ou PDF</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">JPG, PNG ou PDF da ficha</span>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Status da Chave de IA da Clínica -->
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                <div class="flex items-center gap-1.5 text-teal-700 dark:text-teal-400 font-medium">
+                  <span class="material-icons text-sm text-teal-600">check_circle</span>
+                  <span>IA Google Gemini: {{ keyMasked() || 'Ativa' }}</span>
                 </div>
-                <div>
-                  <span class="block text-sm font-bold text-slate-800 dark:text-white">Enviar Imagem ou PDF</span>
-                  <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block">JPG, PNG ou PDF da ficha</span>
-                </div>
-              </button>
+                <button type="button" (click)="openKeyConfig()"
+                  class="text-[11px] font-bold text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 underline transition-colors">
+                  Alterar Chave
+                </button>
+              </div>
             </div>
 
             <!-- Inputs invisíveis para acionamento nativo -->
@@ -174,7 +257,7 @@ export interface ScanResult {
             Cancelar
           </button>
 
-          @if (previewSrc()) {
+          @if (previewSrc() && !showKeySetup()) {
             <button type="button" (click)="processarComIA()" [disabled]="processing()"
               class="px-5 py-2.5 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/25 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50">
               <span class="material-icons text-sm">auto_awesome</span>
@@ -187,7 +270,7 @@ export interface ScanResult {
     </div>
   `
 })
-export class FichaScannerModalComponent {
+export class FichaScannerModalComponent implements OnInit {
   @Input() title: string = 'Digitalizar Ficha do Paciente';
   @Input() tipoFicha: 'PACIENTE' | 'ANAMNESE' = 'PACIENTE';
   @Output() scanned = new EventEmitter<ScanResult>();
@@ -203,7 +286,70 @@ export class FichaScannerModalComponent {
   processing = signal<boolean>(false);
   loadingStatusText = signal<string>('Decifrando caligrafia e dados cadastrais...');
 
+  // Gestão de Chave de API por Tenant
+  hasKey = signal<boolean>(false);
+  keyMasked = signal<string>('');
+  showKeySetup = signal<boolean>(false);
+  apiKeyInput = signal<string>('');
+  showPassword = signal<boolean>(false);
+  savingKey = signal<boolean>(false);
+
   private intervalId: any = null;
+
+  ngOnInit() {
+    this.checkKeyStatus();
+  }
+
+  checkKeyStatus() {
+    this.api.get<any>('/ai-ocr/has-key').subscribe({
+      next: (res) => {
+        if (res && res.hasKey) {
+          this.hasKey.set(true);
+          this.keyMasked.set(res.keyMasked || '••••••••');
+        } else {
+          this.hasKey.set(false);
+          this.showKeySetup.set(true);
+        }
+      },
+      error: () => {
+        this.hasKey.set(false);
+        this.showKeySetup.set(true);
+      }
+    });
+  }
+
+  openKeyConfig() {
+    this.apiKeyInput.set('');
+    this.showKeySetup.set(true);
+  }
+
+  saveKeyAndContinue() {
+    const key = this.apiKeyInput().trim();
+    if (!key) {
+      this.toast.error('Informe a chave de API gerada no Google AI Studio.');
+      return;
+    }
+
+    this.savingKey.set(true);
+    this.api.post<any>('/ai-ocr/save-key', { geminiKey: key }).subscribe({
+      next: (res) => {
+        this.savingKey.set(false);
+        this.toast.success(res?.message || 'Chave do Google Gemini configurada com sucesso!');
+        this.hasKey.set(true);
+        this.keyMasked.set(res?.keyMasked || '••••••••');
+        this.showKeySetup.set(false);
+
+        // Se o usuário já tinha tirado foto antes de configurar a chave, processa automaticamente
+        if (this.previewSrc() && !this.processing()) {
+          this.processarComIA();
+        }
+      },
+      error: (err) => {
+        this.savingKey.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao validar chave do Google. Verifique e tente novamente.');
+      }
+    });
+  }
 
   onFileSelected(event: any) {
     const file = event.target.files?.[0];
@@ -274,7 +420,13 @@ export class FichaScannerModalComponent {
         this.processing.set(false);
         this.stopLoadingPhrases();
         console.error('Erro no OCR:', err);
-        this.toast.error(err?.error?.error || 'Erro ao processar imagem da ficha com IA.');
+        
+        if (err?.error?.requiresApiKey) {
+          this.showKeySetup.set(true);
+          this.toast.warning(err?.error?.error || 'Configure sua chave do Google Gemini para escanear.');
+        } else {
+          this.toast.error(err?.error?.error || 'Erro ao processar imagem da ficha com IA.');
+        }
       }
     });
   }
@@ -300,4 +452,5 @@ export class FichaScannerModalComponent {
     }
   }
 }
+
 

@@ -197,16 +197,164 @@ Extraia os dados da FICHA CADASTRAL / TRIAGEM DO PACIENTE estruturando exatament
 }
 
 /**
+ * GET /api/ai-ocr/has-key
+ * Informa ao frontend se a clínica já possui chave de API configurada
+ */
+router.get('/has-key', async (req: Request, res: Response) => {
+  try {
+    const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+    const userRole = (req as any).user?.role;
+    let hasKey = false;
+    let keyMasked = '';
+
+    if (tenantId) {
+      const cfg = await prisma.whatsAppConfig.findFirst({
+        where: { tenantId },
+        select: { geminiKey: true },
+      });
+      if (cfg?.geminiKey && cfg.geminiKey.trim()) {
+        hasKey = true;
+        const k = cfg.geminiKey.trim();
+        keyMasked = k.length > 8 ? `${k.substring(0, 4)}...${k.substring(k.length - 4)}` : '••••••••';
+      }
+    }
+
+    // Se for SUPERADMIN, pode usar a chave global se configurada
+    if (!hasKey && userRole === 'SUPERADMIN' && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+      hasKey = true;
+      keyMasked = 'Global (.env)';
+    }
+
+    return res.json({ hasKey, keyMasked });
+  } catch {
+    return res.json({ hasKey: false });
+  }
+});
+
+/**
+ * POST /api/ai-ocr/save-key
+ * Salva ou atualiza a Chave de API própria da clínica para IA
+ */
+router.post('/save-key', async (req: Request, res: Response) => {
+  try {
+    const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Identificação da clínica não encontrada.' });
+    }
+
+    const { geminiKey } = req.body;
+    if (!geminiKey || typeof geminiKey !== 'string' || !geminiKey.trim()) {
+      return res.status(400).json({ error: 'Informe a Chave de API do Google Gemini.' });
+    }
+
+    const key = geminiKey.trim();
+
+    if (key.length < 15) {
+      return res.status(400).json({ error: 'Chave de API parece inválida ou muito curta (deve ter pelo menos 20 caracteres).' });
+    }
+
+    // Teste leve de validação direta com o Google para garantir que a chave funciona
+    try {
+      const testRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (!testRes.ok) {
+        const errBody = await testRes.text();
+        if (errBody.includes('API_KEY_INVALID') || testRes.status === 400 || testRes.status === 403) {
+          return res.status(400).json({
+            error: 'O Google recusou esta chave de API. Verifique se copiou a chave completa gerada no Google AI Studio (ex: AIzaSy...).'
+          });
+        }
+      }
+    } catch (testErr) {
+      console.warn('Aviso: Falha temporária de rede ao validar chave com Google:', testErr);
+    }
+
+    const existing = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+    if (existing) {
+      await prisma.whatsAppConfig.update({
+        where: { id: existing.id },
+        data: { geminiKey: key, aiEnabled: true },
+      });
+    } else {
+      await prisma.whatsAppConfig.create({
+        data: {
+          tenantId,
+          apiUrl: 'https://api.evolution-api.com',
+          token: 'default',
+          geminiKey: key,
+          aiEnabled: true,
+        },
+      });
+    }
+
+    const keyMasked = key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : '••••••••';
+    return res.json({
+      success: true,
+      message: 'Chave de Inteligência Artificial do Google salva e ativada com sucesso!',
+      keyMasked
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Erro ao salvar chave: ' + error.message });
+  }
+});
+
+/**
+ * DELETE /api/ai-ocr/key
+ * Remove a Chave de API da clínica
+ */
+router.delete('/key', async (req: Request, res: Response) => {
+  try {
+    const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+    if (tenantId) {
+      const existing = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+      if (existing) {
+        await prisma.whatsAppConfig.update({
+          where: { id: existing.id },
+          data: { geminiKey: null },
+        });
+      }
+    }
+    return res.json({ success: true, message: 'Chave removida com sucesso.' });
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Erro ao remover chave: ' + error.message });
+  }
+});
+
+/**
  * POST /api/ai-ocr/scan
  * Endpoint unificado para upload de arquivo (multipart) ou envio de base64 (JSON)
  */
 router.post('/scan', upload.single('file'), async (req: Request, res: Response) => {
   try {
     let apiKey = '';
+    const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+
+    // 0. Se o usuário forneceu a chave diretamente na modal/requisição:
+    if (req.body.geminiKey && typeof req.body.geminiKey === 'string' && req.body.geminiKey.trim()) {
+      apiKey = req.body.geminiKey.trim();
+      // Salva para a clínica para uso contínuo
+      if (tenantId) {
+        const existing = await prisma.whatsAppConfig.findFirst({ where: { tenantId } });
+        if (existing) {
+          await prisma.whatsAppConfig.update({
+            where: { id: existing.id },
+            data: { geminiKey: apiKey, aiEnabled: true },
+          });
+        } else {
+          await prisma.whatsAppConfig.create({
+            data: {
+              tenantId,
+              apiUrl: 'https://api.evolution-api.com',
+              token: 'default',
+              geminiKey: apiKey,
+              aiEnabled: true,
+            },
+          });
+        }
+      }
+    }
 
     // 1. Tenta buscar a chave configurada na clínica ativa (WhatsAppConfig.geminiKey)
-    const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
-    if (tenantId) {
+    if (!apiKey && tenantId) {
       const tenantConfig = await prisma.whatsAppConfig.findFirst({
         where: { tenantId },
         select: { geminiKey: true }
@@ -216,25 +364,17 @@ router.post('/scan', upload.single('file'), async (req: Request, res: Response) 
       }
     }
 
-    // 2. Fallback: Se a clínica não tiver chave própria, busca de qualquer clínica configurada (ex: SuperAdmin / Gestora)
-    if (!apiKey) {
-      const masterConfig = await prisma.whatsAppConfig.findFirst({
-        where: { geminiKey: { not: null } },
-        select: { geminiKey: true }
-      });
-      if (masterConfig?.geminiKey && masterConfig.geminiKey.trim()) {
-        apiKey = masterConfig.geminiKey.trim();
-      }
-    }
-
-    // 3. Fallback: Variável global no .env do servidor
-    if (!apiKey && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+    // 2. Se for SuperAdmin, pode usar a variável global .env se existir
+    const userRole = (req as any).user?.role;
+    if (!apiKey && userRole === 'SUPERADMIN' && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
       apiKey = process.env.GEMINI_API_KEY.trim();
     }
 
+    // IMPORTANTE: Cada clínica deve ter sua própria chave gratuita para não consumir limite do SaaS
     if (!apiKey) {
       return res.status(400).json({
-        error: 'Chave do Google Gemini não encontrada. Por favor, adicione sua chave de API gratuita do Gemini em Configurações > WhatsApp > Chave Google Gemini.',
+        requiresApiKey: true,
+        error: 'Sua clínica ainda não configurou uma chave gratuita do Google Gemini. Cada clínica deve usar sua própria chave gratuita (1.500 leituras/dia sem cartão) para ler fichas.',
       });
     }
 

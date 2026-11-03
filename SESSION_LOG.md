@@ -2,6 +2,38 @@
 
 ## Última Atualização: 03 de Novembro de 2026
 
+## Sessão 80 - 03/11/2026 — Isolamento de Cota de IA por Clínica (Chave Própria Gratuita Google Gemini), Configuração Direta no Scanner e Nova Aba de IA em Configurações
+
+### O que foi feito
+
+#### 1. Isolamento de Cota & Proteção de Custos do SaaS (Multi-Tenant AI)
+- **Eliminação de Leeching de Cota:** Removido o fallback automático que permitia a outras clínicas usarem a chave master ou global do sistema. Cada clínica/profissional agora opera estritamente com sua própria Chave de API gratuita do Google Gemini, protegendo 100% o limite e custos da conta do dono do SaaS.
+- **Novos Endpoints de Gestão no Backend (`backend/src/routes/ai-ocr.ts`):**
+  - `GET /api/ai-ocr/has-key`: Verifica se a clínica ativa tem chave própria cadastrada e retorna formato mascarado (`AIza...xxxx`).
+  - `POST /api/ai-ocr/save-key`: Valida formato básico da chave, testa conectividade com a API do Google e salva para o tenant na tabela `WhatsAppConfig` com criação segura de registros (fornecendo defaults para `apiUrl` e `token`).
+  - `DELETE /api/ai-ocr/key`: Permite desconectar/remover a chave de IA da clínica a qualquer momento.
+  - `POST /api/ai-ocr/scan`: Processa leitura apenas se houver chave própria da clínica ou passada na requisição. Caso ausente, retorna HTTP 400 com payload estruturado `{ requiresApiKey: true }`.
+
+#### 2. Configuração Rápida & Intuitiva no Scanner de Fichas (`ficha-scanner-modal.component.ts`)
+- **Assistente Integrado de Chave:** Caso a clínica ainda não possua chave configurada (ex: conta Vilma NeuroAPP), a modal não gera erro confuso; em vez disso, exibe de imediato um assistente amigável com 2 passos simples:
+  - **Passo 1:** Botão direto para o Google AI Studio (`https://aistudio.google.com/app/apikey`), explicando que são 1.500 leituras gratuitas por dia e sem exigir cartão de crédito.
+  - **Passo 2:** Campo para colar o código gerado (`AIzaSy...`) com toggle de visualização (olho) e botão "Salvar Chave & Continuar".
+- **Preservação de Captura:** Se o usuário tirou uma foto antes de configurar a chave, a imagem é mantida em memória e processada imediatamente após a chave ser salva.
+- **Indicador de Conexão:** Quando a chave está ativa, exibe chip de confirmação com link discreto para "Alterar Chave".
+
+#### 3. Nova Aba "Inteligência Artificial" em Configurações (`configuracoes.component.ts`)
+- **Aba Centralizada:** Criada a aba **"Inteligência Artificial"** em `/app/configuracoes`, facilitando o acesso para qualquer profissional sem precisar entrar nas configurações do WhatsApp.
+- **Painel Completo de Controle:**
+  - Card explicativo sobre a cota gratuita de 1.500 requisições diárias sem cartão de crédito.
+  - Status em tempo real (Conectada / Pendente) com chave mascarada.
+  - Formulário para cadastrar, testar, alterar ou desconectar a chave de IA da clínica.
+
+#### 4. Build & Validação
+- **TypeScript & Angular:** `tsc --noEmit` e `ng build` executados com 100% de sucesso (código 0).
+- **Design System:** Rigorosa observância da regra Purple Ban, utilizando tons `teal`, `emerald`, `amber` e `slate`.
+
+---
+
 ## Sessão 79 - 03/11/2026 — Correção da Vulnerabilidade de Kernel Linux (Hostinger CVE-2026-98432), Acesso ao Painel Master e Digitalização Inteligente de Fichas com IA Multimodal (Google Gemini)
 
 ### O que foi feito
