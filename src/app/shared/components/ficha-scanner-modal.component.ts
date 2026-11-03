@@ -89,8 +89,16 @@ export interface ScanResult {
         <!-- Body / Content -->
         <div class="p-6 flex flex-col items-center justify-center overflow-y-auto">
 
+          <!-- Estado Inicial: Verificando status da chave -->
+          @if (checkingKey()) {
+            <div class="w-full py-12 flex flex-col items-center justify-center text-center space-y-3">
+              <div class="size-8 border-3 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+              <p class="text-xs text-slate-500 font-medium">Conectando ao assistente de IA...</p>
+            </div>
+          }
+
           <!-- Estado 0: Configuração de Chave de API Google Gemini (quando ausente ou em edição) -->
-          @if (showKeySetup()) {
+          @else if (showKeySetup()) {
             <div class="w-full space-y-4">
               <div class="p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 text-xs space-y-2">
                 <div class="flex items-center gap-2 font-bold text-sm">
@@ -136,7 +144,7 @@ export interface ScanResult {
 
               <!-- Botão Salvar Chave -->
               <div class="pt-2 flex flex-col gap-2">
-                <button type="button" (click)="saveKeyAndContinue()" [disabled]="savingKey() || !apiKeyInput().trim()"
+                <button type="button" (click)="saveKeyAndContinue()" [disabled]="savingKey() || !apiKeyInput.trim()"
                   class="w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50">
                   @if (savingKey()) {
                     <span class="size-3.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
@@ -287,10 +295,11 @@ export class FichaScannerModalComponent implements OnInit {
   loadingStatusText = signal<string>('Decifrando caligrafia e dados cadastrais...');
 
   // Gestão de Chave de API por Tenant
+  checkingKey = signal<boolean>(true);
   hasKey = signal<boolean>(false);
   keyMasked = signal<string>('');
   showKeySetup = signal<boolean>(false);
-  apiKeyInput = signal<string>('');
+  apiKeyInput: string = '';
   showPassword = signal<boolean>(false);
   savingKey = signal<boolean>(false);
 
@@ -301,8 +310,10 @@ export class FichaScannerModalComponent implements OnInit {
   }
 
   checkKeyStatus() {
+    this.checkingKey.set(true);
     this.api.get<any>('/ai-ocr/has-key').subscribe({
       next: (res) => {
+        this.checkingKey.set(false);
         if (res && res.hasKey) {
           this.hasKey.set(true);
           this.keyMasked.set(res.keyMasked || '••••••••');
@@ -312,6 +323,7 @@ export class FichaScannerModalComponent implements OnInit {
         }
       },
       error: () => {
+        this.checkingKey.set(false);
         this.hasKey.set(false);
         this.showKeySetup.set(true);
       }
@@ -319,12 +331,12 @@ export class FichaScannerModalComponent implements OnInit {
   }
 
   openKeyConfig() {
-    this.apiKeyInput.set('');
+    this.apiKeyInput = '';
     this.showKeySetup.set(true);
   }
 
   saveKeyAndContinue() {
-    const key = this.apiKeyInput().trim();
+    const key = this.apiKeyInput.trim();
     if (!key) {
       this.toast.error('Informe a chave de API gerada no Google AI Studio.');
       return;
@@ -338,6 +350,7 @@ export class FichaScannerModalComponent implements OnInit {
         this.hasKey.set(true);
         this.keyMasked.set(res?.keyMasked || '••••••••');
         this.showKeySetup.set(false);
+        this.apiKeyInput = '';
 
         // Se o usuário já tinha tirado foto antes de configurar a chave, processa automaticamente
         if (this.previewSrc() && !this.processing()) {
