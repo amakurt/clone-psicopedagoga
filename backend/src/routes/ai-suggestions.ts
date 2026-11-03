@@ -103,11 +103,18 @@ function generateLocalPlan(diagnosis: string, age: string, goals: string, level:
 }
 
 // --- LLM Providers Calling Helper (Google Gemini / OpenAI) ---
+const GEMINI_MODELS = [
+  'gemini-1.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-flash-latest',
+  'gemini-1.5-pro',
+];
+
 async function callGemini(prompt: string, apiKey: string): Promise<any> {
-  const models = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-flash-latest'];
   let lastError = null;
 
-  for (const model of models) {
+  for (const model of GEMINI_MODELS) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
@@ -140,6 +147,26 @@ async function callGemini(prompt: string, apiKey: string): Promise<any> {
   }
 
   throw lastError || new Error('Falha ao comunicar com a API do Gemini');
+}
+
+/**
+ * Resolve a chave do Gemini configurada para a clínica ativa
+ */
+async function resolveGeminiKey(req: any): Promise<string> {
+  const tenantId = req.tenantId || req.user?.tenantId;
+  if (tenantId) {
+    const config = await prisma.whatsAppConfig.findFirst({
+      where: { tenantId },
+      select: { geminiKey: true }
+    });
+    if (config?.geminiKey && config.geminiKey.trim()) {
+      return config.geminiKey.trim();
+    }
+  }
+  if (req.user?.role === 'SUPERADMIN' && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+    return process.env.GEMINI_API_KEY.trim();
+  }
+  return '';
 }
 
 // --- 1. Endpoint: Patient Context Helper ---
@@ -186,7 +213,7 @@ router.post('/plan-suggestion', async (req, res) => {
     return res.status(400).json({ error: 'Campos obrigatórios: diagnosis, age, goals' });
   }
 
-  const geminiKey = process.env.GEMINI_API_KEY;
+  const geminiKey = await resolveGeminiKey(req);
 
   if (geminiKey) {
     try {
@@ -357,7 +384,7 @@ router.post('/generate-pei', async (req, res) => {
     return res.status(400).json({ error: 'Campos obrigatórios: diagnosis, age, goals, patientName' });
   }
 
-  const geminiKey = process.env.GEMINI_API_KEY;
+  const geminiKey = await resolveGeminiKey(req);
 
   if (geminiKey) {
     try {

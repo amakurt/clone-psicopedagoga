@@ -28,7 +28,16 @@
   - Status em tempo real (Conectada / Pendente) com chave mascarada.
   - Formulário para cadastrar, testar, alterar ou desconectar a chave de IA da clínica.
 
-#### 4. Build & Validação
+#### 4. Unificação da Chave de IA para Todos os Recursos do Sistema (Ecossistema Integrado)
+- **Uma Única Chave para Tudo:** A chave do Google Gemini cadastrada pela clínica agora alimenta **100% dos recursos de IA** do sistema:
+  - 📷 **Leitor e Digitalizador de Fichas (OCR Multimodal):** Leitura de fichas e caligrafia manuscrita de pacientes e anamnese.
+  - 🧠 **Gerador de Planos de Intervenção Terapêutica:** Sugestão de metas SMART e estratégias clínicas baseadas em ABA, TEA e Neuropsicopedagogia (`/api/ai-suggestions/plan-suggestion`).
+  - 📝 **Gerador de PEI (Plano Educacional Individualizado):** Planejamento escolar adaptativo curricular e metas por etapas (`/api/ai-suggestions/generate-pei`).
+  - 💬 **Assistente Virtual do WhatsApp Oficial:** Atendimento 24/7 com agendamento inteligente para pais e responsáveis (`whatsapp-ai.service.ts`).
+- **Resolução Automática por Tenant:** Rota `ai-suggestions.ts` atualizada para priorizar a chave própria da clínica (`WhatsAppConfig.geminiKey`).
+- **Modelos Homologados:** Atualização dos nomes de modelos para as versões oficiais do Google v1beta (`gemini-1.5-flash`, `gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-flash-latest`, `gemini-1.5-pro`).
+
+#### 5. Build & Validação
 - **TypeScript & Angular:** `tsc --noEmit` e `ng build` executados com 100% de sucesso (código 0).
 - **Design System:** Rigorosa observância da regra Purple Ban, utilizando tons `teal`, `emerald`, `amber` e `slate`.
 
