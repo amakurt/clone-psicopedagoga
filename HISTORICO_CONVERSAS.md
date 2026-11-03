@@ -170,6 +170,7 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
   - Aplicação do Portão Socrático para alinhamento clínico e arquitetural (Ambos Paciente/Anamnese, Câmera + Arquivo, preenchimento com conferência prévia e botão na listagem).
   - Criação do plano formal `.agent/tasks/smart-ficha-scanner.md`.
   - Backend: Criação de `backend/src/routes/ai-ocr.ts` (`POST /api/ai-ocr/scan`) integrando a API REST Multimodal do Google Gemini, leitura de caligrafia e retenção física de imagens em `/uploads/fichas/`.
+  - Resolução Dinâmica de Chaves: Suporte à chave da própria clínica (`WhatsAppConfig.geminiKey`), chave mestre ou `.env`, além de suporte aos modelos oficiais `gemini-1.5-flash`, `gemini-2.0-flash` e `gemini-2.5-flash`.
   - Frontend: Criação do modal reutilizável `<app-ficha-scanner-modal>` com câmera nativa traseira (`capture="environment"`), upload de imagens e PDF.
   - Módulo de Pacientes: Botões em `pacientes-list.component.ts` e `paciente-form.component.ts`, integração automática de dados cadastrais/clínicos, vinculação de responsável/escola e badges visuais "✨ IA".
   - Módulo de Anamnese: Botão em `anamnese-form.component.ts` com distribuição estruturada dos dados nas etapas de anamnese.

@@ -16,7 +16,9 @@
 - **Novo Endpoint no Backend (`backend/src/routes/ai-ocr.ts`):**
   - Rota `POST /api/ai-ocr/scan` autenticada para gestores e profissionais de saúde.
   - Suporte duplo de entrada: upload de arquivos via `multipart/form-data` (JPG, PNG, WebP e PDF) ou transmissão direta em `base64` (capturas de tela e câmera).
-  - Motor de visão computacional multimodal utilizando a família de modelos Google Gemini com `temperature: 0.1` e prompt de especialidade clínica para psicopedagogia/neuropsicologia.
+  - Resolução dinâmica da chave do Google Gemini: busca prioritária na clínica ativa (`WhatsAppConfig.geminiKey`), com fallback para clínicas mestres e para `process.env.GEMINI_API_KEY`.
+  - Suporte aos modelos oficiais multimodais: `gemini-1.5-flash`, `gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-flash-latest` e `gemini-1.5-pro`.
+  - Tratamento de mensagens claras e amigáveis em caso de chave ausente ou inválida.
   - Reconhecimento com alta precisão de dados impressos e caligrafia manuscrita (incluindo queixas, diagnósticos, medicações, dados de nascimento, contatos e filiação).
   - Retenção documental com arquivamento da ficha original digitalizada em `/uploads/fichas/` para auditoria e histórico no prontuário.
   - Rota registrada centralmente em `backend/src/routes/index.ts`.

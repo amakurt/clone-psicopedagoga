@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate, authorize } from '../middleware';
+import prisma from '../lib/prisma';
 
 const router = Router();
 router.use(authenticate);
@@ -30,10 +31,11 @@ const upload = multer({
 });
 
 const GEMINI_MODELS = [
-  'gemini-3.5-flash-lite',
-  'gemini-3.6-flash',
-  'gemini-3.7-flash',
-  'gemini-3.8-flash',
+  'gemini-1.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-flash-latest',
+  'gemini-1.5-pro',
 ];
 
 /**
@@ -166,6 +168,10 @@ Extraia os dados da FICHA CADASTRAL / TRIAGEM DO PACIENTE estruturando exatament
 
       if (!response.ok) {
         const errorText = await response.text();
+        if (errorText.includes('API key not valid') || errorText.includes('INVALID_ARGUMENT')) {
+          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou. Obtenha uma chave gratuita em https://aistudio.google.com e configure em Configurações > WhatsApp.');
+          break;
+        }
         lastError = new Error(`Gemini ${model} HTTP ${response.status}: ${errorText}`);
         continue;
       }
@@ -196,10 +202,39 @@ Extraia os dados da FICHA CADASTRAL / TRIAGEM DO PACIENTE estruturando exatament
  */
 router.post('/scan', upload.single('file'), async (req: Request, res: Response) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    let apiKey = '';
+
+    // 1. Tenta buscar a chave configurada na clínica ativa (WhatsAppConfig.geminiKey)
+    const tenantId = (req as any).tenantId || (req as any).user?.tenantId;
+    if (tenantId) {
+      const tenantConfig = await prisma.whatsAppConfig.findFirst({
+        where: { tenantId },
+        select: { geminiKey: true }
+      });
+      if (tenantConfig?.geminiKey && tenantConfig.geminiKey.trim()) {
+        apiKey = tenantConfig.geminiKey.trim();
+      }
+    }
+
+    // 2. Fallback: Se a clínica não tiver chave própria, busca de qualquer clínica configurada (ex: SuperAdmin / Gestora)
     if (!apiKey) {
-      return res.status(500).json({
-        error: 'Chave GEMINI_API_KEY não configurada no servidor. Contate o administrador.',
+      const masterConfig = await prisma.whatsAppConfig.findFirst({
+        where: { geminiKey: { not: null } },
+        select: { geminiKey: true }
+      });
+      if (masterConfig?.geminiKey && masterConfig.geminiKey.trim()) {
+        apiKey = masterConfig.geminiKey.trim();
+      }
+    }
+
+    // 3. Fallback: Variável global no .env do servidor
+    if (!apiKey && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+      apiKey = process.env.GEMINI_API_KEY.trim();
+    }
+
+    if (!apiKey) {
+      return res.status(400).json({
+        error: 'Chave do Google Gemini não encontrada. Por favor, adicione sua chave de API gratuita do Gemini em Configurações > WhatsApp > Chave Google Gemini.',
       });
     }
 
@@ -263,3 +298,4 @@ router.post('/scan', upload.single('file'), async (req: Request, res: Response) 
 });
 
 export default router;
+

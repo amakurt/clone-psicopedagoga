@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Ficha Clínica de Teste para Impressão - EduPsych Pro</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Inter:wght@400;600;700;800&display=swap');
+
+    @page {
+      size: A4;
+      margin: 12mm 15mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1e293b;
+      background-color: #f8fafc;
+      padding: 20px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .no-print-bar {
+      max-width: 800px;
+      margin: 0 auto 20px auto;
+      background: #0f766e;
+      color: white;
+      padding: 14px 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+    }
+
+    .btn-print {
+      background: white;
+      color: #0f766e;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-print:hover {
+      background: #f1f5f9;
+    }
+
+    .folha-a4 {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 28px 32px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+    }
+
+    .header {
+      border-bottom: 2px solid #0f766e;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-info h1 {
+      font-size: 17px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0f766e;
+    }
+
+    .header-info p {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .badge-doc {
+      border: 1px dashed #0f766e;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f766e;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #334155;
+      background: #f1f5f9;
+      padding: 5px 10px;
+      border-left: 4px solid #0f766e;
+      margin-top: 14px;
+      margin-bottom: 10px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px 14px;
+    }
+
+    .field {
+      margin-bottom: 4px;
+    }
+
+    .label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 2px;
+      display: block;
+    }
+
+    .value-box {
+      border-bottom: 1.5px solid #94a3b8;
+      padding: 3px 4px;
+      font-size: 13px;
+      min-height: 24px;
+    }
+
+    /* Estilo que simula preenchimento manual realista */
+    .handwritten {
+      font-family: 'Caveat', cursive;
+      font-size: 18px;
+      color: #1e3a8a; /* Tinta azul de caneta esferográfica */
+      letter-spacing: 0.3px;
+    }
+
+    .textarea-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 10px;
+      min-height: 55px;
+      background: #fafafa;
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .signature-area {
+      text-align: center;
+      width: 250px;
+    }
+
+    .signature-line {
+      border-top: 1px solid #475569;
+      margin-top: 30px;
+      padding-top: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .no-print-bar {
+        display: none !important;
+      }
+      .folha-a4 {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra superior visível apenas na tela para facilitar impressão -->
+  <div class="no-print-bar">
+    <div>
+      <span style="font-weight: 700; font-size: 15px;">📄 Ficha de Teste Pronta para Impressão</span>
+      <p style="font-size: 12px; opacity: 0.9; margin-top: 2px;">Clique no botão ao lado ou use <kbd style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;">Cmd + P</kbd> para imprimir.</p>
+    </div>
+    <button class="btn-print" onclick="window.print()">
+      🖨️ Imprimir Ficha
+    </button>
+  </div>
+
+  <!-- Folha A4 Simulação de Consultório -->
+  <div class="folha-a4">
+    
+    <div class="header">
+      <div class="header-info">
+        <h1>Centro de Atendimento Psicopedagógico & Neurodesenvolvimento</h1>
+        <p>Acolhimento Clínico, Avaliação Diagnóstica e Intervenção Multidisciplinar</p>
+      </div>
+      <div class="badge-doc">
+        Ficha Cadastral · Triagem
+      </div>
+    </div>
+
+    <!-- SEÇÃO 1: DADOS DO PACIENTE -->
+    <div class="section-title">1. Identificação do Paciente / Aluno</div>
+    
+    <div class="field">
+      <span class="label">Nome Completo do Paciente</span>
+      <div class="value-box handwritten">Lucas Gabriel Silveira de Souza</div>
+    </div>
+
+    <div class="grid-3" style="margin-top: 8px;">
+      <div class="field">
+        <span class="label">Data de Nascimento</span>
+        <div class="value-box handwritten">18/06/2017</div>
+      </div>
+      <div class="field">
+        <span class="label">Sexo / Gênero</span>
+        <div class="value-box handwritten">Masculino</div>
+      </div>
+      <div class="field">
+        <span class="label">CPF</span>
+        <div class="value-box handwritten">087.654.321-90</div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top: 8px;">
+      <div class="field">
+        <span class="label">Escola Onde Estuda</span>
+        <div class="value-box handwritten">Colégio Santa Cecília</div>
+      </div>
+      <div class="field">
+        <span class="label">Ano / Série Escolar</span>
+        <div class="value-box handwritten">4º ano Fundamental</div>
+      </div>
+      <div class="field">
+        <span class="label">Turno Escolar</span>
+        <div class="value-box handwritten">Tarde</div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 2: DADOS DO RESPONSÁVEL -->
+    <div class="section-title">2. Filiação e Dados do Responsável Legal</div>
+
+    <div class="grid-2">
+      <div class="field">
+        <span class="label">Nome do Responsável Principal</span>
+        <div class="value-box handwritten">Vanessa Silveira de Souza</div>
+      </div>
+      <div class="field">
+        <span class="label">Parentesco com o Paciente</span>
+        <div class="value-box handwritten">Mãe</div>
+      </div>
+    </div>
+
+    <div class="grid-3" style="margin-top: 8px;">
+      <div class="field">
+        <span class="label">Telefone Celular / WhatsApp</span>
+        <div class="value-box handwritten">(85) 98765-4321</div>
+      </div>
+      <div class="field">
+        <span class="label">E-mail de Contato</span>
+        <div class="value-box handwritten">vanessa.silveira@email.com</div>
+      </div>
+      <div class="field">
+        <span class="label">CPF do Responsável</span>
+        <div class="value-box handwritten">654.987.321-00</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top: 8px;">
+      <span class="label">Endereço Residencial Completo</span>
+      <div class="value-box handwritten">Rua das Acácias, nº 450, Apto 302 - Aldeota, Fortaleza - CE, CEP: 60160-230</div>
+    </div>
+
+    <!-- SEÇÃO 3: TRIAGEM E DADOS CLÍNICOS -->
+    <div class="section-title">3. Triagem Clínica Inicial & Queixa Principal</div>
+
+    <div class="field">
+      <span class="label">Hipótese Diagnóstica / Queixa Principal (Informada pelos Pais ou Escola)</span>
+      <div class="textarea-box handwritten" style="min-height: 60px;">
+        Apresenta dificuldades na fixação da leitura, troca de letras espelhadas (b/d e p/q) e oscilação de atenção em sala de aula. Suspeita de Dislexia e TDAH tipo desatento.
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top: 8px;">
+      <div class="field">
+        <span class="label">Medicamentos em Uso Contínuo</span>
+        <div class="value-box handwritten">Ritalina 10mg (pela manhã nos dias letivos)</div>
+      </div>
+      <div class="field">
+        <span class="label">Alergias ou Restrições</span>
+        <div class="value-box handwritten">Alergia a corantes artificiais e frutos do mar</div>
+      </div>
+    </div>
+
+    <!-- RODAPÉ E ASSINATURA -->
+    <div class="footer">
+      <div>
+        <p><strong>EduPsych Pro</strong> · Ficha Modelo de Demonstração e OCR Clínico</p>
+        <p>Documento de teste com simulação de escrita esferográfica em tinta azul.</p>
+      </div>
+
+      <div class="signature-area">
+        <div class="signature-line">
+          Vanessa Silveira de Souza<br>
+          <span style="font-size: 9px; color: #64748b; font-weight: normal;">Assinatura do Responsável</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
+
