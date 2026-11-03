@@ -7,22 +7,30 @@ import { ApiService } from '@core/services/api.service';
 import { AddressFormComponent, Address } from '@core/components/address-form.component';
 import { ToastService } from '@shared/components/toast.component';
 import { DialogService } from '@shared/services/dialog.service';
+import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
 
 @Component({
   selector: 'app-anamnese-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, FichaScannerModalComponent],
   template: `
     <div class="min-h-screen bg-gray-50 p-6 legacy-page">
       <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-start mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h1 class="text-2xl font-bold text-gray-900">{{ isEdit ? 'Editar' : 'Nova' }} Anamnese</h1>
             <p class="text-sm text-gray-500 mt-1">Preencha os dados do paciente etapa por etapa</p>
           </div>
-          <a routerLink="/app/anamnese" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            <span class="material-icons text-lg">arrow_back</span> Voltar
-          </a>
+          <div class="flex flex-wrap items-center gap-3">
+            <button type="button" (click)="showScannerModal.set(true)"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-xl text-sm font-bold shadow-md shadow-teal-600/20 active:scale-95 transition-all">
+              <span class="material-icons text-lg">document_scanner</span>
+              <span>Preencher por Foto da Anamnese (IA)</span>
+            </button>
+            <a routerLink="/app/anamnese" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              <span class="material-icons text-lg">arrow_back</span> Voltar
+            </a>
+          </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm">
@@ -47,6 +55,26 @@ import { DialogService } from '@shared/services/dialog.service';
           </div>
 
           <div class="p-6">
+            @if (aiFilledFields().size > 0) {
+              <div class="mb-6 p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                <div class="flex items-center gap-3">
+                  <div class="size-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <span class="material-icons text-lg">auto_awesome</span>
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-teal-900 dark:text-teal-200">Anamnese interpretada via Inteligência Artificial</p>
+                    <p class="text-[11px] text-teal-700 dark:text-teal-400">Etapas preenchidas automaticamente a partir da imagem digitalizada.</p>
+                  </div>
+                </div>
+                @if (scanOriginalUrl()) {
+                  <a [href]="scanOriginalUrl()" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 text-xs font-bold ring-1 ring-teal-200 dark:ring-teal-700/60 flex items-center gap-1.5 hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors shrink-0 shadow-xs">
+                    <span class="material-icons text-sm">visibility</span>
+                    <span>Ver Ficha Original</span>
+                  </a>
+                }
+              </div>
+            }
+
             @if (currentStep() === 0) {
               <div>
                 <h2 class="text-lg font-semibold text-gray-900 mb-1">Identificação</h2>
@@ -367,6 +395,14 @@ import { DialogService } from '@shared/services/dialog.service';
           }
         </div>
       </div>
+
+      @if (showScannerModal()) {
+        <app-ficha-scanner-modal
+          [title]="'Escanear Folha de Anamnese'"
+          [tipoFicha]="'ANAMNESE'"
+          (scanned)="onFichaScanned($event)"
+          (cancelled)="showScannerModal.set(false)" />
+      }
     </div>
   `,
   styles: [`
@@ -387,6 +423,9 @@ export class AnamneseFormComponent implements OnInit {
   records = signal<any[]>([]);
   editingId = signal('');
   currentStep = signal(0);
+  showScannerModal = signal(false);
+  scanOriginalUrl = signal<string | null>(null);
+  aiFilledFields = signal<Set<string>>(new Set());
 
   steps = [
     { id: 'identificacao', title: 'Identificação' },
@@ -506,6 +545,59 @@ export class AnamneseFormComponent implements OnInit {
     } catch {
       return { cep: '', street: '', neighborhood: '', number: '', complement: '', city: '', state: '' };
     }
+  }
+
+  onFichaScanned(result: ScanResult) {
+    this.showScannerModal.set(false);
+    if (!result) return;
+
+    const filled = new Set<string>();
+
+    if (result.fileUrl) {
+      this.scanOriginalUrl.set(result.fileUrl);
+    }
+
+    if (result.anamnese) {
+      const a = result.anamnese;
+      if (a.pacienteNome && this.pacientes().length > 0) {
+        const pNome = a.pacienteNome.toLowerCase();
+        const found = this.pacientes().find(p => p.name.toLowerCase().includes(pNome) || pNome.includes(p.name.toLowerCase()));
+        if (found) {
+          this.form.pacienteId = found.id;
+          filled.add('pacienteId');
+          this.loadRecords();
+        }
+      }
+      if (a.turno) { this.form.turno = a.turno; filled.add('turno'); }
+      if (a.telefoneEscola) { this.form.telefoneEscola = a.telefoneEscola; filled.add('telefoneEscola'); }
+      if (a.queixaPrincipal) { this.form.queixaPrincipal = a.queixaPrincipal; filled.add('queixaPrincipal'); }
+      if (a.historicoGestacional) { this.form.gestacao = a.historicoGestacional; filled.add('gestacao'); }
+      if (a.sonoAlimentacao) { 
+        this.form.sono = a.sonoAlimentacao; 
+        this.form.alimentacao = a.sonoAlimentacao; 
+        filled.add('sono'); 
+      }
+      if (a.historicoEscolar) { this.form.historicoEscolar = a.historicoEscolar; filled.add('historicoEscolar'); }
+      if (a.observacoesComportamentais) { this.form.observacoesComportamentais = a.observacoesComportamentais; filled.add('observacoesComportamentais'); }
+    }
+
+    if (result.paciente) {
+      const p = result.paciente;
+      if (p.notes && !this.form.queixaPrincipal) {
+        this.form.queixaPrincipal = p.notes;
+        filled.add('queixaPrincipal');
+      }
+      if (p.diagnosis && !this.form.diagnostico) {
+        this.form.diagnostico = p.diagnosis;
+        filled.add('diagnostico');
+      }
+      if (p.medications && !this.form.medicacoes) {
+        this.form.medicacoes = p.medications;
+        filled.add('medicacoes');
+      }
+    }
+
+    this.aiFilledFields.set(filled);
   }
 
   save() {

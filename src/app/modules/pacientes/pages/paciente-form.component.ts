@@ -10,11 +10,12 @@ import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.c
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
 import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
+import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
 
 @Component({
   selector: 'app-paciente-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent, FichaScannerModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -22,9 +23,16 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">{{ isEdit ? 'Editar' : 'Novo' }} Paciente</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ isEdit ? 'Atualize os dados do paciente' : 'Preencha os dados para cadastrar' }}</p>
         </div>
-        <a routerLink="/app/pacientes" class="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all">
-          <span class="material-icons text-lg">arrow_back</span> Voltar
-        </a>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" (click)="showScannerModal.set(true)"
+            class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-2xl text-sm font-bold shadow-lg shadow-teal-600/20 active:scale-95 transition-all">
+            <span class="material-icons text-lg">document_scanner</span>
+            <span>Escanear Ficha / Foto (IA)</span>
+          </button>
+          <a routerLink="/app/pacientes" class="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all">
+            <span class="material-icons text-lg">arrow_back</span> Voltar
+          </a>
+        </div>
       </div>
 
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
@@ -80,22 +88,65 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
             (cancelled)="closeCropper()" />
         }
 
+        @if (showScannerModal()) {
+          <app-ficha-scanner-modal
+            [title]="'Escanear Ficha do Paciente'"
+            [tipoFicha]="'PACIENTE'"
+            (scanned)="onFichaScanned($event)"
+            (cancelled)="showScannerModal.set(false)" />
+        }
+
         <div class="p-8">
+          @if (aiFilledFields().size > 0) {
+            <div class="mb-8 p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+              <div class="flex items-center gap-3">
+                <div class="size-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <span class="material-icons text-lg">auto_awesome</span>
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-teal-900 dark:text-teal-200">Ficha interpretada via Inteligência Artificial</p>
+                  <p class="text-[11px] text-teal-700 dark:text-teal-400">Campos preenchidos automaticamente. Revise os dados antes de salvar.</p>
+                </div>
+              </div>
+              @if (scanOriginalUrl()) {
+                <a [href]="scanOriginalUrl()" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 text-xs font-bold ring-1 ring-teal-200 dark:ring-teal-700/60 flex items-center gap-1.5 hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors shrink-0 shadow-xs">
+                  <span class="material-icons text-sm">visibility</span>
+                  <span>Ver Ficha Original</span>
+                </a>
+              }
+            </div>
+          }
+
           <!-- Dados Pessoais -->
           <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Dados Pessoais</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nome Completo *</label>
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                <span>Nome Completo *</span>
+                @if (isAiFilled('name')) {
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300">✨ IA</span>
+                }
+              </label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.name" placeholder="Nome completo">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Data de Nascimento</label>
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                <span>Data de Nascimento</span>
+                @if (isAiFilled('birthDate')) {
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300">✨ IA</span>
+                }
+              </label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 type="date" [(ngModel)]="form.birthDate">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Série/Ano</label>
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                <span>Série/Ano</span>
+                @if (isAiFilled('grade')) {
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300">✨ IA</span>
+                }
+              </label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.grade" placeholder="Ex: 3º ano">
             </div>
@@ -183,22 +234,42 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
           <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Triagem & Dados Clínicos Iniciais</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Diagnóstico Prévio / Hipótese Diagnóstica</label>
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                <span>Diagnóstico Prévio / Hipótese Diagnóstica</span>
+                @if (isAiFilled('diagnosis')) {
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300">✨ IA</span>
+                }
+              </label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.diagnosis" placeholder="Ex: TDAH tipo combinado, TEA Nível 1, Dislexia, Em Investigação...">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Medicamentos em Uso</label>
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                <span>Medicamentos em Uso</span>
+                @if (isAiFilled('medications')) {
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300">✨ IA</span>
+                }
+              </label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.medications" placeholder="Ex: Ritalina 10mg pela manhã, Nenhum...">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Alergias / Restrições</label>
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                <span>Alergias / Restrições</span>
+                @if (isAiFilled('allergies')) {
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300">✨ IA</span>
+                }
+              </label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
                 [(ngModel)]="form.allergies" placeholder="Ex: Glúten, Lactose, Corantes, Nenhuma...">
             </div>
             <div class="md:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Queixa Principal / Observações Iniciais</label>
+              <label class="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                <span>Queixa Principal / Observações Iniciais</span>
+                @if (isAiFilled('notes')) {
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300">✨ IA</span>
+                }
+              </label>
               <textarea rows="3" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
                 [(ngModel)]="form.notes" placeholder="Resumo da queixa trazida pela família/escola ou observações para o acolhimento..."></textarea>
             </div>
@@ -371,6 +442,9 @@ export class PacienteFormComponent implements OnInit {
   avatarPreview = signal<string | null>(null);
   showCropperModal = signal(false);
   rawImageToCrop = signal<string | null>(null);
+  showScannerModal = signal(false);
+  aiFilledFields = signal<Set<string>>(new Set());
+  scanOriginalUrl = signal<string | null>(null);
   
   responsavelSearch = '';
   showResponsavelDropdown = signal(false);
@@ -433,6 +507,10 @@ export class PacienteFormComponent implements OnInit {
       });
     } else {
       this.generateAccessCode();
+      const draft = this.service.consumeScanDraft();
+      if (draft) {
+        setTimeout(() => this.onFichaScanned(draft), 100);
+      }
     }
   }
 
@@ -577,6 +655,92 @@ export class PacienteFormComponent implements OnInit {
     this.avatarPreview.set(null);
     this.form.avatarUrl = null;
     this.toast.info('Foto removida');
+  }
+
+  isAiFilled(field: string): boolean {
+    return this.aiFilledFields().has(field);
+  }
+
+  onFichaScanned(result: ScanResult) {
+    this.showScannerModal.set(false);
+    if (!result) return;
+
+    const filled = new Set<string>();
+
+    if (result.fileUrl) {
+      this.scanOriginalUrl.set(result.fileUrl);
+    }
+
+    if (result.paciente) {
+      const p = result.paciente;
+      if (p.name) { this.form.name = p.name; filled.add('name'); }
+      if (p.birthDate) { this.form.birthDate = p.birthDate; filled.add('birthDate'); }
+      if (p.grade) { this.form.grade = p.grade; filled.add('grade'); }
+      if (p.schoolShift) { this.form.schoolShift = p.schoolShift; filled.add('schoolShift'); }
+      if (p.cpf) { this.form.cpf = p.cpf; filled.add('cpf'); }
+      if (p.rg) { this.form.rg = p.rg; filled.add('rg'); }
+      if (p.phone) { 
+        this.form.phone = p.phone; 
+        this.form.phoneIsWhatsApp = p.phoneIsWhatsApp ?? true; 
+        filled.add('phone'); 
+      }
+      if (p.diagnosis) { this.form.diagnosis = p.diagnosis; filled.add('diagnosis'); }
+      if (p.medications) { this.form.medications = p.medications; filled.add('medications'); }
+      if (p.allergies) { this.form.allergies = p.allergies; filled.add('allergies'); }
+      if (p.notes) { 
+        this.form.notes = this.form.notes 
+          ? `${this.form.notes}\n\n[Ficha Digitalizada]: ${p.notes}`
+          : p.notes;
+        filled.add('notes'); 
+      }
+
+      if (p.address) {
+        this.form.address = {
+          cep: p.address.cep || this.form.address.cep || '',
+          street: p.address.street || this.form.address.street || '',
+          neighborhood: p.address.neighborhood || this.form.address.neighborhood || '',
+          number: p.address.number || this.form.address.number || '',
+          complement: p.address.complement || this.form.address.complement || '',
+          city: p.address.city || this.form.address.city || '',
+          state: p.address.state || this.form.address.state || ''
+        };
+        filled.add('address');
+      }
+
+      // Tenta associar escola por aproximação
+      if (p.schoolName && this.escolas().length > 0) {
+        const foundEscola = this.escolas().find(e => 
+          e.name.toLowerCase().includes(p.schoolName!.toLowerCase()) || 
+          p.schoolName!.toLowerCase().includes(e.name.toLowerCase())
+        );
+        if (foundEscola) {
+          this.form.schoolId = foundEscola.id;
+          filled.add('schoolId');
+        }
+      }
+    }
+
+    // Trata responsável identificado
+    if (result.responsavel?.name) {
+      const respName = result.responsavel.name.toLowerCase();
+      const foundResp = this.responsaveis().find(r => r.name.toLowerCase().includes(respName));
+      if (foundResp) {
+        this.selectResponsavel(foundResp);
+        filled.add('responsavel');
+      } else {
+        this.newResponsavel = {
+          name: result.responsavel.name,
+          relationship: result.responsavel.relationship || 'Mãe',
+          cpf: result.responsavel.cpf || '',
+          phone: result.responsavel.phone || '',
+          email: result.responsavel.email || ''
+        };
+        this.showNewResponsavelModal.set(true);
+        filled.add('responsavel');
+      }
+    }
+
+    this.aiFilledFields.set(filled);
   }
 
   save() {

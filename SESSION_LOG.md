@@ -1,22 +1,50 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 28 de Outubro de 2026
+## Última Atualização: 03 de Novembro de 2026
 
-## Sessão 78 - 28/10/2026 — Atualização Visual do Rodapé: Ícones Oficiais SVG de WhatsApp e Instagram, Link da AVA Systems e Copyright Oficial
+## Sessão 79 - 03/11/2026 — Correção da Vulnerabilidade de Kernel Linux (Hostinger CVE-2026-98432), Acesso ao Painel Master e Digitalização Inteligente de Fichas com IA Multimodal (Google Gemini)
 
 ### O que foi feito
 
-#### 1. Modernização dos Ícones de Redes Sociais no Rodapé (`landing-page.component.ts`)
-- **Substituição de Ícone Genérico por SVG Oficial do WhatsApp:** Substituído o ícone genérico de mensagem (`material-icons: chat`) pelo SVG vetorial oficial do WhatsApp tanto nos botões de mídia social quanto no item da lista de Suporte & Contato.
-- **Ícone e Link Oficial do Instagram AVA Systems:** Substituído o ícone genérico de câmera (`material-icons: photo_camera`) pelo SVG vetorial oficial do Instagram com transição para tons de rose, direcionando para `https://www.instagram.com/avasystemsbr/` com menção `&#64;avasystemsbr`.
+#### 1. Manutenção de Infraestrutura & Segurança na VPS Hostinger
+- **Mitigação e Patch de Segurança Definitivo:** Aplicada atualização de segurança do kernel do Linux contra a **CVE-2026-98432** no servidor Ubuntu 24.04 LTS (`200.141.23.28`), reinicializando para o kernel ativo `6.8.0-147-generic`.
+- **Validação de Reinicialização Segura:** O PM2 restabeleceu o backend `edupsych-backend` automaticamente no boot sem nenhuma intervenção manual (94.6 MB de RAM e 0 reinicializações), Nginx reativado e todos os domínios (`edupsychpro.tech` e `app.edupsychpro.tech`) retornando HTTP 200.
+- **Sincronização de Código:** Confirmada paridade absoluta de versão entre Repositório Local, GitHub Remoto e Servidor VPS, todos no commit `98365d2`.
+- **Acesso ao Painel Master SuperAdmin:** Identificação e autenticação bem-sucedida do administrador geral no Painel Master (`/master`), com gestão de faturamento MRR, monitoramento de clínicas e modo suporte (impersonate).
 
-#### 2. Atualização dos Direitos Reservados para AVA Systems
-- **Rodapé Principal da Landing Page:** Atualizado o copyright para `© {{ currentYear }} AVA Systems. Todos os direitos reservados.`, com propriedade reativa `currentYear` no componente.
-- **Páginas Institucionais:** Atualizado o copyright para `© 2026 AVA Systems. Todos os direitos reservados.` nas páginas de Política de Privacidade (`politica-privacidade.component.ts`) e Termos de Uso (`termos-de-uso.component.ts`).
+#### 2. Digitalização Inteligente de Fichas com IA Multimodal (Google Gemini OCR)
+- **Novo Endpoint no Backend (`backend/src/routes/ai-ocr.ts`):**
+  - Rota `POST /api/ai-ocr/scan` autenticada para gestores e profissionais de saúde.
+  - Suporte duplo de entrada: upload de arquivos via `multipart/form-data` (JPG, PNG, WebP e PDF) ou transmissão direta em `base64` (capturas de tela e câmera).
+  - Motor de visão computacional multimodal utilizando a família de modelos Google Gemini com `temperature: 0.1` e prompt de especialidade clínica para psicopedagogia/neuropsicologia.
+  - Reconhecimento com alta precisão de dados impressos e caligrafia manuscrita (incluindo queixas, diagnósticos, medicações, dados de nascimento, contatos e filiação).
+  - Retenção documental com arquivamento da ficha original digitalizada em `/uploads/fichas/` para auditoria e histórico no prontuário.
+  - Rota registrada centralmente em `backend/src/routes/index.ts`.
+- **Componente Reutilizável de Captura (`src/app/shared/components/ficha-scanner-modal.component.ts`):**
+  - Modal moderna com backdrop blur e paleta clínica elegante (`teal`/`emerald`, respeitando a Purple Ban).
+  - Suporte nativo a acionamento da câmera traseira de smartphones e tablets (`capture="environment"`) com alta definição.
+  - Suporte a seleção de imagem da galeria ou documentos PDF no desktop.
+  - Área de pré-visualização da imagem capturada com atalho de repetição rápida ("Tirar outra").
+  - Estado de processamento inteligente com animações e mensagens dinâmicas de progresso.
+- **Integração no Módulo de Pacientes (`pacientes-list.component.ts` & `paciente-form.component.ts`):**
+  - Botão de destaque **[Cadastrar por Ficha (IA)]** no cabeçalho da listagem de pacientes, permitindo fotografar a ficha e navegar direto para o formulário com os dados carregados.
+  - Botão **[Escanear Ficha / Foto (IA)]** no formulário de criação/edição de pacientes.
+  - Preenchimento automático em tempo real de: Nome, Data de Nascimento (ISO), Série/Ano, Turno, CPF, RG, Telefone/WhatsApp, Endereço, Diagnóstico, Medicamentos, Alergias e Queixa Inicial.
+  - Busca inteligente de escolas e responsáveis existentes por similaridade fonética/nome.
+  - Destaque visual dos campos identificados com badges discretas *"✨ IA"* e banner superior com link para abrir a foto original da ficha lado a lado.
+- **Integração no Módulo de Anamnese (`anamnese-form.component.ts`):**
+  - Botão **[Preencher por Foto da Anamnese (IA)]** no cabeçalho do formulário.
+  - Distribuição automática das informações manuscritas através das etapas clínicas (Identificação, Queixa, Histórico Gestacional, Sono/Alimentação, Histórico Escolar e Comportamental).
+  - Associação automática com paciente cadastrado e banner com link da ficha original.
+
+#### 3. Qualidade Técnica, Builds & Testes
+- **Backend Build:** Compilação TypeScript executada com 100% de sucesso (`tsc`, código 0).
+- **Frontend Build:** Bundle Angular gerado com 100% de sucesso (`ng build`, código 0).
+- **Testes Automatizados:** Script `backend/scripts/test-ai-ocr.ts` validando chaves, payloads e comunicação.
 
 ---
 
-## Sessão 77 - 26/10/2026 — Correção CORS em Produção (Ver Demonstração), Fluxo de Escolha de Planos na Landing Page e Modal de Vídeo Tour
+## Sessão 78 - 28/10/2026 — Correção CORS em Produção (Ver Demonstração), Fluxo de Escolha de Planos na Landing Page e Modal de Vídeo Tour
 
 ### O que foi feito
 

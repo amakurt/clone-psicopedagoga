@@ -1,14 +1,15 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PacientesService } from '../services/pacientes.service';
 import { ToastService } from '@shared/components/toast.component';
+import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
 
 @Component({
   selector: 'app-pacientes-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, FichaScannerModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Alert for missing access codes -->
@@ -40,13 +41,18 @@ import { ToastService } from '@shared/components/toast.component';
               [(ngModel)]="searchTerm" (input)="onSearch()">
           </div>
         </div>
-        <div class="flex items-center gap-3 w-full lg:w-auto">
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
           <select class="flex-1 lg:flex-none px-5 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all outline-none"
             [(ngModel)]="filterStatus" (change)="load()">
             <option value="">Status: Todos</option>
             <option value="active">Ativos</option>
             <option value="inactive">Inativos</option>
           </select>
+          <button type="button" (click)="showScannerModal.set(true)"
+            class="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-5 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-teal-600/20 transition-all active:scale-95">
+            <span class="material-icons text-[18px]">document_scanner</span>
+            <span>Cadastrar por Ficha (IA)</span>
+          </button>
           <a routerLink="/app/pacientes/novo"
             class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
             <span class="material-icons text-[18px]">add</span>
@@ -226,6 +232,14 @@ import { ToastService } from '@shared/components/toast.component';
         </div>
       </div>
     }
+
+    @if (showScannerModal()) {
+      <app-ficha-scanner-modal
+        [title]="'Escanear Ficha para Cadastro'"
+        [tipoFicha]="'PACIENTE'"
+        (scanned)="onFichaScanned($event)"
+        (cancelled)="showScannerModal.set(false)" />
+    }
   `,
   styles: [`
     :host { display: block; }
@@ -233,12 +247,14 @@ import { ToastService } from '@shared/components/toast.component';
 })
 export class PacientesListComponent implements OnInit {
   private service = inject(PacientesService);
+  private router = inject(Router);
   private toast = inject(ToastService);
   items = signal<any[]>([]);
   loading = signal(true);
   searchTerm = '';
   filterStatus = '';
   showDeleteModal = signal(false);
+  showScannerModal = signal(false);
   pacienteToDelete = signal<any>(null);
   patientsWithoutCodes = signal(0);
   generatingCodes = signal(false);
@@ -333,5 +349,11 @@ export class PacientesListComponent implements OnInit {
       next: () => { this.showDeleteModal.set(false); this.load(); },
       error: () => this.toast.error('Erro ao excluir paciente')
     });
+  }
+
+  onFichaScanned(result: ScanResult) {
+    this.showScannerModal.set(false);
+    this.service.setScanDraft(result);
+    this.router.navigate(['/app/pacientes/novo']);
   }
 }

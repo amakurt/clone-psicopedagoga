@@ -23,6 +23,10 @@ export class ApiService {
     return this.http.post<T>(`${this.baseUrl}${path}`, body);
   }
 
+  postFormData<T = any>(path: string, formData: FormData) {
+    return this.http.post<T>(`${this.baseUrl}${path}`, formData);
+  }
+
   put<T = any>(path: string, body: any) {
     return this.http.put<T>(`${this.baseUrl}${path}`, body);
   }
