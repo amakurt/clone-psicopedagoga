@@ -1,6 +1,35 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 03 de Novembro de 2026
+## Última Atualização: 04 de Novembro de 2026
+
+## Sessão 81 - 04/11/2026 — Redirecionamento Inteligente PWA / Tela de Início do iPhone para Login e Dashboard (Remoção da Landing Page no Atalho do App)
+
+### O que foi feito
+
+#### 1. Diagnóstico do Atalho no Safari iOS
+- **Causa Raiz Identificada:** No arquivo `site.webmanifest` (em `public/` e `src/assets/`), a propriedade `start_url` estava configurada como `"/"`. Além disso, a rota raiz (`path: ''`) em `app.routes.ts` carregava incondicionalmente a `LandingPageComponent` institucional. Assim, ao adicionar o app à Tela de Início do iPhone via Safari, o atalho sempre abria na página inicial de vendas e planos.
+
+#### 2. Implementação do `rootGuard` (`src/app/core/guards/root.guard.ts`)
+- Criado guarda de rota para o caminho raiz (`path: ''`):
+  - **Detecção de PWA Standalone:** Verifica se o app foi aberto pela Tela de Início no iOS (`window.navigator.standalone`) ou via display standalone. Se verdadeiro:
+    - Usuário com sessão ativa (`auth.token`) -> vai direto para `/app/dashboard`.
+    - Usuário sem sessão ativa -> vai direto para `/login`.
+  - **Detecção de Subdomínio (`app.edupsychpro.tech`):** Caso o acesso ocorra pelo subdomínio da aplicação clínica, nunca exibe a página de vendas, redirecionando direto para o painel ou login.
+  - **Sessão Ativa no Domínio Principal:** Usuários já autenticados são encaminhados automaticamente para `/app/dashboard`.
+  - **Visitantes Comuns:** Apenas visitantes anônimos no domínio institucional (`edupsychpro.tech`) visualizam a Landing Page.
+
+#### 3. Atualização dos Manifests PWA & Metadados Apple
+- **Manifestos Atualizados (`public/site.webmanifest` e `src/assets/site.webmanifest`):**
+  - `start_url` alterado para `"/app"`.
+  - Adicionados `scope: "/"` e `orientation: "portrait"`.
+- **`src/index.html`:** Adicionada meta tag `<meta name="apple-mobile-web-app-title" content="EduPsych Pro">` para exibição correta do nome no ícone da Tela de Início.
+- **`LoginComponent` (`login.component.ts`):** Usuários já autenticados que acessam a rota `/login` agora são redirecionados automaticamente para `/master` (SuperAdmin) ou `/app/dashboard` (profissionais e gestores).
+
+#### 4. Build & Validação
+- **TypeScript:** `npx tsc --noEmit` executado com 0 erros.
+- **Frontend Build:** `ng build` gerado com 100% de sucesso.
+
+---
 
 ## Sessão 80 - 03/11/2026 — Isolamento de Cota de IA por Clínica (Chave Própria Gratuita Google Gemini), Configuração Direta no Scanner e Nova Aba de IA em Configurações
 

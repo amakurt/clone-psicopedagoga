@@ -2,13 +2,26 @@
 
 > **Repositório:** `https://github.com/amakurt/clone-psicopedagoga.git`  
 > **Branch Principal:** `main`  
-> **Última Atualização:** 03 de Novembro de 2026
+> **Última Atualização:** 04 de Novembro de 2026
 
 ---
 
 ## 📌 Sumário Executivo
 
 Este documento consolida o histórico cronológico de conversas, decisões técnicas, arquitetura implementada e procedimentos de teste do projeto **EduPsych Pro Clone**.
+
+---
+
+## 💬 Sessão 81: 04 de Novembro de 2026
+
+### 1. Interação do Usuário: Correção de Rota ao Adicionar Atalho à Tela de Início no iPhone
+- **Solicitação do Usuário:**  
+  *"Quando vou adicionar pelo safari no iphone pra ficar como aplicativo na tela dde inicio como favorito não está indo pra tela de login logo, vai primeiro pra landpage"*
+- **Decisões & Implementações:**
+  - **Identificação da Causa:** Manifestos PWA apontavam `start_url: "/"` e rota vazia apontava incondicionalmente para `LandingPageComponent`.
+  - **Criação do `rootGuard`:** Verifica se o acesso é feito por aplicativo standalone (iPhone Tela de Início / PWA) ou pelo subdomínio `app.edupsychpro.tech`. Caso positivo, redireciona para `/app/dashboard` (se logado) ou `/login` (se deslogado), sem exibir a landing page.
+  - **Ajuste de Manifestos:** `start_url: "/app"`, `scope: "/"` e `<meta name="apple-mobile-web-app-title">`.
+  - **LoginComponent:** Usuários com sessão ativa não veem formulário de login e são encaminhados diretamente ao dashboard.
 
 ---
 

@@ -204,8 +204,12 @@ export class LoginComponent {
   private route = inject(ActivatedRoute);
 
   constructor() {
-    if (this.auth.token && this.auth.user()?.role === 'SUPERADMIN') {
-      this.router.navigate(['/master']);
+    if (this.auth.token) {
+      if (this.auth.user()?.role === 'SUPERADMIN') {
+        this.router.navigate(['/master']);
+      } else {
+        this.router.navigate(['/app/dashboard']);
+      }
       return;
     }
     const mode = this.route.snapshot.queryParamMap.get('mode');

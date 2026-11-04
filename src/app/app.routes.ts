@@ -2,9 +2,14 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { superAdminGuard } from './core/guards/superadmin.guard';
+import { rootGuard } from './core/guards/root.guard';
 
 export const routes: Routes = [
-  { path: '', loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) },
+  { 
+    path: '', 
+    canActivate: [rootGuard],
+    loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) 
+  },
   { path: 'login', loadComponent: () => import('./modules/auth/pages/login/login.component').then(m => m.LoginComponent) },
   { path: 'auth/verify', loadComponent: () => import('./modules/auth/pages/verify/verify-account.component').then(m => m.VerifyAccountComponent) },
   { path: 'auth/recuperar-senha', loadComponent: () => import('./modules/auth/pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent) },

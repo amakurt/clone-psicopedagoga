@@ -24,5 +24,7 @@
   "theme_color": "#007F80",
   "background_color": "#EFF2F6",
   "display": "standalone",
-  "start_url": "/"
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/app"
 }
