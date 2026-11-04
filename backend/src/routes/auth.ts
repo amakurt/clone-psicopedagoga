@@ -45,7 +45,7 @@ function signToken(user: any) {
   return jwt.sign(
     { sub: user.id, email: user.email, role: user.role },
     getJwtSecret(),
-    { expiresIn: '7d' }
+    { expiresIn: '30d' }
   );
 }
 
@@ -596,7 +596,7 @@ router.post('/google/exchange', strictLimiter, async (req: Request, res: Respons
   const token = jwt.sign(
     { sub: user.id, email: user.email, role: user.role },
     getJwtSecret(),
-    { expiresIn: '7d' }
+    { expiresIn: '30d' }
   );
 
   res.json({ token, user: {

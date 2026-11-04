@@ -2,6 +2,32 @@
 
 ## Última Atualização: 04 de Novembro de 2026
 
+## Sessão 83 - 04/11/2026 — Sessão Persistente / Lembrar Usuário Logado ao Fechar e Reabrir o App Web (PWA / iPhone / Safari)
+
+### O que foi feito
+
+#### 1. Diagnóstico da Perda de Sessão ao Fechar o App
+- **Causa Raiz Identificada:** O `AuthService` (`src/app/core/services/auth.service.ts`) estava gravando as credenciais de login (`auth_token`, `auth_user`, `auth_tenants`, `auth_tenant`) exclusivamente no `sessionStorage`, e no `constructor()` realizava intencionalmente `localStorage.removeItem(...)`.
+- **Comportamento no iOS Safari e PWA:**
+  - O `sessionStorage` é destruído pelo navegador/sistema operacional sempre que o usuário fecha a aba do Safari, fecha a janela do navegador ou encerra o aplicativo PWA (swipe-up na multitarefa do iPhone).
+  - Como consequência, ao reabrir o aplicativo pela Tela de Início ou pelo navegador, a sessão estava zerada, forçando o profissional a digitar email e senha novamente a cada fechamento do app.
+
+#### 2. Implementação de Persistência Segura em Multi-Storage (`auth.service.ts`)
+- **Camada de Armazenamento Resiliente (`setItem`, `getItem`, `removeItem`):**
+  - O `AuthService` agora grava e sincroniza credenciais simultaneamente no `localStorage` (persistente entre reinicializações do app e fechamento de abas) e no `sessionStorage` (fallback).
+  - Na leitura inicial do `constructor()`, o sistema restaura o token e dados do usuário a partir do `localStorage`, mantendo a clínica e usuário logados permanentemente até que o usuário clique explicitamente em "Sair" (Logout).
+  - No `logout()`, remove de forma completa e limpa todos os dados de autenticação de ambos os storages.
+- **Proteção contra Exceções:** Métodos encapsulados com blocos `try/catch` para garantir funcionamento seguro mesmo em janelas privadas ou em navegadores com restrições rígidas de sandbox.
+
+#### 3. Extensão da Validade do Token JWT no Backend (`backend/src/routes/auth.ts`)
+- O tempo de expiração do JWT assinado no backend foi estendido de 7 dias para **30 dias** (`expiresIn: '30d'`), compatível com o padrão de mercado para aplicativos clínicos móveis, evitando que o profissional seja deslogado involuntariamente ao longo do mês.
+
+#### 4. Validação & Build
+- **Backend:** `npm --prefix backend run build` compilado com 0 erros.
+- **Frontend:** `npx ng build` compilado com 0 erros e bundles gerados com sucesso.
+
+---
+
 ## Sessão 82 - 04/11/2026 — Resolução do Erro de IA Gemini no iPhone da Vilma: Compressão Automática de Fotos de Alta Resolução, Descoberta Dinâmica de Modelos e Fallback para Gemini 2.0 Flash
 
 ### O que foi feito

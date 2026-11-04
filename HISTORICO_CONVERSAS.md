@@ -12,6 +12,19 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
 
 ---
 
+## 💬 Sessão 83: 04 de Novembro de 2026
+
+### 1. Interação do Usuário: Manter Sessão Logada ao Fechar e Reabrir o App
+- **Solicitação do Usuário:**  
+  *"quando fecha o app web ao abrir novamente precisa logar, colocar pra ficar. logado"*
+- **Decisões & Implementações:**
+  - **Diagnóstico:** O sistema utilizava estritamente `sessionStorage` para guardar o token JWT e dados do usuário, o que provocava o descarte imediato da sessão toda vez que o Safari, navegador ou PWA no iPhone era fechado.
+  - **Sessão Persistente:** Modificado o `AuthService` para persistir dados no `localStorage` (com sincronização em `sessionStorage`), mantendo o usuário logado indefinidamente até clicar em "Sair".
+  - **Validade do JWT:** Aumentada a validade do token gerado pelo backend de 7 para 30 dias (`expiresIn: '30d'`).
+  - **Validação:** Backend e Frontend testados e aprovados com 100% de sucesso.
+
+---
+
 ## 💬 Sessão 82: 04 de Novembro de 2026
 
 ### 1. Interação do Usuário: Resolução do Erro Gemini no iPhone da Vilma

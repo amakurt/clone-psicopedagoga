@@ -37,23 +37,52 @@ export class AuthService {
     return false;
   });
 
+  private setItem(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch {}
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {}
+  }
+
+  private getItem(key: string): string | null {
+    try {
+      const fromLocal = localStorage.getItem(key);
+      if (fromLocal) return fromLocal;
+    } catch {}
+    try {
+      return sessionStorage.getItem(key);
+    } catch {}
+    return null;
+  }
+
+  private removeItem(key: string): void {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+    try {
+      sessionStorage.removeItem(key);
+    } catch {}
+  }
+
   constructor(private router: Router) {
-    // Migração: remover credenciais antigas do localStorage (agora a sessão é sessionStorage)
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-    localStorage.removeItem(this.tenantsKey);
-    localStorage.removeItem(this.tenantKey);
+    const savedUser = this.getItem(this.userKey);
+    if (savedUser) {
+      try { this.user.set(JSON.parse(savedUser)); } catch {}
+    }
 
-    const savedUser = sessionStorage.getItem(this.userKey);
-    if (savedUser) this.user.set(JSON.parse(savedUser));
+    const savedTenants = this.getItem(this.tenantsKey);
+    if (savedTenants) {
+      try { this.tenants.set(JSON.parse(savedTenants)); } catch {}
+    }
 
-    const savedTenants = sessionStorage.getItem(this.tenantsKey);
-    if (savedTenants) this.tenants.set(JSON.parse(savedTenants));
+    const savedTenant = this.getItem(this.tenantKey);
+    if (savedTenant) {
+      try { this.tenant.set(JSON.parse(savedTenant)); } catch {}
+    }
 
-    const savedTenant = sessionStorage.getItem(this.tenantKey);
-    if (savedTenant) this.tenant.set(JSON.parse(savedTenant));
-
-    const impersonateBackup = sessionStorage.getItem(this.impersonationBackupKey);
+    const impersonateBackup = this.getItem(this.impersonationBackupKey);
     if (impersonateBackup) {
       this.isImpersonating.set(true);
       try {
@@ -64,7 +93,7 @@ export class AuthService {
   }
 
   get token(): string | null {
-    return sessionStorage.getItem(this.tokenKey);
+    return this.getItem(this.tokenKey);
   }
 
   get tenantId(): string | null {
@@ -72,16 +101,16 @@ export class AuthService {
   }
 
   login(token: string, user: any, tenants?: any[], tenant?: any) {
-    sessionStorage.setItem(this.tokenKey, token);
-    sessionStorage.setItem(this.userKey, JSON.stringify(user));
+    this.setItem(this.tokenKey, token);
+    this.setItem(this.userKey, JSON.stringify(user));
     this.user.set(user);
 
     if (tenants) {
-      sessionStorage.setItem(this.tenantsKey, JSON.stringify(tenants));
+      this.setItem(this.tenantsKey, JSON.stringify(tenants));
       this.tenants.set(tenants);
     }
     if (tenant) {
-      sessionStorage.setItem(this.tenantKey, JSON.stringify(tenant));
+      this.setItem(this.tenantKey, JSON.stringify(tenant));
       this.tenant.set(tenant);
     }
 
@@ -97,10 +126,10 @@ export class AuthService {
     if (!res.ok) return;
     const data = await res.json();
     this.tenants.set(data.tenants || []);
-    sessionStorage.setItem(this.tenantsKey, JSON.stringify(data.tenants || []));
+    this.setItem(this.tenantsKey, JSON.stringify(data.tenants || []));
     if (data.tenant) {
       this.tenant.set(data.tenant);
-      sessionStorage.setItem(this.tenantKey, JSON.stringify(data.tenant));
+      this.setItem(this.tenantKey, JSON.stringify(data.tenant));
     }
   }
 
@@ -116,7 +145,7 @@ export class AuthService {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro ao trocar de clínica');
     this.tenant.set(data.tenant);
-    sessionStorage.setItem(this.tenantKey, JSON.stringify(data.tenant));
+    this.setItem(this.tenantKey, JSON.stringify(data.tenant));
     return data.tenant;
   }
 
@@ -128,7 +157,7 @@ export class AuthService {
       tenant: this.tenant(),
       targetClinicName: tenant?.name || 'Clínica',
     };
-    sessionStorage.setItem(this.impersonationBackupKey, JSON.stringify(backup));
+    this.setItem(this.impersonationBackupKey, JSON.stringify(backup));
     this.login(token, user, [tenant], tenant);
     this.isImpersonating.set(true);
     this.impersonatedClinicName.set(tenant?.name || 'Clínica');
@@ -136,11 +165,11 @@ export class AuthService {
   }
 
   stopImpersonation() {
-    const backupRaw = sessionStorage.getItem(this.impersonationBackupKey);
+    const backupRaw = this.getItem(this.impersonationBackupKey);
     if (backupRaw) {
       try {
         const backup = JSON.parse(backupRaw);
-        sessionStorage.removeItem(this.impersonationBackupKey);
+        this.removeItem(this.impersonationBackupKey);
         this.isImpersonating.set(false);
         this.impersonatedClinicName.set('');
         this.login(backup.token, backup.user, backup.tenants, backup.tenant);
@@ -155,11 +184,11 @@ export class AuthService {
   }
 
   logout() {
-    sessionStorage.removeItem(this.tokenKey);
-    sessionStorage.removeItem(this.userKey);
-    sessionStorage.removeItem(this.tenantsKey);
-    sessionStorage.removeItem(this.tenantKey);
-    sessionStorage.removeItem(this.impersonationBackupKey);
+    this.removeItem(this.tokenKey);
+    this.removeItem(this.userKey);
+    this.removeItem(this.tenantsKey);
+    this.removeItem(this.tenantKey);
+    this.removeItem(this.impersonationBackupKey);
     this.user.set(null);
     this.tenants.set([]);
     this.tenant.set(null);
@@ -179,17 +208,17 @@ export class AuthService {
     const current = this.user() || {};
     const next = { ...current, ...patch };
     this.user.set(next);
-    sessionStorage.setItem(this.userKey, JSON.stringify(next));
+    this.setItem(this.userKey, JSON.stringify(next));
   }
 
   updateTenant(patch: any) {
     const current = this.tenant() || {};
     const next = { ...current, ...patch };
     this.tenant.set(next);
-    sessionStorage.setItem(this.tenantKey, JSON.stringify(next));
+    this.setItem(this.tenantKey, JSON.stringify(next));
 
     const list = this.tenants().map(t => t.id === next.id ? { ...t, ...next } : t);
     this.tenants.set(list);
-    sessionStorage.setItem(this.tenantsKey, JSON.stringify(list));
+    this.setItem(this.tenantsKey, JSON.stringify(list));
   }
 }
