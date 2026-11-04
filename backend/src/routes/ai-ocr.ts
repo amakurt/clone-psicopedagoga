@@ -30,13 +30,63 @@ const upload = multer({
   },
 });
 
-const GEMINI_MODELS = [
-  'gemini-1.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.5-flash',
-  'gemini-flash-latest',
-  'gemini-1.5-pro',
-];
+// Cache de modelos suportados por chave (TTL: 1 hora)
+const modelsCache = new Map<string, { models: string[]; expiresAt: number }>();
+
+/**
+ * Descobre dinamicamente os modelos habilitados para a chave do Google Gemini da clínica,
+ * priorizando as versões mais rápidas, estáveis e modernas para visão computacional/OCR.
+ */
+async function getAvailableGeminiModels(apiKey: string): Promise<string[]> {
+  const cached = modelsCache.get(apiKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.models;
+  }
+
+  const fallbackModels = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-pro',
+  ];
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (res.ok) {
+      const data: any = await res.json();
+      if (Array.isArray(data?.models)) {
+        const validNames: string[] = data.models
+          .filter((m: any) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+          .map((m: any) => (m.name || '').replace(/^models\//, ''));
+
+        const preferredOrder = [
+          'gemini-2.0-flash',
+          'gemini-2.0-flash-lite',
+          'gemini-1.5-flash',
+          'gemini-1.5-flash-8b',
+          'gemini-1.5-pro',
+        ];
+
+        const prioritized: string[] = [];
+        for (const pref of preferredOrder) {
+          const match = validNames.find(vn => vn === pref || vn.startsWith(pref));
+          if (match && !prioritized.includes(match)) {
+            prioritized.push(match);
+          }
+        }
+
+        if (prioritized.length > 0) {
+          modelsCache.set(apiKey, { models: prioritized, expiresAt: Date.now() + 60 * 60 * 1000 });
+          return prioritized;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[AI_OCR] Falha ao consultar modelos ativos do Google, usando fallback padrão:', err);
+  }
+
+  return fallbackModels;
+}
 
 /**
  * Chamada multimodal ao Gemini para extração estruturada de dados clínicos
@@ -134,8 +184,9 @@ Extraia os dados da FICHA CADASTRAL / TRIAGEM DO PACIENTE estruturando exatament
   const finalPrompt = `${systemPrompt}\n\n${promptInstrucao}`;
 
   let lastError: any = null;
+  const models = await getAvailableGeminiModels(apiKey);
 
-  for (const model of GEMINI_MODELS) {
+  for (const model of models) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
@@ -168,11 +219,38 @@ Extraia os dados da FICHA CADASTRAL / TRIAGEM DO PACIENTE estruturando exatament
 
       if (!response.ok) {
         const errorText = await response.text();
-        if (errorText.includes('API key not valid') || errorText.includes('INVALID_ARGUMENT')) {
-          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou. Obtenha uma chave gratuita em https://aistudio.google.com e configure em Configurações > WhatsApp.');
+        let errorDetail = errorText;
+        try {
+          const parsed = JSON.parse(errorText);
+          errorDetail = parsed?.error?.message || errorText;
+        } catch {}
+
+        // 1. Chave realmente inválida
+        if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
+          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou. Obtenha uma chave gratuita em https://aistudio.google.com e configure nas opções.');
           break;
         }
-        lastError = new Error(`Gemini ${model} HTTP ${response.status}: ${errorText}`);
+
+        // 2. Limite temporário da cota gratuita atingido (15 req/min)
+        if (response.status === 429 || errorDetail.includes('RESOURCE_EXHAUSTED')) {
+          lastError = new Error('Limite temporário de requisições por minuto atingido no Google Gemini gratuito. Aguarde 30 segundos e tente novamente.');
+          continue;
+        }
+
+        // 3. Modelo não disponível ou descontinuado na API (ex: 404 em versões antigas)
+        if (response.status === 404 || errorDetail.includes('not found') || errorDetail.includes('is not supported')) {
+          console.warn(`[AI_OCR] Modelo ${model} indisponível para esta chave, tentando alternativo...`);
+          lastError = new Error(`Modelo ${model} indisponível no Google Gemini.`);
+          continue;
+        }
+
+        // 4. Payload ou tamanho da foto
+        if (errorDetail.includes('payload size exceeds') || errorDetail.includes('exceeds maximum allowed size')) {
+          lastError = new Error('A imagem da foto é muito pesada para o processador de IA. Reduza a resolução ou fotografe diretamente pelo aplicativo.');
+          break;
+        }
+
+        lastError = new Error(`Falha no Google Gemini (${model}): ${errorDetail}`);
         continue;
       }
 
@@ -188,12 +266,12 @@ Extraia os dados da FICHA CADASTRAL / TRIAGEM DO PACIENTE estruturando exatament
         .trim();
 
       return JSON.parse(cleanJson);
-    } catch (err) {
+    } catch (err: any) {
       lastError = err;
     }
   }
 
-  throw lastError || new Error('Não foi possível processar o documento com os modelos disponíveis.');
+  throw lastError || new Error('Não foi possível interpretar a ficha com os modelos disponíveis no Google Gemini.');
 }
 
 /**
@@ -285,6 +363,9 @@ router.post('/save-key', async (req: Request, res: Response) => {
         },
       });
     }
+
+    // Limpa cache de modelos para esta chave
+    modelsCache.delete(key);
 
     const keyMasked = key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : '••••••••';
     return res.json({

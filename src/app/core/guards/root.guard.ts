@@ -60,3 +60,4 @@ export const rootGuard: CanActivateFn = () => {
   // Visitante comum no site institucional: exibe a Landing Page
   return true;
 };
+

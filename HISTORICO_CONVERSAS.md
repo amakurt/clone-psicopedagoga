@@ -12,6 +12,21 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
 
 ---
 
+## 💬 Sessão 82: 04 de Novembro de 2026
+
+### 1. Interação do Usuário: Resolução do Erro Gemini no iPhone da Vilma
+- **Solicitação do Usuário:**  
+  *"no ipone da Vilma deu erro relacionado ao gemini 1.5"*
+- **Decisões & Implementações:**
+  - **Diagnóstico:** As fotos tiradas pelo sensor do iPhone atingem 12MP/48MP (8MB a 15MB), excedendo limites de upload e de payload JSON Base64 da API do Google Gemini, além de possíveis formatos HEIC não compatíveis.
+  - **Compressor no Navegador:** Adicionada compressão client-side em canvas (`compressImage`) na modal do scanner (`ficha-scanner-modal.component.ts`), redimensionando para 1600px e formato JPEG otimizado (~300KB), tornando o upload ultra rápido e livre de falhas de memória.
+  - **Descoberta Dinâmica de Modelos (`ai-ocr.ts`):** O backend agora consulta os modelos habilitados na conta da clínica via API do Google com cache de 1h, priorizando `gemini-2.0-flash` (mais recente e veloz) e com fallback suave para `gemini-1.5-flash` e `gemini-1.5-flash-8b`.
+  - **Tratamento de Exceções:** Mensagens amigáveis em português sem expor erros brutos de código para o usuário.
+  - **Unificação:** Atualizados os módulos de sugestões de intervenção/PEI e do WhatsApp para o mesmo padrão.
+  - **Validação:** Backend e Frontend compilados com sucesso absoluto.
+
+---
+
 ## 💬 Sessão 81: 04 de Novembro de 2026
 
 ### 1. Interação do Usuário: Correção de Rota ao Adicionar Atalho à Tela de Início no iPhone

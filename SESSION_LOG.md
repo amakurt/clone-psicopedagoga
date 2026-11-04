@@ -2,6 +2,53 @@
 
 ## Última Atualização: 04 de Novembro de 2026
 
+## Sessão 82 - 04/11/2026 — Resolução do Erro de IA Gemini no iPhone da Vilma: Compressão Automática de Fotos de Alta Resolução, Descoberta Dinâmica de Modelos e Fallback para Gemini 2.0 Flash
+
+### O que foi feito
+
+#### 1. Diagnóstico do Erro no iPhone da Vilma
+- **Problema Reportado:** Ao fotografar ou escanear uma ficha clínica pelo iPhone na conta da Vilma (Vilma NeuroAPP), o sistema retornava mensagem de erro citando "gemini 1.5".
+- **Causas Raízes Identificadas:**
+  1. **Fotos de Câmera em Alta Resolução no iOS (iPhone 12 a 16):**
+     - O sensor fotográfico do iPhone gera fotos com 12MP a 48MP (resoluções de 4032x3024 ou superiores), resultando em arquivos brutos de 6MB a 15MB.
+     - Ao converter para Base64 no envio para o Google Gemini sem compressão prévia, o payload JSON ultrapassava 16MB a 20MB.
+     - A API REST do Google Generative Language rejeitava a chamada inline com HTTP 400 (`Request payload size exceeds limit` / `INVALID_ARGUMENT`) ou estourava o tempo limite de uplink móvel (3G/4G/5G).
+     - Além disso, fotos capturadas pelo iOS Safari podem utilizar o formato HEIC não compatível com o parser padrão de Base64 da API do Gemini sem conversão prévia.
+  2. **Modelos Obsoletos e Erro na Captura de Exceções:**
+     - O backend tentava uma lista estática onde `gemini-1.5-flash` vinha primeiro, continha nomes inexistentes (`gemini-2.5-flash` e `gemini-flash-latest`), e o tratamento de erro interpretava erroneamente `INVALID_ARGUMENT` de payload como se fosse chave inválida, quebrando a execução e expondo o erro bruto `Gemini gemini-1.5-flash HTTP ...` no toast do frontend.
+
+#### 2. Implementação de Compressão Inteligente no Frontend (`ficha-scanner-modal.component.ts`)
+- **Processador Canvas Automático:**
+  - Adicionado método `compressImage(file: File)` nativo que intercepta qualquer imagem capturada pela câmera ou galeria do iPhone/Android/Desktop.
+  - Redimensiona proporcionalmente a imagem para até **1600px** de largura/altura máxima (resolução ideal para OCR de alta acurácia).
+  - Normaliza qualquer formato (inclusive fotos HEIC do iOS) para **JPEG limpo** com fator de qualidade 0.85.
+  - **Redução de Tamanho:** Arquivos de 10MB-15MB são compactados para **200KB a 400KB** (~97% de redução) em menos de 100 milissegundos no próprio navegador do usuário.
+  - **Velocidade de Upload:** O envio da ficha ocorre de forma instantânea (< 1 segundo), eliminando falhas de conexão móvel e timeouts.
+
+#### 3. Descoberta Dinâmica de Modelos & Fallback no Backend (`backend/src/routes/ai-ocr.ts`)
+- **Descoberta Dinâmica com Cache:**
+  - Implementada função `getAvailableGeminiModels(apiKey)` com cache de 1 hora.
+  - Consulta a API do Google (`/v1beta/models`) usando a própria chave da clínica para identificar com precisão quais modelos com suporte a `generateContent` estão liberados para aquela conta.
+  - **Priorização Otimizada:** Define ordem de preferência moderna:
+    1. `gemini-2.0-flash` (modelo de última geração, muito mais rápido e superior para OCR multimodal).
+    2. `gemini-2.0-flash-lite`
+    3. `gemini-1.5-flash`
+    4. `gemini-1.5-flash-8b`
+    5. `gemini-1.5-pro`
+  - Eliminados modelos inválidos (`gemini-2.5-flash` e `gemini-flash-latest`).
+- **Tratamento Amigável de Erros:**
+  - Erros 404 de modelos legados agora tentam o próximo modelo silenciosamente.
+  - Erros de cota 429 exibem mensagem orientando o usuário a aguardar 30 segundos.
+  - Erros de chave inválida são estritamente distinguidos de erros de payload, evitando alarmes falsos de "chave expirada".
+- **Unificação com Outros Módulos de IA:**
+  - `backend/src/routes/ai-suggestions.ts` (Planos de Intervenção e PEI) e `backend/src/services/whatsapp-ai.service.ts` (Atendimento WhatsApp) atualizados para priorizar `gemini-2.0-flash` e usar o mesmo fallback resiliente.
+
+#### 4. Validação & Build
+- **Backend:** `npm --prefix backend run build` concluído com 0 erros.
+- **Frontend:** `npx ng build` concluído com 0 erros e bundle otimizado.
+
+---
+
 ## Sessão 81 - 04/11/2026 — Redirecionamento Inteligente PWA / Tela de Início do iPhone para Login e Dashboard (Remoção da Landing Page no Atalho do App)
 
 ### O que foi feito

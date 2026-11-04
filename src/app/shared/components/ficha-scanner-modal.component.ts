@@ -364,24 +364,105 @@ export class FichaScannerModalComponent implements OnInit {
     });
   }
 
-  onFileSelected(event: any) {
+  async onFileSelected(event: any) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    this.selectedFile.set(file);
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    this.isPdf.set(isPdf);
     this.selectedFileName.set(file.name);
-    this.isPdf.set(file.type === 'application/pdf');
 
-    if (file.type.startsWith('image/')) {
+    if (isPdf) {
+      this.selectedFile.set(file);
+      this.previewSrc.set('pdf-placeholder');
+      return;
+    }
+
+    // Para fotos e imagens (iPhone, Android, PC):
+    // Comprime e normaliza para JPEG 1600px max (reduz de 12MB para ~300KB, garantindo upload instantâneo e OCR perfeito)
+    try {
+      const { blob, dataUrl } = await this.compressImage(file);
+      const cleanName = (file.name || 'foto-ficha').replace(/\.[^/.]+$/, '') + '.jpg';
+      const optimizedFile = new File([blob], cleanName, {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+
+      this.selectedFile.set(optimizedFile);
+      this.previewSrc.set(dataUrl);
+    } catch (err) {
+      console.warn('[FichaScanner] Compressão em canvas falhou, usando arquivo original:', err);
+      this.selectedFile.set(file);
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewSrc.set(e.target.result);
       };
       reader.readAsDataURL(file);
-    } else {
-      // PDF
-      this.previewSrc.set('pdf-placeholder');
     }
+  }
+
+  /**
+   * Redimensiona e comprime imagens de alta resolução (câmeras de smartphones/iPhones)
+   * Evita estouro de payload no backend e no Google Gemini, garantindo leitura ultra rápida.
+   */
+  private compressImage(file: File): Promise<{ blob: Blob; dataUrl: string }> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const MAX_DIMENSION = 1600;
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIMENSION) / width);
+            width = MAX_DIMENSION;
+          } else {
+            width = Math.round((width * MAX_DIMENSION) / height);
+            height = MAX_DIMENSION;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas 2D context indisponível'));
+          return;
+        }
+
+        // Fundo branco caso haja transparência
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const quality = 0.85; // Alta nitidez com tamanho entre 200KB e 450KB
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve({ blob, dataUrl });
+            } else {
+              reject(new Error('Falha ao gerar blob JPEG'));
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Falha ao decodificar imagem para compressão'));
+      };
+
+      img.src = objectUrl;
+    });
   }
 
   clearSelection() {

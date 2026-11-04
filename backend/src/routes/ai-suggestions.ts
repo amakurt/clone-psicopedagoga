@@ -104,10 +104,9 @@ function generateLocalPlan(diagnosis: string, age: string, goals: string, level:
 
 // --- LLM Providers Calling Helper (Google Gemini / OpenAI) ---
 const GEMINI_MODELS = [
-  'gemini-1.5-flash',
   'gemini-2.0-flash',
-  'gemini-2.5-flash',
-  'gemini-flash-latest',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
   'gemini-1.5-pro',
 ];
 
@@ -131,7 +130,24 @@ async function callGemini(prompt: string, apiKey: string): Promise<any> {
 
       if (!response.ok) {
         const errText = await response.text();
-        lastError = new Error(`Gemini ${model} Error (${response.status}): ${errText}`);
+        let errorDetail = errText;
+        try {
+          const parsed = JSON.parse(errText);
+          errorDetail = parsed?.error?.message || errText;
+        } catch {}
+
+        if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
+          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou.');
+          break;
+        }
+
+        if (response.status === 404 || errorDetail.includes('not found')) {
+          console.warn(`[AI_SUGGESTIONS] Modelo ${model} indisponível, tentando próximo...`);
+          lastError = new Error(`Modelo ${model} indisponível.`);
+          continue;
+        }
+
+        lastError = new Error(`Falha no Google Gemini (${model}): ${errorDetail}`);
         continue;
       }
 
@@ -146,7 +162,7 @@ async function callGemini(prompt: string, apiKey: string): Promise<any> {
     }
   }
 
-  throw lastError || new Error('Falha ao comunicar com a API do Gemini');
+  throw lastError || new Error('Falha ao comunicar com os modelos disponíveis do Google Gemini');
 }
 
 /**

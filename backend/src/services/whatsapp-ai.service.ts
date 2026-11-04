@@ -43,10 +43,9 @@ function isDirectHandoffRequest(text: string): boolean {
  */
 async function callGeminiForChat(prompt: string, apiKey: string): Promise<string> {
   const models = [
-    'gemini-1.5-flash',
     'gemini-2.0-flash',
-    'gemini-2.5-flash',
-    'gemini-flash-latest',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
     'gemini-1.5-pro',
   ];
   let lastError: any = null;
@@ -81,7 +80,24 @@ async function callGeminiForChat(prompt: string, apiKey: string): Promise<string
 
       if (!response.ok) {
         const errText = await response.text();
-        lastError = new Error(`Gemini ${model} Error (${response.status}): ${errText}`);
+        let errorDetail = errText;
+        try {
+          const parsed = JSON.parse(errText);
+          errorDetail = parsed?.error?.message || errText;
+        } catch {}
+
+        if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
+          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou.');
+          break;
+        }
+
+        if (response.status === 404 || errorDetail.includes('not found')) {
+          console.warn(`[WHATSAPP_AI] Modelo ${model} indisponível, tentando próximo...`);
+          lastError = new Error(`Modelo ${model} indisponível.`);
+          continue;
+        }
+
+        lastError = new Error(`Gemini ${model} Error (${response.status}): ${errorDetail}`);
         continue;
       }
 
