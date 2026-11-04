@@ -114,51 +114,61 @@ async function callGemini(prompt: string, apiKey: string): Promise<any> {
   let lastError = null;
 
   for (const model of GEMINI_MODELS) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    for (const ep of ['v1beta', 'v1']) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${ep}/models/${model}:generateContent?key=${apiKey}`;
+        const requestBody: any = {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             responseMimeType: 'application/json',
             temperature: 0.3,
           }
-        })
-      });
+        };
 
-      if (!response.ok) {
-        const errText = await response.text();
-        let errorDetail = errText;
-        try {
-          const parsed = JSON.parse(errText);
-          errorDetail = parsed?.error?.message || errText;
-        } catch {}
+        let response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
 
-        if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
-          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou.');
-          break;
+        if (!response.ok && response.status === 400 && requestBody.generationConfig?.responseMimeType) {
+          delete requestBody.generationConfig.responseMimeType;
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+          });
         }
 
-        if (response.status === 404 || errorDetail.includes('not found')) {
-          console.warn(`[AI_SUGGESTIONS] Modelo ${model} indisponível, tentando próximo...`);
-          lastError = new Error(`Modelo ${model} indisponível.`);
+        if (!response.ok) {
+          const errText = await response.text();
+          let errorDetail = errText;
+          try {
+            const parsed = JSON.parse(errText);
+            errorDetail = parsed?.error?.message || errText;
+          } catch {}
+
+          if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
+            throw new Error('A chave de API do Google Gemini informada é inválida ou expirou.');
+          }
+
+          if (response.status === 404 || errorDetail.includes('not found')) {
+            continue;
+          }
+
+          lastError = new Error(`Falha no Google Gemini (${model}): ${errorDetail}`);
           continue;
         }
 
-        lastError = new Error(`Falha no Google Gemini (${model}): ${errorDetail}`);
-        continue;
+        const data = (await response.json()) as any;
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error('Resposta vazia da API do Gemini');
+        
+        const cleanText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
+      } catch (err: any) {
+        lastError = err;
       }
-
-      const data = (await response.json()) as any;
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error('Resposta vazia da API do Gemini');
-      
-      const cleanText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-      return JSON.parse(cleanText);
-    } catch (err: any) {
-      lastError = err;
     }
   }
 

@@ -63,8 +63,11 @@ async function getAvailableGeminiModels(apiKey: string): Promise<string[]> {
           'gemini-2.0-flash',
           'gemini-2.0-flash-lite',
           'gemini-1.5-flash',
+          'gemini-1.5-flash-002',
+          'gemini-1.5-flash-001',
           'gemini-1.5-flash-8b',
           'gemini-1.5-pro',
+          'gemini-1.5-pro-002',
         ];
 
         const prioritized: string[] = [];
@@ -72,6 +75,13 @@ async function getAvailableGeminiModels(apiKey: string): Promise<string[]> {
           const match = validNames.find(vn => vn === pref || vn.startsWith(pref));
           if (match && !prioritized.includes(match)) {
             prioritized.push(match);
+          }
+        }
+
+        // Adiciona quaisquer outros modelos que suportem generateContent (exceto embeddings/tts)
+        for (const vn of validNames) {
+          if (!prioritized.includes(vn) && !vn.includes('embedding') && !vn.includes('aqa') && !vn.includes('imagen')) {
+            prioritized.push(vn);
           }
         }
 
@@ -187,87 +197,116 @@ Extraia os dados da FICHA CADASTRAL / TRIAGEM DO PACIENTE estruturando exatament
   const models = await getAvailableGeminiModels(apiKey);
 
   for (const model of models) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    for (const ep of ['v1beta', 'v1']) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${ep}/models/${model}:generateContent?key=${apiKey}`;
 
-      const requestBody = {
-        contents: [
-          {
-            parts: [
-              { text: finalPrompt },
-              {
-                inline_data: {
-                  mime_type: mimeType,
-                  data: base64Data,
+        const requestBody: any = {
+          contents: [
+            {
+              parts: [
+                { text: finalPrompt },
+                {
+                  inlineData: {
+                    mimeType: mimeType,
+                    data: base64Data,
+                  },
                 },
-              },
-            ],
+              ],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+            maxOutputTokens: 3000,
           },
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.1,
-          maxOutputTokens: 3000,
-        },
-      };
+        };
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
+        let response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorDetail = errorText;
-        try {
-          const parsed = JSON.parse(errorText);
-          errorDetail = parsed?.error?.message || errorText;
-        } catch {}
-
-        // 1. Chave realmente inválida
-        if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
-          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou. Obtenha uma chave gratuita em https://aistudio.google.com e configure nas opções.');
-          break;
+        // Se falhar com 400 por não suportar responseMimeType, retenta sem responseMimeType
+        if (!response.ok && response.status === 400 && requestBody.generationConfig?.responseMimeType) {
+          delete requestBody.generationConfig.responseMimeType;
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          });
         }
 
-        // 2. Limite temporário da cota gratuita atingido (15 req/min)
-        if (response.status === 429 || errorDetail.includes('RESOURCE_EXHAUSTED')) {
-          lastError = new Error('Limite temporário de requisições por minuto atingido no Google Gemini gratuito. Aguarde 30 segundos e tente novamente.');
+        // Se ainda falhar com 400, tenta formato alternativo inline_data (snake_case)
+        if (!response.ok && response.status === 400) {
+          requestBody.contents[0].parts[1] = {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64Data,
+            },
+          };
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          });
+        }
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorDetail = errorText;
+          try {
+            const parsed = JSON.parse(errorText);
+            errorDetail = parsed?.error?.message || errorText;
+          } catch {}
+
+          console.warn(`[AI_OCR] Falha no endpoint ${ep}/${model} (Status ${response.status}):`, errorDetail);
+
+          // 1. Chave realmente inválida
+          if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
+            throw new Error('A chave de API do Google Gemini informada é inválida ou expirou. Obtenha uma chave gratuita em https://aistudio.google.com e configure nas opções.');
+          }
+
+          // 2. Limite temporário da cota gratuita atingido (15 req/min)
+          if (response.status === 429 || errorDetail.includes('RESOURCE_EXHAUSTED')) {
+            lastError = new Error('Limite temporário de requisições por minuto atingido no Google Gemini gratuito. Aguarde 30 segundos e tente novamente.');
+            continue;
+          }
+
+          // 3. Payload ou tamanho da foto
+          if (errorDetail.includes('payload size exceeds') || errorDetail.includes('exceeds maximum allowed size')) {
+            throw new Error('A imagem da foto é muito pesada para o processador de IA. Reduza a resolução ou fotografe diretamente pelo aplicativo.');
+          }
+
+          // 4. Modelo não encontrado nesta versão da API (404) ou desativado no projeto
+          if (response.status === 404 || errorDetail.includes('not found') || errorDetail.includes('is not supported')) {
+            lastError = new Error(
+              `O Google recusou o processamento com esta chave (${model} - ${ep}): "${errorDetail}". ` +
+              `Para resolver, acesse https://aistudio.google.com/app/apikey, clique em "Create API key" e certifique-se de escolher "Create API key in NEW project".`
+            );
+            continue;
+          }
+
+          lastError = new Error(`Falha no Google Gemini (${model}): ${errorDetail}`);
           continue;
         }
 
-        // 3. Modelo não disponível ou descontinuado na API (ex: 404 em versões antigas)
-        if (response.status === 404 || errorDetail.includes('not found') || errorDetail.includes('is not supported')) {
-          console.warn(`[AI_OCR] Modelo ${model} indisponível para esta chave, tentando alternativo...`);
-          lastError = new Error(`Modelo ${model} indisponível no Google Gemini.`);
-          continue;
+        const resJson: any = await response.json();
+        const rawText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) {
+          throw new Error('Nenhum texto retornado pelo modelo Gemini');
         }
 
-        // 4. Payload ou tamanho da foto
-        if (errorDetail.includes('payload size exceeds') || errorDetail.includes('exceeds maximum allowed size')) {
-          lastError = new Error('A imagem da foto é muito pesada para o processador de IA. Reduza a resolução ou fotografe diretamente pelo aplicativo.');
-          break;
-        }
+        const cleanJson = rawText
+          .replace(/```json/gi, '')
+          .replace(/```/g, '')
+          .trim();
 
-        lastError = new Error(`Falha no Google Gemini (${model}): ${errorDetail}`);
-        continue;
+        return JSON.parse(cleanJson);
+      } catch (err: any) {
+        lastError = err;
       }
-
-      const resJson: any = await response.json();
-      const rawText = resJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) {
-        throw new Error('Nenhum texto retornado pelo modelo Gemini');
-      }
-
-      const cleanJson = rawText
-        .replace(/```json/gi, '')
-        .replace(/```/g, '')
-        .trim();
-
-      return JSON.parse(cleanJson);
-    } catch (err: any) {
-      lastError = err;
     }
   }
 
@@ -331,16 +370,41 @@ router.post('/save-key', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Chave de API parece inválida ou muito curta (deve ter pelo menos 20 caracteres).' });
     }
 
-    // Teste leve de validação direta com o Google para garantir que a chave funciona
+    // Teste de validação direta e geração com o Google para garantir que a chave funciona 100%
     try {
-      const testRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-      if (!testRes.ok) {
-        const errBody = await testRes.text();
-        if (errBody.includes('API_KEY_INVALID') || testRes.status === 400 || testRes.status === 403) {
+      const testModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+      let workingModel: string | null = null;
+      let lastTestErr = '';
+
+      for (const m of testModels) {
+        for (const ep of ['v1beta', 'v1']) {
+          const genTest = await fetch(`https://generativelanguage.googleapis.com/${ep}/models/${m}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: 'ok' }] }] }),
+          });
+          if (genTest.ok) {
+            workingModel = `${ep}/${m}`;
+            break;
+          } else {
+            const errTxt = await genTest.text();
+            lastTestErr = errTxt;
+          }
+        }
+        if (workingModel) break;
+      }
+
+      if (!workingModel) {
+        let parsedMsg = lastTestErr;
+        try { parsedMsg = JSON.parse(lastTestErr)?.error?.message || lastTestErr; } catch {}
+        if (parsedMsg.includes('API_KEY_INVALID') || parsedMsg.includes('API key not valid')) {
           return res.status(400).json({
-            error: 'O Google recusou esta chave de API. Verifique se copiou a chave completa gerada no Google AI Studio (ex: AIzaSy...).'
+            error: 'Chave de API do Google inválida. Copie a chave completa gerada no Google AI Studio (ex: AIzaSy...).'
           });
         }
+        return res.status(400).json({
+          error: `O Google recusou a geração com esta chave: "${parsedMsg}". Dica: Acesse https://aistudio.google.com/app/apikey, clique em "Create API key" e certifique-se de escolher "Create API key in NEW project".`
+        });
       }
     } catch (testErr) {
       console.warn('Aviso: Falha temporária de rede ao validar chave com Google:', testErr);

@@ -121,7 +121,7 @@ export interface ScanResult {
                   <span>Abrir Google AI Studio (1 minuto)</span>
                 </a>
                 <p class="text-[11px] text-slate-500">
-                  Faça login com seu Gmail, clique em <b>"Create API key"</b> e copie o código gerado.
+                  Faça login com seu Gmail, clique em <b>"Create API key"</b> e escolha <b>"Create API key in new project"</b> para habilitar os modelos de IA.
                 </p>
               </div>
 

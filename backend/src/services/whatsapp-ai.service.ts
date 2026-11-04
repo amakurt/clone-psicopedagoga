@@ -51,68 +51,67 @@ async function callGeminiForChat(prompt: string, apiKey: string): Promise<string
   let lastError: any = null;
 
   for (const model of models) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const requestBody: any = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 2500,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      };
+    for (const ep of ['v1beta', 'v1']) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${ep}/models/${model}:generateContent?key=${apiKey}`;
+        const requestBody: any = {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.5,
+            maxOutputTokens: 2500,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        };
 
-      let response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-
-      // Se o endpoint retornar erro 400 por não suportar thinkingConfig, retenta sem thinkingConfig
-      if (!response.ok && response.status === 400) {
-        delete requestBody.generationConfig.thinkingConfig;
-        response = await fetch(url, {
+        let response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
         });
-      }
 
-      if (!response.ok) {
-        const errText = await response.text();
-        let errorDetail = errText;
-        try {
-          const parsed = JSON.parse(errText);
-          errorDetail = parsed?.error?.message || errText;
-        } catch {}
-
-        if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
-          lastError = new Error('A chave de API do Google Gemini informada é inválida ou expirou.');
-          break;
+        // Se o endpoint retornar erro 400 por não suportar thinkingConfig, retenta sem thinkingConfig
+        if (!response.ok && response.status === 400) {
+          delete requestBody.generationConfig.thinkingConfig;
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+          });
         }
 
-        if (response.status === 404 || errorDetail.includes('not found')) {
-          console.warn(`[WHATSAPP_AI] Modelo ${model} indisponível, tentando próximo...`);
-          lastError = new Error(`Modelo ${model} indisponível.`);
+        if (!response.ok) {
+          const errText = await response.text();
+          let errorDetail = errText;
+          try {
+            const parsed = JSON.parse(errText);
+            errorDetail = parsed?.error?.message || errText;
+          } catch {}
+
+          if (errorDetail.includes('API_KEY_INVALID') || errorDetail.includes('API key not valid')) {
+            throw new Error('A chave de API do Google Gemini informada é inválida ou expirou.');
+          }
+
+          if (response.status === 404 || errorDetail.includes('not found')) {
+            continue;
+          }
+
+          lastError = new Error(`Gemini ${model} Error (${response.status}): ${errorDetail}`);
           continue;
         }
 
-        lastError = new Error(`Gemini ${model} Error (${response.status}): ${errorDetail}`);
-        continue;
+        const data = (await response.json()) as any;
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        const rawText = parts.map((p: any) => p.text || '').join('');
+        if (rawText && rawText.trim()) {
+          return rawText.trim();
+        }
+      } catch (err: any) {
+        lastError = err;
       }
-
-      const data = (await response.json()) as any;
-      const parts = data.candidates?.[0]?.content?.parts || [];
-      const rawText = parts.map((p: any) => p.text || '').join('');
-      if (rawText && rawText.trim()) {
-        return rawText.trim();
-      }
-    } catch (err: any) {
-      lastError = err;
     }
   }
 
-  throw lastError || new Error('Falha ao comunicar com a API do Gemini');
+  throw lastError || new Error('Não foi possível obter resposta dos modelos de IA do Google Gemini.');
 }
 
 /**

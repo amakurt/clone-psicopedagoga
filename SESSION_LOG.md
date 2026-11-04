@@ -2,6 +2,33 @@
 
 ## Última Atualização: 04 de Novembro de 2026
 
+## Sessão 84 - 04/11/2026 — Suporte Duplo a Endpoints Gemini (v1beta + v1), Validação Ativa de Chaves (generateContent) e Diagnóstico Preciso para Chaves sem Permissão no Google AI Studio
+
+### O que foi feito
+
+#### 1. Diagnóstico da Mensagem "Modelo Gemini 1.5 não disponível"
+- **Causa Raiz Identificada:** 
+  1. No Google AI Studio, quando uma chave de API é criada selecionando um projeto do Google Cloud já existente (em vez de "Create API key in NEW project"), esse projeto muitas vezes não tem a **Generative Language API** habilitada. O Google recusa qualquer chamada de inferência com HTTP 404 (`models/... is not found for API version v1beta, or is not supported for generateContent`).
+  2. A versão `/v1beta` e `/v1` do Google possuem diferenças de suporte por versão de modelo (`gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-1.5-flash-002`), além de formatações de payload JSON (`inlineData` camelCase vs `inline_data` snake_case) e configuração de retorno (`responseMimeType`).
+  3. No código anterior, se o Google retornasse 404 para a versão beta, o backend tratava como modelo genérico indisponível e exibia apenas a mensagem de erro superficial, mascarando a orientação necessária para o usuário.
+
+#### 2. Implementação do Suporte Multi-Versão e Fallback Automático (`ai-ocr.ts`, `ai-suggestions.ts`, `whatsapp-ai.service.ts`)
+- **Iteração Dupla por Versão de API (`v1beta` e `v1`):**
+  - O backend agora tenta primeiro o endpoint `v1beta`. Caso retorne 404, tenta imediatamente o endpoint estável `v1` com o mesmo modelo antes de passar para o próximo.
+- **Normalização de Payload Protobuf:**
+  - Padronizado para `inlineData` (camelCase oficial da especificação do Google) com retry automático sem `responseMimeType` caso a versão da API não suporte schemas estritos de JSON.
+- **Teste Ativo de Geração ao Salvar a Chave (`POST /api/ai-ocr/save-key`):**
+  - O endpoint de salvamento agora executa uma chamada real de `generateContent` em miniatura. Se o Google recusar, o sistema alerta o usuário de imediato, explicando exatamente o passo a passo:
+  - *"Dica: Acesse https://aistudio.google.com/app/apikey, clique em 'Create API key' e escolha a opção 'Create API key in NEW project' para habilitar a API padrão."*
+- **Instruções no Scanner (`ficha-scanner-modal.component.ts`):**
+  - O texto do Passo 1 foi atualizado para instruir explicitamente o clique em "Create API key in new project".
+
+#### 3. Validação & Build
+- **Backend:** `npm --prefix backend run build` compilado com 0 erros.
+- **Frontend:** `npx ng build` compilado com 0 erros e 100% dos chunks gerados.
+
+---
+
 ## Sessão 83 - 04/11/2026 — Sessão Persistente / Lembrar Usuário Logado ao Fechar e Reabrir o App Web (PWA / iPhone / Safari)
 
 ### O que foi feito

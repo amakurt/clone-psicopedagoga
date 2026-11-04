@@ -12,6 +12,20 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
 
 ---
 
+## 💬 Sessão 84: 04 de Novembro de 2026
+
+### 1. Interação do Usuário: Resolução da Mensagem "Modelo Gemini 1.5 não disponível"
+- **Solicitação do Usuário:**  
+  *"apareceu a mensagem: modelo gemini 1.5 não disponivel"*
+- **Decisões & Implementações:**
+  - **Diagnóstico:** O Google retorna HTTP 404 para chaves de API criadas em projetos do Google Cloud onde a API "Generative Language API" não está habilitada (acontece quando se cria a chave em projeto legado em vez de "Create API key in NEW project"). Além disso, o endpoint `/v1beta` pode divergir de `/v1` dependendo da região/versão do modelo.
+  - **Endpoints Duplos (`v1beta` + `v1`):** Adicionada tentativa automática entre `/v1beta/` e `/v1/` para cada modelo (`gemini-2.0-flash`, `gemini-1.5-flash`, etc.).
+  - **Normalização Protobuf (`inlineData`):** Implementada retentativa automática sem `responseMimeType` e compatibilidade com schemas do Google.
+  - **Validação com `generateContent` ao Salvar Chave:** O salvamento agora testa uma micro-geração real e avisa se a chave precisa ser recriada no AI Studio.
+  - **Validação:** Backend e Frontend testados e aprovados com 100% de sucesso.
+
+---
+
 ## 💬 Sessão 83: 04 de Novembro de 2026
 
 ### 1. Interação do Usuário: Manter Sessão Logada ao Fechar e Reabrir o App
