@@ -66,10 +66,37 @@ router.put('/:id', validate(schoolSchema), async (req, res) => {
   res.json(school);
 });
 
+router.patch('/:id/toggle-status', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const existing = await db.school.findUnique({ where: { id: req.params.id } });
+  if (!existing) return res.status(404).json({ error: 'Escola não encontrada' });
+  const nextStatus = existing.status === 'Ativa' ? 'Inativa' : 'Ativa';
+  const school = await db.school.update({
+    where: { id: req.params.id },
+    data: { status: nextStatus },
+    include: { patients: true }
+  });
+  res.json(school);
+});
+
 router.delete('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  await db.school.delete({ where: { id: req.params.id } });
-  res.status(204).send();
+  try {
+    const existing = await db.school.findUnique({
+      where: { id: req.params.id },
+      include: { patients: true }
+    });
+    if (existing && existing.patients && existing.patients.length > 0) {
+      return res.status(400).json({
+        error: `Esta escola possui ${existing.patients.length} paciente(s) vinculado(s). Recomendamos utilizar a opção "Desativar" para manter o histórico.`,
+        hasRelations: true
+      });
+    }
+    await db.school.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  } catch (err: any) {
+    res.status(500).json({ error: 'Erro ao excluir escola: ' + (err.message || 'Erro desconhecido') });
+  }
 });
 
 export default router;

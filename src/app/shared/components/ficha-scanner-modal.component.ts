@@ -165,19 +165,52 @@ export interface ScanResult {
             </div>
           }
 
-          <!-- Estado 1: Carregando / Processando IA -->
+          <!-- Estado 1: Carregando / Processando IA com Barra de Preenchimento -->
           @else if (processing()) {
-            <div class="w-full py-12 flex flex-col items-center justify-center text-center space-y-4">
+            <div class="w-full py-10 px-4 flex flex-col items-center justify-center text-center space-y-5 animate-in">
               <div class="relative size-20">
-                <div class="absolute inset-0 rounded-full border-4 border-teal-200 dark:border-teal-900 animate-pulse"></div>
-                <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-teal-600 dark:border-t-teal-400 animate-spin"></div>
-                <div class="absolute inset-0 flex items-center justify-center text-teal-600 dark:text-teal-400">
-                  <span class="material-icons text-2xl animate-bounce">auto_awesome</span>
+                <div class="absolute inset-0 rounded-3xl bg-teal-500/10 dark:bg-teal-400/10 animate-ping"></div>
+                <div class="absolute inset-0 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-teal-600/30">
+                  <span class="material-icons text-3xl animate-bounce">auto_awesome</span>
                 </div>
               </div>
-              <div class="space-y-1">
-                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Lendo caligrafia e dados clínicos...</h4>
-                <p class="text-xs text-slate-500 max-w-xs">{{ loadingStatusText() }}</p>
+
+              <div class="space-y-1.5 max-w-sm">
+                <div class="flex items-center justify-center gap-2">
+                  <span class="size-2 rounded-full bg-teal-500 animate-pulse"></span>
+                  <span class="text-xs font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
+                    Processando com IA Multimodal
+                  </span>
+                </div>
+                <h4 class="text-base font-bold text-slate-900 dark:text-white leading-snug">
+                  {{ loadingStatusText() }}
+                </h4>
+              </div>
+
+              <!-- Barra de Preenchimento / Progresso -->
+              <div class="w-full max-w-md space-y-2 pt-2">
+                <div class="flex items-center justify-between text-xs font-bold">
+                  <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <span class="material-icons text-sm text-teal-600 animate-spin">sync</span>
+                    <span>Lendo dados da ficha...</span>
+                  </span>
+                  <span class="text-teal-600 dark:text-teal-400 font-mono text-sm font-black">
+                    {{ progressPercent() }}%
+                  </span>
+                </div>
+
+                <div class="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-slate-700">
+                  <div class="h-full bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-500 rounded-full transition-all duration-500 ease-out shadow-sm"
+                    [style.width.%]="progressPercent()"></div>
+                </div>
+
+                <!-- 4 Indicadores de Etapa Visual -->
+                <div class="grid grid-cols-4 gap-1 pt-1 text-[10px] font-semibold text-slate-400">
+                  <div class="text-left" [class.text-teal-600]="progressPercent() >= 20" [class.font-bold]="progressPercent() >= 20">1. Caligrafia</div>
+                  <div class="text-center" [class.text-teal-600]="progressPercent() >= 45" [class.font-bold]="progressPercent() >= 45">2. Nomes & Datas</div>
+                  <div class="text-center" [class.text-teal-600]="progressPercent() >= 75" [class.font-bold]="progressPercent() >= 75">3. Extração</div>
+                  <div class="text-right" [class.text-teal-600]="progressPercent() >= 95" [class.font-bold]="progressPercent() >= 95">4. Finalizando</div>
+                </div>
               </div>
             </div>
           }
@@ -292,6 +325,7 @@ export class FichaScannerModalComponent implements OnInit {
   selectedFileName = signal<string>('');
   isPdf = signal<boolean>(false);
   processing = signal<boolean>(false);
+  progressPercent = signal<number>(15);
   loadingStatusText = signal<string>('Decifrando caligrafia e dados cadastrais...');
 
   // Gestão de Chave de API por Tenant
@@ -496,19 +530,24 @@ export class FichaScannerModalComponent implements OnInit {
 
     this.api.postFormData<any>('/ai-ocr/scan', formData).subscribe({
       next: (res) => {
-        this.processing.set(false);
-        this.stopLoadingPhrases();
+        this.progressPercent.set(100);
+        this.loadingStatusText.set('Preenchimento concluído com sucesso!');
 
-        if (res && res.success && res.data) {
-          const result: ScanResult = {
-            ...res.data,
-            fileUrl: res.fileUrl
-          };
-          this.toast.success('Ficha interpretada com sucesso! Campos preenchidos no formulário.');
-          this.scanned.emit(result);
-        } else {
-          this.toast.error('Não foi possível identificar os dados da ficha.');
-        }
+        setTimeout(() => {
+          this.processing.set(false);
+          this.stopLoadingPhrases();
+
+          if (res && res.success && res.data) {
+            const result: ScanResult = {
+              ...res.data,
+              fileUrl: res.fileUrl
+            };
+            this.toast.success('Ficha interpretada com sucesso! Campos preenchidos no formulário.');
+            this.scanned.emit(result);
+          } else {
+            this.toast.error('Não foi possível identificar os dados da ficha.');
+          }
+        }, 300);
       },
       error: (err) => {
         this.processing.set(false);
@@ -526,17 +565,25 @@ export class FichaScannerModalComponent implements OnInit {
   }
 
   private startLoadingPhrases() {
-    const phrases = [
-      'Analisando linhas e caligrafia manuscrita...',
-      'Identificando nomes, datas e informações de contato...',
-      'Estruturando dados clínicos e pedagógicos...',
-      'Quase pronto! Organizando campos para o formulário...'
+    const steps = [
+      { text: 'Otimizando imagem para leitura de caligrafia...', percent: 22 },
+      { text: 'Analisando linhas manuscritas e identificando nomes e datas...', percent: 50 },
+      { text: 'Estruturando campos clínicos, pedagógicos e contatos...', percent: 78 },
+      { text: 'Quase terminando! Organizando dados para o formulário...', percent: 94 }
     ];
     let index = 0;
+    this.progressPercent.set(18);
+    this.loadingStatusText.set(steps[0].text);
+
     this.intervalId = setInterval(() => {
-      index = (index + 1) % phrases.length;
-      this.loadingStatusText.set(phrases[index]);
-    }, 2500);
+      index++;
+      if (index < steps.length) {
+        this.progressPercent.set(steps[index].percent);
+        this.loadingStatusText.set(steps[index].text);
+      } else {
+        this.progressPercent.update(p => Math.min(p + 1, 96));
+      }
+    }, 1400);
   }
 
   private stopLoadingPhrases() {

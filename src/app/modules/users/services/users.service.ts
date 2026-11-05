@@ -8,8 +8,8 @@ export class UsersService {
 
   constructor(private api: ApiService) {}
 
-  getAll() {
-    return this.api.get<User[]>(this.endpoint);
+  getAll(params?: any) {
+    return this.api.get<User[]>(this.endpoint, params);
   }
 
   getById(id: string) {
@@ -22,6 +22,10 @@ export class UsersService {
 
   update(id: string, data: Partial<User>) {
     return this.api.put<User>(`${this.endpoint}/${id}`, data);
+  }
+
+  toggleStatus(id: string, active?: boolean) {
+    return this.api.patch<User>(`${this.endpoint}/${id}/toggle-status`, { active });
   }
 
   delete(id: string) {

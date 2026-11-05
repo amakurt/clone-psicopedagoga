@@ -20,5 +20,6 @@ export class PacientesService {
   get(id: string) { return this.api.get(`/pacientes/${id}`); }
   create(data: any) { return this.api.post('/pacientes', data); }
   update(id: string, data: any) { return this.api.put(`/pacientes/${id}`, data); }
+  toggleStatus(id: string, active?: boolean) { return this.api.patch(`/pacientes/${id}/toggle-status`, { active }); }
   delete(id: string) { return this.api.delete(`/pacientes/${id}`); }
 }

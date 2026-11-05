@@ -7,5 +7,6 @@ export class ResponsaveisService {
   get(id: string) { return this.api.get(`/responsaveis/${id}`); }
   create(data: any) { return this.api.post('/responsaveis', data); }
   update(id: string, data: any) { return this.api.put(`/responsaveis/${id}`, data); }
+  toggleStatus(id: string, active?: boolean) { return this.api.patch(`/responsaveis/${id}/toggle-status`, { active }); }
   delete(id: string) { return this.api.delete(`/responsaveis/${id}`); }
 }

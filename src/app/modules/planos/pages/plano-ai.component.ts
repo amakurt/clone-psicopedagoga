@@ -148,6 +148,55 @@ declare var html2pdf: any;
         </div>
       </div>
 
+      <!-- Card de Carregamento com Barra de Preenchimento quando a IA está gerando -->
+      @if (loading()) {
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 ring-1 ring-slate-200 dark:ring-slate-800 shadow-xl space-y-5 animate-in text-center flex flex-col items-center justify-center">
+          <div class="relative size-16">
+            <div class="absolute inset-0 rounded-2xl bg-teal-500/10 dark:bg-teal-400/10 animate-ping"></div>
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-tr from-teal-600 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-teal-600/30">
+              <span class="material-icons text-2xl animate-spin">auto_awesome</span>
+            </div>
+          </div>
+
+          <div class="space-y-1 max-w-md">
+            <div class="flex items-center justify-center gap-2">
+              <span class="size-2 rounded-full bg-teal-500 animate-pulse"></span>
+              <span class="text-xs font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
+                {{ currentAction === 'PEI' ? 'Elaborando PEI com IA' : 'Elaborando Plano de Intervenção com IA' }}
+              </span>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white leading-snug">
+              {{ loadingStatusText() }}
+            </h3>
+          </div>
+
+          <!-- Barra de Progresso com Porcentagem -->
+          <div class="w-full max-w-lg space-y-2 pt-1">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span class="material-icons text-sm text-teal-600 animate-spin">sync</span>
+                <span>Construindo intervenções baseadas em evidências...</span>
+              </span>
+              <span class="text-teal-600 dark:text-teal-400 font-mono text-sm font-black">
+                {{ progressPercent() }}%
+              </span>
+            </div>
+
+            <div class="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-slate-700">
+              <div class="h-full bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-500 rounded-full transition-all duration-500 ease-out shadow-sm"
+                [style.width.%]="progressPercent()"></div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-1 pt-1 text-[10px] font-semibold text-slate-400">
+              <div class="text-left" [class.text-teal-600]="progressPercent() >= 20" [class.font-bold]="progressPercent() >= 20">1. Diagnóstico</div>
+              <div class="text-center" [class.text-teal-600]="progressPercent() >= 45" [class.font-bold]="progressPercent() >= 45">2. Metas SMART</div>
+              <div class="text-center" [class.text-teal-600]="progressPercent() >= 75" [class.font-bold]="progressPercent() >= 75">3. Estratégias</div>
+              <div class="text-right" [class.text-teal-600]="progressPercent() >= 95" [class.font-bold]="progressPercent() >= 95">4. Cronograma</div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Generated Plano Geral de Intervenção -->
       @if (plan()) {
         <div class="space-y-6 animate-in">
@@ -403,6 +452,10 @@ export class PlanoAiComponent implements OnInit {
   materiaisService = inject(MateriaisService);
 
   loading = signal(false);
+  progressPercent = signal<number>(15);
+  loadingStatusText = signal<string>('Construindo estratégias neuropsicopedagógicas...');
+  private loadingTimer: any;
+
   currentAction = 'PLAN';
   plan = signal<any>(null);
   pei = signal<any>(null);
@@ -442,11 +495,47 @@ export class PlanoAiComponent implements OnInit {
     });
   }
 
+  private startLoadingProgress(action: 'PLAN' | 'PEI') {
+    const steps = action === 'PEI' ? [
+      { text: 'Mapeando diretrizes de adaptação curricular e BNCC...', percent: 25 },
+      { text: 'Formulando objetivos educacionais individualizados e metas SMART...', percent: 55 },
+      { text: 'Adaptando recursos pedagógicos e critérios avaliativos...', percent: 80 },
+      { text: 'Quase pronto! Formatando documento PEI estruturado...', percent: 94 }
+    ] : [
+      { text: 'Analisando diagnóstico, idade e marcos do neurodesenvolvimento...', percent: 25 },
+      { text: 'Mapeando protocolos clínicos e evidências científicas (ABA/TEA)...', percent: 55 },
+      { text: 'Estruturando estratégias terapêuticas por meta e recursos...', percent: 80 },
+      { text: 'Quase pronto! Organizando estimativa de sessões e reavaliação...', percent: 94 }
+    ];
+
+    let index = 0;
+    this.progressPercent.set(18);
+    this.loadingStatusText.set(steps[0].text);
+
+    this.loadingTimer = setInterval(() => {
+      index++;
+      if (index < steps.length) {
+        this.progressPercent.set(steps[index].percent);
+        this.loadingStatusText.set(steps[index].text);
+      } else {
+        this.progressPercent.update(p => Math.min(p + 1, 96));
+      }
+    }, 1300);
+  }
+
+  private stopLoadingProgress() {
+    if (this.loadingTimer) {
+      clearInterval(this.loadingTimer);
+      this.loadingTimer = null;
+    }
+  }
+
   generatePlan() {
     if (!this.form.diagnosis || !this.form.age || !this.form.goals) return;
     this.loading.set(true);
     this.currentAction = 'PLAN';
     this.pei.set(null);
+    this.startLoadingProgress('PLAN');
 
     // Update suggested therapeutic materials
     const goalsList = this.form.goals.split(',').map(g => g.trim()).filter(Boolean);
@@ -457,12 +546,18 @@ export class PlanoAiComponent implements OnInit {
       patientName: this.form.patientName
     }).subscribe({
       next: (res: any) => {
-        this.plan.set(res);
-        this.loading.set(false);
-        this.toast.success('Plano de Intervenção gerado com IA!');
+        this.progressPercent.set(100);
+        this.loadingStatusText.set('Plano elaborado com sucesso!');
+        setTimeout(() => {
+          this.plan.set(res);
+          this.loading.set(false);
+          this.stopLoadingProgress();
+          this.toast.success('Plano de Intervenção gerado com IA!');
+        }, 300);
       },
       error: () => {
         this.loading.set(false);
+        this.stopLoadingProgress();
         this.toast.error('Erro ao gerar plano');
       }
     });
@@ -473,6 +568,7 @@ export class PlanoAiComponent implements OnInit {
     this.loading.set(true);
     this.currentAction = 'PEI';
     this.plan.set(null);
+    this.startLoadingProgress('PEI');
 
     const pName = this.form.patientName || 'Paciente';
 
@@ -481,12 +577,18 @@ export class PlanoAiComponent implements OnInit {
       patientName: pName
     }).subscribe({
       next: (res: any) => {
-        this.pei.set(res);
-        this.loading.set(false);
-        this.toast.success('PEI Estruturado gerado com IA!');
+        this.progressPercent.set(100);
+        this.loadingStatusText.set('PEI estruturado concluído com sucesso!');
+        setTimeout(() => {
+          this.pei.set(res);
+          this.loading.set(false);
+          this.stopLoadingProgress();
+          this.toast.success('PEI Estruturado gerado com IA!');
+        }, 300);
       },
       error: () => {
         this.loading.set(false);
+        this.stopLoadingProgress();
         this.toast.error('Erro ao gerar PEI');
       }
     });

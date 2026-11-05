@@ -28,6 +28,7 @@ const basePacienteFields = {
   responsavelId: z.string().optional().or(z.literal('')),
   accessCode: z.string().optional().or(z.literal('')),
   active: z.boolean().optional(),
+  status: z.string().optional(),
   color: z.string().optional(),
   cep: z.string().optional().or(z.literal('')),
   street: z.string().optional().or(z.literal('')),
@@ -101,10 +102,16 @@ function sanitizePacienteInput(body: any) {
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const { search, active } = req.query;
+  const { search, active, status } = req.query;
   const where: any = {};
   if (search) where.name = { contains: String(search) };
-  if (active !== undefined) where.active = active === 'true';
+  if (active !== undefined && active !== '') {
+    where.active = active === 'true';
+  } else if (status === 'active' || status === 'ATIVO') {
+    where.active = true;
+  } else if (status === 'inactive' || status === 'INATIVO') {
+    where.active = false;
+  }
   const pacientes = await db.paciente.findMany({
     where,
     orderBy: { name: 'asc' },
@@ -152,10 +159,35 @@ router.patch('/:id/avatar', async (req, res) => {
   res.json({ ...paciente, avatar: paciente.avatarUrl });
 });
 
+router.patch('/:id/toggle-status', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const existing = await db.paciente.findUnique({ where: { id: req.params.id } });
+  if (!existing) return res.status(404).json({ error: 'Paciente não encontrado' });
+  const newActive = typeof req.body.active === 'boolean' ? req.body.active : !existing.active;
+  const paciente = await db.paciente.update({
+    where: { id: req.params.id },
+    data: {
+      active: newActive,
+      status: newActive ? 'ATIVO' : 'INATIVO'
+    }
+  });
+  res.json({ ...paciente, avatar: paciente.avatarUrl });
+});
+
 router.delete('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  await db.paciente.delete({ where: { id: req.params.id } });
-  res.status(204).send();
+  try {
+    await db.paciente.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  } catch (err: any) {
+    if (err?.code === 'P2003') {
+      return res.status(400).json({
+        error: 'Este paciente possui histórico clínico (prontuários, laudos ou sessões) vinculado. Para manter a segurança e a conformidade legal do prontuário, utilize a opção "Desativar" em vez de excluir.',
+        hasRelations: true
+      });
+    }
+    res.status(500).json({ error: 'Erro ao excluir paciente: ' + (err.message || 'Erro desconhecido') });
+  }
 });
 
 export default router;

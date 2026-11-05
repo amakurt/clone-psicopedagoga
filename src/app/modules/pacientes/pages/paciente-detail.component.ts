@@ -1,15 +1,16 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { PacientesService } from '../services/pacientes.service';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
 import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
 @Component({
   selector: 'app-paciente-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, ImageCropperModalComponent],
+  imports: [CommonModule, RouterLink, ImageCropperModalComponent, ConfirmModalComponent],
   template: `
     <div class="min-h-screen bg-gray-50 p-6 legacy-page">
       <div class="max-w-5xl mx-auto">
@@ -17,12 +18,24 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
           <a routerLink="/app/pacientes" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             <span class="material-icons text-lg">arrow_back</span> Voltar
           </a>
-          <div class="flex gap-2">
-            <a [routerLink]="['/app/pacientes', id, 'editar']" class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-              <span class="material-icons text-lg">edit</span> Editar
+          <div class="flex flex-wrap items-center gap-2">
+            <a [routerLink]="['/app/pacientes', id, 'editar']" class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <span class="material-icons text-base">edit</span> Editar
             </a>
-            <a [routerLink]="['/app/pacientes', id, 'prontuario']" class="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
-              <span class="material-icons text-lg">description</span> Prontuário
+            @if (paciente()?.active) {
+              <button (click)="showStatusModal.set(true)" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm">
+                <span class="material-icons text-base">pause_circle</span> Desativar
+              </button>
+            } @else {
+              <button (click)="showStatusModal.set(true)" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm">
+                <span class="material-icons text-base">play_circle</span> Reativar
+              </button>
+            }
+            <button (click)="showDeleteModal.set(true)" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm">
+              <span class="material-icons text-base">delete</span> Excluir
+            </button>
+            <a [routerLink]="['/app/pacientes', id, 'prontuario']" class="inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2 rounded-xl text-xs sm:text-sm font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20">
+              <span class="material-icons text-base">description</span> Prontuário
             </a>
           </div>
         </div>
@@ -219,6 +232,29 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
             (cropped)="onPhotoCropped($event)"
             (cancelled)="closeCropper()" />
         }
+
+        <!-- Modal de Confirmação: Excluir Paciente -->
+        <app-confirm-modal
+          [isOpen]="showDeleteModal()"
+          title="Excluir Paciente Definitivamente"
+          [message]="'Tem certeza que deseja excluir o cadastro de ' + (paciente()?.name || 'este paciente') + '? Esta ação remove o cadastro de forma permanente.'"
+          confirmText="Sim, Excluir Registro"
+          [dangerMode]="true"
+          (closed)="showDeleteModal.set(false)"
+          (confirmed)="deletePaciente()" />
+
+        <!-- Modal de Confirmação: Ativar ou Desativar Paciente -->
+        <app-confirm-modal
+          [isOpen]="showStatusModal()"
+          [title]="paciente()?.active ? 'Desativar Paciente' : 'Reativar Paciente'"
+          [message]="paciente()?.active 
+            ? 'Deseja desativar ' + (paciente()?.name || 'este paciente') + '? Ele não aparecerá na listagem ativa do dia a dia, mas todo o histórico clínico permanecerá 100% seguro.'
+            : 'Deseja reativar ' + (paciente()?.name || 'este paciente') + '? Ele voltará a aparecer normalmente nos atendimentos e na lista de pacientes ativos.'"
+          [confirmText]="paciente()?.active ? 'Sim, Desativar' : 'Sim, Reativar'"
+          [mode]="paciente()?.active ? 'warning' : 'success'"
+          [icon]="paciente()?.active ? 'pause_circle' : 'play_circle'"
+          (closed)="showStatusModal.set(false)"
+          (confirmed)="toggleStatusPaciente()" />
       </div>
     </div>
   `,
@@ -230,12 +266,15 @@ export class PacienteDetailComponent implements OnInit {
   private service = inject(PacientesService);
   private api = inject(ApiService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private toast = inject(ToastService);
   id = '';
   paciente = signal<any>(null);
   insights = signal<any>(null);
   insightsLoading = signal(false);
 
+  showDeleteModal = signal(false);
+  showStatusModal = signal(false);
   showCropperModal = signal(false);
   rawImageToCrop = signal<string | null>(null);
 
@@ -308,5 +347,37 @@ export class PacienteDetailComponent implements OnInit {
 
   copyCode(code: string) {
     navigator.clipboard.writeText(code);
+    this.toast.success('Código copiado para a área de transferência!');
+  }
+
+  toggleStatusPaciente() {
+    const current = this.paciente();
+    if (!current) return;
+    const nextActive = !current.active;
+    this.service.toggleStatus(this.id, nextActive).subscribe({
+      next: (res: any) => {
+        this.showStatusModal.set(false);
+        this.paciente.update(p => ({ ...p, active: nextActive, status: nextActive ? 'ATIVO' : 'INATIVO' }));
+        this.toast.success(nextActive ? 'Paciente reativado com sucesso!' : 'Paciente desativado com sucesso! Histórico preservado.');
+      },
+      error: (err: any) => {
+        this.showStatusModal.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao alterar status do paciente.');
+      }
+    });
+  }
+
+  deletePaciente() {
+    this.service.delete(this.id).subscribe({
+      next: () => {
+        this.showDeleteModal.set(false);
+        this.toast.success('Paciente excluído com sucesso.');
+        this.router.navigate(['/app/pacientes']);
+      },
+      error: (err: any) => {
+        this.showDeleteModal.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao excluir paciente');
+      }
+    });
   }
 }

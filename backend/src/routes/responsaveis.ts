@@ -27,6 +27,8 @@ const responsibleSchema = z.object({
   city: z.string().optional().or(z.literal('')),
   state: z.string().optional().or(z.literal('')),
   userId: z.string().optional().nullable(),
+  active: z.boolean().optional(),
+  status: z.string().optional(),
   pacienteIds: z.array(z.string()).optional(),
   portalAccess: z.boolean().optional(),
   portalPassword: z.string().min(6).optional().or(z.literal('')),
@@ -80,9 +82,16 @@ async function handlePortalAccess(tenantId: string, name: string, email?: string
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const { search } = req.query;
+  const { search, active, status } = req.query;
   const where: any = {};
-  if (search) where.name = { contains: search };
+  if (search) where.name = { contains: String(search) };
+  if (active !== undefined && active !== '') {
+    where.active = active === 'true';
+  } else if (status === 'active' || status === 'ATIVO') {
+    where.active = true;
+  } else if (status === 'inactive' || status === 'INATIVO') {
+    where.active = false;
+  }
   const responsaveis = await db.responsible.findMany({ where, orderBy: { name: 'asc' }, include: { patients: true } });
   res.json({ data: responsaveis, total: responsaveis.length });
 });
@@ -143,10 +152,46 @@ router.put('/:id', async (req, res) => {
   res.json(responsible);
 });
 
+router.patch('/:id/toggle-status', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  const existing = await db.responsible.findUnique({ where: { id: req.params.id } });
+  if (!existing) return res.status(404).json({ error: 'Responsável não encontrado' });
+  const newActive = typeof req.body.active === 'boolean' ? req.body.active : !existing.active;
+  const responsible = await db.responsible.update({
+    where: { id: req.params.id },
+    data: {
+      active: newActive,
+      status: newActive ? 'ATIVO' : 'INATIVO'
+    },
+    include: { patients: true }
+  });
+  res.json(responsible);
+});
+
 router.delete('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  await db.responsible.delete({ where: { id: req.params.id } });
-  res.status(204).send();
+  try {
+    const existing = await db.responsible.findUnique({
+      where: { id: req.params.id },
+      include: { patients: true }
+    });
+    if (existing && existing.patients && existing.patients.length > 0) {
+      return res.status(400).json({
+        error: `Este responsável está vinculado a ${existing.patients.length} paciente(s). Para manter o histórico sem perda de dados, recomendamos desativar o cadastro em vez de excluir.`,
+        hasRelations: true
+      });
+    }
+    await db.responsible.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  } catch (err: any) {
+    if (err?.code === 'P2003') {
+      return res.status(400).json({
+        error: 'Este responsável possui vínculos clínicos ou financeiros. Recomendamos utilizar a opção "Desativar" para manter o histórico.',
+        hasRelations: true
+      });
+    }
+    res.status(500).json({ error: 'Erro ao excluir responsável: ' + (err.message || 'Erro desconhecido') });
+  }
 });
 
 export default router;

@@ -26,17 +26,27 @@ import { ToastService } from '@shared/components/toast.component';
         </a>
       </div>
 
-      <!-- Barra de Busca -->
-      <div class="w-full max-w-md">
-        <div class="relative group">
-          <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
-          <input type="text" class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm transition-all outline-none"
-            placeholder="Buscar por nome, e-mail ou perfil..."
-            [(ngModel)]="searchTerm">
+      <!-- Barra de Busca e Filtros -->
+      <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+        <div class="w-full max-w-md">
+          <div class="relative group">
+            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
+            <input type="text" class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm transition-all outline-none"
+              placeholder="Buscar por nome, e-mail ou perfil..."
+              [(ngModel)]="searchTerm">
+          </div>
         </div>
+
+        <!-- Filtro de Status: Padrão apenas ATIVOS -->
+        <select class="px-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all outline-none text-slate-700 dark:text-slate-200"
+          [(ngModel)]="filterStatus" (change)="loadUsers()">
+          <option value="active">Status: Apenas Ativos</option>
+          <option value="inactive">Status: Inativos</option>
+          <option value="">Status: Todos os Usuários</option>
+        </select>
       </div>
 
-      <!-- Card da Tabela -->
+      <!-- Card da Tabela com Scroll Horizontal para iPad -->
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
         @if (loading()) {
           <div class="flex items-center justify-center p-12 text-slate-500">
@@ -45,19 +55,24 @@ import { ToastService } from '@shared/components/toast.component';
         } @else if (filteredUsers().length === 0) {
           <div class="text-center py-16 px-4">
             <span class="material-icons text-6xl text-slate-300 dark:text-slate-700">people</span>
-            <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhum usuário encontrado</p>
+            <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhum usuário encontrado com o filtro atual</p>
+            @if (filterStatus === 'active') {
+              <button (click)="filterStatus = ''; loadUsers()" class="mt-2 text-xs font-bold text-primary hover:underline">
+                Visualizar usuários inativos ou todos
+              </button>
+            }
           </div>
         } @else {
-          <!-- Desktop Table (md and up) -->
+          <!-- Desktop & iPad Table (md and up) -->
           <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-            <table class="w-full text-left border-collapse min-w-[700px]">
+            <table class="w-full text-left border-collapse min-w-[760px]">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                   <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Nome / Usuário</th>
                   <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Email</th>
                   <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Perfil</th>
                   <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right min-w-[280px]">Ações</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -75,7 +90,7 @@ import { ToastService } from '@shared/components/toast.component';
                         <span class="font-bold text-slate-900 dark:text-white text-sm">{{ user.name }}</span>
                       </div>
                     </td>
-                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                    <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                       {{ user.email }}
                     </td>
                     <td class="px-6 py-4">
@@ -84,28 +99,49 @@ import { ToastService } from '@shared/components/toast.component';
                         {{ user.role }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 text-center">
+                    <td class="px-6 py-4 text-center whitespace-nowrap">
                       <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
-                        [class]="user.active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'">
-                        <span class="w-1.5 h-1.5 rounded-full" [class]="user.active ? 'bg-emerald-500' : 'bg-red-500'"></span>
+                        [class]="user.active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
+                        <span class="size-1.5 rounded-full" [class]="user.active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
                         {{ user.active ? 'Ativo' : 'Inativo' }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 text-right">
-                      <div class="flex items-center justify-end gap-1">
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                      <div class="flex items-center justify-end gap-1.5 flex-nowrap">
                         <a [routerLink]="[user.id, 'editar']" 
-                          class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" 
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" 
                           title="Editar">
-                          <span class="material-icons text-lg">edit</span>
+                          <span class="material-icons text-[15px]">edit</span>
+                          <span>Editar</span>
                         </a>
+
                         <a [routerLink]="[user.id, 'permissoes']" 
-                          class="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" 
                           title="Permissões">
-                          <span class="material-icons text-lg">admin_panel_settings</span>
+                          <span class="material-icons text-[15px]">admin_panel_settings</span>
+                          <span>Permissões</span>
                         </a>
-                        <button class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" 
-                          title="Excluir" (click)="confirmDelete(user.id)">
-                          <span class="material-icons text-lg">delete</span>
+
+                        @if (user.active) {
+                          <button (click)="confirmToggleStatus(user)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+                            title="Desativar usuário">
+                            <span class="material-icons text-[15px]">pause_circle</span>
+                            <span>Desativar</span>
+                          </button>
+                        } @else {
+                          <button (click)="confirmToggleStatus(user)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+                            title="Reativar usuário">
+                            <span class="material-icons text-[15px]">play_circle</span>
+                            <span>Ativar</span>
+                          </button>
+                        }
+
+                        <button class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" 
+                          title="Excluir" (click)="confirmDelete(user)">
+                          <span class="material-icons text-[15px]">delete</span>
+                          <span>Excluir</span>
                         </button>
                       </div>
                     </td>
@@ -115,7 +151,7 @@ import { ToastService } from '@shared/components/toast.component';
             </table>
           </div>
 
-          <!-- Mobile Cards (under md / Smartphones) -->
+          <!-- Mobile Cards (telas menores que md) -->
           <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
             @for (user of filteredUsers(); track user.id) {
               <div class="p-4 space-y-3">
@@ -134,8 +170,8 @@ import { ToastService } from '@shared/components/toast.component';
                     </div>
                   </div>
                   <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0"
-                    [class]="user.active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'">
-                    <span class="w-1.5 h-1.5 rounded-full" [class]="user.active ? 'bg-emerald-500' : 'bg-red-500'"></span>
+                    [class]="user.active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
+                    <span class="size-1.5 rounded-full" [class]="user.active ? 'bg-emerald-500' : 'bg-slate-400'"></span>
                     {{ user.active ? 'Ativo' : 'Inativo' }}
                   </span>
                 </div>
@@ -148,21 +184,34 @@ import { ToastService } from '@shared/components/toast.component';
                   </span>
                 </div>
 
-                <div class="flex items-center gap-2 pt-1">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
                   <a [routerLink]="[user.id, 'editar']"
-                    class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all">
+                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all">
                     <span class="material-icons text-[16px]">edit</span>
-                    Editar
+                    <span>Editar</span>
                   </a>
                   <a [routerLink]="[user.id, 'permissoes']"
-                    class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all">
+                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all">
                     <span class="material-icons text-[16px]">admin_panel_settings</span>
-                    Permissões
+                    <span>Permissões</span>
                   </a>
-                  <button (click)="confirmDelete(user.id)"
-                    class="flex items-center justify-center size-9 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 transition-all shrink-0"
-                    title="Excluir">
+                  @if (user.active) {
+                    <button (click)="confirmToggleStatus(user)"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all">
+                      <span class="material-icons text-[16px]">pause_circle</span>
+                      <span>Desativar</span>
+                    </button>
+                  } @else {
+                    <button (click)="confirmToggleStatus(user)"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all">
+                      <span class="material-icons text-[16px]">play_circle</span>
+                      <span>Ativar</span>
+                    </button>
+                  }
+                  <button (click)="confirmDelete(user)"
+                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all">
                     <span class="material-icons text-[16px]">delete</span>
+                    <span>Excluir</span>
                   </button>
                 </div>
               </div>
@@ -172,14 +221,28 @@ import { ToastService } from '@shared/components/toast.component';
       </div>
     </div>
 
+    <!-- Modal de Confirmação: Excluir Usuário -->
     <app-confirm-modal
       [isOpen]="showDeleteModal()"
-      title="Excluir usuário"
-      message="Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita."
-      confirmText="Excluir"
+      title="Excluir Usuário Definitivamente"
+      [message]="'Tem certeza que deseja excluir o usuário ' + (userToDelete()?.name || 'este usuário') + '? Esta ação não pode ser desfeita.'"
+      confirmText="Sim, Excluir Registro"
       [dangerMode]="true"
       (closed)="showDeleteModal.set(false)"
       (confirmed)="deleteUser()" />
+
+    <!-- Modal de Confirmação: Ativar ou Desativar Usuário -->
+    <app-confirm-modal
+      [isOpen]="showStatusModal()"
+      [title]="userToToggle()?.active ? 'Desativar Usuário' : 'Reativar Usuário'"
+      [message]="userToToggle()?.active
+        ? 'Deseja desativar o usuário ' + (userToToggle()?.name || 'este usuário') + '? Ele perderá temporariamente o acesso ao sistema, mas todo o seu histórico permanecerá salvo.'
+        : 'Deseja reativar o usuário ' + (userToToggle()?.name || 'este usuário') + '? Ele poderá voltar a acessar o sistema normalmente.'"
+      [confirmText]="userToToggle()?.active ? 'Sim, Desativar' : 'Sim, Reativar'"
+      [mode]="userToToggle()?.active ? 'warning' : 'success'"
+      [icon]="userToToggle()?.active ? 'pause_circle' : 'play_circle'"
+      (closed)="showStatusModal.set(false)"
+      (confirmed)="toggleStatusUser()" />
   `,
   styles: [`:host { display: block; }`]
 })
@@ -190,8 +253,13 @@ export class UsersListComponent implements OnInit {
   users = signal<User[]>([]);
   loading = signal(true);
   searchTerm = '';
+  filterStatus = 'active'; // Padrão: Apenas ativos
+
   showDeleteModal = signal(false);
-  userIdToDelete = signal('');
+  userToDelete = signal<any>(null);
+
+  showStatusModal = signal(false);
+  userToToggle = signal<any>(null);
 
   ngOnInit() {
     this.loadUsers();
@@ -199,9 +267,14 @@ export class UsersListComponent implements OnInit {
 
   loadUsers() {
     this.loading.set(true);
-    this.usersService.getAll().subscribe({
-      next: (users) => {
-        this.users.set(users || []);
+    const params: any = {};
+    if (this.filterStatus) {
+      params.status = this.filterStatus;
+      params.active = this.filterStatus === 'active' ? 'true' : 'false';
+    }
+    this.usersService.getAll(params).subscribe({
+      next: (res: any) => {
+        this.users.set(res?.data || res || []);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -223,7 +296,7 @@ export class UsersListComponent implements OnInit {
     switch (role?.toUpperCase()) {
       case 'GESTOR':
       case 'ADMIN':
-        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400';
+        return 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300';
       case 'PSICOPEDAGOGO':
       case 'PROFISSIONAL':
         return 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400';
@@ -232,17 +305,46 @@ export class UsersListComponent implements OnInit {
     }
   }
 
-  confirmDelete(id: string) {
-    this.userIdToDelete.set(id);
+  confirmDelete(user: any) {
+    this.userToDelete.set(user);
     this.showDeleteModal.set(true);
   }
 
   deleteUser() {
-    const id = this.userIdToDelete();
-    this.showDeleteModal.set(false);
-    this.usersService.delete(id).subscribe({
-      next: () => { this.loadUsers(); this.toast.success('Usuário excluído com sucesso'); },
-      error: () => this.toast.error('Erro ao excluir usuário')
+    const user = this.userToDelete();
+    if (!user) return;
+    this.usersService.delete(user.id).subscribe({
+      next: () => {
+        this.showDeleteModal.set(false);
+        this.loadUsers();
+        this.toast.success('Usuário excluído com sucesso');
+      },
+      error: (err: any) => {
+        this.showDeleteModal.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao excluir usuário');
+      }
+    });
+  }
+
+  confirmToggleStatus(user: any) {
+    this.userToToggle.set(user);
+    this.showStatusModal.set(true);
+  }
+
+  toggleStatusUser() {
+    const user = this.userToToggle();
+    if (!user) return;
+    const nextActive = !user.active;
+    this.usersService.toggleStatus(user.id, nextActive).subscribe({
+      next: () => {
+        this.showStatusModal.set(false);
+        this.toast.success(nextActive ? 'Usuário reativado com sucesso!' : 'Usuário desativado com sucesso!');
+        this.loadUsers();
+      },
+      error: (err: any) => {
+        this.showStatusModal.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao alterar status do usuário');
+      }
     });
   }
 }

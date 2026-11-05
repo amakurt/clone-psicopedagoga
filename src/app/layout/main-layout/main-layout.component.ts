@@ -25,7 +25,7 @@ type NavItem = {
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, NotificationDropdownComponent, ChatFloatingComponent],
   template: `
-    <div class="flex h-screen overflow-hidden" [class.dark]="theme.isDarkMode()">
+    <div class="flex h-screen h-[100dvh] min-h-[100dvh] overflow-hidden" [class.dark]="theme.isDarkMode()">
       
       <!-- Backdrop móvel para tela pequena (< lg) -->
       @if (mobileSidebarOpen()) {
@@ -250,7 +250,7 @@ type NavItem = {
         }
 
         <!-- Header Superior -->
-        <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 lg:px-8 shrink-0 z-30">
+        <header class="min-h-16 h-auto py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 lg:px-8 shrink-0 z-30 pt-[calc(0.5rem+env(safe-area-inset-top))]">
           
           <div class="flex items-center gap-2 sm:gap-3 min-w-0">
             <!-- Botão Hamburger no Mobile -->
@@ -346,7 +346,7 @@ type NavItem = {
         </header>
 
         <!-- Área de Conteúdo com padding adaptativo -->
-        <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           <div class="max-w-[1400px] mx-auto w-full">
             <router-outlet />
           </div>

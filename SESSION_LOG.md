@@ -3761,3 +3761,40 @@ npm run start
 - Servidores locais ativos e responsivos em `http://localhost:4200` e `http://localhost:3000`.
 
 
+
+
+---
+
+## Sessão 86 - 05/11/2026 — Responsividade no iPad (Safari PWA), Gestão Completa de Cadastros (Ativar/Desativar/Excluir) e Barra de Preenchimento para IA
+
+### O que foi feito
+
+#### 1. Responsividade e Safe Area no iPad & Safari Web App (PWA)
+- **Dynamic Viewport Height (`100dvh`):** Substituído `h-screen` rígido por `min-h-[100dvh] h-[100dvh]` no layout raiz (`main-layout.component.ts`), evitando que o rodapé e ações sejam empurrados para fora da tela pela barra dinâmica do iPad/Safari.
+- **Safe Area Insets do iOS/iPad:** Aplicado `padding-top: calc(0.5rem + env(safe-area-inset-top))` no cabeçalho e `padding-bottom: calc(1.5rem + env(safe-area-inset-bottom))` na área de rolagem de conteúdo e em `styles.scss`, garantindo que botões e menus nunca colidam com a barra de status ou indicador de gestos do iPad.
+- **Scroll Touch nas Tabelas:** Adicionada rolagem horizontal com `-webkit-overflow-scrolling: touch` e colunas de ações com largura mínima e botões não-quebráveis no iPad.
+
+#### 2. Gestão de Cadastros (Ativar / Desativar / Excluir) com Modal de Confirmação
+- **Filtro Padrão "Apenas Ativos":** Todas as listagens de cadastros agora inicializam filtrando exclusivamente por registros ativos (`status: 'active'`), com dropdown permitindo alternar para "Inativos" ou "Todos os Registros".
+- **Botões Visíveis em Cada Registro (Tabela e Cards Mobile):**
+  - **Visualizar:** Acesso direto ao prontuário/perfil.
+  - **Editar:** Edição dos dados cadastrais.
+  - **Ativar / Desativar:** Botão contextual (se ativo -> "Desativar" em âmbar; se inativo -> "Ativar" em esmeralda), acionando modal que assegura que o histórico clínico permanecerá 100% seguro.
+  - **Excluir:** Botão em vermelho com modal de confirmação de exclusão definitiva.
+- **Módulos Padronizados:**
+  - **Pacientes (`pacientes-list.component.ts` e `paciente-detail.component.ts`):** Ações completas na listagem e na página de detalhes, com proteção contra exclusão caso haja histórico clínico vinculado.
+  - **Responsáveis (`responsaveis-list.component.ts`):** Adicionado campo `active` e `status` no schema Prisma (`Responsible`), rota backend com alternância de status e proteção de vínculos de pacientes.
+  - **Escolas (`escolas-list.component.ts`):** Alternância de status Ativa/Inativa e exclusão protegida.
+  - **Usuários da Equipe (`users-list.component.ts`):** Filtro de ativos, alternância de status ativo/inativo e exclusão com modal de confirmação.
+- **Componente Universal `ConfirmModalComponent`:** Expandido para suportar modos `danger`, `warning`, `success` e `primary`, com ícones personalizados (`pause_circle`, `play_circle`, `delete_forever`).
+
+#### 3. Barra de Preenchimento / Progresso Visual em Telas com IA
+- **Scanner de Fichas (`ficha-scanner-modal.component.ts`):**
+  - Implementada barra de progresso animada com gradiente `teal-500` para `emerald-500`, indicador de porcentagem em tempo real (`0%` a `100%`) e 4 marcos visuais (Caligrafia -> Nomes & Datas -> Extração -> Finalizando).
+- **Gerador de Planos e PEI com IA (`plano-ai.component.ts`):**
+  - Adicionado card interativo de carregamento exibindo barra de preenchimento animada e etapas explicativas baseadas em evidências científicas enquanto o modelo Google Gemini elabora o plano.
+
+#### 4. Validação Técnica
+- **Prisma:** Sincronizado com o banco via `npx prisma db push` e `npx prisma generate`.
+- **Backend:** Compilação TypeScript (`npm --prefix backend run build`) com 0 erros.
+- **Frontend:** Compilação de produção (`npx ng build`) com 0 erros.

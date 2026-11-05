@@ -60,7 +60,7 @@ router.get('/members', async (req, res) => {
 // Listar membros do tenant para o GESTOR
 router.get('/', authorize('GESTOR'), async (req, res) => {
   const tenantId = req.user!.tenantId;
-  const { role, search } = req.query;
+  const { role, search, active, status } = req.query;
 
   const where: any = {
     memberships: { some: { tenantId } },
@@ -68,6 +68,13 @@ router.get('/', authorize('GESTOR'), async (req, res) => {
 
   if (role) where.role = String(role);
   if (search) where.name = { contains: String(search) };
+  if (active !== undefined && active !== '') {
+    where.active = active === 'true';
+  } else if (status === 'active' || status === 'ATIVO') {
+    where.active = true;
+  } else if (status === 'inactive' || status === 'INATIVO') {
+    where.active = false;
+  }
 
   const users = await prisma.user.findMany({
     where,
@@ -208,6 +215,40 @@ router.put('/:id', authorize('GESTOR'), validate(userUpdateSchema), async (req: 
   }
 
   res.json(user);
+});
+
+// Alternar status ativo/inativo do usuário
+router.patch('/:id/toggle-status', authorize('GESTOR'), async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const tenantId = req.user!.tenantId;
+
+  if (id === req.user!.id) {
+    return res.status(400).json({ error: 'Você não pode desativar seu próprio usuário' });
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { id, memberships: { some: { tenantId } } },
+    select: { id: true, active: true },
+  });
+
+  if (!user) {
+    return res.status(404).json({ error: 'Usuário não encontrado nesta clínica' });
+  }
+
+  const newActive = typeof req.body.active === 'boolean' ? req.body.active : !user.active;
+
+  const updated = await prisma.user.update({
+    where: { id },
+    data: { active: newActive },
+    select: USER_SAFE_SELECT,
+  });
+
+  await prisma.membership.updateMany({
+    where: { userId: id, tenantId },
+    data: { active: newActive },
+  });
+
+  res.json(updated);
 });
 
 // Remover usuário da clínica (remove o membership)

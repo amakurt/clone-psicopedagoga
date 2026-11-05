@@ -263,3 +263,20 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
   - Builds (`tsc` e `ng build`) validados com 100% de sucesso.
 
 
+
+
+### 4. Interação do Usuário: Responsividade iPad, Ações de Cadastro (Ativar/Desativar/Excluir) e Barra de Progresso IA (05/11/2026)
+- **Solicitação do Usuário:**  
+  *"1. estou usando no ipad, pegeui e adicionei app web pelo Safari e em algum momento a tela ficou cortando algumas coisas.*  
+  *2. preciso que nos cadastros tenha opção de excluir ou ativar ou desativar pacientes, responsáveis ou qualquer cadastro do tipo e coloque um modal perguntando se realmente deseja fazer isso... os botções colocar em todos, os filtros só os ativos.*  
+  *3. quando estiver carregando algum dado como foi na ficha scaneada como o da Ia, alem das informações que tinha falando que estava fazendo isso e isso quase terminando coloque uma barra de preenchimento... sim adicionar em outras telas."*
+- **Ações Realizadas:**
+  - Aplicação do Socratic Gate e análise técnica das áreas de layout no iPad Safari PWA.
+  - Ajuste de viewport dinâmico (`100dvh`), `env(safe-area-inset-top)` e `env(safe-area-inset-bottom)` em `main-layout.component.ts` e `styles.scss`.
+  - Padronização dos módulos de cadastro (Pacientes, Responsáveis, Escolas e Usuários da Equipe):
+    - Filtro inicial padrão exibindo apenas registros ativos (`status: 'active'`).
+    - 4 ações visíveis e confortáveis ao toque em tabela e cards: Visualizar, Editar, Ativar/Desativar e Excluir.
+    - Modais de confirmação específicos (`ConfirmModalComponent`) explicando a preservação do histórico clínico na desativação e alertando sobre exclusão permanente.
+    - Sincronização de schema Prisma (`Responsible` com campos `active` e `status`), rotas backend e serviços Angular.
+  - Implementação de barra de progresso visual animada com preenchimento percentual (0% a 100%) no Scanner de Fichas (`ficha-scanner-modal.component.ts`) e no Gerador de Planos/PEI (`plano-ai.component.ts`).
+  - Ambas as compilações (`npm --prefix backend run build` e `npx ng build`) concluídas com 100% de sucesso (código 0).

@@ -403,6 +403,13 @@ select.form-control { appearance: auto; cursor: pointer; }
   }
 }
 
+/* iOS & iPad Safari PWA Standalone Safe Area & Viewport fix */
+@supports (padding-top: env(safe-area-inset-top)) {
+  html, body {
+    min-height: 100dvh;
+  }
+}
+
 /* ==========================================================================
    Google Material Symbols Rounded - Configuração Global de Ícones
    ========================================================================== */

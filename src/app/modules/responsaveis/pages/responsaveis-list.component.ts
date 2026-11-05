@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ResponsaveisService } from '../services/responsaveis.service';
 import { ToastService } from '@shared/components/toast.component';
+import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
 
 @Component({
   selector: 'app-responsaveis-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmModalComponent],
   template: `
     <div class="space-y-6 sm:space-y-8 animate-in">
       <!-- Header -->
@@ -24,17 +25,27 @@ import { ToastService } from '@shared/components/toast.component';
         </a>
       </div>
 
-      <!-- Barra de Busca -->
-      <div class="w-full max-w-md">
-        <div class="relative group">
-          <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
-          <input type="text" class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm transition-all outline-none"
-            placeholder="Buscar por nome, parentesco, telefone ou email..."
-            [(ngModel)]="searchTerm" (input)="onSearch()">
+      <!-- Barra de Busca e Filtros -->
+      <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+        <div class="w-full max-w-md">
+          <div class="relative group">
+            <span class="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-[20px]">search</span>
+            <input type="text" class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm ring-1 ring-slate-200 dark:ring-slate-800 focus:ring-2 focus:ring-primary shadow-sm transition-all outline-none"
+              placeholder="Buscar por nome, parentesco, telefone ou email..."
+              [(ngModel)]="searchTerm" (input)="onSearch()">
+          </div>
         </div>
+
+        <!-- Filtro de Status: Padrão apenas ATIVOS -->
+        <select class="px-4 py-3 bg-white dark:bg-slate-900 border-none rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all outline-none text-slate-700 dark:text-slate-200"
+          [(ngModel)]="filterStatus" (change)="load()">
+          <option value="active">Status: Apenas Ativos</option>
+          <option value="inactive">Status: Inativos</option>
+          <option value="">Status: Todos os Responsáveis</option>
+        </select>
       </div>
 
-      <!-- Card da Tabela com Scroll Horizontal Responsivo -->
+      <!-- Card da Tabela com Scroll Horizontal Responsivo para iPad -->
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
         @if (loading()) {
           <div class="flex items-center justify-center p-12 text-slate-500">
@@ -43,19 +54,24 @@ import { ToastService } from '@shared/components/toast.component';
         } @else if (filteredItems().length === 0) {
           <div class="text-center py-16 px-4">
             <span class="material-icons text-6xl text-slate-300 dark:text-slate-700">people</span>
-            <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhum responsável encontrado</p>
+            <p class="text-slate-500 dark:text-slate-400 mt-4 text-sm font-medium">Nenhum responsável encontrado com o filtro atual</p>
+            @if (filterStatus === 'active') {
+              <button (click)="filterStatus = ''; load()" class="mt-2 text-xs font-bold text-primary hover:underline">
+                Visualizar responsáveis inativos ou todos
+              </button>
+            }
           </div>
         } @else {
-          <!-- Desktop Table (md and up) -->
+          <!-- Desktop & iPad Table (md and up) -->
           <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-            <table class="w-full text-left border-collapse min-w-[700px]">
+            <table class="w-full text-left border-collapse min-w-[820px]">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                   <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Responsável</th>
                   <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Parentesco</th>
                   <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Contato</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Localização</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right min-w-[280px]">Ações</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -73,7 +89,7 @@ import { ToastService } from '@shared/components/toast.component';
                         </div>
                         <div class="min-w-0">
                           <p class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ r.name }}</p>
-                          <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ r.email || 'Sem e-mail' }}</p>
+                          <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ r.email || 'Sem e-mail cadastrado' }}</p>
                         </div>
                       </div>
                     </td>
@@ -90,25 +106,54 @@ import { ToastService } from '@shared/components/toast.component';
                         <span class="text-sm text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">{{ r.phones || '—' }}</span>
                       </div>
                     </td>
-                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                      {{ (r.city ? r.city + (r.state ? '/' + r.state : '') : '—') }}
+                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
+                        [class]="(r.active ?? true) ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
+                        <span class="size-1.5 rounded-full" [class]="(r.active ?? true) ? 'bg-emerald-500' : 'bg-slate-400'"></span>
+                        {{ (r.active ?? true) ? 'Ativo' : 'Inativo' }}
+                      </span>
                     </td>
-                    <td class="px-6 py-4 text-right">
-                      <div class="flex items-center justify-end gap-1">
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                      <div class="flex items-center justify-end gap-1.5 flex-nowrap">
+                        <!-- Visualizar -->
                         <a [routerLink]="['/app/responsaveis', r.id]" 
-                          class="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" 
                           title="Ver detalhes">
-                          <span class="material-icons text-lg">visibility</span>
+                          <span class="material-icons text-[15px]">visibility</span>
+                          <span>Ver</span>
                         </a>
+
+                        <!-- Editar -->
                         <a [routerLink]="['/app/responsaveis', r.id, 'editar']" 
-                          class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" 
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" 
                           title="Editar">
-                          <span class="material-icons text-lg">edit</span>
+                          <span class="material-icons text-[15px]">edit</span>
+                          <span>Editar</span>
                         </a>
+
+                        <!-- Ativar / Desativar -->
+                        @if (r.active ?? true) {
+                          <button (click)="confirmToggleStatus(r)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+                            title="Desativar responsável">
+                            <span class="material-icons text-[15px]">pause_circle</span>
+                            <span>Desativar</span>
+                          </button>
+                        } @else {
+                          <button (click)="confirmToggleStatus(r)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
+                            title="Reativar responsável">
+                            <span class="material-icons text-[15px]">play_circle</span>
+                            <span>Ativar</span>
+                          </button>
+                        }
+
+                        <!-- Excluir -->
                         <button (click)="confirmDelete(r)"
-                          class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all" 
+                          class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" 
                           title="Excluir">
-                          <span class="material-icons text-lg">delete</span>
+                          <span class="material-icons text-[15px]">delete</span>
+                          <span>Excluir</span>
                         </button>
                       </div>
                     </td>
@@ -118,7 +163,7 @@ import { ToastService } from '@shared/components/toast.component';
             </table>
           </div>
 
-          <!-- Mobile Cards (under md / Smartphones) -->
+          <!-- Mobile & Touch Cards -->
           <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
             @for (r of filteredItems(); track r.id) {
               <div class="p-4 space-y-3">
@@ -137,8 +182,9 @@ import { ToastService } from '@shared/components/toast.component';
                       <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ r.email || 'Sem e-mail cadastrado' }}</p>
                     </div>
                   </div>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
-                    {{ r.relationship || 'Responsável' }}
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0"
+                    [class]="(r.active ?? true) ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
+                    {{ (r.active ?? true) ? 'Ativo' : 'Inativo' }}
                   </span>
                 </div>
 
@@ -153,28 +199,40 @@ import { ToastService } from '@shared/components/toast.component';
                     </span>
                   </div>
                   <div>
-                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Localização</span>
-                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">
-                      {{ (r.city ? r.city + (r.state ? '/' + r.state : '') : '—') }}
-                    </span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Parentesco</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ r.relationship || 'Responsável' }}</span>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2 pt-1">
-                  <a [routerLink]="['/app/responsaveis', r.id]" 
-                    class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all">
+                <!-- 4 Ações no Card Mobile -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  <a [routerLink]="['/app/responsaveis', r.id]"
+                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
                     <span class="material-icons text-[16px]">visibility</span>
-                    Ver Detalhes
+                    <span>Ver</span>
                   </a>
-                  <a [routerLink]="['/app/responsaveis', r.id, 'editar']" 
-                    class="flex items-center justify-center size-9 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition-all"
-                    title="Editar">
+                  <a [routerLink]="['/app/responsaveis', r.id, 'editar']"
+                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
                     <span class="material-icons text-[16px]">edit</span>
+                    <span>Editar</span>
                   </a>
+                  @if (r.active ?? true) {
+                    <button (click)="confirmToggleStatus(r)"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all">
+                      <span class="material-icons text-[16px]">pause_circle</span>
+                      <span>Desativar</span>
+                    </button>
+                  } @else {
+                    <button (click)="confirmToggleStatus(r)"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all">
+                      <span class="material-icons text-[16px]">play_circle</span>
+                      <span>Ativar</span>
+                    </button>
+                  }
                   <button (click)="confirmDelete(r)"
-                    class="flex items-center justify-center size-9 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 transition-all"
-                    title="Excluir">
+                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all">
                     <span class="material-icons text-[16px]">delete</span>
+                    <span>Excluir</span>
                   </button>
                 </div>
               </div>
@@ -184,39 +242,30 @@ import { ToastService } from '@shared/components/toast.component';
       </div>
     </div>
 
-    <!-- Modal de Confirmação de Exclusão -->
-    @if (showDeleteModal()) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" (click)="showDeleteModal.set(false)">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 ring-1 ring-slate-200 dark:ring-slate-800" (click)="$event.stopPropagation()">
-          <div class="flex items-center gap-4 mb-6">
-            <div class="size-12 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
-              <span class="material-icons text-2xl">warning</span>
-            </div>
-            <div>
-              <h3 class="text-lg font-black text-slate-900 dark:text-white">Excluir Responsável</h3>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Esta ação removerá o vínculo do responsável</p>
-            </div>
-          </div>
-          <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-            Tem certeza de que deseja excluir <strong class="text-slate-900 dark:text-white">{{ itemToDelete()?.name }}</strong>?
-          </p>
-          <div class="flex justify-end gap-3">
-            <button class="px-5 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all" 
-              (click)="showDeleteModal.set(false)">
-              Cancelar
-            </button>
-            <button class="px-5 py-2.5 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-600/20" 
-              (click)="deleteItem()">
-              Excluir
-            </button>
-          </div>
-        </div>
-      </div>
-    }
+    <!-- Modal de Confirmação: Excluir Responsável -->
+    <app-confirm-modal
+      [isOpen]="showDeleteModal()"
+      title="Excluir Responsável Definitivamente"
+      [message]="'Tem certeza que deseja excluir o cadastro de ' + (itemToDelete()?.name || 'este responsável') + '? Esta ação não pode ser desfeita.'"
+      confirmText="Sim, Excluir Registro"
+      [dangerMode]="true"
+      (closed)="showDeleteModal.set(false)"
+      (confirmed)="deleteItem()" />
+
+    <!-- Modal de Confirmação: Ativar ou Desativar Responsável -->
+    <app-confirm-modal
+      [isOpen]="showStatusModal()"
+      [title]="(itemToToggle()?.active ?? true) ? 'Desativar Responsável' : 'Reativar Responsável'"
+      [message]="(itemToToggle()?.active ?? true)
+        ? 'Deseja desativar ' + (itemToToggle()?.name || 'este responsável') + '? Ele ficará inativo nas buscas do dia a dia, preservando todo o histórico de contatos e pacientes vinculados.'
+        : 'Deseja reativar ' + (itemToToggle()?.name || 'este responsável') + '? Ele voltará a constar como ativo no sistema.'"
+      [confirmText]="(itemToToggle()?.active ?? true) ? 'Sim, Desativar' : 'Sim, Reativar'"
+      [mode]="(itemToToggle()?.active ?? true) ? 'warning' : 'success'"
+      [icon]="(itemToToggle()?.active ?? true) ? 'pause_circle' : 'play_circle'"
+      (closed)="showStatusModal.set(false)"
+      (confirmed)="toggleStatusItem()" />
   `,
-  styles: [`
-    :host { display: block; }
-  `]
+  styles: [`:host { display: block; }`]
 })
 export class ResponsaveisListComponent implements OnInit {
   private service = inject(ResponsaveisService);
@@ -225,8 +274,13 @@ export class ResponsaveisListComponent implements OnInit {
   items = signal<any[]>([]);
   loading = signal(true);
   searchTerm = '';
+  filterStatus = 'active'; // Padrão: Apenas ativos
+
   showDeleteModal = signal(false);
   itemToDelete = signal<any>(null);
+
+  showStatusModal = signal(false);
+  itemToToggle = signal<any>(null);
 
   ngOnInit() {
     this.load();
@@ -234,7 +288,12 @@ export class ResponsaveisListComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.service.list().subscribe({
+    const params: any = {};
+    if (this.filterStatus) {
+      params.status = this.filterStatus;
+      params.active = this.filterStatus === 'active' ? 'true' : 'false';
+    }
+    this.service.list(params).subscribe({
       next: (res: any) => {
         this.items.set(res.data || res || []);
         this.loading.set(false);
@@ -257,7 +316,7 @@ export class ResponsaveisListComponent implements OnInit {
   }
 
   onSearch() {
-    // Filtragem reativa via filteredItems()
+    // Filtragem reativa instantânea
   }
 
   getInitials(name: string): string {
@@ -266,7 +325,7 @@ export class ResponsaveisListComponent implements OnInit {
   }
 
   getAvatarColor(name: string): string {
-    const colors = ['#2563EB', '#6D28D9', '#BE185D', '#B45309', '#047857', '#B91C1C', '#0E7490', '#4D7C0F'];
+    const colors = ['#007F80', '#0284C7', '#059669', '#D97706', '#DC2626', '#475569'];
     const index = name ? name.charCodeAt(0) % colors.length : 0;
     return colors[index];
   }
@@ -285,7 +344,32 @@ export class ResponsaveisListComponent implements OnInit {
         this.toast.success('Responsável excluído com sucesso');
         this.load();
       },
-      error: () => this.toast.error('Erro ao excluir responsável')
+      error: (err: any) => {
+        this.showDeleteModal.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao excluir responsável');
+      }
+    });
+  }
+
+  confirmToggleStatus(item: any) {
+    this.itemToToggle.set(item);
+    this.showStatusModal.set(true);
+  }
+
+  toggleStatusItem() {
+    const item = this.itemToToggle();
+    if (!item) return;
+    const nextActive = !(item.active ?? true);
+    this.service.toggleStatus(item.id, nextActive).subscribe({
+      next: () => {
+        this.showStatusModal.set(false);
+        this.toast.success(nextActive ? 'Responsável reativado com sucesso!' : 'Responsável desativado com sucesso! Histórico preservado.');
+        this.load();
+      },
+      error: (err: any) => {
+        this.showStatusModal.set(false);
+        this.toast.error(err?.error?.error || 'Erro ao alterar status do responsável');
+      }
     });
   }
 }

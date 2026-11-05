@@ -7,5 +7,6 @@ export class EscolasService {
   get(id: string) { return this.api.get(`/escolas/${id}`); }
   create(data: any) { return this.api.post('/escolas', data); }
   update(id: string, data: any) { return this.api.put(`/escolas/${id}`, data); }
+  toggleStatus(id: string) { return this.api.patch(`/escolas/${id}/toggle-status`, {}); }
   delete(id: string) { return this.api.delete(`/escolas/${id}`); }
 }
