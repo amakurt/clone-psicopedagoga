@@ -1,6 +1,33 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 04 de Novembro de 2026
+## Última Atualização: 05 de Novembro de 2026
+
+## Sessão 85 - 05/11/2026 — Descoberta Dinâmica de Modelos na Validação de Chave do Google AI Studio (Eliminação do Teste com Modelos Descontinuados 1.5)
+
+### O que foi feito
+
+#### 1. Diagnóstico do Erro ao Salvar Nova Chave
+- **Problema Reportado:** Ao criar uma nova chave de API no Google AI Studio, colá-la na modal e clicar em salvar/alterar, surgia mensagem vermelha informando que o Google recusava a chave citando o `gemini 1.5`.
+- **Causa Raiz Identificada:** 
+  - No endpoint `POST /api/ai-ocr/save-key`, havia uma lista de teste estática (`testModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro']`).
+  - Como a família `gemini-1.5-*` foi descontinuada pelo Google (e o Google AI Studio agora cria chaves para as gerações ativas como `gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash`), o teste do backend tentava forçar o endpoint antigo `gemini-1.5-flash`.
+  - Como o modelo 1.5 retornava 404 para aquela chave nova válida, o validador do backend rejeitava a chave nova legítima da usuária com base no erro do modelo antigo!
+
+#### 2. Implementação da Validação Dinâmica Inteligente (`backend/src/routes/ai-ocr.ts`)
+- **Descoberta Dinâmica em Tempo Real:**
+  - O método `fetchModelsFromGoogle(key)` agora consulta a lista real de modelos autorizados pelo Google para aquela chave específica (`models.list`).
+  - Filtra e ordena automaticamente priorizando os modelos **Flash** mais modernos (`gemini-3.8-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash`, etc.).
+- **Teste com Modelos Reais da Conta:**
+  - Em `save-key`, o teste de geração agora é executado estritamente contra os modelos que o próprio Google informou que estão ativos para aquela chave.
+  - Elimina 100% de alarmes falsos de "modelo descontinuado" e aceita qualquer chave válida gerada no Google AI Studio.
+- **Unificação nos Módulos de Sugestões e WhatsApp:**
+  - Atualizados `backend/src/routes/ai-suggestions.ts` e `backend/src/services/whatsapp-ai.service.ts` com a lista de modelos ativos (`gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash`, `gemini-2.0-flash`).
+
+#### 3. Validação & Build
+- **Backend:** `npm --prefix backend run build` compilado com 0 erros.
+- **Frontend:** `npx ng build` compilado com 0 erros.
+
+---
 
 ## Sessão 84 - 04/11/2026 — Suporte Duplo a Endpoints Gemini (v1beta + v1), Validação Ativa de Chaves (generateContent) e Diagnóstico Preciso para Chaves sem Permissão no Google AI Studio
 

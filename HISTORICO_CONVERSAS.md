@@ -12,6 +12,19 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
 
 ---
 
+## 💬 Sessão 85: 05 de Novembro de 2026
+
+### 1. Interação do Usuário: Resolução da Validação de Chave no Google AI Studio
+- **Solicitação do Usuário:**  
+  *"fui criar uma nova chave api key e colei cliquei em alterar apareceu mensagem em vermelho dizendo que o google recusou a criação dessa chave gemini 1.5 ..."*
+- **Decisões & Implementações:**
+  - **Diagnóstico:** O validador do backend no endpoint `/save-key` ainda testava modelos legados e descontinuados da família `gemini-1.5-*`. Quando a usuária colou a chave nova válida gerada no Google AI Studio, o teste do backend tentou forçar o modelo antigo 1.5, o Google retornou 404, e o backend recusou erroneamente a chave nova.
+  - **Validação Dinâmica em Tempo Real:** Agora o backend consulta primeiro `models.list` diretamente da conta da usuária no Google e testa a geração usando os modelos ativos daquela chave (como `gemini-3.8-flash`, `gemini-3.5-flash-lite`, `gemini-2.5-flash`).
+  - **Unificação:** Modelos atualizados também em `ai-suggestions.ts` e `whatsapp-ai.service.ts`.
+  - **Validação:** Backend e Frontend compilados com 0 erros.
+
+---
+
 ## 💬 Sessão 84: 04 de Novembro de 2026
 
 ### 1. Interação do Usuário: Resolução da Mensagem "Modelo Gemini 1.5 não disponível"

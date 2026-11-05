@@ -34,6 +34,57 @@ const upload = multer({
 const modelsCache = new Map<string, { models: string[]; expiresAt: number }>();
 
 /**
+ * Ordena modelos priorizando Flash (alta velocidade e multimodal para OCR) e versões mais recentes
+ */
+function sortGeminiModels(models: string[]): string[] {
+  return [...models].sort((a, b) => {
+    const aFlash = a.includes('flash') ? 1 : 0;
+    const bFlash = b.includes('flash') ? 1 : 0;
+    if (aFlash !== bFlash) return bFlash - aFlash;
+    return b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' });
+  });
+}
+
+/**
+ * Consulta a lista de modelos ativos e autorizados pelo Google para a chave específica
+ */
+async function fetchModelsFromGoogle(key: string): Promise<string[]> {
+  for (const ep of ['v1beta', 'v1']) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/${ep}/models?key=${key}`);
+      if (res.ok) {
+        const data: any = await res.json();
+        if (Array.isArray(data?.models)) {
+          const names = data.models
+            .filter((m: any) =>
+              Array.isArray(m.supportedGenerationMethods) &&
+              m.supportedGenerationMethods.includes('generateContent') &&
+              !m.name.includes('embedding') &&
+              !m.name.includes('imagen') &&
+              !m.name.includes('tts') &&
+              !m.name.includes('aqa')
+            )
+            .map((m: any) => (m.name || '').replace(/^models\//, ''));
+          if (names.length > 0) {
+            return sortGeminiModels(names);
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // Lista de fallback moderna (2025/2026)
+  return [
+    'gemini-3.8-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+  ];
+}
+
+/**
  * Descobre dinamicamente os modelos habilitados para a chave do Google Gemini da clínica,
  * priorizando as versões mais rápidas, estáveis e modernas para visão computacional/OCR.
  */
@@ -43,59 +94,9 @@ async function getAvailableGeminiModels(apiKey: string): Promise<string[]> {
     return cached.models;
   }
 
-  const fallbackModels = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-8b',
-    'gemini-1.5-pro',
-  ];
-
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-    if (res.ok) {
-      const data: any = await res.json();
-      if (Array.isArray(data?.models)) {
-        const validNames: string[] = data.models
-          .filter((m: any) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-          .map((m: any) => (m.name || '').replace(/^models\//, ''));
-
-        const preferredOrder = [
-          'gemini-2.0-flash',
-          'gemini-2.0-flash-lite',
-          'gemini-1.5-flash',
-          'gemini-1.5-flash-002',
-          'gemini-1.5-flash-001',
-          'gemini-1.5-flash-8b',
-          'gemini-1.5-pro',
-          'gemini-1.5-pro-002',
-        ];
-
-        const prioritized: string[] = [];
-        for (const pref of preferredOrder) {
-          const match = validNames.find(vn => vn === pref || vn.startsWith(pref));
-          if (match && !prioritized.includes(match)) {
-            prioritized.push(match);
-          }
-        }
-
-        // Adiciona quaisquer outros modelos que suportem generateContent (exceto embeddings/tts)
-        for (const vn of validNames) {
-          if (!prioritized.includes(vn) && !vn.includes('embedding') && !vn.includes('aqa') && !vn.includes('imagen')) {
-            prioritized.push(vn);
-          }
-        }
-
-        if (prioritized.length > 0) {
-          modelsCache.set(apiKey, { models: prioritized, expiresAt: Date.now() + 60 * 60 * 1000 });
-          return prioritized;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[AI_OCR] Falha ao consultar modelos ativos do Google, usando fallback padrão:', err);
-  }
-
-  return fallbackModels;
+  const models = await fetchModelsFromGoogle(apiKey);
+  modelsCache.set(apiKey, { models, expiresAt: Date.now() + 60 * 60 * 1000 });
+  return models;
 }
 
 /**
@@ -370,25 +371,29 @@ router.post('/save-key', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Chave de API parece inválida ou muito curta (deve ter pelo menos 20 caracteres).' });
     }
 
-    // Teste de validação direta e geração com o Google para garantir que a chave funciona 100%
+    // Validação inteligente e teste ativo usando os modelos retornados pelo próprio Google para esta chave
     try {
-      const testModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+      const dynamicModels = await fetchModelsFromGoogle(key);
       let workingModel: string | null = null;
       let lastTestErr = '';
 
-      for (const m of testModels) {
+      for (const m of dynamicModels.slice(0, 4)) {
         for (const ep of ['v1beta', 'v1']) {
-          const genTest = await fetch(`https://generativelanguage.googleapis.com/${ep}/models/${m}:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: 'ok' }] }] }),
-          });
-          if (genTest.ok) {
-            workingModel = `${ep}/${m}`;
-            break;
-          } else {
-            const errTxt = await genTest.text();
-            lastTestErr = errTxt;
+          try {
+            const genTest = await fetch(`https://generativelanguage.googleapis.com/${ep}/models/${m}:generateContent?key=${key}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contents: [{ parts: [{ text: 'ok' }] }] }),
+            });
+            if (genTest.ok) {
+              workingModel = `${ep}/${m}`;
+              modelsCache.set(key, { models: dynamicModels, expiresAt: Date.now() + 60 * 60 * 1000 });
+              break;
+            } else {
+              lastTestErr = await genTest.text();
+            }
+          } catch (errFetch) {
+            lastTestErr = String(errFetch);
           }
         }
         if (workingModel) break;
@@ -403,7 +408,7 @@ router.post('/save-key', async (req: Request, res: Response) => {
           });
         }
         return res.status(400).json({
-          error: `O Google recusou a geração com esta chave: "${parsedMsg}". Dica: Acesse https://aistudio.google.com/app/apikey, clique em "Create API key" e certifique-se de escolher "Create API key in NEW project".`
+          error: `O Google recusou a geração com esta chave (${parsedMsg}). Verifique se a chave foi criada no Google AI Studio (https://aistudio.google.com).`
         });
       }
     } catch (testErr) {
