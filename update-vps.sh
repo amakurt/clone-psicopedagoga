@@ -19,6 +19,7 @@ ROOT_DIR=$(pwd)
 
 # 1. Puxar alterações do Git
 echo -e "\n${YELLOW}[1/4] Puxando últimos commits do GitHub...${NC}"
+git checkout -- backend/prisma/schema.prisma 2>/dev/null || true
 git pull origin main
 
 # 2. Atualizar Banco de Dados (PostgreSQL) e Backend

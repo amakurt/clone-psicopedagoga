@@ -335,6 +335,8 @@ model Responsible {
   city         String?
   state        String?
   userId       String?
+  active       Boolean  @default(true)
+  status       String   @default("ATIVO")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
