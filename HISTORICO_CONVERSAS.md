@@ -308,3 +308,15 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
     - Sincronização de schema Prisma (`Responsible` com campos `active` e `status`), rotas backend e serviços Angular.
   - Implementação de barra de progresso visual animada com preenchimento percentual (0% a 100%) no Scanner de Fichas (`ficha-scanner-modal.component.ts`) e no Gerador de Planos/PEI (`plano-ai.component.ts`).
   - Ambas as compilações (`npm --prefix backend run build` e `npx ng build`) concluídas com 100% de sucesso (código 0).
+
+
+
+
+### 5. Resolução de Crash Loop da Evolution API v2 no Docker da VPS (06/11/2026)
+- **Solicitação do Usuário:**  
+  *Investigação de falha ao gerar QR code do WhatsApp e erro "Database provider invalid" na VPS.*
+- **Ações Realizadas:**
+  - Diagnóstico via `docker logs edupsych-evolution` apontando `Error: Database provider  invalid.`.
+  - Identificada falta do parâmetro `DATABASE_PROVIDER: postgresql` e `CACHE_REDIS_ENABLED: "false"` no `docker-compose.prod.yml`.
+  - Configurado `SERVER_URL: http://127.0.0.1:8080`, persistência de dados de instâncias e chats.
+  - Atualização do repositório remoto para atualização imediata na VPS via `git pull origin main`.

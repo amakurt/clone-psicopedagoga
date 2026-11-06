@@ -31,12 +31,21 @@ services:
     container_name: edupsych-evolution
     restart: always
     environment:
+      SERVER_URL: http://127.0.0.1:8080
       SERVER_PORT: 8080
       SERVER_TYPE: http
       AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-edupsych_evolution_master_key_2026}
       DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
       DATABASE_CONNECTION_URI: "postgresql://${POSTGRES_USER:-edupsych}:${POSTGRES_PASSWORD:-edupsych_secret_2026}@postgres:5432/${POSTGRES_DB:-edupsych_prod}?schema=evolution"
       DATABASE_CONNECTION_CLIENT_NAME: "edupsych_evolution"
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      CACHE_REDIS_ENABLED: "false"
+      LOG_LEVEL: ERROR,WARN,INFO
       CONFIG_SESSION_PHONE_CLIENT: "EduPsych Pro"
       CONFIG_SESSION_PHONE_NAME: "Chrome (Linux)"
       QRCODE_LIMIT: 30

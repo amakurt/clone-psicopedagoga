@@ -3840,3 +3840,14 @@ npm run start
 - **Prisma:** Sincronizado com o banco via `npx prisma db push` e `npx prisma generate`.
 - **Backend:** Compilação TypeScript (`npm --prefix backend run build`) com 0 erros.
 - **Frontend:** Compilação de produção (`npx ng build`) com 0 erros.
+
+### Sessão: Resolução do Crash Loop da Evolution API no Docker VPS (06/11/2026)
+- **Problema:** Modal de conexão do WhatsApp retornava erro "Serviço Evolution API offline na porta 8080". Inspeção via `docker logs edupsych-evolution` revelou o erro fatal `Error: Database provider  invalid.` com o container em loop contínuo de `Restarting (1)`.
+- **Causa Raiz:** O arquivo `docker-compose.prod.yml` não continha a variável `DATABASE_PROVIDER: postgresql` exigida obrigatoriamente pela Evolution API v2 para identificar o provider do PostgreSQL, além de faltar `SERVER_URL` e `CACHE_REDIS_ENABLED: "false"`.
+- **Correção:**
+  - Atualizado `docker-compose.prod.yml` com todas as variáveis obrigatórias da Evolution API v2:
+    - `SERVER_URL: http://127.0.0.1:8080`
+    - `DATABASE_PROVIDER: postgresql`
+    - `CACHE_REDIS_ENABLED: "false"`
+    - Flags de persistência de instâncias, contatos, mensagens e chats.
+  - Sincronizado com o repositório GitHub para aplicação na VPS.
