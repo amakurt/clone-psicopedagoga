@@ -3857,3 +3857,4 @@ npm run start
 - **Melhorias Aplicadas:**
   - **Backend (`whatsapp-client.service.ts`):** Suporte automático a `data.base64` e `data.qrcode.base64`, formatação do prefixo `data:image/png;base64,` e auto-retry interno com até 3 tentativas de 1.5s enquanto o Baileys emite o primeiro frame.
   - **Frontend (`whatsapp-config.component.ts`):** Polling contínuo e silencioso a cada 2.5s enquanto o modal estiver aberto, detecção imediata do status `open` (conectado) para alternar a tela para sucesso automaticamente assim que a Dra. Vilma apontar o celular.
+  - **Evolution API (`docker-compose.prod.yml`):** Atualizada imagem da Evolution API para `v2.3.7` (com suporte ao handshake Baileys recente do WhatsApp) e `DEL_INSTANCE: "true"` para evitar locks de instância no banco.

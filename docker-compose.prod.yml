@@ -27,7 +27,7 @@ services:
   # 2. EVOLUTION API V2 (GATEWAY WHATSAPP MULTI-CLÍNICA)
   # =========================================================================
   evolution-api:
-    image: evoapicloud/evolution-api:v2.2.0
+    image: evoapicloud/evolution-api:v2.3.7
     container_name: edupsych-evolution
     restart: always
     environment:
@@ -49,7 +49,7 @@ services:
       CONFIG_SESSION_PHONE_CLIENT: "EduPsych Pro"
       CONFIG_SESSION_PHONE_NAME: "Chrome (Linux)"
       QRCODE_LIMIT: 30
-      DEL_INSTANCE: "false"
+      DEL_INSTANCE: "true"
     ports:
       # Vinculado apenas a 127.0.0.1 (acessado pelo backend ou proxy reverso seguro)
       - "127.0.0.1:8080:8080"
