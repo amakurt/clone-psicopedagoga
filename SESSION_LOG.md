@@ -32,7 +32,13 @@
   - **Grid de Cards Elegante para Tablet/iPad (`block lg:hidden`):** Telas até 1023px (incluindo iPad em modo retrato) exibem cards modernos em grid de 2 colunas (`md:grid-cols-2 gap-4`), onde cada card apresenta todos os dados e os 4 botões de ação (`Ver`, `Editar`, `Ativar/Desativar`, `Excluir`) 100% visíveis na tela, sem necessidade de rolagem horizontal com o dedo.
   - **Padronização em Todos os Cadastros:** Aplicado em `responsaveis-list.component.ts`, `pacientes-list.component.ts` e `escolas-list.component.ts`.
 
-#### 3. Validação Técnica
+#### 3. Diagnóstico e Resolução do Erro "fetch failed" ao Gerar QR Code do WhatsApp
+- **Causa Raiz Identificada:** O erro `fetch failed` gerado pelo Node.js ocorre quando a porta `8080` (Evolution API) está inacessível via rede (ECONNREFUSED / container Docker `edupsych-evolution` offline na VPS). Além disso, o script `update-vps.sh` não garantia a inicialização dos containers Docker do Compose, fazendo com que reinicializações da VPS ou pausas do Docker deixassem a Evolution API inativa.
+- **Soluções Implementadas:**
+  - **Auto-provisionamento & Tolerância a Falhas (`whatsapp-client.service.ts`):** O método `getEvolutionQrCode` agora detecta status 404 (instância inexistente) e a cria automaticamente em tempo de execução, com retentativa suave e timeout aumentado para 8 segundos. Mensagem de erro humanizada para conexões recusadas.
+  - **Inclusão no Script de Atualização (`update-vps.sh`):** Adicionado `docker compose -f docker-compose.prod.yml up -d` e criação do schema `evolution` no PostgreSQL no script de deploy diário, assegurando que os containers do banco e do WhatsApp sempre permaneçam ativos após cada atualização.
+
+#### 4. Validação Técnica
 - **Backend:** Compilação TypeScript com `npm --prefix backend run build` (0 erros).
 - **Frontend:** Compilação de produção com `npx ng build` (0 erros, 100% dos bundles gerados).
 

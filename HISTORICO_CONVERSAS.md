@@ -32,6 +32,10 @@ Este documento consolida o histórico cronológico de conversas, decisões técn
     - A tabela desktop ativava em `md` (768px), enquanto telas de iPad em modo retrato possuem 768px a 834px de largura. Com tabela de largura mínima de 820px, a coluna de ações ficava para fora da tela.
     - Ajustado breakpoint para `lg` (1024px+): no iPad e tablets em modo retrato, o sistema agora exibe um grid elegante de 2 colunas de cards (`md:grid-cols-2`), com todos os 4 botões de ação (`Ver`, `Editar`, `Ativar/Desativar`, `Excluir`) 100% visíveis, sem exigir nenhuma rolagem com o dedo.
     - Padronizado em `responsaveis-list`, `pacientes-list` e `escolas-list`.
+  - **Diagnóstico do Erro 'fetch failed' na Evolution API:**
+    - O erro `fetch failed` ocorre quando o container Docker `edupsych-evolution` está desligado na VPS (porta 8080 fechada).
+    - `update-vps.sh` atualizado para sempre subir o container da Evolution API e assegurar o schema no PostgreSQL.
+    - `whatsapp-client.service.ts` aprimorado com auto-provisionamento de instância (HTTP 404 -> create) e retentativas seguras.
   - **Validação:** Backend e Frontend compilados com 0 erros.
 
 ---

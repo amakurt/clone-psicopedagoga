@@ -18,23 +18,29 @@ echo -e "${BLUE}================================================================
 ROOT_DIR=$(pwd)
 
 # 1. Puxar alterações do Git
-echo -e "\n${YELLOW}[1/4] Puxando últimos commits do GitHub...${NC}"
+echo -e "\n${YELLOW}[1/5] Puxando últimos commits do GitHub...${NC}"
 git checkout -- backend/prisma/schema.prisma 2>/dev/null || true
 git pull origin main
 
-# 2. Atualizar Banco de Dados (PostgreSQL) e Backend
-echo -e "\n${YELLOW}[2/4] Sincronizando schema do banco de dados (Prisma)...${NC}"
+# 2. Garantir containers Docker ativos (PostgreSQL e Evolution API)
+echo -e "\n${YELLOW}[2/5] Garantindo containers Docker ativos (PostgreSQL & Evolution API)...${NC}"
+docker compose -f docker-compose.prod.yml up -d
+sleep 3
+docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "CREATE SCHEMA IF NOT EXISTS evolution;" 2>/dev/null || true
+
+# 3. Atualizar Banco de Dados (PostgreSQL) e Backend
+echo -e "\n${YELLOW}[3/5] Sincronizando schema do banco de dados (Prisma)...${NC}"
 cd "$ROOT_DIR/backend"
 cp prisma/schema.postgres.prisma prisma/schema.prisma
 npx prisma generate
 npx prisma db push --accept-data-loss
 
-echo -e "\n${YELLOW}[3/4] Recompilando backend e reiniciando PM2...${NC}"
+echo -e "\n${YELLOW}[4/5] Recompilando backend e reiniciando PM2...${NC}"
 npm run build
 pm2 restart edupsych-backend
 
-# 3. Compilar Frontend se solicitado ou necessário
-echo -e "\n${YELLOW}[4/4] Atualizando Frontend Angular...${NC}"
+# 4. Compilar Frontend se solicitado ou necessário
+echo -e "\n${YELLOW}[5/5] Atualizando Frontend Angular...${NC}"
 cd "$ROOT_DIR"
 npx ng build
 cp -r dist/browser/* /var/www/edupsych/dist/browser/ 2>/dev/null || cp -r dist/* /var/www/edupsych/dist/

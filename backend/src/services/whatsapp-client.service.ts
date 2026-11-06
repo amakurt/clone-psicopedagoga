@@ -274,10 +274,24 @@ export async function getEvolutionQrCode(instanceName: string): Promise<{
   if (!cleanName) return { state: 'error', error: 'Nome de instância inválido' };
 
   try {
-    const res = await fetch(`${apiUrl}/instance/connect/${cleanName}`, {
+    let res = await fetch(`${apiUrl}/instance/connect/${cleanName}`, {
       headers: { apikey: apiKey },
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(8000),
     });
+
+    // Se a instância não existe ainda na Evolution API (HTTP 404), provisiona automaticamente
+    if (res.status === 404) {
+      console.log(`[EVOLUTION] Instância "${cleanName}" não encontrada (404). Provisionando automaticamente...`);
+      const createRes = await createEvolutionInstance(cleanName);
+      if (createRes.success) {
+        await new Promise((r) => setTimeout(r, 1500));
+        res = await fetch(`${apiUrl}/instance/connect/${cleanName}`, {
+          headers: { apikey: apiKey },
+          signal: AbortSignal.timeout(8000),
+        });
+      }
+    }
+
     if (!res.ok) {
       const errText = await res.text();
       return { state: 'error', error: `Falha ao conectar: HTTP ${res.status} - ${errText.slice(0, 100)}` };
@@ -290,7 +304,12 @@ export async function getEvolutionQrCode(instanceName: string): Promise<{
       pairingCode: data?.pairingCode || undefined,
     };
   } catch (err: any) {
-    return { state: 'error', error: err.message || 'Erro ao obter QR Code' };
+    console.error('[ERRO getEvolutionQrCode]:', err);
+    const isConnErr = err?.message?.includes('fetch failed') || err?.code === 'ECONNREFUSED';
+    const errorMsg = isConnErr
+      ? `Serviço Evolution API offline na porta 8080 (${apiUrl}). Inicie o container com: docker compose -f docker-compose.prod.yml up -d`
+      : (err.message || 'Erro ao obter QR Code');
+    return { state: 'error', error: errorMsg };
   }
 }
 
