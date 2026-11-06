@@ -667,7 +667,7 @@ import {
                   <p class="text-[11px] text-slate-500">Escaneie o código com o aplicativo do WhatsApp</p>
                 </div>
               </div>
-              <button (click)="qrModalOpen.set(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <button (click)="closeQrModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                 <span class="material-icons text-lg">close</span>
               </button>
             </div>
@@ -688,9 +688,9 @@ import {
                     Sua clínica já está pareada e o assistente de IA está pronto para atender.
                   </p>
                 </div>
-              } @else if (qrData()?.base64) {
+              } @else if (qrData()?.base64 || qrData()?.qrcode?.base64) {
                 <div class="inline-block p-4 bg-white rounded-2xl shadow-xl mx-auto border border-slate-200">
-                  <img [src]="qrData()?.base64" alt="QR Code WhatsApp" class="size-56 object-contain mx-auto" />
+                  <img [src]="qrData()?.base64 || qrData()?.qrcode?.base64" alt="QR Code WhatsApp" class="size-56 object-contain mx-auto" />
                 </div>
                 <div class="space-y-1 text-xs text-slate-500 dark:text-slate-400 text-left max-w-xs mx-auto">
                   <p class="font-semibold text-slate-700 dark:text-slate-300">Como conectar:</p>
@@ -716,7 +716,7 @@ import {
                 <span class="material-icons text-sm" [class.animate-spin]="qrLoading()">refresh</span>
                 Atualizar QR Code
               </button>
-              <button (click)="qrModalOpen.set(false)"
+              <button (click)="closeQrModal()"
                 class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
                 Concluir
               </button>
@@ -735,6 +735,7 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef;
   private pollTimer: any = null;
+  private qrPollTimer: any = null;
 
   activeTab = signal<'atendimento' | 'configuracao' | 'historico'>('atendimento');
 
@@ -810,6 +811,7 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
       clearInterval(this.pollTimer);
       this.pollTimer = null;
     }
+    this.stopQrPolling();
   }
 
   startPolling() {
@@ -940,22 +942,54 @@ export class WhatsAppComponent implements OnInit, OnDestroy {
 
   openQrModal() {
     this.qrModalOpen.set(true);
-    this.refreshQrCode();
+    this.refreshQrCode(false);
+    this.startQrPolling();
   }
 
-  refreshQrCode() {
-    this.qrLoading.set(true);
+  closeQrModal() {
+    this.qrModalOpen.set(false);
+    this.stopQrPolling();
+  }
+
+  startQrPolling() {
+    this.stopQrPolling();
+    this.qrPollTimer = setInterval(() => {
+      if (this.qrModalOpen() && this.qrData()?.state !== 'open') {
+        this.refreshQrCode(true);
+      } else {
+        this.stopQrPolling();
+      }
+    }, 2500);
+  }
+
+  stopQrPolling() {
+    if (this.qrPollTimer) {
+      clearInterval(this.qrPollTimer);
+      this.qrPollTimer = null;
+    }
+  }
+
+  refreshQrCode(silent = false) {
+    if (!silent) {
+      this.qrLoading.set(true);
+    }
     this.whatsappService.getQrCode().subscribe({
       next: (res) => {
-        this.qrData.set(res);
-        this.qrLoading.set(false);
+        const rawBase64 = res.base64 || (res as any)?.qrcode?.base64;
+        const normalized = {
+          ...res,
+          base64: rawBase64 && typeof rawBase64 === 'string' && !rawBase64.startsWith('data:') ? `data:image/png;base64,${rawBase64}` : rawBase64
+        };
+        this.qrData.set(normalized);
+        if (!silent) this.qrLoading.set(false);
         if (res.state === 'open') {
           this.instanceStatus.set('open');
+          this.stopQrPolling();
         }
       },
       error: (err) => {
         this.qrData.set({ state: 'error', error: err?.error?.error || 'Erro ao carregar QR Code' });
-        this.qrLoading.set(false);
+        if (!silent) this.qrLoading.set(false);
       },
     });
   }

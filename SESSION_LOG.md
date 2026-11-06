@@ -3851,3 +3851,9 @@ npm run start
     - `CACHE_REDIS_ENABLED: "false"`
     - Flags de persistência de instâncias, contatos, mensagens e chats.
   - Sincronizado com o repositório GitHub para aplicação na VPS.
+
+#### Resolução da Geração e Polling Automático do QR Code
+- **Causa da mensagem "Aguardando o servidor...":** A Evolution API v2 leva alguns segundos na inicialização do socket Baileys para gerar o primeiro hash base64 ou pode devolver o objeto aninhado em `qrcode.base64`. O frontend chamava a rota apenas 1 única vez sem polling.
+- **Melhorias Aplicadas:**
+  - **Backend (`whatsapp-client.service.ts`):** Suporte automático a `data.base64` e `data.qrcode.base64`, formatação do prefixo `data:image/png;base64,` e auto-retry interno com até 3 tentativas de 1.5s enquanto o Baileys emite o primeiro frame.
+  - **Frontend (`whatsapp-config.component.ts`):** Polling contínuo e silencioso a cada 2.5s enquanto o modal estiver aberto, detecção imediata do status `open` (conectado) para alternar a tela para sucesso automaticamente assim que a Dra. Vilma apontar o celular.

@@ -296,12 +296,38 @@ export async function getEvolutionQrCode(instanceName: string): Promise<{
       const errText = await res.text();
       return { state: 'error', error: `Falha ao conectar: HTTP ${res.status} - ${errText.slice(0, 100)}` };
     }
-    const data = (await res.json()) as any;
+    let data = (await res.json()) as any;
+    let rawBase64 = data?.base64 || data?.qrcode?.base64;
+
+    // Se ainda não gerou o QR Code (Baileys inicializando), aguarda e tenta novamente
+    if (!rawBase64 && data?.instance?.state !== 'open' && data?.state !== 'open') {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        try {
+          const retryRes = await fetch(`${apiUrl}/instance/connect/${cleanName}`, {
+            headers: { apikey: apiKey },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (retryRes.ok) {
+            data = (await retryRes.json()) as any;
+            rawBase64 = data?.base64 || data?.qrcode?.base64;
+            if (rawBase64 || data?.instance?.state === 'open' || data?.state === 'open') {
+              break;
+            }
+          }
+        } catch {}
+      }
+    }
+
+    if (rawBase64 && typeof rawBase64 === 'string' && !rawBase64.startsWith('data:')) {
+      rawBase64 = `data:image/png;base64,${rawBase64}`;
+    }
+
     return {
-      state: data?.instance?.state || data?.state || (data?.base64 ? 'connecting' : 'unknown'),
-      base64: data?.base64 || undefined,
-      code: data?.code || undefined,
-      pairingCode: data?.pairingCode || undefined,
+      state: data?.instance?.state || data?.state || (rawBase64 ? 'connecting' : 'unknown'),
+      base64: rawBase64 || undefined,
+      code: data?.code || data?.qrcode?.code || undefined,
+      pairingCode: data?.pairingCode || data?.qrcode?.pairingCode || undefined,
     };
   } catch (err: any) {
     console.error('[ERRO getEvolutionQrCode]:', err);
