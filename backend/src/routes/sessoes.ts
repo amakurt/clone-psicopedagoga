@@ -25,15 +25,40 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
-  const sessao = await db.sessao.create({ data: req.body });
-  res.status(201).json(sessao);
+  try {
+    const db = scoped(prisma, req.user?.tenantId);
+    const data = { ...req.body };
+    if (data.date && typeof data.date === 'string') {
+      const parsedDate = new Date(data.date);
+      data.date = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+    } else if (!data.date) {
+      data.date = new Date();
+    }
+    if (!data.psicopedagogoId || data.psicopedagogoId === 'system') {
+      data.psicopedagogoId = req.user?.id;
+    }
+    const sessao = await db.sessao.create({ data });
+    res.status(201).json(sessao);
+  } catch (err: any) {
+    console.error('[ERRO CRIAR SESSAO]:', err);
+    res.status(400).json({ error: err.message || 'Erro ao salvar sessão' });
+  }
 });
 
 router.put('/:id', async (req, res) => {
-  const db = scoped(prisma, req.user?.tenantId);
-  const sessao = await db.sessao.update({ where: { id: req.params.id }, data: req.body });
-  res.json(sessao);
+  try {
+    const db = scoped(prisma, req.user?.tenantId);
+    const data = { ...req.body };
+    if (data.date && typeof data.date === 'string') {
+      const parsedDate = new Date(data.date);
+      data.date = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+    }
+    const sessao = await db.sessao.update({ where: { id: req.params.id }, data });
+    res.json(sessao);
+  } catch (err: any) {
+    console.error('[ERRO ATUALIZAR SESSAO]:', err);
+    res.status(400).json({ error: err.message || 'Erro ao atualizar sessão' });
+  }
 });
 
 router.delete('/:id', async (req, res) => {

@@ -9,9 +9,9 @@ router.use(authenticate);
 router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 const availabilitySchema = z.object({
-  dayOfWeek: z.number().int().min(0).max(6),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  dayOfWeek: z.coerce.number().int().min(0).max(6),
+  startTime: z.string().regex(/^\d{1,2}:\d{2}$/).transform((val) => (val.length === 4 ? `0${val}` : val)),
+  endTime: z.string().regex(/^\d{1,2}:\d{2}$/).transform((val) => (val.length === 4 ? `0${val}` : val)),
   active: z.boolean().optional(),
 });
 

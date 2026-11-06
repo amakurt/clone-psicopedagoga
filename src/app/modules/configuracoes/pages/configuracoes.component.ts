@@ -1036,12 +1036,18 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   saveAvailability() {
-    if (!this.availabilityForm.dayOfWeek || !this.availabilityForm.startTime || !this.availabilityForm.endTime) {
+    const rawDay = this.availabilityForm.dayOfWeek;
+    const day = rawDay !== null && rawDay !== undefined && rawDay !== '' ? Number(rawDay) : null;
+    if (day === null || isNaN(day) || !this.availabilityForm.startTime || !this.availabilityForm.endTime) {
       this.toast.warning('Preencha dia, início e fim');
       return;
     }
     this.savingAvailability.set(true);
-    this.api.post('/availability', this.availabilityForm).subscribe({
+    const payload = {
+      ...this.availabilityForm,
+      dayOfWeek: day,
+    };
+    this.api.post('/availability', payload).subscribe({
       next: () => {
         this.savingAvailability.set(false);
         this.showAvailabilityForm.set(false);

@@ -3858,3 +3858,9 @@ npm run start
   - **Backend (`whatsapp-client.service.ts`):** Suporte automático a `data.base64` e `data.qrcode.base64`, formatação do prefixo `data:image/png;base64,` e auto-retry interno com até 3 tentativas de 1.5s enquanto o Baileys emite o primeiro frame.
   - **Frontend (`whatsapp-config.component.ts`):** Polling contínuo e silencioso a cada 2.5s enquanto o modal estiver aberto, detecção imediata do status `open` (conectado) para alternar a tela para sucesso automaticamente assim que a Dra. Vilma apontar o celular.
   - **Evolution API (`docker-compose.prod.yml`):** Atualizada imagem da Evolution API para `v2.3.7` (com suporte ao handshake Baileys recente do WhatsApp) e `DEL_INSTANCE: "true"` para evitar locks de instância no banco.
+
+#### Correção de Validação e Conversão de Data/Horário (Disponibilidade e Sessões)
+- **Problema:** Ao cadastrar horário de atendimento/disponibilidade no perfil (`/app/configuracoes`), ocorria erro de validação ("Expected number, received string"). No cadastro de sessões, valores de data em formato string disparavam erro do Prisma ("Provided String, expected DateTime").
+- **Soluções:**
+  - **Disponibilidade (`availability.ts` e `configuracoes.component.ts`):** Adicionado `z.coerce.number()` e normalização de horários (`startTime`/`endTime`). No frontend, conversão explícita de `dayOfWeek` para número antes do envio e suporte pleno a Domingo (`dayOfWeek: 0`).
+  - **Sessões (`sessoes.ts`):** Conversão automática de strings de data para objetos `Date` válidos aceitos pelo Prisma e atribuição dinâmica do ID do usuário autenticado caso venha como `'system'`.
