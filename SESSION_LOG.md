@@ -1,6 +1,42 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 05 de Novembro de 2026
+## Última Atualização: 06 de Novembro de 2026
+
+## Sessão 87 - 06/11/2026 — Correção no Salvamento de Paciente Escaneado via IA e Otimização do Layout Touch para iPad (Visibilidade Total dos Botões de Ação sem Scroll Horizontal)
+
+### O que foi feito
+
+#### 1. Correção no Salvamento de Paciente via Ficha Digitalizada com IA (`backend/src/routes/pacientes.ts` e `paciente-form.component.ts`)
+- **Diagnóstico das Causas Raízes:**
+  - **Violação de Foreign Key (`P2003`):** No formulário de paciente (`paciente-form.component.ts`), quando nenhuma escola ou responsável era vinculado, enviava-se `schoolId: ""` ou `responsavelId: ""`. O backend não sanitizava strings vazias para `null`, fazendo o Prisma tentar vincular a uma chave estrangeira com ID `""` inexistente, provocando falha `500 Internal Server Error`.
+  - **Campos Omitidos no Zod Schema (`pacienteSchema`):** `schoolId`, `responsibleId` e `rg` não estavam presentes em `basePacienteFields`. O middleware `validate(schema)` (que faz `req.body = result.data`) descartava silenciosamente esses campos do payload recebido.
+  - **Rejeição por Validação Estrita de E-mail:** A regra `z.string().email()` rejeitava cadastros se o OCR extraísse anotações manuscritas imperfeitas no campo de e-mail (como notas "não possui" ou espaços).
+  - **Interrupção de UX no Formulário:** Ao concluir o scanner, se um novo responsável era detectado, abria-se imediatamente a modal "Novo Responsável" com botão "Salvar Responsável". O usuário salvava o responsável com sucesso, mas o formulário do paciente permanecia em segundo plano sem botão de salvar no cabeçalho superior (o botão ficava oculto no final da rolagem da página).
+- **Correções Aplicadas:**
+  - **Backend (`pacientes.ts`):**
+    - Adicionados `rg`, `schoolId`, `responsibleId`, `responsavelId`, `age` e `initials` ao `basePacienteFields`.
+    - `email` flexibilizado no schema para evitar rejeições indevidas.
+    - Sanitização em `sanitizePacienteInput`: conversão automática de `schoolId` e `responsibleId` em branco/vazios para `null`, sanitização inteligente de e-mail e descarte de campos não existentes no modelo Prisma (`guardianName`, `guardianPhone`).
+    - Adicionado bloco `try / catch` robusto com logs descritivos em `POST /pacientes` e `PUT /pacientes/:id`.
+  - **Frontend (`paciente-form.component.ts`):**
+    - `save()`: Envio correto de `rg`, normalização de `schoolId` e `responsavelId` para `null` caso vazios, e exibição da mensagem de erro exata vinda da API.
+    - **Botão de Ação no Topo:** Adicionado botão proeminente "Salvar Paciente" no cabeçalho superior da tela (ao lado de "Voltar" e "Escanear Ficha"), eliminando a necessidade de rolar até o rodapé em iPads e celulares.
+    - **Ação Rápida no Banner de IA:** Quando campos são preenchidos via IA, o banner agora exibe o botão direto "Salvar Paciente Agora".
+    - **Modal de Responsável Guiada:** Adicionado aviso explicativo na modal ("Identificamos o responsável na ficha. Ao salvar, ele será vinculado a este paciente") e mensagem de sucesso instruindo o clique em "Salvar Paciente".
+
+#### 2. Layout Touch Responsivo para iPad e Telas Médias (`responsaveis-list`, `pacientes-list`, `escolas-list`)
+- **Problema Reportado:** No iPad (Safari), ao abrir a listagem de responsáveis, era necessário arrastar/scrollar horizontalmente com o dedo para conseguir ver os botões de ação (Editar, Desativar, Excluir).
+- **Causa Raiz Identificada:** A tabela desktop era ativada a partir do breakpoint `md` (768px). Como a largura em modo retrato do iPad (768px a 834px) aciona `md:block` e a tabela tinha largura mínima de `820px` a `840px`, as colunas de ação transbordavam para fora do viewport do iPad.
+- **Solução Implementada:**
+  - **Breakpoint Refinado para `lg` (1024px+):** A tabela ampla agora é exibida apenas em telas desktop e iPad em modo paisagem (`hidden lg:block`), com paddings otimizados (`px-4 xl:px-6`).
+  - **Grid de Cards Elegante para Tablet/iPad (`block lg:hidden`):** Telas até 1023px (incluindo iPad em modo retrato) exibem cards modernos em grid de 2 colunas (`md:grid-cols-2 gap-4`), onde cada card apresenta todos os dados e os 4 botões de ação (`Ver`, `Editar`, `Ativar/Desativar`, `Excluir`) 100% visíveis na tela, sem necessidade de rolagem horizontal com o dedo.
+  - **Padronização em Todos os Cadastros:** Aplicado em `responsaveis-list.component.ts`, `pacientes-list.component.ts` e `escolas-list.component.ts`.
+
+#### 3. Validação Técnica
+- **Backend:** Compilação TypeScript com `npm --prefix backend run build` (0 erros).
+- **Frontend:** Compilação de produção com `npx ng build` (0 erros, 100% dos bundles gerados).
+
+---
 
 ## Sessão 85 - 05/11/2026 — Descoberta Dinâmica de Modelos na Validação de Chave do Google AI Studio (Eliminação do Teste com Modelos Descontinuados 1.5)
 

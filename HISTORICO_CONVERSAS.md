@@ -2,13 +2,37 @@
 
 > **Repositório:** `https://github.com/amakurt/clone-psicopedagoga.git`  
 > **Branch Principal:** `main`  
-> **Última Atualização:** 04 de Novembro de 2026
+> **Última Atualização:** 06 de Novembro de 2026
 
 ---
 
 ## 📌 Sumário Executivo
 
 Este documento consolida o histórico cronológico de conversas, decisões técnicas, arquitetura implementada e procedimentos de teste do projeto **EduPsych Pro Clone**.
+
+---
+
+## 💬 Sessão 87: 06 de Novembro de 2026
+
+### 1. Interação do Usuário: Salvamento de Paciente Escaneado via IA e Ajuste de Ações no iPad
+- **Solicitação do Usuário:**  
+  *"Está funcionando a parte de scanear, porém só está salvando o responsável o paciente não, testei duas vezes e oura coisa ao entrar em responsável onde fica os botões de de ação como editar, desativar e demais tem que scrollar com dedo pra ver as outras opções na tela do ipad"*
+- **Decisões & Implementações:**
+  - **Diagnóstico do Salvamento de Paciente:**
+    1. Foreign Key Crash (`P2003`): `schoolId` vazio era enviado como `""`. No backend, isso tentava referenciar uma escola com ID `""` inexistente, provocando erro 500 no Prisma.
+    2. Validador Zod descartando campos: `schoolId`, `responsibleId` e `rg` não constavam em `basePacienteFields`.
+    3. Rejeição de E-mail: A validação estrita `.email()` falhava quando notas manuscritas continham imperfeições.
+    4. UX de Salvamento: A modal de responsável abria sobre o formulário; ao salvá-lo, o usuário não via botão claro no topo para concluir o salvamento do paciente (estava apenas no rodapé).
+  - **Solução no Backend & Frontend:**
+    - Sanitização de chaves estrangeiras: strings vazias convertidas para `null`.
+    - Campos `rg`, `schoolId`, `responsibleId`, `age` adicionados ao Zod schema e tratados com segurança.
+    - Adicionado botão proeminente "Salvar Paciente" no cabeçalho superior do formulário e botão direto "Salvar Paciente Agora" no banner da IA.
+    - Modal de responsável com aviso orientando a salvar o responsável e em seguida concluir a ficha do paciente.
+  - **Diagnóstico & Solução de Rolagem no iPad:**
+    - A tabela desktop ativava em `md` (768px), enquanto telas de iPad em modo retrato possuem 768px a 834px de largura. Com tabela de largura mínima de 820px, a coluna de ações ficava para fora da tela.
+    - Ajustado breakpoint para `lg` (1024px+): no iPad e tablets em modo retrato, o sistema agora exibe um grid elegante de 2 colunas de cards (`md:grid-cols-2`), com todos os 4 botões de ação (`Ver`, `Editar`, `Ativar/Desativar`, `Excluir`) 100% visíveis, sem exigir nenhuma rolagem com o dedo.
+    - Padronizado em `responsaveis-list`, `pacientes-list` e `escolas-list`.
+  - **Validação:** Backend e Frontend compilados com 0 erros.
 
 ---
 

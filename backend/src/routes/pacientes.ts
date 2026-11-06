@@ -11,32 +11,35 @@ router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 const basePacienteFields = {
   name: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
+  email: z.string().optional().or(z.literal('')).nullable(),
+  phone: z.string().optional().or(z.literal('')).nullable(),
   phoneIsWhatsApp: z.coerce.boolean().optional(),
-  cpf: z.string().optional().or(z.literal('')),
-  birthDate: z.string().optional().or(z.literal('')),
-  guardianName: z.string().optional().or(z.literal('')),
-  guardianPhone: z.string().optional().or(z.literal('')),
-  school: z.string().optional().or(z.literal('')),
-  grade: z.string().optional().or(z.literal('')),
-  schoolShift: z.string().optional().or(z.literal('')),
-  diagnosis: z.string().optional().or(z.literal('')),
-  medications: z.string().optional().or(z.literal('')),
-  allergies: z.string().optional().or(z.literal('')),
-  notes: z.string().optional().or(z.literal('')),
-  responsavelId: z.string().optional().or(z.literal('')),
-  accessCode: z.string().optional().or(z.literal('')),
+  cpf: z.string().optional().or(z.literal('')).nullable(),
+  rg: z.string().optional().or(z.literal('')).nullable(),
+  birthDate: z.string().optional().or(z.literal('')).nullable(),
+  age: z.string().optional().or(z.literal('')).nullable(),
+  initials: z.string().optional().or(z.literal('')).nullable(),
+  schoolId: z.string().optional().or(z.literal('')).nullable(),
+  responsibleId: z.string().optional().or(z.literal('')).nullable(),
+  responsavelId: z.string().optional().or(z.literal('')).nullable(),
+  school: z.string().optional().or(z.literal('')).nullable(),
+  grade: z.string().optional().or(z.literal('')).nullable(),
+  schoolShift: z.string().optional().or(z.literal('')).nullable(),
+  diagnosis: z.string().optional().or(z.literal('')).nullable(),
+  medications: z.string().optional().or(z.literal('')).nullable(),
+  allergies: z.string().optional().or(z.literal('')).nullable(),
+  notes: z.string().optional().or(z.literal('')).nullable(),
+  accessCode: z.string().optional().or(z.literal('')).nullable(),
   active: z.boolean().optional(),
   status: z.string().optional(),
   color: z.string().optional(),
-  cep: z.string().optional().or(z.literal('')),
-  street: z.string().optional().or(z.literal('')),
-  neighborhood: z.string().optional().or(z.literal('')),
-  number: z.string().optional().or(z.literal('')),
-  complement: z.string().optional().or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
-  state: z.string().optional().or(z.literal('')),
+  cep: z.string().optional().or(z.literal('')).nullable(),
+  street: z.string().optional().or(z.literal('')).nullable(),
+  neighborhood: z.string().optional().or(z.literal('')).nullable(),
+  number: z.string().optional().or(z.literal('')).nullable(),
+  complement: z.string().optional().or(z.literal('')).nullable(),
+  city: z.string().optional().or(z.literal('')).nullable(),
+  state: z.string().optional().or(z.literal('')).nullable(),
   avatarUrl: z.string().optional().or(z.literal('')).nullable(),
   avatar: z.string().optional().or(z.literal('')).nullable(),
 };
@@ -48,6 +51,8 @@ function sanitizePacienteInput(body: any) {
   const {
     address,
     responsavelId,
+    responsibleId,
+    schoolId,
     tenantId,
     id,
     createdAt,
@@ -75,6 +80,8 @@ function sanitizePacienteInput(body: any) {
     consentLogs,
     responsible,
     school,
+    guardianName,
+    guardianPhone,
     ...data
   } = body;
 
@@ -84,8 +91,29 @@ function sanitizePacienteInput(body: any) {
     Object.assign(data, address);
   }
 
-  if (responsavelId !== undefined) {
-    data.responsibleId = responsavelId ? String(responsavelId) : null;
+  // Normaliza responsibleId: se vazio ou em branco, fica null para não violar foreign key
+  const finalRespId = responsavelId !== undefined ? responsavelId : (responsibleId !== undefined ? responsibleId : data.responsibleId);
+  if (finalRespId !== undefined) {
+    const trimmed = String(finalRespId || '').trim();
+    data.responsibleId = trimmed.length > 0 ? trimmed : null;
+  }
+  delete data.responsavelId;
+
+  // Normaliza schoolId: se vazio ou em branco, fica null para não violar foreign key
+  const finalSchoolId = schoolId !== undefined ? schoolId : data.schoolId;
+  if (finalSchoolId !== undefined) {
+    const trimmed = String(finalSchoolId || '').trim();
+    data.schoolId = trimmed.length > 0 ? trimmed : null;
+  }
+
+  // Normaliza email
+  if (data.email !== undefined) {
+    const emailStr = String(data.email || '').trim();
+    if (emailStr.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+      data.email = emailStr;
+    } else {
+      data.email = null;
+    }
   }
 
   // Suporte a avatar / avatarUrl
@@ -96,6 +124,14 @@ function sanitizePacienteInput(body: any) {
     data.avatarUrl = null;
   }
   delete data.avatar;
+
+  // Garante strings limpas para campos de texto opcionais
+  const stringFields = ['cpf', 'rg', 'birthDate', 'grade', 'schoolShift', 'diagnosis', 'medications', 'allergies', 'notes', 'accessCode', 'cep', 'street', 'neighborhood', 'number', 'complement', 'city', 'state'];
+  for (const f of stringFields) {
+    if (data[f] !== undefined && data[f] !== null) {
+      data[f] = String(data[f]);
+    }
+  }
 
   return data;
 }
@@ -133,20 +169,30 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', validate(pacienteSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  await enforcePlanLimits(req.user!.tenantId || '', 'paciente');
-  const data = sanitizePacienteInput(req.body);
-  const paciente = await db.paciente.create({ data });
-  res.status(201).json({ ...paciente, avatar: paciente.avatarUrl });
+  try {
+    await enforcePlanLimits(req.user!.tenantId || '', 'paciente');
+    const data = sanitizePacienteInput(req.body);
+    const paciente = await db.paciente.create({ data });
+    res.status(201).json({ ...paciente, avatar: paciente.avatarUrl });
+  } catch (err: any) {
+    console.error('[ERRO POST /pacientes]:', err);
+    res.status(500).json({ error: 'Erro ao cadastrar paciente: ' + (err?.message || 'Erro interno') });
+  }
 });
 
 router.put('/:id', validate(pacienteUpdateSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const data = sanitizePacienteInput(req.body);
-  const paciente = await db.paciente.update({
-    where: { id: req.params.id },
-    data,
-  });
-  res.json({ ...paciente, avatar: paciente.avatarUrl });
+  try {
+    const data = sanitizePacienteInput(req.body);
+    const paciente = await db.paciente.update({
+      where: { id: req.params.id },
+      data,
+    });
+    res.json({ ...paciente, avatar: paciente.avatarUrl });
+  } catch (err: any) {
+    console.error('[ERRO PUT /pacientes]:', err);
+    res.status(500).json({ error: 'Erro ao atualizar paciente: ' + (err?.message || 'Erro interno') });
+  }
 });
 
 router.patch('/:id/avatar', async (req, res) => {

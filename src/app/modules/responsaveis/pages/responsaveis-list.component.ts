@@ -62,22 +62,22 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
             }
           </div>
         } @else {
-          <!-- Desktop & iPad Table (md and up) -->
-          <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-            <table class="w-full text-left border-collapse min-w-[820px]">
+          <!-- Desktop Table (lg and up) -->
+          <div class="hidden lg:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-left border-collapse min-w-[780px] xl:min-w-0">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Responsável</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Parentesco</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Contato</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right min-w-[280px]">Ações</th>
+                  <th class="px-4 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Responsável</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Parentesco</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Contato</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                  <th class="px-4 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 @for (r of filteredItems(); track r.id) {
                   <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                    <td class="px-6 py-4">
+                    <td class="px-4 xl:px-6 py-4">
                       <div class="flex items-center gap-3">
                         <div class="size-10 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-800 shrink-0"
                           [style.background]="r.avatarUrl ? 'transparent' : getAvatarColor(r.name)">
@@ -93,12 +93,12 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                         </div>
                       </div>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-3 xl:px-6 py-4">
                       <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                         {{ r.relationship || 'Responsável' }}
                       </span>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-3 xl:px-6 py-4">
                       <div class="flex items-center gap-2">
                         @if (r.phoneIsWhatsApp) {
                           <span class="size-2 rounded-full bg-emerald-500 shrink-0" title="WhatsApp disponível"></span>
@@ -106,14 +106,14 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                         <span class="text-sm text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">{{ r.phones || '—' }}</span>
                       </div>
                     </td>
-                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                    <td class="px-3 xl:px-6 py-4 text-center whitespace-nowrap">
                       <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
                         [class]="(r.active ?? true) ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
                         <span class="size-1.5 rounded-full" [class]="(r.active ?? true) ? 'bg-emerald-500' : 'bg-slate-400'"></span>
                         {{ (r.active ?? true) ? 'Ativo' : 'Inativo' }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                    <td class="px-4 xl:px-6 py-4 text-right whitespace-nowrap">
                       <div class="flex items-center justify-end gap-1.5 flex-nowrap">
                         <!-- Visualizar -->
                         <a [routerLink]="['/app/responsaveis', r.id]" 
@@ -163,80 +163,84 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
             </table>
           </div>
 
-          <!-- Mobile & Touch Cards -->
-          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-            @for (r of filteredItems(); track r.id) {
-              <div class="p-4 space-y-3">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <div class="size-11 rounded-full overflow-hidden flex items-center justify-center text-sm font-black text-white shadow-sm shrink-0"
-                      [style.background]="r.avatarUrl ? 'transparent' : getAvatarColor(r.name)">
-                      @if (r.avatarUrl) {
-                        <img [src]="r.avatarUrl" [alt]="r.name" class="size-full object-cover">
-                      } @else {
-                        {{ getInitials(r.name) }}
-                      }
+          <!-- Mobile & iPad Portrait Cards (Telas menores que 1024px) -->
+          <div class="block lg:hidden p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @for (r of filteredItems(); track r.id) {
+                <div class="bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl p-4 ring-1 ring-slate-200/70 dark:ring-slate-800 space-y-3 flex flex-col justify-between shadow-xs">
+                  <div class="space-y-3">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="size-11 rounded-full overflow-hidden flex items-center justify-center text-sm font-black text-white shadow-sm shrink-0"
+                          [style.background]="r.avatarUrl ? 'transparent' : getAvatarColor(r.name)">
+                          @if (r.avatarUrl) {
+                            <img [src]="r.avatarUrl" [alt]="r.name" class="size-full object-cover">
+                          } @else {
+                            {{ getInitials(r.name) }}
+                          }
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ r.name }}</h4>
+                          <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ r.email || 'Sem e-mail cadastrado' }}</p>
+                        </div>
+                      </div>
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0"
+                        [class]="(r.active ?? true) ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
+                        {{ (r.active ?? true) ? 'Ativo' : 'Inativo' }}
+                      </span>
                     </div>
-                    <div class="min-w-0 flex-1">
-                      <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ r.name }}</h4>
-                      <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ r.email || 'Sem e-mail cadastrado' }}</p>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-white dark:bg-slate-800/70 p-2.5 rounded-xl ring-1 ring-slate-200/50 dark:ring-slate-700/50">
+                      <div>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase block">Contato</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate">
+                          @if (r.phoneIsWhatsApp) {
+                            <span class="size-2 rounded-full bg-emerald-500 shrink-0"></span>
+                          }
+                          {{ r.phones || '—' }}
+                        </span>
+                      </div>
+                      <div>
+                        <span class="text-[10px] font-bold text-slate-500 uppercase block">Parentesco</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ r.relationship || 'Responsável' }}</span>
+                      </div>
                     </div>
                   </div>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0"
-                    [class]="(r.active ?? true) ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
-                    {{ (r.active ?? true) ? 'Ativo' : 'Inativo' }}
-                  </span>
-                </div>
 
-                <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-2xl">
-                  <div>
-                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Contato</span>
-                    <span class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate">
-                      @if (r.phoneIsWhatsApp) {
-                        <span class="size-2 rounded-full bg-emerald-500 shrink-0"></span>
-                      }
-                      {{ r.phones || '—' }}
-                    </span>
-                  </div>
-                  <div>
-                    <span class="text-[10px] font-bold text-slate-500 uppercase block">Parentesco</span>
-                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate block">{{ r.relationship || 'Responsável' }}</span>
+                  <!-- 4 Ações no Card: 100% visíveis, sem necessidade de scroll no iPad e celular -->
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <a [routerLink]="['/app/responsaveis', r.id]"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                      <span class="material-icons text-[16px]">visibility</span>
+                      <span>Ver</span>
+                    </a>
+                    <a [routerLink]="['/app/responsaveis', r.id, 'editar']"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                      <span class="material-icons text-[16px]">edit</span>
+                      <span>Editar</span>
+                    </a>
+                    @if (r.active ?? true) {
+                      <button (click)="confirmToggleStatus(r)"
+                        class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                        <span class="material-icons text-[16px]">pause_circle</span>
+                        <span>Desativar</span>
+                      </button>
+                    } @else {
+                      <button (click)="confirmToggleStatus(r)"
+                        class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                        <span class="material-icons text-[16px]">play_circle</span>
+                        <span>Ativar</span>
+                      </button>
+                    }
+                    <button (click)="confirmDelete(r)"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                      <span class="material-icons text-[16px]">delete</span>
+                      <span>Excluir</span>
+                    </button>
                   </div>
                 </div>
-
-                <!-- 4 Ações no Card Mobile -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                  <a [routerLink]="['/app/responsaveis', r.id]"
-                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
-                    <span class="material-icons text-[16px]">visibility</span>
-                    <span>Ver</span>
-                  </a>
-                  <a [routerLink]="['/app/responsaveis', r.id, 'editar']"
-                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
-                    <span class="material-icons text-[16px]">edit</span>
-                    <span>Editar</span>
-                  </a>
-                  @if (r.active ?? true) {
-                    <button (click)="confirmToggleStatus(r)"
-                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all">
-                      <span class="material-icons text-[16px]">pause_circle</span>
-                      <span>Desativar</span>
-                    </button>
-                  } @else {
-                    <button (click)="confirmToggleStatus(r)"
-                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all">
-                      <span class="material-icons text-[16px]">play_circle</span>
-                      <span>Ativar</span>
-                    </button>
-                  }
-                  <button (click)="confirmDelete(r)"
-                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all">
-                    <span class="material-icons text-[16px]">delete</span>
-                    <span>Excluir</span>
-                  </button>
-                </div>
-              </div>
-            }
+              }
+            </div>
           </div>
         }
       </div>

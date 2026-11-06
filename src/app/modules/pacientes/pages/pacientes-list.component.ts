@@ -85,17 +85,17 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
             }
           </div>
         } @else {
-          <!-- Desktop & Tablet Table (md and up, com rolagem horizontal touch fluida para iPad) -->
-          <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-            <table class="w-full text-left border-collapse min-w-[840px]">
+          <!-- Desktop Table (lg and up) -->
+          <div class="hidden lg:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-left border-collapse min-w-[780px] xl:min-w-0">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Idade</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Instituição</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Portal Pais</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right min-w-[280px]">Ações</th>
+                  <th class="px-4 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Paciente</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Idade</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Instituição</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Portal Pais</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                  <th class="px-4 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -205,10 +205,12 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
             </table>
           </div>
 
-          <!-- Cards Mobile (telas menores que md) -->
-          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          <!-- Cards Mobile & iPad Portrait (telas menores que 1024px) -->
+          <div class="block lg:hidden p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @for (p of items(); track p.id) {
-              <div class="p-4 space-y-3">
+              <div class="bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl p-4 ring-1 ring-slate-200/70 dark:ring-slate-800 space-y-3 flex flex-col justify-between shadow-xs">
+                <div class="space-y-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex items-center gap-3 min-w-0 flex-1">
                     <div class="size-11 rounded-full flex items-center justify-center text-sm font-black text-white shadow-sm shrink-0 overflow-hidden"
@@ -252,8 +254,9 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
                   }
                 </div>
 
-                <!-- 4 Ações no Card Mobile / Touch -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                </div>
+                <!-- 4 Ações no Card: 100% visíveis, sem scroll no iPad e celular -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                   <a [routerLink]="['/app/pacientes', p.id]"
                     class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
                     <span class="material-icons text-[16px]">visibility</span>
@@ -285,6 +288,7 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
                 </div>
               </div>
             }
+            </div>
           </div>
         }
       </div>

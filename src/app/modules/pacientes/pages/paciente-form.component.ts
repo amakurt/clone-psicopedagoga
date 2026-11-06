@@ -24,6 +24,15 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ isEdit ? 'Atualize os dados do paciente' : 'Preencha os dados para cadastrar' }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
+          <button type="button" (click)="save()" [disabled]="saving()"
+            class="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-on-primary rounded-2xl text-sm font-bold shadow-xl shadow-primary/20 active:scale-95 transition-all disabled:opacity-50">
+            @if (saving()) {
+              <div class="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            } @else {
+              <span class="material-icons text-lg">save</span>
+            }
+            <span>{{ saving() ? 'Salvando...' : (isEdit ? 'Salvar Alterações' : 'Salvar Paciente') }}</span>
+          </button>
           <button type="button" (click)="showScannerModal.set(true)"
             class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white rounded-2xl text-sm font-bold shadow-lg shadow-teal-600/20 active:scale-95 transition-all">
             <span class="material-icons text-lg">document_scanner</span>
@@ -105,15 +114,22 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
                 </div>
                 <div>
                   <p class="text-xs font-bold text-teal-900 dark:text-teal-200">Ficha interpretada via Inteligência Artificial</p>
-                  <p class="text-[11px] text-teal-700 dark:text-teal-400">Campos preenchidos automaticamente. Revise os dados antes de salvar.</p>
+                  <p class="text-[11px] text-teal-700 dark:text-teal-400">Campos preenchidos automaticamente. Revise os dados e clique em salvar.</p>
                 </div>
               </div>
-              @if (scanOriginalUrl()) {
-                <a [href]="scanOriginalUrl()" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 text-xs font-bold ring-1 ring-teal-200 dark:ring-teal-700/60 flex items-center gap-1.5 hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors shrink-0 shadow-xs">
-                  <span class="material-icons text-sm">visibility</span>
-                  <span>Ver Ficha Original</span>
-                </a>
-              }
+              <div class="flex flex-wrap items-center gap-2 shrink-0">
+                @if (scanOriginalUrl()) {
+                  <a [href]="scanOriginalUrl()" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 text-xs font-bold ring-1 ring-teal-200 dark:ring-teal-700/60 flex items-center gap-1.5 hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors shrink-0 shadow-xs">
+                    <span class="material-icons text-sm">visibility</span>
+                    <span>Ver Ficha Original</span>
+                  </a>
+                }
+                <button type="button" (click)="save()" [disabled]="saving()"
+                  class="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all disabled:opacity-50">
+                  <span class="material-icons text-sm">check_circle</span>
+                  <span>{{ saving() ? 'Salvando...' : 'Salvar Paciente Agora' }}</span>
+                </button>
+              </div>
             </div>
           }
 
@@ -365,6 +381,10 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
             </button>
           </div>
           <div class="p-6 space-y-4">
+            <div class="p-3 bg-teal-50 dark:bg-teal-950/40 rounded-xl border border-teal-200 dark:border-teal-800/80 flex items-center gap-2.5 text-xs text-teal-800 dark:text-teal-200">
+              <span class="material-icons text-base text-teal-600 dark:text-teal-400">info</span>
+              <span>Identificamos o responsável na ficha. Ao salvar, ele será vinculado a este paciente.</span>
+            </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome *</label>
               <input [(ngModel)]="newResponsavel.name" 
@@ -413,7 +433,7 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
               @if (savingNewResponsavel()) {
                 <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               }
-              {{ savingNewResponsavel() ? 'Salvando...' : 'Salvar Responsável' }}
+              {{ savingNewResponsavel() ? 'Salvando...' : 'Salvar e Vincular ao Paciente' }}
             </button>
           </div>
         </div>
@@ -606,6 +626,7 @@ export class PacienteFormComponent implements OnInit {
         this.showNewResponsavelModal.set(false);
         this.savingNewResponsavel.set(false);
         this.resetNewResponsavel();
+        this.toast.success('Responsável ' + res.name + ' cadastrado e vinculado! Agora clique em "Salvar Paciente" para concluir.');
       },
       error: () => {
         this.savingNewResponsavel.set(false);
@@ -753,17 +774,19 @@ export class PacienteFormComponent implements OnInit {
       phone: this.form.phone || '',
       phoneIsWhatsApp: this.form.phoneIsWhatsApp || false,
       cpf: this.form.cpf || '',
+      rg: this.form.rg || '',
       birthDate: this.form.birthDate || '',
       grade: this.form.grade || '',
       schoolShift: this.form.schoolShift || '',
-      schoolId: this.form.schoolId || '',
+      schoolId: this.form.schoolId ? this.form.schoolId : null,
       active: this.form.active !== undefined ? this.form.active : true,
       diagnosis: this.form.diagnosis || '',
       medications: this.form.medications || '',
       allergies: this.form.allergies || '',
       notes: this.form.notes || '',
       accessCode: this.form.accessCode || '',
-      responsavelId: this.form.responsavelId || '',
+      responsavelId: this.form.responsavelId ? this.form.responsavelId : null,
+      responsibleId: this.form.responsavelId ? this.form.responsavelId : null,
       avatarUrl: this.form.avatarUrl !== undefined ? this.form.avatarUrl : (this.avatarPreview() || null),
       cep: this.form.address?.cep || '',
       street: this.form.address?.street || '',
@@ -780,9 +803,9 @@ export class PacienteFormComponent implements OnInit {
         this.toast.success(this.isEdit ? 'Paciente atualizado com sucesso!' : 'Paciente criado com sucesso!');
         this.router.navigate(['/app/pacientes']);
       },
-      error: () => { 
+      error: (err: any) => { 
         this.saving.set(false); 
-        this.toast.error('Erro ao salvar paciente'); 
+        this.toast.error(err?.error?.error || 'Erro ao salvar paciente'); 
       }
     });
   }

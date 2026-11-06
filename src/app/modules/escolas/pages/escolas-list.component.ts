@@ -62,22 +62,22 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
             }
           </div>
         } @else {
-          <!-- Desktop & iPad Table (md and up) -->
-          <div class="hidden md:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-            <table class="w-full text-left border-collapse min-w-[760px]">
+          <!-- Desktop Table (lg and up) -->
+          <div class="hidden lg:block overflow-x-auto custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
+            <table class="w-full text-left border-collapse min-w-[760px] xl:min-w-0">
               <thead>
                 <tr class="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Instituição</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Etapas / Níveis</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Alunos</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                  <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right min-w-[280px]">Ações</th>
+                  <th class="px-4 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Instituição</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Etapas / Níveis</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest">Alunos</th>
+                  <th class="px-3 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                  <th class="px-4 xl:px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest text-right">Ações</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 @for (e of filteredItems(); track e.id) {
                   <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                    <td class="px-6 py-4">
+                    <td class="px-4 xl:px-6 py-4">
                       <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                           <span class="material-icons text-xl">school</span>
@@ -95,7 +95,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                         </div>
                       </div>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-3 xl:px-6 py-4">
                       <div class="flex flex-wrap gap-1 max-w-[240px]">
                         @for (level of getLevels(e); track level) {
                           <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
@@ -104,17 +104,17 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                         }
                       </div>
                     </td>
-                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                    <td class="px-3 xl:px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
                       {{ e.patients?.length || e.patientCount || 0 }} paciente(s)
                     </td>
-                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                    <td class="px-3 xl:px-6 py-4 text-center whitespace-nowrap">
                       <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
                         [class]="e.status === 'Ativa' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
                         <span class="size-1.5 rounded-full" [class]="e.status === 'Ativa' ? 'bg-emerald-500' : 'bg-slate-400'"></span>
                         {{ e.status }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                    <td class="px-4 xl:px-6 py-4 text-right whitespace-nowrap">
                       <div class="flex items-center justify-end gap-1.5 flex-nowrap">
                         <a [routerLink]="['/app/escolas', e.id]" 
                           class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" 
@@ -160,58 +160,73 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
             </table>
           </div>
 
-          <!-- Cards Mobile / Touch -->
-          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-            @for (e of filteredItems(); track e.id) {
-              <div class="p-4 space-y-3">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <div class="size-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <span class="material-icons text-xl">school</span>
+          <!-- Cards Mobile & iPad Portrait (telas menores que 1024px) -->
+          <div class="block lg:hidden p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              @for (e of filteredItems(); track e.id) {
+                <div class="bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl p-4 ring-1 ring-slate-200/70 dark:ring-slate-800 space-y-3 flex flex-col justify-between shadow-xs">
+                  <div class="space-y-3">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="size-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <span class="material-icons text-xl">school</span>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <div class="flex items-center gap-1.5">
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ e.name }}</h4>
+                            @if (e.inep) {
+                              <span class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-primary/10 text-primary shrink-0">{{ e.inep }}</span>
+                            }
+                          </div>
+                          <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ e.city ? (e.city + (e.state ? '/' + e.state : '')) : 'Sem localização' }}</p>
+                        </div>
+                      </div>
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0"
+                        [class]="e.status === 'Ativa' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
+                        {{ e.status }}
+                      </span>
                     </div>
-                    <div class="min-w-0 flex-1">
-                      <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">{{ e.name }}</h4>
-                      <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ e.patients?.length || e.patientCount || 0 }} aluno(s) vinculados</p>
+
+                    <div class="text-xs bg-white dark:bg-slate-800/70 p-2.5 rounded-xl ring-1 ring-slate-200/50 dark:ring-slate-700/50 flex items-center justify-between">
+                      <span class="text-slate-500 font-medium">Alunos vinculados:</span>
+                      <span class="font-bold text-slate-800 dark:text-slate-200">{{ e.patients?.length || e.patientCount || 0 }} paciente(s)</span>
                     </div>
                   </div>
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0"
-                    [class]="e.status === 'Ativa' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'">
-                    {{ e.status }}
-                  </span>
-                </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                  <a [routerLink]="['/app/escolas', e.id]"
-                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
-                    <span class="material-icons text-[16px]">visibility</span>
-                    <span>Ver</span>
-                  </a>
-                  <a [routerLink]="['/app/escolas', e.id, 'editar']"
-                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all">
-                    <span class="material-icons text-[16px]">edit</span>
-                    <span>Editar</span>
-                  </a>
-                  @if (e.status === 'Ativa') {
-                    <button (click)="confirmToggleStatus(e)"
-                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all">
-                      <span class="material-icons text-[16px]">pause_circle</span>
-                      <span>Desativar</span>
+                  <!-- 4 Ações no Card: 100% visíveis, sem scroll no iPad e celular -->
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <a [routerLink]="['/app/escolas', e.id]"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                      <span class="material-icons text-[16px]">visibility</span>
+                      <span>Ver</span>
+                    </a>
+                    <a [routerLink]="['/app/escolas', e.id, 'editar']"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                      <span class="material-icons text-[16px]">edit</span>
+                      <span>Editar</span>
+                    </a>
+                    @if (e.status === 'Ativa') {
+                      <button (click)="confirmToggleStatus(e)"
+                        class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/70 dark:border-amber-900/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                        <span class="material-icons text-[16px]">pause_circle</span>
+                        <span>Desativar</span>
+                      </button>
+                    } @else {
+                      <button (click)="confirmToggleStatus(e)"
+                        class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                        <span class="material-icons text-[16px]">play_circle</span>
+                        <span>Ativar</span>
+                      </button>
+                    }
+                    <button (click)="confirmDelete(e)"
+                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs">
+                      <span class="material-icons text-[16px]">delete</span>
+                      <span>Excluir</span>
                     </button>
-                  } @else {
-                    <button (click)="confirmToggleStatus(e)"
-                      class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-900/60 rounded-xl text-xs font-bold transition-all">
-                      <span class="material-icons text-[16px]">play_circle</span>
-                      <span>Ativar</span>
-                    </button>
-                  }
-                  <button (click)="confirmDelete(e)"
-                    class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs font-bold transition-all">
-                    <span class="material-icons text-[16px]">delete</span>
-                    <span>Excluir</span>
-                  </button>
+                  </div>
                 </div>
-              </div>
-            }
+              }
+            </div>
           </div>
         }
       </div>
