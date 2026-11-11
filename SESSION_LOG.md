@@ -1,6 +1,36 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 06 de Novembro de 2026
+## Última Atualização: 11 de Novembro de 2026
+
+## Sessão 88 - 11/11/2026 — Eliminação de Dados Fictícios no DRE e Implementação de Modal de Relatórios com Navegação Segura para iPad
+
+### O que foi feito
+
+#### 1. Eliminação de Dados Fictícios nas Cobranças do DRE (`financeiro-dre.component.ts` e `backend/src/routes/financeiro.ts`)
+- **Problema Reportado:** No DRE (`/app/financeiro/dre`), a seção "Cobranças Automáticas do Mês" estava exibindo nomes de pacientes e valores falsos/mockados (Ana Silva, Carlos Souza, Maria Oliveira...), mesmo sem a profissional ter lançado nenhuma receita ainda.
+- **Causa Raiz:** O método `generateCobrancas()` continha um array mock com nomes fictícios e valores randômicos gerados via `Math.random()`.
+- **Solução Implementada:**
+  - Substituído `generateCobrancas()` pelo método `setCobrancasFromReceitas(receitas)`, que mapeia exclusivamente lançamentos e receitas reais da clínica para o mês e ano selecionados.
+  - Adicionado estado vazio (*Empty State*) acolhedor com ícone clínico e mensagem informativa: *"Nenhuma cobrança registrada neste mês. Quando você registrar sessões ou receitas para [Mês/Ano], elas serão listadas aqui com seus valores e status de pagamento."*
+  - Adicionado suporte a filtro por `month` e `year` na rota `GET /financeiro` no backend (`backend/src/routes/financeiro.ts`), complementado pela filtragem estrita no cliente.
+
+#### 2. Modal de Relatórios In-App e Navegação Segura sem Travamento no iPad (`financeiro-list.component.ts`, `financeiro-dre.component.ts` e `nfse.component.ts`)
+- **Problema Reportado:** Ao tocar em "Relatório" no Financeiro, o iPad abria uma página de impressão (`window.open` e `window.print`) sem botão de voltar, prendendo o usuário na tela sem conseguir retornar ao sistema (particularmente crítico no Safari em modo PWA / Adicionado à Tela de Início).
+- **Causa Raiz:** A ausência de suporte nativo ao `declare var html2pdf` em tempo de execução direcionava o fluxo para o fallback de `window.open('', '_blank')`, injetando HTML plano sem botões de controle ou navegação.
+- **Solução Implementada:**
+  - **Modal de Relatórios Integrado (In-App):** Tanto no Financeiro Geral quanto no DRE, ao clicar em "Relatório" ou em qualquer um dos 5 relatórios especializados (DRE, Extrato Mensal, Fluxo de Caixa, Inadimplência, Por Paciente), o documento é renderizado em uma modal dentro do próprio aplicativo com pré-visualização elegante.
+  - **Navegação Segura com Botões de Retorno Proeminentes:**
+    - Botão superior e inferior `← Voltar ao Financeiro` / `← Voltar ao DRE` com ícone de seta e estilo tátil otimizado para toque no iPad.
+    - Botão de fechar (✕).
+  - **Download de PDF sem Sair do App:** Implementada importação dinâmica de `html2pdf.js` (`import('html2pdf.js')`), gerando o download direto do PDF (A4 formatado) sem abrir telas externas.
+  - **Barra de Proteção para Impressão (`.no-print-bar`):** Caso o usuário opte por imprimir via nova janela, é injetada uma barra de navegação fixa no topo (`position: sticky; z-index: 9999`) com o botão `← Voltar ao Sistema` (`onclick="window.close(); history.back();"`), oculta automaticamente na impressão (`@media print { .no-print-bar { display: none !important; } }`).
+  - Padronização aplicada também aos comprovantes/recibos de pagamento (`generateReceipt`) e à visualização de NFS-e (`nfse.component.ts`).
+
+#### 3. Validação Técnica
+- **Backend:** Compilação TypeScript com `npm --prefix backend run build` (0 erros).
+- **Frontend:** Compilação de produção com `npx ng build` (0 erros, 100% dos bundles gerados).
+
+---
 
 ## Sessão 87 - 06/11/2026 — Correção no Salvamento de Paciente Escaneado via IA e Otimização do Layout Touch para iPad (Visibilidade Total dos Botões de Ação sem Scroll Horizontal)
 

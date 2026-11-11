@@ -25,8 +25,8 @@ declare var html2pdf: any;
         </div>
         <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           <button class="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-white dark:bg-slate-900 rounded-2xl text-xs sm:text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all text-slate-700 dark:text-slate-300 shadow-sm"
-            (click)="exportMonthlyReport()">
-            <span class="material-icons text-lg">picture_as_pdf</span> Relatório
+            (click)="openReportModal()">
+            <span class="material-icons text-lg text-primary">picture_as_pdf</span> Relatório
           </button>
           <button (click)="openExpenseModal()"
             class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl font-bold text-xs sm:text-sm shadow-lg shadow-red-600/20 transition-all active:scale-95">
@@ -640,6 +640,173 @@ declare var html2pdf: any;
       </div>
     }
 
+    <!-- Modal de Relatório Financeiro In-App (Com Botão Visível de Retorno p/ iPad) -->
+    @if (showReportModal()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto"
+        (click)="closeReportModal()">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden my-auto animate-in"
+          (click)="$event.stopPropagation()">
+          
+          <!-- Top Bar com Botão ← Voltar ao Financeiro -->
+          <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-800/50">
+            <div class="flex items-center gap-3">
+              <button (click)="closeReportModal()"
+                class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm">
+                <span class="material-icons text-base">arrow_back</span>
+                <span>Voltar ao Financeiro</span>
+              </button>
+              <div>
+                <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white">Relatório Financeiro</h3>
+                <p class="text-xs text-slate-500">{{ currentMonthYear() }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button (click)="printReportModal()"
+                class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold ring-1 ring-slate-200 dark:ring-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-all">
+                <span class="material-icons text-sm">print</span>
+                <span>Imprimir</span>
+              </button>
+              <button (click)="downloadReportPdf()"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-sm">
+                <span class="material-icons text-sm">download</span>
+                <span>Baixar PDF</span>
+              </button>
+              <button (click)="closeReportModal()"
+                class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
+                title="Fechar">
+                <span class="material-icons">close</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Printable Report Container -->
+          <div class="p-4 sm:p-8 max-h-[68vh] overflow-y-auto bg-slate-100/60 dark:bg-slate-950/60 custom-scrollbar">
+            <div id="financeiro-report-printable" class="bg-white text-slate-900 p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200 max-w-3xl mx-auto">
+              
+              <!-- Cabeçalho Clínico do Documento -->
+              <div class="flex items-center justify-between pb-6 border-b border-slate-200 mb-6">
+                <div class="flex items-center gap-3">
+                  @if (auth.tenant()?.logoUrl) {
+                    <img [src]="auth.tenant()?.logoUrl" alt="Logo" class="h-12 max-w-[160px] object-contain">
+                  }
+                  <div>
+                    <h2 class="text-xl font-black text-[#007F80]">{{ auth.tenant()?.name || 'EduPsych Pro' }}</h2>
+                    <p class="text-xs text-slate-500 font-medium">Clínica Multidisciplinar & Psicopedagogia</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {{ currentMonthYear() }}
+                  </span>
+                  <p class="text-[10px] text-slate-400 mt-1">Gerado em {{ currentDateFormatted() }}</p>
+                </div>
+              </div>
+
+              <!-- Título do Documento -->
+              <div class="mb-6">
+                <h3 class="text-lg font-black text-slate-900">Relatório Geral de Movimentações</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Consolidado de receitas, despesas e status de liquidação</p>
+              </div>
+
+              <!-- 4 Caixas Resumo -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                  <p class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Receitas Pagas</p>
+                  <p class="text-base font-black text-emerald-700 mt-0.5">{{ totalReceitas() | currency:'BRL' }}</p>
+                </div>
+                <div class="p-3 bg-red-50 rounded-xl border border-red-200 text-center">
+                  <p class="text-[10px] font-bold text-red-800 uppercase tracking-wider">Despesas Pagas</p>
+                  <p class="text-base font-black text-red-600 mt-0.5">{{ totalDespesas() | currency:'BRL' }}</p>
+                </div>
+                <div class="p-3 bg-rose-50 rounded-xl border border-rose-200 text-center">
+                  <p class="text-[10px] font-bold text-rose-800 uppercase tracking-wider">A Pagar</p>
+                  <p class="text-base font-black text-rose-700 mt-0.5">{{ aPagar() | currency:'BRL' }}</p>
+                </div>
+                <div class="p-3 bg-slate-100 rounded-xl border border-slate-300 text-center">
+                  <p class="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Saldo Atual</p>
+                  <p class="text-base font-black mt-0.5" [class]="saldo() >= 0 ? 'text-emerald-700' : 'text-red-600'">{{ saldo() | currency:'BRL' }}</p>
+                </div>
+              </div>
+
+              <!-- Tabela de Lançamentos -->
+              @if (filteredItems().length === 0) {
+                <p class="text-center text-slate-500 py-8 text-sm italic">Nenhum lançamento encontrado para a visualização atual.</p>
+              } @else {
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="bg-slate-100 border-b border-slate-300 font-bold text-slate-700">
+                      <th class="p-2.5">Data / Venc.</th>
+                      <th class="p-2.5">Identificação</th>
+                      <th class="p-2.5">Categoria</th>
+                      <th class="p-2.5">Tipo</th>
+                      <th class="p-2.5">Status</th>
+                      <th class="p-2.5 text-right">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    @for (item of filteredItems(); track item.id) {
+                      <tr>
+                        <td class="p-2.5 text-slate-500 whitespace-nowrap">{{ item.date | date:'dd/MM/yyyy' }}</td>
+                        <td class="p-2.5 font-medium text-slate-900">
+                          {{ item.type === 'despesa' ? (item.fornecedor || item.description || 'Despesa') : (item.paciente?.name || item.description || 'Receita') }}
+                        </td>
+                        <td class="p-2.5 text-slate-500">{{ getCategoryLabel(item.category) }}</td>
+                        <td class="p-2.5">
+                          <span class="px-2 py-0.5 rounded font-bold text-[10px]"
+                            [class]="item.type === 'receita' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'">
+                            {{ item.type === 'receita' ? 'Receita' : 'Despesa' }}
+                          </span>
+                        </td>
+                        <td class="p-2.5">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-bold"
+                            [class]="item.status === 'pago' ? 'text-emerald-700' : item.status === 'pendente' ? 'text-amber-700' : 'text-red-700'">
+                            {{ item.status | titlecase }}
+                          </span>
+                        </td>
+                        <td class="p-2.5 text-right font-bold whitespace-nowrap"
+                          [class]="item.type === 'receita' ? 'text-emerald-700' : 'text-red-600'">
+                          {{ (item.value || item.valor || 0) | currency:'BRL' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+
+              <!-- Rodapé Clínico Oficial -->
+              <div class="mt-8 pt-4 border-t border-slate-200 text-center text-[10px] text-slate-400">
+                <p>{{ auth.tenant()?.name || 'EduPsych Pro' }} — Gestão Financeira Clínica</p>
+                <p class="mt-0.5">Relatório confidencial gerado eletronicamente em {{ currentDateFormatted() }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Footer com Botão ← Fechar e Voltar ao Financeiro -->
+          <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-800/50">
+            <button (click)="closeReportModal()"
+              class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2">
+              <span class="material-icons text-base">arrow_back</span>
+              <span>Fechar e Voltar ao Financeiro</span>
+            </button>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button (click)="printReportModal()"
+                class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center gap-1.5 transition-all">
+                <span class="material-icons text-base">print</span>
+                <span>Imprimir</span>
+              </button>
+              <button (click)="downloadReportPdf()"
+                class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-primary text-white hover:bg-primary/90 flex items-center justify-center gap-1.5 shadow-sm transition-all">
+                <span class="material-icons text-base">download</span>
+                <span>Baixar em PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Toast Notification -->
     @if (showToast()) {
       <div class="fixed bottom-6 right-6 z-50 p-4 rounded-xl flex items-center gap-3 animate-in shadow-lg"
@@ -656,7 +823,7 @@ declare var html2pdf: any;
 export class FinanceiroListComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
 
   items = signal<any[]>([]);
   pacientes = signal<any[]>([]);
@@ -664,6 +831,9 @@ export class FinanceiroListComponent implements OnInit {
   searchTerm = '';
   filterStatus = '';
   activeTab = signal<'todos' | 'receita' | 'despesa'>('todos');
+
+  // Modal de Relatório In-App
+  showReportModal = signal(false);
 
   // Métricas
   totalReceitas = signal(0);
@@ -957,6 +1127,104 @@ export class FinanceiroListComponent implements OnInit {
     });
   }
 
+  // Controle do Modal de Relatório In-App
+  openReportModal() {
+    this.showReportModal.set(true);
+  }
+
+  closeReportModal() {
+    this.showReportModal.set(false);
+  }
+
+  currentMonthYear(): string {
+    return new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  }
+
+  currentDateFormatted(): string {
+    return new Date().toLocaleString('pt-BR');
+  }
+
+  // Baixar PDF do relatório usando html2pdf.js via dynamic import
+  downloadReportPdf() {
+    const el = document.getElementById('financeiro-report-printable');
+    if (!el) return;
+    this.showNotification('Gerando arquivo PDF...', 'info');
+
+    import('html2pdf.js').then((module: any) => {
+      const html2pdf = module.default || module;
+      html2pdf()
+        .set({
+          margin: [8, 8, 8, 8],
+          filename: `relatorio-financeiro-${new Date().getMonth() + 1}-${new Date().getFullYear()}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        })
+        .from(el)
+        .save()
+        .then(() => {
+          this.showNotification('PDF baixado com sucesso!', 'success');
+        })
+        .catch(() => {
+          this.showNotification('Erro ao baixar PDF. Tente imprimir.', 'error');
+        });
+    }).catch(() => {
+      this.printReportModal();
+    });
+  }
+
+  // Imprimir relatório com barra fixa "← Voltar ao Sistema" (salva-vidas no iPad PWA)
+  printReportModal() {
+    const el = document.getElementById('financeiro-report-printable');
+    if (!el) return;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8">
+          <title>Relatório Financeiro - ${this.currentMonthYear()}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * { box-sizing: border-box; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #fff; }
+            .no-print-bar {
+              position: sticky; top: 0; background: #0f172a; color: white; padding: 12px 20px;
+              display: flex; justify-content: space-between; align-items: center; z-index: 9999;
+              box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            }
+            .no-print-bar button {
+              background: #334155; color: white; border: none; padding: 10px 18px; border-radius: 10px;
+              font-weight: 700; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            }
+            .no-print-bar button:active { opacity: 0.8; }
+            .no-print-bar button.primary { background: #007F80; }
+            .report-wrapper { max-width: 800px; margin: 20px auto; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            @media print {
+              .no-print-bar { display: none !important; }
+              .report-wrapper { margin: 0; padding: 0; max-width: 100%; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="no-print-bar">
+            <button onclick="window.close(); history.back();">← Voltar ao Sistema</button>
+            <span style="font-weight: 700; font-size: 15px;">Relatório Financeiro</span>
+            <button class="primary" onclick="window.print();">🖨️ Imprimir</button>
+          </div>
+          <div class="report-wrapper">
+            ${el.innerHTML}
+          </div>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 350);
+    }
+  }
+
   // Recibo / Comprovante
   generateReceipt(item: any) {
     const isDespesa = item.type === 'despesa';
@@ -994,96 +1262,61 @@ export class FinanceiroListComponent implements OnInit {
       </div>
     `;
 
-    if (typeof html2pdf !== 'undefined') {
+    import('html2pdf.js').then((module: any) => {
+      const html2pdf = module.default || module;
       const element = document.createElement('div');
       element.innerHTML = receiptHtml;
-      html2pdf().from(element).set({ filename: `comprovante-${item.id}.pdf`, margin: 10 }).save();
-    } else {
+      html2pdf()
+        .set({
+          margin: 10,
+          filename: `comprovante-${item.id}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        })
+        .from(element)
+        .save()
+        .then(() => {
+          this.showNotification('Comprovante baixado com sucesso!', 'success');
+        });
+    }).catch(() => {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        printWindow.document.write(receiptHtml);
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html lang="pt-BR">
+          <head>
+            <meta charset="utf-8">
+            <title>${docTitle}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * { box-sizing: border-box; }
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; }
+              .no-print-bar { position: sticky; top: 0; background: #0f172a; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; }
+              .no-print-bar button { background: #334155; color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+              .no-print-bar button.primary { background: #007F80; }
+              @media print { .no-print-bar { display: none !important; } }
+            </style>
+          </head>
+          <body>
+            <div class="no-print-bar">
+              <button onclick="window.close(); history.back();">← Voltar ao Sistema</button>
+              <span style="font-weight: 700;">${docTitle}</span>
+              <button class="primary" onclick="window.print();">🖨️ Imprimir</button>
+            </div>
+            ${receiptHtml}
+          </body>
+          </html>
+        `);
         printWindow.document.close();
-        printWindow.print();
+        setTimeout(() => printWindow.print(), 350);
       }
-    }
-    this.showNotification('Comprovante gerado com sucesso!', 'success');
+    });
   }
 
-  // Relatório Mensal
+  // Alias para manter compatibilidade
   exportMonthlyReport() {
-    const now = new Date();
-    const monthName = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    const data = this.filteredItems();
-    const tenant = this.auth.tenant();
-    const clinicName = tenant?.name || 'EduPsych Pro';
-    const logoUrl = tenant?.logoUrl || '';
-
-    const reportHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px;">
-        <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 25px;">
-          ${logoUrl ? `<img src="${logoUrl}" alt="${clinicName}" style="max-height: 55px; max-width: 180px; object-fit: contain;">` : ''}
-          <div style="text-align: ${logoUrl ? 'left' : 'center'};">
-            <h1 style="color: #007F80; margin: 0; font-size: 22px;">${clinicName}</h1>
-            <h2 style="color: #333; margin: 4px 0 0; font-size: 16px;">Relatório Financeiro - ${monthName}</h2>
-          </div>
-        </div>
-        <div style="display: flex; gap: 15px; margin-bottom: 30px;">
-          <div style="flex: 1; padding: 15px; background: #D1FAE5; border-radius: 12px; text-align: center;">
-            <p style="margin: 0; color: #065F46; font-size: 11px;">RECEITAS PAGAS</p>
-            <p style="margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #065F46;">R$ ${this.totalReceitas().toFixed(2)}</p>
-          </div>
-          <div style="flex: 1; padding: 15px; background: #FEE2E2; border-radius: 12px; text-align: center;">
-            <p style="margin: 0; color: #991B1B; font-size: 11px;">DESPESAS PAGAS</p>
-            <p style="margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #991B1B;">R$ ${this.totalDespesas().toFixed(2)}</p>
-          </div>
-          <div style="flex: 1; padding: 15px; background: #FFE4E6; border-radius: 12px; text-align: center;">
-            <p style="margin: 0; color: #BE123C; font-size: 11px;">A PAGAR</p>
-            <p style="margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #BE123C;">R$ ${this.aPagar().toFixed(2)}</p>
-          </div>
-          <div style="flex: 1; padding: 15px; background: #DBEAFE; border-radius: 12px; text-align: center;">
-            <p style="margin: 0; color: #1E40AF; font-size: 11px;">SALDO ATUAL</p>
-            <p style="margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #1E40AF;">R$ ${this.saldo().toFixed(2)}</p>
-          </div>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <thead>
-            <tr style="background: #f8fafc;">
-              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">Data / Venc.</th>
-              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">Identificação</th>
-              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">Tipo</th>
-              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">Status</th>
-              <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e2e8f0;">Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map(item => `
-              <tr style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 10px;">${new Date(item.date).toLocaleDateString('pt-BR')}</td>
-                <td style="padding: 10px;">${escapeHtml(item.fornecedor || item.paciente?.name || item.description) || '—'}</td>
-                <td style="padding: 10px;">${item.type === 'receita' ? 'Receita' : 'Despesa'}</td>
-                <td style="padding: 10px;">${item.status === 'pago' ? 'Pago' : item.status === 'pendente' ? 'Pendente' : 'Atrasado'}</td>
-                <td style="padding: 10px; text-align: right; font-weight: bold; color: ${item.type === 'receita' ? '#10B981' : '#EF4444'};">R$ ${(parseFloat(item.value) || 0).toFixed(2)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <p style="text-align: center; color: #999; font-size: 11px; margin-top: 30px;">Relatório gerado em ${new Date().toLocaleString('pt-BR')}</p>
-      </div>
-    `;
-
-    if (typeof html2pdf !== 'undefined') {
-      const element = document.createElement('div');
-      element.innerHTML = reportHtml;
-      html2pdf().from(element).set({ filename: `relatorio-financeiro-${now.getMonth() + 1}-${now.getFullYear()}.pdf`, margin: 10 }).save();
-    } else {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(reportHtml);
-        printWindow.document.close();
-        printWindow.print();
-      }
-    }
-    this.showNotification('Relatório exportado com sucesso!', 'success');
+    this.openReportModal();
   }
 
   showNotification(message: string, type: string) {

@@ -292,7 +292,41 @@ export class NfseComponent implements OnInit {
       next: (res: any) => {
         const printWindow = window.open('', '_blank');
         if (printWindow) {
-          printWindow.document.write(res.html);
+          const content = `
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+              <meta charset="utf-8">
+              <title>NFS-e #${item.numero || item.id}</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                * { box-sizing: border-box; }
+                body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+                .no-print-bar {
+                  position: sticky; top: 0; background: #0f172a; color: white; padding: 12px 20px;
+                  display: flex; justify-content: space-between; align-items: center; z-index: 9999;
+                  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                }
+                .no-print-bar button {
+                  background: #334155; color: white; border: none; padding: 10px 18px; border-radius: 10px;
+                  font-weight: 700; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+                }
+                .no-print-bar button:active { opacity: 0.8; }
+                .no-print-bar button.primary { background: #007F80; }
+                @media print { .no-print-bar { display: none !important; } }
+              </style>
+            </head>
+            <body>
+              <div class="no-print-bar">
+                <button onclick="window.close(); history.back();">← Voltar ao Sistema</button>
+                <span style="font-weight: 700;">NFS-e #${item.numero || item.id}</span>
+                <button class="primary" onclick="window.print();">🖨️ Imprimir</button>
+              </div>
+              ${res.html || ''}
+            </body>
+            </html>
+          `;
+          printWindow.document.write(content);
           printWindow.document.close();
           setTimeout(() => printWindow.print(), 500);
         }

@@ -59,7 +59,7 @@ function normalizeOutput(r: any) {
 
 router.get('/', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const { type, status } = req.query;
+  const { type, status, month, year } = req.query;
 
   const where: any = {};
   if (type) {
@@ -72,6 +72,19 @@ router.get('/', async (req, res) => {
   }
   if (status) {
     where.status = String(status).toUpperCase();
+  }
+  if (month && year) {
+    const m = parseInt(String(month), 10);
+    const y = parseInt(String(year), 10);
+    if (!isNaN(m) && !isNaN(y)) {
+      const start = new Date(y, m - 1, 1, 0, 0, 0, 0);
+      const end = new Date(y, m, 0, 23, 59, 59, 999);
+      where.OR = [
+        { dataPagamento: { gte: start, lte: end } },
+        { dataVencimento: { gte: start, lte: end } },
+        { createdAt: { gte: start, lte: end } },
+      ];
+    }
   }
 
   const registros = await db.financeiroSessao.findMany({
