@@ -58,6 +58,7 @@ model Tenant {
   sessionDiaries      SessionDiary[]
   frequencySheets     FrequencySheet[]
   interventionDocuments InterventionDocument[]
+  documentTemplates    DocumentTemplate[]
   consentLogs          ConsentLog[]
   nfse                 Nfse[]
   waitingRoom          WaitingRoom[]
@@ -88,6 +89,7 @@ model User {
   password      String?
   role          String   @default("SECRETARIA")
   active        Boolean  @default(true)
+  emailVerified Boolean  @default(false)
   avatarUrl     String?
   phone         String?
   phoneIsWhatsApp Boolean @default(false)
@@ -123,6 +125,7 @@ model User {
   verificationCodes  VerificationCode[]
   documentRequests   DocumentRequest[]
   availabilities     Availability[]
+  documentTemplates  DocumentTemplate[]
 }
 
 model Availability {
@@ -334,6 +337,8 @@ model Responsible {
   city         String?
   state        String?
   userId       String?
+  active       Boolean  @default(true)
+  status       String   @default("ATIVO")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -1088,4 +1093,23 @@ model SaaSBillingConfig {
   autoReminderMessage   String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+}
+
+model DocumentTemplate {
+  id          String   @id @default(cuid())
+  tenantId    String   @default("")
+  name        String
+  description String?
+  category    String   @default("Avaliação")
+  content     String
+  favorite    Boolean  @default(false)
+  isCustom    Boolean  @default(true)
+  autorId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  autor  User?  @relation(fields: [autorId], references: [id])
+
+  @@index([tenantId])
 }

@@ -2,6 +2,59 @@
 
 ## Última Atualização: 11 de Novembro de 2026
 
+## Sessão 89 - 11/11/2026 — Enriquecimento Clínico dos 37 Modelos de Documentos, Persistência de Cópias Personalizadas no Banco e Seletor Rápido de Pacientes (Preenchimento Automático vs Ficha em Branco)
+
+### O que foi feito
+
+#### 1. Enriquecimento Clínico e Técnico dos Modelos Oficiais (`doc-templates.data.ts`)
+- **Problema Reportado:** Os modelos de documentos na tela de Modelos continham descrições e estruturas superficiais ou genéricas, necessitando de templates válidos e prontos para a prática psicopedagógica e neuroeducacional da Dra. Vilma.
+- **Solução Implementada:**
+  - Redação técnica aprofundada de 37 modelos clínicos completos divididos em 7 categorias:
+    - **Diagnóstico (7):** Laudo TEA (DSM-5 / CID-11 6A02), Laudo TDAH (CID-11 6A05), Parecer Dislexia & Disortografia (CID-11 6A03), Parecer Discalculia (CID-11 6A03.2), Parecer Deficiência Intelectual Leve (CID-11 6A00), Parecer Transtorno Opositor Desafiador (TOD / CID-11 6C90) e Parecer Altas Habilidades / Superdotação (AH/SD).
+    - **Avaliação (6):** Relatório de Avaliação Psicopedagógica Clínica Completa, Relatório de Anamnese com Família, Parecer Clínico Neuropsicopedagógico, Relatório de Rastreio Neurocognitivo, Parecer de Habilidades Pré-Acadêmicas e Avaliação Comportamental ABA & Funções Executivas.
+    - **Intervenção (6):** Plano Educacional Individualizado (PEI - Lei 13.146/15), Plano de Intervenção Terapêutica (PIT), Relatório de Evolução Trimestral, Plano de Intervenção em Consciência Fonológica, Guia de Estratégias de Modulação Sensorial e Programa de Treino de Funções Executivas.
+    - **Escolar (5):** Relatório de Devolutiva Escolar com Adequações Curriculares (Lei 14.254/21), Parecer para Solicitação de Profissional de Apoio Escolar / Mediador (Lei 12.764/12), Ficha de Observação do Aluno em Sala de Aula, Guia de Acomodações Pedagógicas para Professores e Termo de Alinhamento Multidisciplinar Escola-Clínica.
+    - **Jurídico (5):** Termo de Consentimento Informado para Avaliação e Tratamento, Termo de Tratamento de Dados e Privacidade (LGPD - Lei 13.709/18), Encaminhamento Médico Multidisciplinar (Neuropediatria / Psiquiatria), Encaminhamento para Fonoaudiologia & Terapia Ocupacional e Declaração de Acompanhamento Terapêutico para Fins Jurídicos / Periciais.
+    - **Família (4):** Relatório de Orientação Parental e Rotina Domiciliar, Guia de Manejo de Crises e Regulação Emocional em Casa, Roteiro de Entrevista Familiar e Termo de Devolutiva e Ciência dos Responsáveis.
+    - **Financeiro (4):** Contrato de Prestação de Serviços Psicopedagógicos Clínicos com cláusulas detalhadas de faltas, reposições e rescisão, Recibo de Pagamento de Honorários Profissionais para Imposto de Renda e Declaração Anual de Quitação de Débitos (Lei 12.007/09).
+  - Cada modelo possui citações legais completas, critérios diagnósticos atualizados (DSM-5-TR, CID-11, ABPp, CFEP), tabelas de acomodações e campos padronizados para preenchimento.
+
+#### 2. Backend & Banco de Dados para Persistência de Modelos (`backend/prisma` e `backend/src/routes/modelos.ts`)
+- **Nova Tabela no Banco de Dados (`DocumentTemplate`):**
+  - Adicionado modelo `DocumentTemplate` nos esquemas Prisma SQLite (`schema.sqlite.prisma`) e PostgreSQL (`schema.postgres.prisma`), incluindo relacionamentos com `Tenant` e `User` (`autor`).
+  - Campos: `id`, `name`, `description`, `category`, `content`, `favorite`, `isCustom`, `tenantId`, `autorId`, `createdAt`, `updatedAt`.
+  - Migração aplicada via `prisma db push` e cliente atualizado com `prisma generate`.
+- **API REST Completa (`/api/modelos`):**
+  - `GET /modelos`: Lista todos os modelos personalizados da clínica/tenant, ordenados por data de atualização e com autor incluído.
+  - `GET /modelos/:id`: Busca modelo específico com validação de escopo multi-tenant.
+  - `POST /modelos`: Criação de novo modelo personalizado ou salvamento de cópia editável no banco.
+  - `PUT /modelos/:id`: Edição e salvamento de alterações no conteúdo ou metadados de modelos existentes.
+  - `DELETE /modelos/:id`: Exclusão segura de modelos personalizados criados pela clínica.
+
+#### 3. Frontend dos Modelos com Cópia no Banco e Seletor Rápido de Paciente (`modelos-documento.component.ts`)
+- **Gestão de Modelos Personalizados ("Meus Modelos"):**
+  - Carregamento assíncrono e mesclagem instantânea entre os modelos oficiais da plataforma e os modelos customizados salvos no banco.
+  - Indicadores visuais claros por badge: "Modelo Oficial" vs. "Meu Modelo" (destaque âmbar com ícone de edição).
+  - Filtro dedicado por categoria e pílula especial para "Meus Modelos".
+  - Botão superior **"+ Novo Modelo Personalizado"** com modal para criação de templates do zero.
+  - No editor visual A4:
+    - Se for modelo oficial: botão **"Salvar como Cópia"**, gravando instantaneamente uma versão customizada e editável no banco da clínica.
+    - Se for modelo do usuário: botão **"Salvar Alterações"**, sincronizando as edições no banco.
+    - Opção de excluir modelos customizados com confirmação.
+- **Seletor Rápido de Paciente para Impressão e PDF:**
+  - Ao clicar em "Imprimir" ou "Baixar PDF" (tanto nos cards quanto no cabeçalho do editor visual A4), abre-se a modal inteligente de preparação do documento com 2 opções:
+    - **Opção 1 (Preenchimento Automático):** Permite selecionar qualquer paciente cadastrado na clínica. O sistema substitui automaticamente todas as tags `{nome_paciente}`, `{idade}`, `{data_nascimento}`, `{escola}`, `{serie}`, `{nome_responsavel}`, `{data_atual}`, `{profissional_nome}` e `{registro_profissional}` com os dados cadastrais reais e do profissional logado.
+    - **Opção 2 (Ficha em Branco / Preenchimento Manual):** Converte as tags em linhas e campos pontilhados limpos (`________________________`), perfeito para avaliações impressas, anamnese na mesa ou fichas para preencher à mão na escola.
+- **Impressão e PDF Seguros para iPad e Navegadores:**
+  - Integração de download direto em PDF via `html2pdf.js` sem redirecionamento externo.
+  - Janela de impressão segura com barra fixa no topo (`.no-print-bar`) contendo o botão `← Voltar ao Sistema`, garantindo que o usuário no iPad PWA nunca fique preso em telas de impressão.
+
+#### 4. Validação Técnica
+- **Backend:** Compilação TypeScript com `npm --prefix backend run build` (0 erros).
+- **Frontend:** Compilação Angular com `npx ng build` (0 erros, 100% dos bundles gerados).
+
+---
+
 ## Sessão 88 - 11/11/2026 — Eliminação de Dados Fictícios no DRE e Implementação de Modal de Relatórios com Navegação Segura para iPad
 
 ### O que foi feito

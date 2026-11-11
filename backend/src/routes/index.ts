@@ -45,6 +45,7 @@ import sessionPlannerRoutes from './session-planner';
 import superadminRoutes from './superadmin';
 import clinicRoutes from './clinic';
 import aiOcrRoutes from './ai-ocr';
+import modelosRoutes from './modelos';
 
 const router = Router();
 
@@ -96,5 +97,6 @@ router.use('/session-planner', sessionPlannerRoutes);
 router.use('/superadmin', superadminRoutes);
 router.use('/clinic', clinicRoutes);
 router.use('/ai-ocr', aiOcrRoutes);
+router.use('/modelos', modelosRoutes);
 
 export default router;
