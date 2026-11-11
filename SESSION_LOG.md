@@ -6,12 +6,14 @@
 
 ### O que foi feito
 
-#### 1. Eliminação de Dados Fictícios nas Cobranças do DRE (`financeiro-dre.component.ts` e `backend/src/routes/financeiro.ts`)
+#### 1. Eliminação de Dados Fictícios nas Cobranças e Cálculos Reais no DRE (`financeiro-dre.component.ts` e `backend/src/routes/financeiro.ts`)
 - **Problema Reportado:** No DRE (`/app/financeiro/dre`), a seção "Cobranças Automáticas do Mês" estava exibindo nomes de pacientes e valores falsos/mockados (Ana Silva, Carlos Souza, Maria Oliveira...), mesmo sem a profissional ter lançado nenhuma receita ainda.
-- **Causa Raiz:** O método `generateCobrancas()` continha um array mock com nomes fictícios e valores randômicos gerados via `Math.random()`.
+- **Causa Raiz:** O método `generateCobrancas()` continha um array mock com nomes fictícios e valores randômicos gerados via `Math.random()`. Além disso, a tabela de custos operacionais do DRE aplicava percentuais fixos arbitrários sobre o total de despesas (30% aluguel, 40% funcionários, etc.) e o gráfico multiplicava por 1.1 para simular previsão.
 - **Solução Implementada:**
   - Substituído `generateCobrancas()` pelo método `setCobrancasFromReceitas(receitas)`, que mapeia exclusivamente lançamentos e receitas reais da clínica para o mês e ano selecionados.
   - Adicionado estado vazio (*Empty State*) acolhedor com ícone clínico e mensagem informativa: *"Nenhuma cobrança registrada neste mês. Quando você registrar sessões ou receitas para [Mês/Ano], elas serão listadas aqui com seus valores e status de pagamento."*
+  - **Cálculo Real de Despesas por Categoria:** O DRE agora agrupa e totaliza as despesas pelas categorias reais registradas no financeiro (`ALUGUEL`, `SALARIOS`, `MATERIAIS`, `IMPOSTOS`, `OUTRAS`).
+  - **Gráfico Comparativo Realista:** O gráfico "Previsto vs Realizado" agora compara o faturamento/previsão total (Pagas + Em Aberto) com os valores efetivamente liquidados, além de exibir estado vazio quando o mês não possuir dados.
   - Adicionado suporte a filtro por `month` e `year` na rota `GET /financeiro` no backend (`backend/src/routes/financeiro.ts`), complementado pela filtragem estrita no cliente.
 
 #### 2. Modal de Relatórios In-App e Navegação Segura sem Travamento no iPad (`financeiro-list.component.ts`, `financeiro-dre.component.ts` e `nfse.component.ts`)

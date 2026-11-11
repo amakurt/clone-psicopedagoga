@@ -123,25 +123,37 @@ import { AuthService } from '@core/services/auth.service';
       <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
         <div class="p-6 border-b border-slate-100 dark:border-slate-800">
           <h3 class="text-lg font-black text-slate-900 dark:text-white">Previsto vs Realizado</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Comparativo de metas e execuções financeiras do mês</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Comparativo entre faturado/previsto e valores efetivamente liquidados</p>
         </div>
         <div class="p-6">
-          <div class="flex items-end gap-4 h-48">
-            @for (item of barData(); track item.label) {
-              <div class="flex-1 flex flex-col items-center gap-1">
-                <span class="text-[10px] font-bold text-slate-500">{{ item.value | currency:'BRL':'symbol':'1.0-0' }}</span>
-                <div class="w-full rounded-t-lg transition-all"
-                  [style.height.%]="item.height"
-                  [class]="item.type === 'previsto' ? 'bg-blue-200 dark:bg-blue-800' : 'bg-emerald-500'">
-                </div>
-                <span class="text-[10px] font-bold text-slate-500 text-center">{{ item.label }}</span>
+          @if (barData().length === 0) {
+            <div class="py-12 text-center">
+              <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 mx-auto flex items-center justify-center mb-3">
+                <span class="material-icons text-2xl">bar_chart</span>
               </div>
-            }
-          </div>
-          <div class="flex items-center justify-center gap-6 mt-4">
-            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-blue-200 dark:bg-blue-800"></div><span class="text-xs text-slate-500">Previsto</span></div>
-            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-emerald-500"></div><span class="text-xs text-slate-500">Realizado</span></div>
-          </div>
+              <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Sem dados financeiros no período</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                O gráfico de previsto vs. realizado será gerado automaticamente assim que receitas e despesas forem lançadas em {{ getMonthName() }}/{{ selectedYear() }}.
+              </p>
+            </div>
+          } @else {
+            <div class="flex items-end gap-4 h-48">
+              @for (item of barData(); track item.label) {
+                <div class="flex-1 flex flex-col items-center gap-1">
+                  <span class="text-[10px] font-bold text-slate-500">{{ item.value | currency:'BRL':'symbol':'1.0-0' }}</span>
+                  <div class="w-full rounded-t-lg transition-all"
+                    [style.height.%]="item.height"
+                    [class]="item.type === 'previsto' ? 'bg-blue-200 dark:bg-blue-800' : 'bg-emerald-500'">
+                  </div>
+                  <span class="text-[10px] font-bold text-slate-500 text-center">{{ item.label }}</span>
+                </div>
+              }
+            </div>
+            <div class="flex items-center justify-center gap-6 mt-4">
+              <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-blue-200 dark:bg-blue-800"></div><span class="text-xs text-slate-500">Previsto (Aberto + Liquidado)</span></div>
+              <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-emerald-500"></div><span class="text-xs text-slate-500">Realizado (Pago)</span></div>
+            </div>
+          }
         </div>
       </div>
 
@@ -685,32 +697,73 @@ export class FinanceiroDreComponent implements OnInit {
 
   calculateDRE(receitas: any[], despesas: any[]) {
     const receitaBruta = receitas.reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
-    const impostos = receitaBruta * 0.115;
-    const receitaLiquida = receitaBruta - impostos;
-    const despesaOperacional = despesas.reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
+    // Impostos lançados diretamente na categoria IMPOSTOS ou 6% (alíquota média Simples Nacional Anexo III clínica)
+    const impostosLancados = despesas
+      .filter((d: any) => (d.category || '').toUpperCase() === 'IMPOSTOS')
+      .reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
+    const impostos = impostosLancados > 0 ? impostosLancados : (receitaBruta * 0.06);
+    const receitaLiquida = Math.max(0, receitaBruta - impostos);
+
+    // Despesas Reais Calculadas por Categoria Real Cadastrada
+    const aluguel = despesas
+      .filter((d: any) => ['ALUGUEL', 'ENERGIA_AGUA', 'INTERNET_TELEFONE'].includes((d.category || '').toUpperCase()))
+      .reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
+
+    const funcionarios = despesas
+      .filter((d: any) => ['SALARIOS'].includes((d.category || '').toUpperCase()))
+      .reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
+
+    const materiais = despesas
+      .filter((d: any) => ['MATERIAIS'].includes((d.category || '').toUpperCase()))
+      .reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
+
+    const outras = despesas
+      .filter((d: any) => !['ALUGUEL', 'ENERGIA_AGUA', 'INTERNET_TELEFONE', 'SALARIOS', 'MATERIAIS', 'IMPOSTOS'].includes((d.category || '').toUpperCase()))
+      .reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
+
+    const despesaOperacional = aluguel + funcionarios + materiais + outras;
 
     this.dreReceitaBruta.set(receitaBruta);
     this.dreImpostos.set(impostos);
     this.dreReceitaLiquida.set(receitaLiquida);
     this.dreDespesasOperacionais.set(despesaOperacional);
-    this.dreAluguel.set(despesaOperacional * 0.3);
-    this.dreFuncionarios.set(despesaOperacional * 0.4);
-    this.dreMateriais.set(despesaOperacional * 0.15);
-    this.dreOutrasDespesas.set(despesaOperacional * 0.15);
+    this.dreAluguel.set(aluguel);
+    this.dreFuncionarios.set(funcionarios);
+    this.dreMateriais.set(materiais);
+    this.dreOutrasDespesas.set(outras);
     this.dreLucro.set(receitaLiquida - despesaOperacional);
   }
 
   calculateBarData(receitas: any[], despesas: any[]) {
-    const receitaTotal = receitas.reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
-    const despesaTotal = despesas.reduce((sum: number, t: any) => sum + (parseFloat(t.value || t.valor) || 0), 0);
-    const maxVal = Math.max(receitaTotal, despesaTotal, 1);
+    if (receitas.length === 0 && despesas.length === 0) {
+      this.barData.set([]);
+      return;
+    }
+
+    const recPagas = receitas
+      .filter((r: any) => (r.status || '').toLowerCase() === 'pago')
+      .reduce((s, r) => s + (parseFloat(r.value || r.valor) || 0), 0);
+    const recPrevistas = receitas
+      .reduce((s, r) => s + (parseFloat(r.value || r.valor) || 0), 0);
+
+    const despPagas = despesas
+      .filter((d: any) => (d.status || '').toLowerCase() === 'pago')
+      .reduce((s, d) => s + (parseFloat(d.value || d.valor) || 0), 0);
+    const despPrevistas = despesas
+      .reduce((s, d) => s + (parseFloat(d.value || d.valor) || 0), 0);
+
+    const lucroRealizado = recPagas - despPagas;
+    const lucroPrevisto = recPrevistas - despPrevistas;
+
+    const maxVal = Math.max(recPrevistas, despPrevistas, Math.abs(lucroPrevisto), Math.abs(lucroRealizado), 1);
+
     this.barData.set([
-      { label: 'Previsto Receita', value: receitaTotal * 1.1, height: (receitaTotal * 1.1 / maxVal) * 100, type: 'previsto' },
-      { label: 'Realizado Receita', value: receitaTotal, height: (receitaTotal / maxVal) * 100, type: 'realizado' },
-      { label: 'Previsto Despesa', value: despesaTotal * 1.1, height: (despesaTotal * 1.1 / maxVal) * 100, type: 'previsto' },
-      { label: 'Realizado Despesa', value: despesaTotal, height: (despesaTotal / maxVal) * 100, type: 'realizado' },
-      { label: 'Previsto Lucro', value: (receitaTotal - despesaTotal) * 1.1, height: Math.abs((receitaTotal - despesaTotal) * 1.1 / maxVal) * 100, type: 'previsto' },
-      { label: 'Realizado Lucro', value: receitaTotal - despesaTotal, height: Math.abs((receitaTotal - despesaTotal) / maxVal) * 100, type: 'realizado' },
+      { label: 'Receita Prevista', value: recPrevistas, height: Math.min(100, (recPrevistas / maxVal) * 100), type: 'previsto' },
+      { label: 'Receita Realizada', value: recPagas, height: Math.min(100, (recPagas / maxVal) * 100), type: 'realizado' },
+      { label: 'Despesa Prevista', value: despPrevistas, height: Math.min(100, (despPrevistas / maxVal) * 100), type: 'previsto' },
+      { label: 'Despesa Realizada', value: despPagas, height: Math.min(100, (despPagas / maxVal) * 100), type: 'realizado' },
+      { label: 'Resultado Previsto', value: lucroPrevisto, height: Math.min(100, (Math.abs(lucroPrevisto) / maxVal) * 100), type: 'previsto' },
+      { label: 'Resultado Realizado', value: lucroRealizado, height: Math.min(100, (Math.abs(lucroRealizado) / maxVal) * 100), type: 'realizado' },
     ]);
   }
 
