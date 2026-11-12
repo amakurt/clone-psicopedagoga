@@ -674,7 +674,7 @@ declare var html2pdf: any;
               </button>
               <button (click)="closeReportModal()"
                 class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
-                title="Fechar">
+                aria-label="Fechar">
                 <span class="material-icons">close</span>
               </button>
             </div>

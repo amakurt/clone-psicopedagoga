@@ -58,11 +58,11 @@ interface ChatConversation {
               @if (isGuardian()) {
                 <a [routerLink]="'/guardian/chat'"
                   (click)="close()"
-                  class="p-1.5 rounded-lg hover:bg-white/20 transition-colors" title="Abrir página completa">
+                  class="p-1.5 rounded-lg hover:bg-white/20 transition-colors" aria-label="Abrir página completa">
                   <span class="material-icons text-lg">open_in_new</span>
                 </a>
               }
-              <button (click)="toggleOpen()" class="p-1.5 rounded-lg hover:bg-white/20 transition-colors" title="Fechar">
+              <button (click)="toggleOpen()" class="p-1.5 rounded-lg hover:bg-white/20 transition-colors" aria-label="Fechar">
                 <span class="material-icons text-lg">close</span>
               </button>
             </div>

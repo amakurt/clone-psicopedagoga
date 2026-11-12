@@ -1785,9 +1785,69 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   private setupListeners() {
+    const hideTooltip = () => {
+      this.currentIcon = null;
+      if (this.tooltip) {
+        this.tooltip.style.opacity = '0';
+        this.tooltip.style.display = 'none';
+      }
+    };
+
+    // 1. Tratamento para toques (iPad, iPhone, Android, touchscreens):
+    // Previne que o tooltip fique congelado na tela após toque e remove title nativo do Safari
+    const onTouchStart = (e: TouchEvent) => {
+      hideTooltip();
+
+      // Prevenir também o tooltip nativo preto do Safari iOS/iPadOS gerado por atributos title
+      const el = (e.target as HTMLElement)?.closest('[title]');
+      if (el) {
+        const titleVal = el.getAttribute('title');
+        if (titleVal) {
+          if (!el.getAttribute('aria-label')) {
+            el.setAttribute('aria-label', titleVal);
+          }
+          el.removeAttribute('title');
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
+    this.destroyFns.push(() => window.removeEventListener('touchstart', onTouchStart));
+
+    // Se o dispositivo é estritamente de toque (iPad / celular sem mouse fino), não ativar listeners de hover
+    const isTouchOnly = typeof window !== 'undefined' && 
+      (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
+      window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+    if (isTouchOnly) {
+      return;
+    }
+
+    let isTouching = false;
+    let touchTimer: any = null;
+
+    // Ao tocar na tela em dispositivos híbridos, suprimir hover por 1 segundo
+    const onHybridTouch = () => {
+      isTouching = true;
+      hideTooltip();
+      clearTimeout(touchTimer);
+      touchTimer = setTimeout(() => { isTouching = false; }, 1000);
+    };
+
+    // Ao pressionar qualquer botão ou ícone, fechar o tooltip instantaneamente
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+        isTouching = true;
+      }
+      hideTooltip();
+    };
+
     const onMouseOver = (e: MouseEvent) => {
+      if (isTouching) return;
+      if ('pointerType' in e && (e as any).pointerType && (e as any).pointerType !== 'mouse') return;
+
       const target = e.target as HTMLElement;
-      const icon = target.closest('.material-icons');
+      const icon = target.closest('.material-icons, .material-symbols-rounded');
       if (!icon || !this.tooltip) return;
 
       const iconName = icon.textContent?.trim() || '';
@@ -1795,30 +1855,41 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
       this.currentIcon = icon as HTMLElement;
       this.tooltip.textContent = getIconLabel(iconName);
+      this.tooltip.style.display = 'block';
       this.tooltip.style.opacity = '1';
       this.positionTooltip(e);
     };
 
     const onMouseMove = (e: MouseEvent) => {
+      if (isTouching) {
+        hideTooltip();
+        return;
+      }
       if (this.currentIcon) this.positionTooltip(e);
     };
 
     const onMouseOut = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const icon = target.closest('.material-icons');
+      const icon = target.closest('.material-icons, .material-symbols-rounded');
       if (icon === this.currentIcon || !icon) {
-        this.currentIcon = null;
-        if (this.tooltip) this.tooltip.style.opacity = '0';
+        hideTooltip();
       }
     };
 
+    window.addEventListener('touchstart', onHybridTouch, { passive: true, capture: true });
+    document.addEventListener('pointerdown', onPointerDown, { passive: true, capture: true });
     document.addEventListener('mouseover', onMouseOver);
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseout', onMouseOut);
+    window.addEventListener('scroll', hideTooltip, { passive: true });
+
     this.destroyFns.push(
+      () => window.removeEventListener('touchstart', onHybridTouch),
+      () => document.removeEventListener('pointerdown', onPointerDown),
       () => document.removeEventListener('mouseover', onMouseOver),
       () => document.removeEventListener('mousemove', onMouseMove),
-      () => document.removeEventListener('mouseout', onMouseOut)
+      () => document.removeEventListener('mouseout', onMouseOut),
+      () => window.removeEventListener('scroll', hideTooltip)
     );
   }
 

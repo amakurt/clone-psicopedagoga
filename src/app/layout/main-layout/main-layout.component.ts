@@ -70,7 +70,7 @@ type NavItem = {
           <!-- Botão Fechar (apenas mobile) -->
           <button (click)="mobileSidebarOpen.set(false)" 
             class="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title="Fechar menu">
+            aria-label="Fechar menu">
             <span class="material-icons text-xl">close</span>
           </button>
         </div>
@@ -86,7 +86,7 @@ type NavItem = {
                   [class.text-primary]="isGroupActive(item.id)"
                   [class.text-slate-600]="!isGroupActive(item.id)"
                   [class.dark:text-slate-400]="!isGroupActive(item.id)"
-                  [title]="item.label">
+                  [attr.aria-label]="item.label">
                   <span class="material-icons text-[20px] shrink-0">{{ item.icon }}</span>
                   <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold text-left flex-1"
                     [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()"
@@ -117,7 +117,7 @@ type NavItem = {
                       } @else if (child.action) {
                         <button (click)="handleChildAction(child)"
                           class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
-                          [title]="child.label">
+                          [attr.aria-label]="child.label">
                           <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
                           <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
                         </button>
@@ -127,7 +127,7 @@ type NavItem = {
                            routerLinkActive="bg-primary/10 text-primary font-bold"
                            [routerLinkActiveOptions]="{ exact: true }"
                            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all group text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-                           [title]="child.label">
+                           [attr.aria-label]="child.label">
                           <span class="material-icons text-[18px] shrink-0">{{ child.icon }}</span>
                           <span class="text-[13px] whitespace-nowrap overflow-hidden font-medium">{{ child.label }}</span>
                         </a>
@@ -142,7 +142,7 @@ type NavItem = {
                  routerLinkActive="bg-primary/10 text-primary font-bold"
                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                  [class.lg:justify-center]="!sidebarOpen()"
-                 [title]="item.label">
+                 [attr.aria-label]="item.label">
                 <span class="material-icons text-[20px] shrink-0">{{ item.icon }}</span>
                 <span class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 font-semibold"
                   [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()"
@@ -242,7 +242,7 @@ type NavItem = {
               <button
                 (click)="dismissActivationBanner()"
                 class="p-1 text-teal-200 hover:text-white rounded-lg transition-colors"
-                title="Fechar aviso">
+                aria-label="Fechar aviso">
                 <span class="material-icons text-base">close</span>
               </button>
             </div>
@@ -256,7 +256,7 @@ type NavItem = {
             <!-- Botão Hamburger no Mobile -->
             <button (click)="mobileSidebarOpen.set(true)"
               class="lg:hidden p-2 -ml-1 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center"
-              title="Abrir menu">
+              aria-label="Abrir menu">
               <span class="material-icons text-2xl">menu</span>
             </button>
 

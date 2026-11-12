@@ -388,6 +388,16 @@ select.form-control { appearance: auto; cursor: pointer; }
   background: #19212E;
 }
 
+/* Desabilitar tooltip flutuante de ícones em dispositivos de toque (iPad, iPhone, tablets, celulares) */
+@media (hover: none), (pointer: coarse) {
+  .icon-tooltip {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
 /* Evitar auto-zoom e quebra de layout no iOS Safari / Mobile ao focar inputs */
 @media screen and (max-width: 768px) {
   input[type="text"],

@@ -1,6 +1,37 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 11 de Novembro de 2026
+## Última Atualização: 12 de Novembro de 2026
+
+## Sessão 90 - 12/11/2026 — Eliminação Definitiva de Tooltips Residuais Pretos no iPad ("Fechar", Nomes de Menus e Ações de Botões)
+
+### O que foi feito
+
+#### 1. Diagnóstico da Causa Raiz dos Textos Pretos Congelados na Tela do iPad
+- **Problema Reportado:** Ao tocar na tela do iPad em botões de fechar, itens de menu ou funções, ficava um texto flutuante em preto com o nome da função (especialmente "fechar"), que não sumia após fechar a modal ou navegar.
+- **Causa Raiz 1 (Tooltip Global de Ícones):** Em `src/app/app.component.ts`, havia um listener global de `mouseover` que capturava qualquer toque em elementos `.material-icons` e exibia o elemento `.icon-tooltip` (estilizado em `styles.scss` com `background: #19212E`, caixa preta/azul-escura). Em telas de toque (iPad/Safari), o navegador converte o toque em pseudo-hover (`mouseover`), gerando a caixa preta. Como em telas de toque não existe cursor de mouse para disparar o evento `mouseout`, e o clique remove o botão do DOM (ao fechar modal ou trocar de rota), o tooltip preto ficava congelado permanentemente na tela do iPad.
+- **Causa Raiz 2 (Atributos `title` Nativos em Botões de Ação):** Botões de fechar e links de navegação continham atributos HTML `title="Fechar"`, `title="Fechar menu"`, `title="Fechar aviso"` e `[title]="item.label"`. No WebKit (iPadOS/iOS 13+), tocar em qualquer elemento com `title` ativa o callout nativo do sistema (balão preto de acessibilidade do Safari). Ao fechar a tela, o Safari deixa o balão preso no meio do visor.
+
+#### 2. Soluções Implementadas
+- **Camada 1: Desativação Absoluta de Tooltips Flutuantes em Dispositivos de Toque (`styles.scss`):**
+  - Adicionada regra CSS `@media (hover: none), (pointer: coarse)` definindo `.icon-tooltip { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }`.
+  - Impede estruturalmente a renderização do elemento visual em qualquer tela sensível ao toque.
+- **Camada 2: Bloqueio Inteligente no `AppComponent` (`app.component.ts`):**
+  - Verificação de dispositivo estritamente de toque: se `(hover: none), (pointer: coarse)` for detectado, o componente nem sequer registra listeners de hover para ícones.
+  - Listener de `touchstart` em fase de captura global:
+    - Oculta imediatamente qualquer tooltip ativo.
+    - Captura dinamicamente qualquer elemento que possua atributo `title` nativo, transfere o valor para `aria-label` (preservando acessibilidade de leitores de tela) e remove o atributo `title` antes que o WebKit do iPad possa programar o callout preto nativo.
+  - Listener de `pointerdown`: ao tocar em qualquer botão ou ícone (click/tap), oculta o tooltip imediatamente, impedindo que permaneça visível durante transições de tela.
+  - Em dispositivos híbridos (iPad com teclado/trackpad ou notebooks 2-em-1): verificação estrita de `pointerType !== 'mouse'` e supressão temporária de hover durante e após gestos de toque na tela.
+- **Camada 3: Substituição de Atributos `title` por `aria-label` nos Templates:**
+  - `src/app/layout/main-layout/main-layout.component.ts`: Substituídos `title="Fechar menu"`, `title="Fechar aviso"`, `title="Abrir menu"` e `[title]="item.label"` por `aria-label`.
+  - `src/app/shared/components/chat-floating.component.ts`: Substituído `title="Fechar"` por `aria-label="Fechar"`.
+  - `src/app/modules/financeiro/pages/financeiro-dre.component.ts`: Substituído `title="Fechar"` na modal de relatório por `aria-label="Fechar"`.
+  - `src/app/modules/financeiro/pages/financeiro-list.component.ts`: Substituído `title="Fechar"` na modal de relatório por `aria-label="Fechar"`.
+
+#### 3. Validação Técnica
+- **Frontend:** Compilação de produção com `npx ng build` concluída com sucesso (0 erros).
+
+---
 
 ## Sessão 89 - 11/11/2026 — Enriquecimento Clínico dos 37 Modelos de Documentos, Persistência de Cópias Personalizadas no Banco e Seletor Rápido de Pacientes (Preenchimento Automático vs Ficha em Branco)
 
