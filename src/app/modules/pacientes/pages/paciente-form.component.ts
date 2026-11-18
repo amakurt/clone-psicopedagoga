@@ -11,11 +11,13 @@ import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
 import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
 import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
+import { MaskDirective } from '@shared/directives/mask.directive';
+import { formatCPF, formatRG, formatPhone } from '@core/utils/masks';
 
 @Component({
   selector: 'app-paciente-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent, FichaScannerModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent, FichaScannerModalComponent, MaskDirective],
   template: `
     <div class="space-y-8 animate-in">
       <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
@@ -297,12 +299,12 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
             <div>
               <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">CPF</label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [value]="form.cpf" (input)="formatCPF($event)" placeholder="000.000.000-00" maxlength="14">
+                [(ngModel)]="form.cpf" appMask="cpf" (input)="formatCPF($event)" placeholder="000.000.000-00" maxlength="14" inputmode="numeric">
             </div>
             <div>
               <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">RG</label>
               <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                [(ngModel)]="form.rg" placeholder="00.000.000-0">
+                [(ngModel)]="form.rg" appMask="rg" (input)="formatRGInput($event)" placeholder="00.000.000-0" maxlength="12">
             </div>
           </div>
 
@@ -405,16 +407,16 @@ import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha
               </div>
               <div>
                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">CPF</label>
-                <input [(ngModel)]="newResponsavel.cpf" 
-                  class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
-                  placeholder="000.000.000-00" maxlength="14">
+                <input [(ngModel)]="newResponsavel.cpf" appMask="cpf" (input)="onNewResponsavelCpfInput($event)"
+                  class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary font-medium"
+                  placeholder="000.000.000-00" maxlength="14" inputmode="numeric">
               </div>
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Telefone</label>
-              <input [(ngModel)]="newResponsavel.phone" 
-                class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
-                placeholder="(00) 00000-0000" maxlength="15">
+              <input [(ngModel)]="newResponsavel.phone" appMask="phone" (input)="onNewResponsavelPhoneInput($event)"
+                class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary font-medium"
+                placeholder="(00) 00000-0000" maxlength="15" inputmode="tel">
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
@@ -558,12 +560,29 @@ export class PacienteFormComponent implements OnInit {
 
   formatCPF(event: Event) {
     const input = event.target as HTMLInputElement;
-    let value = input.value.replace(/\D/g, '');
-    if (value.length > 11) value = value.slice(0, 11);
-    if (value.length > 9) value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
-    else if (value.length > 6) value = value.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-    else if (value.length > 3) value = value.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+    const value = formatCPF(input.value);
     this.form.cpf = value;
+    input.value = value;
+  }
+
+  formatRGInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = formatRG(input.value);
+    this.form.rg = value;
+    input.value = value;
+  }
+
+  onNewResponsavelCpfInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = formatCPF(input.value);
+    this.newResponsavel.cpf = value;
+    input.value = value;
+  }
+
+  onNewResponsavelPhoneInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = formatPhone(input.value);
+    this.newResponsavel.phone = value;
     input.value = value;
   }
 

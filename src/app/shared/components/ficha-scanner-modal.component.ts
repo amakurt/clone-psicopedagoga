@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
+import { formatCPF, formatRG, formatCEP, formatPhone } from '@core/utils/masks';
 
 export interface ScanResult {
   tipoIdentificado: 'PACIENTE' | 'ANAMNESE' | 'DOCUMENTO' | 'LAUDO' | 'PRONTUARIO';
@@ -563,6 +564,19 @@ export class FichaScannerModalComponent implements OnInit {
               ...res.data,
               fileUrl: res.fileUrl
             };
+
+            // Formatação padrão brasileira de campos estruturados
+            if (result.paciente) {
+              if (result.paciente.cpf) result.paciente.cpf = formatCPF(result.paciente.cpf);
+              if (result.paciente.rg) result.paciente.rg = formatRG(result.paciente.rg);
+              if (result.paciente.phone) result.paciente.phone = formatPhone(result.paciente.phone);
+              if (result.paciente.address?.cep) result.paciente.address.cep = formatCEP(result.paciente.address.cep);
+            }
+            if (result.responsavel) {
+              if (result.responsavel.cpf) result.responsavel.cpf = formatCPF(result.responsavel.cpf);
+              if (result.responsavel.phone) result.responsavel.phone = formatPhone(result.responsavel.phone);
+            }
+
             const msg = this.tipoFicha === 'DOCUMENTO' || this.tipoFicha === 'LAUDO'
               ? 'Documento interpretado com sucesso! Conteúdo carregado para o editor.'
               : (this.tipoFicha === 'PRONTUARIO' ? 'Anotação decifrada com sucesso!' : 'Ficha interpretada com sucesso! Campos preenchidos no formulário.');

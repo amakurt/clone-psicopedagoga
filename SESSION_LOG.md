@@ -1,6 +1,44 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 12 de Novembro de 2026
+## Última Atualização: 18 de Novembro de 2026
+
+## Sessão 91 - 18/11/2026 — Máscaras Dinâmicas de Digitação (CPF, RG, CNPJ, Telefone), Edição In-App de Documentos (A4 & Suporte a .doc/.docx) e Scanner OCR Integrado
+
+### O que foi feito
+
+#### 1. Máscaras Dinâmicas de Digitação Automática nos Formulários (CPF, RG, CNPJ e Telefone)
+- **Problema Reportado:** No cadastro de responsáveis (e outros formulários), o campo de CPF não possuía preenchimento padrão automático, obrigando o usuário a digitar manualmente os pontos e o traço.
+- **Solução Implementada:**
+  - **Utilitários Puros de Formatação (`src/app/core/utils/masks.ts`):**
+    - Funções puras de máscara dinâmica em tempo real: `formatCPF`, `formatCNPJ`, `formatRG`, `formatPhone`, `formatCEP` e `formatByMask`.
+    - Trata digitação incremental caractere a caractere, filtrando caracteres não numéricos e aplicando pontuações e delimitadores na posição correta sem quebrar a posição do cursor.
+  - **Diretiva Standalone Angular (`src/app/shared/directives/mask.directive.ts`):**
+    - Criada a diretiva `[appMask]="'cpf'|'cnpj'|'rg'|'phone'|'cep'"`.
+    - Escuta eventos de `input` e `blur`, formatando dinamicamente o valor do elemento e sincronizando diretamente com `NgControl` (`ngModel` ou `FormControl`).
+    - Define automaticamente `maxLength`, `inputMode="numeric"` (para abrir teclado numérico otimizado em iPads e celulares) e placeholders adequados.
+  - **Formulário de Responsáveis (`src/app/modules/responsaveis/pages/responsavel-form.component.ts`):**
+    - Campo CPF com máscara automática `000.000.000-00` e listener `(input)`.
+    - Campo RG com máscara automática `00.000.000-0` e listener `(input)`.
+    - Modal de novo paciente com máscara automática de Telefone `(00) 00000-0000`.
+    - Formatação aplicada também no carregamento de registros existentes em modo de edição.
+  - **Formulário de Pacientes (`src/app/modules/pacientes/pages/paciente-form.component.ts`):**
+    - Máscaras automáticas integradas para CPF e RG do paciente.
+    - Modal de cadastro rápido de responsável com máscaras dinâmicas de CPF e Telefone.
+  - **Configurações da Clínica (`src/app/modules/configuracoes/pages/configuracoes.component.ts`):**
+    - Campo CNPJ da clínica com máscara automática `00.000.000/0000-00`.
+  - **Scanner OCR de Fichas (`src/app/shared/components/ficha-scanner-modal.component.ts`):**
+    - Formatação automática em tempo real de CPF, RG, Telefone e CEP extraídos de fichas fotografadas antes do preenchimento dos formulários.
+
+#### 2. Edição In-App de Documentos e Suporte Nativo a Arquivos Word (.doc e .docx)
+- **Problema Reportado:** Ao editar documentos enviados previamente por upload (em especial formato .doc/.docx), o anexo visual e o editor A4 não exibiam o conteúdo para modificação direta no app.
+- **Solução Implementada:**
+  - Extração de texto e estruturação de documentos `.doc` e `.docx` utilizando `mammoth` e parsers binários no backend.
+  - Visualização e edição nativa integrada no editor A4 sem necessidade de download externo.
+
+#### 3. Validação Técnica
+- **Frontend:** Compilação de produção com `npx ng build` concluída com sucesso (0 erros).
+
+---
 
 ## Sessão 90 - 12/11/2026 — Eliminação Definitiva de Tooltips Residuais Pretos no iPad ("Fechar", Nomes de Menus e Ações de Botões)
 

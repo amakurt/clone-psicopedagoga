@@ -9,11 +9,13 @@ import { PacientesService } from '../../pacientes/services/pacientes.service';
 import { ToastService } from '@shared/components/toast.component';
 
 import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
+import { MaskDirective } from '@shared/directives/mask.directive';
+import { formatCPF, formatRG, formatPhone } from '@core/utils/masks';
 
 @Component({
   selector: 'app-responsavel-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, PhoneInputComponent, AddressFormComponent, ImageCropperModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, PhoneInputComponent, AddressFormComponent, ImageCropperModalComponent, MaskDirective],
   template: `
     <div class="space-y-6 animate-in">
       <!-- Header -->
@@ -108,15 +110,15 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">CPF</label>
-            <input [(ngModel)]="form.cpf" 
-              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="000.000.000-00" maxlength="14">
+            <input [(ngModel)]="form.cpf" appMask="cpf" (input)="onCpfInput($event)"
+              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent font-medium"
+              placeholder="000.000.000-00" maxlength="14" inputmode="numeric">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">RG</label>
-            <input [(ngModel)]="form.rg" 
-              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="00.000.000-0">
+            <input [(ngModel)]="form.rg" appMask="rg" (input)="onRgInput($event)"
+              class="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent font-medium"
+              placeholder="00.000.000-0" maxlength="12">
           </div>
           <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Email</label>
@@ -274,9 +276,9 @@ import { ImageCropperModalComponent } from '@shared/components/image-cropper-mod
             </div>
             <div>
               <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Telefone</label>
-              <input [(ngModel)]="newPaciente.phone" 
-                class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary"
-                placeholder="(00) 00000-0000" maxlength="15">
+              <input [(ngModel)]="newPaciente.phone" appMask="phone" (input)="onPhoneInput($event)"
+                class="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary font-medium"
+                placeholder="(00) 00000-0000" maxlength="15" inputmode="tel">
             </div>
           </div>
           <div class="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
@@ -483,8 +485,9 @@ export class ResponsavelFormComponent implements OnInit {
         this.form = {
           ...this.form,
           ...res,
+          cpf: formatCPF(res.cpf),
+          rg: formatRG(res.rg),
           birthDate: res.birthDate || '',
-          rg: res.rg || '',
           userId: res.userId || null,
           portalAccess: !!res.userId,
           portalPassword: '',
@@ -509,6 +512,24 @@ export class ResponsavelFormComponent implements OnInit {
         }
       });
     }
+  }
+
+  onCpfInput(event: any) {
+    const formatted = formatCPF(event.target.value);
+    this.form.cpf = formatted;
+    event.target.value = formatted;
+  }
+
+  onRgInput(event: any) {
+    const formatted = formatRG(event.target.value);
+    this.form.rg = formatted;
+    event.target.value = formatted;
+  }
+
+  onPhoneInput(event: any) {
+    const formatted = formatPhone(event.target.value);
+    this.newPaciente.phone = formatted;
+    event.target.value = formatted;
   }
 
   onPhoneChange(phone: PhoneNumber) {

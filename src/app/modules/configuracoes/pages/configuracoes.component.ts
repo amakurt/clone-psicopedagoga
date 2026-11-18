@@ -9,11 +9,13 @@ import { PhoneInputComponent, PhoneNumber } from '@core/components/phone-input.c
 import { ToastService } from '@shared/components/toast.component';
 import { ImageCropperModalComponent } from '@shared/components/image-cropper-modal.component';
 import { DialogService } from '@shared/services/dialog.service';
+import { MaskDirective } from '@shared/directives/mask.directive';
+import { formatCNPJ } from '@core/utils/masks';
 
 @Component({
   selector: 'app-configuracoes',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent],
+  imports: [CommonModule, FormsModule, RouterLink, AddressFormComponent, PhoneInputComponent, ImageCropperModalComponent, MaskDirective],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Header -->
@@ -340,8 +342,8 @@ import { DialogService } from '@shared/services/dialog.service';
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">CNPJ (Opcional - Timbrado em Laudos/Recibos)</label>
-                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all"
-                  [(ngModel)]="clinicForm.cnpj" placeholder="00.000.000/0000-00">
+                <input class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-medium ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-primary outline-none transition-all font-mono"
+                  [(ngModel)]="clinicForm.cnpj" appMask="cnpj" (input)="onCnpjInput($event)" placeholder="00.000.000/0000-00" maxlength="18" inputmode="numeric">
               </div>
             </div>
 
@@ -767,7 +769,7 @@ export class ConfiguracoesComponent implements OnInit {
         if (clinic) {
           this.clinicForm = {
             name: clinic.name || this.auth.tenant()?.name || '',
-            cnpj: clinic.cnpj || '',
+            cnpj: formatCNPJ(clinic.cnpj),
             phone: clinic.phone || '',
             phoneIsWhatsApp: !!clinic.phoneIsWhatsApp,
             email: clinic.email || '',
@@ -797,6 +799,12 @@ export class ConfiguracoesComponent implements OnInit {
         }
       }
     });
+  }
+
+  onCnpjInput(event: any) {
+    const formatted = formatCNPJ(event.target.value);
+    this.clinicForm.cnpj = formatted;
+    event.target.value = formatted;
   }
 
   getInitials(name: string): string {
