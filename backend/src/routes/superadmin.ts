@@ -184,6 +184,16 @@ router.get('/tenants', async (req, res) => {
 
     const formatted = tenants.map((t) => {
       const gestor = t.memberships[0]?.user || null;
+      let logoUrl = t.logoUrl;
+      if (!logoUrl && (
+        t.name?.toLowerCase().includes('vilma') ||
+        t.slug?.toLowerCase().includes('vilma') ||
+        gestor?.name?.toLowerCase().includes('vilma') ||
+        gestor?.email?.toLowerCase().includes('vilma')
+      )) {
+        logoUrl = '/api/uploads/public/logo-vilma-transparente.png';
+      }
+
       return {
         id: t.id,
         name: t.name,
@@ -191,7 +201,7 @@ router.get('/tenants', async (req, res) => {
         plan: t.plan,
         status: t.status,
         trialEndsAt: t.trialEndsAt,
-        logoUrl: t.logoUrl,
+        logoUrl,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
         stats: {
@@ -458,13 +468,23 @@ router.post('/tenants/:id/impersonate', async (req, res) => {
       isImpersonated: true,
     };
 
+    let logoUrl = tenant.logoUrl;
+    if (!logoUrl && (
+      tenant.name?.toLowerCase().includes('vilma') ||
+      tenant.slug?.toLowerCase().includes('vilma') ||
+      targetUser?.name?.toLowerCase().includes('vilma') ||
+      targetUser?.email?.toLowerCase().includes('vilma')
+    )) {
+      logoUrl = '/api/uploads/public/logo-vilma-transparente.png';
+    }
+
     const tenantPayload = {
       id: tenant.id,
       name: tenant.name,
       slug: tenant.slug,
       plan: tenant.plan,
       status: tenant.status,
-      logoUrl: tenant.logoUrl,
+      logoUrl,
       colors: tenant.colors,
       role: targetMembership.role,
     };

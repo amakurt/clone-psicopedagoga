@@ -38,7 +38,9 @@
   - Removido 100% do gradiente de fundo azul/ciano via modelo polinomial 2D e desentrelaçamento de cores (color unmixing), eliminando qualquer contaminação ciano nas bordas.
   - Geradas versões transparentes nítidas padrão e 2x Retina (`logo-vilma-transparente.png` e `logo-vilma-transparente-2x.png`) em `src/assets/images/`, `public/assets/images/` e `backend/uploads/`.
 - **Aplicação Completa nos 3 Locais Solicitados:**
-  - **Menu Lateral / Topo da Navegação (Navbar & Sidebar):** Exibição da logomarca transparente em alta definição no desktop e no menu móvel da psicopedagoga.
+  - **Menu Lateral / Topo da Navegação (Navbar & Sidebar):** Exibição da logomarca transparente em alta definição no desktop, no topo da barra de navegação (navbar) e no menu móvel da psicopedagoga.
+  - **Modo Suporte (Impersonate):** Acesso em modo suporte pelo Superadmin agora exibe a logomarca no cabeçalho do sistema e dentro do banner informativo amarelo.
+  - **Menu e Acesso Rápido à Anamnese:** Adicionado item direto **"Anamnese"** (`/app/anamnese`) no menu lateral principal (logo abaixo de Pacientes), no submenu **"Documentos" -> "Anamnese Clínica"** e como botão de atalho **"Anamnese"** na ficha de detalhes de cada paciente.
   - **Papel Timbrado Oficial (A4 Timbrado de Laudos, Relatórios, Documentos e Anamnese):** Inserção automática do cabeçalho oficial timbrado com a logomarca transparente em todas as impressões A4 e exportações em PDF.
   - **Portal do Responsável (Família):** Logomarca transparente integrada no topo e menu do portal dos pais, reforçando a identidade profissional e acolhedora da clínica.
 

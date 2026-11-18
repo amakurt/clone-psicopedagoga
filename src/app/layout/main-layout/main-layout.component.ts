@@ -49,21 +49,24 @@ type NavItem = {
         </button>
 
         <!-- Topo da Sidebar (Logo + Botão Fechar no Mobile) -->
-        <div class="p-4 sm:p-6 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 lg:border-b-0"
-          [class.lg:justify-center]="!sidebarOpen()" [class.lg:px-4]="!sidebarOpen()">
-          <div class="flex items-center gap-3">
-            @if (auth.tenant()?.logoUrl) {
-              <img [src]="auth.tenant()?.logoUrl" [alt]="auth.tenant()?.name || 'Clínica'" class="size-10 rounded-xl shadow-md shrink-0 object-contain bg-white dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700">
+        <div class="p-4 sm:p-5 flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60 lg:border-b-0"
+          [class.lg:justify-center]="!sidebarOpen()" [class.lg:px-3]="!sidebarOpen()">
+          <div class="flex items-center gap-3 min-w-0">
+            @if (effectiveClinicLogo()) {
+              <div class="h-10 w-auto max-w-[170px] flex items-center shrink-0">
+                <img [src]="effectiveClinicLogo()" [alt]="auth.tenant()?.name || 'Clínica'"
+                  class="max-h-10 w-auto max-w-[170px] object-contain">
+              </div>
             } @else {
               <img src="/favicon-96x96.png" alt="EduPsych Pro" class="size-10 rounded-xl shadow-md shrink-0 object-contain">
             }
-            <div class="overflow-hidden transition-all duration-300" 
+            <div class="overflow-hidden transition-all duration-300 min-w-0" 
               [class.lg:w-0]="!sidebarOpen()" [class.lg:opacity-0]="!sidebarOpen()" 
               [class.lg:w-auto]="sidebarOpen()" [class.lg:opacity-100]="sidebarOpen()">
-              <h1 class="text-slate-900 dark:text-white text-sm font-black leading-tight whitespace-nowrap truncate max-w-[160px]" [title]="auth.tenant()?.name || 'EduPsych Pro'">
+              <h1 class="text-slate-900 dark:text-white text-xs font-black leading-tight whitespace-nowrap truncate max-w-[140px]" [title]="auth.tenant()?.name || 'EduPsych Pro'">
                 {{ auth.tenant()?.name || 'EduPsych Pro' }}
               </h1>
-              <p class="text-primary text-[11px] font-bold tracking-wide uppercase whitespace-nowrap">Gestão Clínica</p>
+              <p class="text-primary text-[10px] font-bold tracking-wide uppercase whitespace-nowrap">Gestão Clínica</p>
             </div>
           </div>
 
@@ -185,7 +188,12 @@ type NavItem = {
         <!-- Banner de Impersonação / Modo Suporte -->
         @if (auth.isImpersonating()) {
           <div class="bg-amber-500 text-slate-950 px-4 py-2 text-xs sm:text-sm font-bold flex items-center justify-between shadow-md z-40 shrink-0 border-b border-amber-600">
-            <div class="flex items-center gap-2 truncate">
+            <div class="flex items-center gap-2.5 min-w-0 truncate">
+              @if (effectiveClinicLogo()) {
+                <div class="h-7 w-auto max-w-[120px] bg-white/95 rounded-md px-1.5 py-0.5 flex items-center shrink-0 shadow-sm border border-amber-600/30">
+                  <img [src]="effectiveClinicLogo()" alt="Logo Clínica" class="max-h-6 w-auto object-contain">
+                </div>
+              }
               <span class="material-icons text-base shrink-0 animate-pulse">support_agent</span>
               <span class="truncate">Você está acessando em <strong>Modo Suporte</strong> na clínica: <strong class="underline decoration-slate-950/40">{{ auth.impersonatedClinicName() }}</strong></span>
             </div>
@@ -259,6 +267,15 @@ type NavItem = {
               aria-label="Abrir menu">
               <span class="material-icons text-2xl">menu</span>
             </button>
+
+            <!-- Logo da Clínica no Topo (visível especialmente em tablets/iPads e mobile) -->
+            @if (effectiveClinicLogo()) {
+              <div class="flex items-center gap-2 shrink-0">
+                <img [src]="effectiveClinicLogo()" [alt]="auth.tenant()?.name || 'Clínica'"
+                  class="h-7 sm:h-8 w-auto max-w-[130px] sm:max-w-[170px] object-contain">
+                <div class="h-5 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+              </div>
+            }
 
             <!-- Breadcrumb dinâmico -->
             <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -388,6 +405,26 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return true;
   });
 
+  effectiveClinicLogo = computed(() => {
+    const tenant = this.auth.tenant();
+    if (tenant?.logoUrl) return tenant.logoUrl;
+    const name = (tenant?.name || '').toLowerCase();
+    const slug = (tenant?.slug || '').toLowerCase();
+    const user = (this.auth.user()?.name || '').toLowerCase();
+    const email = (this.auth.user()?.email || '').toLowerCase();
+    const imp = (this.auth.impersonatedClinicName() || '').toLowerCase();
+    if (
+      name.includes('vilma') ||
+      slug.includes('vilma') ||
+      user.includes('vilma') ||
+      email.includes('vilma') ||
+      imp.includes('vilma')
+    ) {
+      return '/assets/images/logo-vilma-transparente.png';
+    }
+    return null;
+  });
+
   sidebarOpen = signal(true);
   mobileSidebarOpen = signal(false);
   notifCount = signal(0);
@@ -400,6 +437,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard', count: signal(0) },
     { id: 'pacientes', label: 'Pacientes', icon: 'people', route: '/app/pacientes', count: signal(0) },
+    { id: 'anamnese', label: 'Anamnese', icon: 'assignment_ind', route: '/app/anamnese', count: signal(0) },
     { id: 'evolucoes', label: 'Evoluções', icon: 'show_chart', route: '/app/evolucoes', count: signal(0) },
     { id: 'responsaveis', label: 'Responsáveis', icon: 'person_add', route: '/app/responsaveis', count: signal(0) },
     { id: 'escolas', label: 'Escolas', icon: 'school', route: '/app/escolas', count: signal(0) },
@@ -417,6 +455,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     {
       id: 'documentos', label: 'Documentos', icon: 'folder_open',
       children: [
+        { id: 'doc-anamnese', label: 'Anamnese Clínica', icon: 'assignment_ind', route: '/app/anamnese' },
         { id: 'doc-arquivos', label: 'Arquivos', icon: 'folder', route: '/app/documentos' },
         { id: 'doc-diario', label: 'Diário de Sessões', icon: 'edit_note', route: '/app/documentos-clinicos/diario' },
         { id: 'doc-frequencia', label: 'Frequência', icon: 'checklist', route: '/app/documentos-clinicos/frequencia' },

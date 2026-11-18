@@ -161,9 +161,10 @@ export class AuthService {
       targetClinicName: tenant?.name || 'Clínica',
     };
     this.setItem(this.impersonationBackupKey, JSON.stringify(backup));
-    this.login(token, user, [tenant], tenant);
     this.isImpersonating.set(true);
     this.impersonatedClinicName.set(tenant?.name || 'Clínica');
+    const enriched = this.enrichTenant(tenant);
+    this.login(token, user, [enriched], enriched);
     this.router.navigate(['/app/dashboard']);
   }
 
@@ -229,9 +230,17 @@ export class AuthService {
     if (!t) return t;
     if (!t.logoUrl) {
       const name = (t.name || '').toLowerCase();
+      const slug = (t.slug || '').toLowerCase();
       const userName = (this.user()?.name || '').toLowerCase();
       const email = (this.user()?.email || '').toLowerCase();
-      if (name.includes('vilma') || userName.includes('vilma') || email.includes('vilma')) {
+      const impersonated = (this.impersonatedClinicName() || '').toLowerCase();
+      if (
+        name.includes('vilma') ||
+        slug.includes('vilma') ||
+        userName.includes('vilma') ||
+        email.includes('vilma') ||
+        impersonated.includes('vilma')
+      ) {
         return { ...t, logoUrl: '/assets/images/logo-vilma-transparente.png' };
       }
     }

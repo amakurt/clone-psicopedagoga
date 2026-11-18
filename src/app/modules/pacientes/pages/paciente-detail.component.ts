@@ -34,6 +34,9 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
             <button (click)="showDeleteModal.set(true)" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/70 dark:border-red-900/60 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm">
               <span class="material-icons text-base">delete</span> Excluir
             </button>
+            <a [routerLink]="['/app/anamnese/novo']" [queryParams]="{ pacienteId: id }" class="inline-flex items-center gap-1.5 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200/70 dark:border-teal-900/60 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm">
+              <span class="material-icons text-base">assignment_ind</span> Anamnese
+            </a>
             <a [routerLink]="['/app/pacientes', id, 'prontuario']" class="inline-flex items-center gap-1.5 bg-primary text-on-primary px-4 py-2 rounded-xl text-xs sm:text-sm font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20">
               <span class="material-icons text-base">description</span> Prontuário
             </a>
