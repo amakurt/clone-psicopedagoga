@@ -79,8 +79,14 @@ router.get('/', authenticate, async (req: any, res) => {
       }
     }
 
+    let logoUrl = tenant.logoUrl;
+    if (!logoUrl && (tenant.name?.toLowerCase().includes('vilma') || tenant.slug?.toLowerCase().includes('vilma'))) {
+      logoUrl = '/api/uploads/public/logo-vilma-transparente.png';
+    }
+
     return res.json({
       ...tenant,
+      logoUrl,
       address: parsedAddress
     });
   } catch (err: any) {

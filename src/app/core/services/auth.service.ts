@@ -79,7 +79,7 @@ export class AuthService {
 
     const savedTenant = this.getItem(this.tenantKey);
     if (savedTenant) {
-      try { this.tenant.set(JSON.parse(savedTenant)); } catch {}
+      try { this.tenant.set(this.enrichTenant(JSON.parse(savedTenant))); } catch {}
     }
 
     const impersonateBackup = this.getItem(this.impersonationBackupKey);
@@ -110,8 +110,9 @@ export class AuthService {
       this.tenants.set(tenants);
     }
     if (tenant) {
-      this.setItem(this.tenantKey, JSON.stringify(tenant));
-      this.tenant.set(tenant);
+      const enriched = this.enrichTenant(tenant);
+      this.setItem(this.tenantKey, JSON.stringify(enriched));
+      this.tenant.set(enriched);
     }
 
     if (!tenants) {
@@ -128,8 +129,9 @@ export class AuthService {
     this.tenants.set(data.tenants || []);
     this.setItem(this.tenantsKey, JSON.stringify(data.tenants || []));
     if (data.tenant) {
-      this.tenant.set(data.tenant);
-      this.setItem(this.tenantKey, JSON.stringify(data.tenant));
+      const enriched = this.enrichTenant(data.tenant);
+      this.tenant.set(enriched);
+      this.setItem(this.tenantKey, JSON.stringify(enriched));
     }
   }
 
@@ -144,9 +146,10 @@ export class AuthService {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro ao trocar de clínica');
-    this.tenant.set(data.tenant);
-    this.setItem(this.tenantKey, JSON.stringify(data.tenant));
-    return data.tenant;
+    const enriched = this.enrichTenant(data.tenant);
+    this.tenant.set(enriched);
+    this.setItem(this.tenantKey, JSON.stringify(enriched));
+    return enriched;
   }
 
   startImpersonation(token: string, user: any, tenant: any) {
@@ -213,12 +216,25 @@ export class AuthService {
 
   updateTenant(patch: any) {
     const current = this.tenant() || {};
-    const next = { ...current, ...patch };
+    const next = this.enrichTenant({ ...current, ...patch });
     this.tenant.set(next);
     this.setItem(this.tenantKey, JSON.stringify(next));
 
     const list = this.tenants().map(t => t.id === next.id ? { ...t, ...next } : t);
     this.tenants.set(list);
     this.setItem(this.tenantsKey, JSON.stringify(list));
+  }
+
+  private enrichTenant(t: any): any {
+    if (!t) return t;
+    if (!t.logoUrl) {
+      const name = (t.name || '').toLowerCase();
+      const userName = (this.user()?.name || '').toLowerCase();
+      const email = (this.user()?.email || '').toLowerCase();
+      if (name.includes('vilma') || userName.includes('vilma') || email.includes('vilma')) {
+        return { ...t, logoUrl: '/assets/images/logo-vilma-transparente.png' };
+      }
+    }
+    return t;
   }
 }

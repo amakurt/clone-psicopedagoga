@@ -10,7 +10,7 @@ export interface DocTemplate {
 
 export const DOC_CATEGORIES = [
   { value: 'Diagnóstico', label: 'Diagnóstico', count: 7 },
-  { value: 'Avaliação', label: 'Avaliação', count: 6 },
+  { value: 'Avaliação', label: 'Avaliação', count: 7 },
   { value: 'Intervenção', label: 'Intervenção', count: 6 },
   { value: 'Escolar', label: 'Escolar', count: 5 },
   { value: 'Jurídico', label: 'Jurídico', count: 5 },
@@ -303,8 +303,275 @@ export const DOC_TEMPLATES: DocTemplate[] = [
   },
 
   // ==========================================
-  // AVALIAÇÃO (6)
+  // AVALIAÇÃO (7)
   // ==========================================
+  {
+    id: "a0",
+    name: "Anamnese Neuropsicopedagógica Clínica Completa — Dra. Vilma Sousa",
+    description: "Protocolo clínico oficial em 16 eixos: identificação completa, constelação familiar, desenvolvimento psicomotor, linguagem, sono, alimentação e escolaridade",
+    category: "Avaliação",
+    favorite: true,
+    content: `<h2>ANAMNESE CLÍNICA NEUROPSICOPEDAGÓGICA</h2>
+<p style="text-align: right; color: #64748b; font-size: 13px;"><em>Protocolo Oficial Clínico • Dra. Vilma Sousa — Neuropsicopedagoga</em></p>
+
+<h3>I. IDENTIFICAÇÃO</h3>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+  <tr>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 65%;"><strong>Nome:</strong> {nome_paciente}</td>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 35%;"><strong>Data de Nascimento:</strong> {data_nascimento}</td>
+  </tr>
+  <tr>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Idade:</strong> {idade}</td>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Ano/Série:</strong> {serie} &nbsp;|&nbsp; <strong>Turno:</strong> {turno}</td>
+  </tr>
+  <tr>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Escola:</strong> {escola}</td>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Telefone Escola:</strong> {telefone_escola}</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Endereço da Escola:</strong> {endereco_escola}</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Nome dos Pais / Responsável:</strong> {nome_responsavel}</td>
+  </tr>
+  <tr>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Profissão do Pai:</strong> {profissao_pai} (Idade: {idade_pai})</td>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Profissão da Mãe:</strong> {profissao_mae} (Idade: {idade_mae})</td>
+  </tr>
+  <tr>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Escolaridade da Mãe:</strong> {escolaridade_mae}</td>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Escolaridade do Pai:</strong> {escolaridade_pai}</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Endereço Residencial:</strong> {endereco_paciente}</td>
+  </tr>
+  <tr>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Telefones para Contato:</strong> {telefone_responsavel}</td>
+    <td style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Indicação do Tratamento:</strong> {indicacao_tratamento}</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="padding: 6px 8px; border: 1px solid #cbd5e1;"><strong>Queixa / Diagnóstico Inicial:</strong> {queixa_principal}</td>
+  </tr>
+</table>
+
+<h3>II. MOTIVO DA CONSULTA</h3>
+<p><strong>Queixa Principal:</strong></p>
+<p>{queixa_principal_detalhada}</p>
+<p><strong>História da queixa (quando, como e em que circunstâncias começou e se desenvolveu):</strong></p>
+<p>{historia_queixa}</p>
+
+<h3>III. CONSTELAÇÃO FAMILIAR</h3>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; text-align: left;">
+  <thead>
+    <tr style="background-color: #f1f5f9;">
+      <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 6%;">Nº</th>
+      <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 36%;">Nome / Parentesco</th>
+      <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 30%;">Ocupação</th>
+      <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 14%;">Idade</th>
+      <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 14%;">Sexo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">1</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_1_nome} ({parente_1_parentesco})</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_1_ocupacao}</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_1_idade}</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_1_sexo}</td>
+    </tr>
+    <tr>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">2</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_2_nome} ({parente_2_parentesco})</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_2_ocupacao}</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_2_idade}</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_2_sexo}</td>
+    </tr>
+    <tr>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">3</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_3_nome} ({parente_3_parentesco})</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_3_ocupacao}</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_3_idade}</td>
+      <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">{parente_3_sexo}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>IV. ANTECEDENTES PESSOAIS</h3>
+<p><strong>a) Concepção:</strong></p>
+<ul>
+  <li>A criança foi desejada? <strong>{concepcao_desejada}</strong></li>
+  <li>Fez pré-natal? <strong>{concepcao_prenatal}</strong></li>
+  <li>Idade da gravidez / semanas: <strong>{idade_gravidez}</strong></li>
+  <li>Observações da concepção: {observacoes_concepcao}</li>
+</ul>
+
+<p><strong>b) Gestação:</strong></p>
+<ul>
+  <li>Como a mãe estava emocionalmente? {gestacao_emocional}</li>
+  <li>Teve complicações orgânicas? <strong>{gestacao_complicacoes}</strong> (Em que mês: {gestacao_mes_complicacao})</li>
+  <li>Traumatismo, queda ou alguma intercorrência durante a gestação: {gestacao_intercorrencias}</li>
+</ul>
+
+<p><strong>c) Parto:</strong></p>
+<ul>
+  <li>Maternidade: {parto_maternidade}</li>
+  <li>Como foram as 24 horas anteriores (mãe) e 24 horas posteriores (mãe e criança) ao parto: {parto_24h}</li>
+  <li>Condições do parto: <strong>{condicoes_parto}</strong> &nbsp;|&nbsp; Tempo: {tempo_parto}</li>
+  <li>Prematuro: <strong>{parto_prematuro}</strong> (Quantos meses ou semanas: {parto_prematuro_semanas})</li>
+  <li>Tamanho ao nascer: <strong>{parto_tamanho}</strong> &nbsp;|&nbsp; Peso ao nascer: <strong>{parto_peso}</strong> &nbsp;|&nbsp; Nota do Apgar: <strong>{parto_apgar}</strong></li>
+  <li>Observações do parto: {observacoes_parto}</li>
+</ul>
+
+<h3>V. DESENVOLVIMENTO</h3>
+<p><strong>a) Recursos Adicionais:</strong> Faz uso de algum recurso adicional (óculos, cadeira de rodas, prótese, aparelho auditivo, muletas, etc.): <strong>{recursos_adicionais}</strong></p>
+<p><strong>b) Alimentação:</strong></p>
+<ul>
+  <li>Mamou, até quando, como e quando introduziu alimentos sólidos: {alimentacao_mamou}</li>
+  <li>Mamadeira (iniciou e deixou): {alimentacao_mamadeira}</li>
+  <li>Como aceitou alimentos sólidos: {alimentacao_solidos}</li>
+  <li>Quando nasceram os primeiros dentes: {alimentacao_dentes}</li>
+  <li>Tem problemas de alimentação atualmente (quais): {alimentacao_atual}</li>
+  <li>Qual a atitude da família: {alimentacao_atitude_familia}</li>
+  <li>Observações: {alimentacao_observacoes}</li>
+</ul>
+<p><strong>c) Sono:</strong></p>
+<ul>
+  <li>Onde dormiu desde o nascimento: {sono_local_nascimento}</li>
+  <li>Qual a idade em que passou a dormir sozinho em seu quarto: {sono_quarto_sozinho}</li>
+  <li>Como foi o sono desde pequeno: {sono_padrao_infancia}</li>
+  <li>Houve época em que melhorou ou piorou (quando): {sono_oscilacao}</li>
+  <li>Atualmente, como é o sono: {sono_atual}</li>
+  <li>Qual a atitude dos pais: {sono_atitude_pais}</li>
+  <li>Observações do sono: {sono_observacoes}</li>
+</ul>
+
+<h3>VI. DESENVOLVIMENTO MOTOR</h3>
+<p><strong>Marcos Motores:</strong></p>
+<ul>
+  <li>Quando sustentou a cabeça: <strong>{motor_sustentou_cabeca}</strong></li>
+  <li>Sentou (idade e observação): <strong>{motor_sentou}</strong></li>
+  <li>Engatinhou (idade e observação): <strong>{motor_engatinhou}</strong></li>
+  <li>Ficou em pé (idade e observação): <strong>{motor_ficou_em_pe}</strong></li>
+  <li>Andou (idade e observação): <strong>{motor_andou}</strong></li>
+</ul>
+<p><strong>a) Dificuldades no Desenvolvimento:</strong></p>
+<ul>
+  <li>Tendência a cair: <strong>{motor_tendencia_cair}</strong></li>
+  <li>Machucar-se com facilidade: <strong>{motor_machucar_se}</strong></li>
+  <li>Dificuldades em manipular objetos: <strong>{motor_manipular_objetos}</strong></li>
+  <li>Dificuldades motoras atuais: {motor_dificuldades_atuais}</li>
+  <li>Qual a atitude dos pais: {motor_atitude_pais}</li>
+  <li>Lateralidade: <strong>{motor_lateralidade}</strong></li>
+  <li>Observações: {motor_observacoes}</li>
+</ul>
+<p><strong>b) Controle dos Esfíncteres:</strong></p>
+<ul>
+  <li>Quando deixou as fraldas: <strong>{esfincter_desfralde}</strong></li>
+  <li>Aprendizagem do uso do penico e do banheiro: {esfincter_aprendizagem}</li>
+  <li>Quem fez o controle e com que idade: {esfincter_quem_controlou}</li>
+  <li>Vesical diurno: <strong>{esfincter_vesical_diurno}</strong> &nbsp;|&nbsp; Anal diurno: <strong>{esfincter_anal_diurno}</strong></li>
+  <li>Vesical noturno: <strong>{esfincter_vesical_noturno}</strong> &nbsp;|&nbsp; Anal noturno: <strong>{esfincter_anal_noturno}</strong></li>
+  <li>Observações: {esfincter_observacoes}</li>
+</ul>
+
+<h3>VII. LINGUAGEM</h3>
+<ul>
+  <li>Quando falou as primeiras palavras e quais foram: <strong>{linguagem_primeiras_palavras}</strong></li>
+  <li>Problemas de fala (quais e desde quando): <strong>{linguagem_problemas_fala}</strong></li>
+  <li>Qual a atitude dos pais: {linguagem_atitude_pais}</li>
+  <li>Observações de linguagem: {linguagem_observacoes}</li>
+</ul>
+
+<h3>VIII. SOCIABILIDADE</h3>
+<ul>
+  <li>Idade em que começou a interagir com a mãe, com o pai e outras pessoas: {social_inicio_interacao}</li>
+  <li>Tem amigos (idade e relacionamento): {social_amigos}</li>
+  <li>Que tipo de brincadeira prefere: {social_brincadeiras}</li>
+  <li>Como se comporta com adultos: {social_comportamento_adultos}</li>
+  <li>Qual a atitude familiar: {social_atitude_familiar}</li>
+  <li>Observações: {social_observacoes}</li>
+</ul>
+
+<h3>IX. REAÇÕES EMOCIONAIS</h3>
+<ul>
+  <li>Temperamento: <strong>{emocional_temperamento}</strong></li>
+  <li>Chora facilmente (por quê): {emocional_choro_facil}</li>
+  <li>Medos manifestados: {emocional_medos}</li>
+  <li>Atitudes dos pais: {emocional_atitudes_pais}</li>
+</ul>
+
+<h3>X. SEXUALIDADE</h3>
+<ul>
+  <li>Manifesta curiosidades sexuais (que perguntas faz): {sexualidade_curiosidades}</li>
+  <li>Qual a atitude dos pais: {sexualidade_atitude_pais}</li>
+  <li>Teve orientação (por parte de quem): {sexualidade_orientacao}</li>
+  <li>Algum fato ou comportamento que gere ou tenha gerado preocupação: {sexualidade_preocupacoes}</li>
+</ul>
+
+<h3>XI. MANIPULAÇÃO E TIQUES</h3>
+<ul>
+  <li>Usou chupeta (qual idade): {manipulacao_chupeta}</li>
+  <li>Apresenta outras manipulações habituais: {manipulacao_outras}</li>
+  <li>Tiques motores ou vocais: <strong>{manipulacao_tiques}</strong></li>
+  <li>Qual a atitude dos pais e observações: {manipulacao_observacoes}</li>
+</ul>
+
+<h3>XII. DOENÇAS</h3>
+<ul>
+  <li>Doenças infantis (quais e em que idade): {doencas_infantis}</li>
+  <li>Operações / cirurgias (quais e em que idade): {doencas_cirurgias}</li>
+  <li>Traumatismos, quedas (idade): {doencas_traumatismos}</li>
+  <li>Desmaios, ausências (idade): {doencas_desmaios}</li>
+  <li>Tem alguma doença atualmente: <strong>{doencas_atual}</strong></li>
+  <li>Toma alguma medicação e dosagem: <strong>{doencas_medicacoes}</strong></li>
+  <li>Tratamentos anteriores e atuais: {doencas_tratamentos}</li>
+  <li>Observações clínicas: {doencas_observacoes}</li>
+</ul>
+
+<h3>XIII. ANTECEDENTES FAMILIARES</h3>
+<p>Doenças na família (incluindo avós, bisavôs, tios, primos: nervosismo, alcoolismo, deficiência mental, homicídios, problemas de linguagem, outros):</p>
+<p>{antecedentes_familiares_detalhes}</p>
+
+<h3>XIV. ASPECTOS SÓCIO-CULTURAIS</h3>
+<ul>
+  <li>Como é o relacionamento do casal: {aspectos_relacionamento_casal}</li>
+  <li>Como é o relacionamento Pais x Filhos x Demais membros: {aspectos_relacionamento_familiar}</li>
+  <li>Com quem da família seu filho(a) melhor se relaciona: {aspectos_melhor_vinculo}</li>
+  <li>A família tem algum lazer (o quê): {aspectos_lazer_familiar}</li>
+</ul>
+
+<h3>XV. ESCOLARIDADE</h3>
+<ul>
+  <li>Idade de início e Creche ou escola: {escola_inicio}</li>
+  <li>Que escola(s) frequentou: {escola_historico_escolas}</li>
+  <li>Com que idade ingressou e problemas de adaptação: {escola_adaptacao}</li>
+  <li>Apresentou dificuldades de relacionamento (quais): {escola_dificuldades_relacionamento}</li>
+  <li>Dificuldades atualmente quanto ao rendimento escolar: {escola_rendimento_atual}</li>
+  <li>Dificuldades para realizar tarefas de casa (quem ajuda e comportamento): {escola_tarefas_casa}</li>
+  <li>Dificuldades escolares (como e quando iniciaram): {escola_dificuldades_inicio}</li>
+  <li>Opinião da professora: {escola_opiniao_professora}</li>
+  <li>A que atribui as dificuldades escolares: {escola_atribuicao_causas}</li>
+  <li>Reprovação (ano/série): <strong>{escola_reprovacao}</strong></li>
+  <li>Qual a atitude dos pais: {escola_atitude_pais}</li>
+  <li>Outras observações: {escola_outras_observacoes}</li>
+</ul>
+
+<h3>XVI. OUTRAS INFORMAÇÕES QUE JULGAREM NECESSÁRIAS</h3>
+<p>Situações traumáticas vividas pela família, doenças, mortes, vícios, acontecimentos marcantes desde a concepção:</p>
+<p>{outras_informacoes_relevantes}</p>
+
+<br />
+<div style="margin-top: 32px; text-align: right;">
+  <p>Redenção, {dia} de {mes} de {ano}.</p>
+</div>
+
+<br /><br />
+<div style="text-align: center; margin-top: 40px;">
+  <div style="border-top: 1px solid #334155; width: 340px; margin: 0 auto 8px auto;"></div>
+  <p style="margin: 0; font-weight: bold;">Dra. Vilma Sousa</p>
+  <p style="margin: 0; font-size: 12px; color: #64748b;">Neuropsicopedagoga Clínica</p>
+</div>`
+  },
   {
     id: 'a1',
     name: 'Relatório de Avaliação Psicopedagógica Completo',
@@ -884,7 +1151,12 @@ export function replaceDocPlaceholders(
   if (!content) return '';
   let res = content;
 
-  const dataAtual = new Date().toLocaleDateString('pt-BR');
+  const now = new Date();
+  const dataAtual = now.toLocaleDateString('pt-BR');
+  const dia = String(now.getDate()).padStart(2, '0');
+  const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const mes = meses[now.getMonth()];
+  const ano = String(now.getFullYear());
 
   // Paciente
   const nomePaciente = paciente?.name || paciente?.nome || '{nome_paciente}';
@@ -907,22 +1179,48 @@ export function replaceDocPlaceholders(
   if (paciente?.birthDate || paciente?.dataNascimento) {
     const bDate = new Date(paciente.birthDate || paciente.dataNascimento);
     if (!isNaN(bDate.getTime())) {
-      const diff = Date.now() - bDate.getTime();
-      const ageDate = new Date(diff);
-      const years = Math.abs(ageDate.getUTCFullYear() - 1970);
-      idade = `${years} anos`;
+      let years = now.getFullYear() - bDate.getFullYear();
+      let months = now.getMonth() - bDate.getMonth();
+      if (now.getDate() < bDate.getDate()) {
+        months--;
+      }
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      idade = `${years} anos e ${months} meses`;
     }
   } else if (paciente?.idade || paciente?.age) {
     idade = `${paciente.idade || paciente.age} anos`;
   }
 
-  const escola = paciente?.school || paciente?.escola || '{escola}';
+  const escola = paciente?.school?.name || paciente?.school || paciente?.escola || '{escola}';
   const serie = paciente?.grade || paciente?.serie || '{serie}';
-  const responsavel = paciente?.responsibleName || paciente?.responsavel || paciente?.responsavelNome || '{nome_responsavel}';
+  const responsavel = paciente?.responsible?.name || paciente?.responsibleName || paciente?.responsavel || paciente?.responsavelNome || '{nome_responsavel}';
+  const turno = paciente?.schoolShift || paciente?.turno || 'Manhã';
+  const telEscola = paciente?.school?.phone || paciente?.telefoneEscola || '—';
+  
+  let enderecoEscola = '—';
+  if (paciente?.school?.street) {
+    enderecoEscola = `${paciente.school.street}${paciente.school.number ? ', ' + paciente.school.number : ''} - ${paciente.school.city || ''}`;
+  } else if (paciente?.enderecoEscola) {
+    enderecoEscola = typeof paciente.enderecoEscola === 'string' ? paciente.enderecoEscola : JSON.stringify(paciente.enderecoEscola);
+  }
+
+  let enderecoPaciente = '—';
+  if (paciente?.street || paciente?.responsible?.street) {
+    const st = paciente?.responsible?.street || paciente?.street;
+    const num = paciente?.responsible?.number || paciente?.number || 'S/N';
+    const cid = paciente?.responsible?.city || paciente?.city || '';
+    enderecoPaciente = `${st}, ${num} - ${cid}`;
+  }
+
+  const telResponsavel = paciente?.responsible?.phones || paciente?.phone || '—';
+  const queixa = paciente?.notes || paciente?.diagnosis || 'Dificuldades no processo de aprendizagem e concentração escolar.';
 
   // Profissional
-  const profNome = profissional?.name || 'Dra. Vilma Rossi';
-  const profRegistro = profissional?.councilNumber || profissional?.registry || 'ABPp 1234/SP';
+  const profNome = profissional?.name || 'Dra. Vilma Sousa';
+  const profRegistro = profissional?.councilNumber || profissional?.registry || 'ABPp 1234/CE';
   const clinicNome = clinica?.name || 'Clínica de Psicopedagogia & Neuroeducação';
 
   res = res.replace(/\{nome_paciente\}/g, nomePaciente);
@@ -931,7 +1229,19 @@ export function replaceDocPlaceholders(
   res = res.replace(/\{escola\}/g, escola);
   res = res.replace(/\{serie\}/g, serie);
   res = res.replace(/\{nome_responsavel\}/g, responsavel);
+  res = res.replace(/\{turno\}/g, turno);
+  res = res.replace(/\{telefone_escola\}/g, telEscola);
+  res = res.replace(/\{endereco_escola\}/g, enderecoEscola);
+  res = res.replace(/\{endereco_paciente\}/g, enderecoPaciente);
+  res = res.replace(/\{telefone_responsavel\}/g, telResponsavel);
+  res = res.replace(/\{indicacao_tratamento\}/g, 'Encaminhamento Escolar / Familiar');
+  res = res.replace(/\{queixa_principal\}/g, queixa);
+  res = res.replace(/\{queixa_principal_detalhada\}/g, queixa);
+  res = res.replace(/\{historia_queixa\}/g, 'Dificuldades observadas desde o início do ano letivo com impacto no rendimento acadêmico.');
   res = res.replace(/\{data_atual\}/g, dataAtual);
+  res = res.replace(/\{dia\}/g, dia);
+  res = res.replace(/\{mes\}/g, mes);
+  res = res.replace(/\{ano\}/g, ano);
   res = res.replace(/\{profissional_nome\}/g, profNome);
   res = res.replace(/\{registro_profissional\}/g, profRegistro);
   res = res.replace(/\{clinica_nome\}/g, clinicNome);
@@ -945,17 +1255,33 @@ export function formatDocBlankPlaceholders(
 ): string {
   if (!content) return '';
   let res = content;
-  const dataAtual = new Date().toLocaleDateString('pt-BR');
-  const profNome = profissional?.name || 'Dra. Vilma Rossi';
-  const profRegistro = profissional?.councilNumber || profissional?.registry || 'ABPp 1234/SP';
+  const now = new Date();
+  const dataAtual = now.toLocaleDateString('pt-BR');
+  const dia = '______';
+  const mes = '__________________';
+  const ano = String(now.getFullYear());
+  const profNome = profissional?.name || 'Dra. Vilma Sousa';
+  const profRegistro = profissional?.councilNumber || profissional?.registry || 'ABPp 1234/CE';
 
   res = res.replace(/\{nome_paciente\}/g, '________________________________________________');
   res = res.replace(/\{data_nascimento\}/g, '___/___/______');
-  res = res.replace(/\{idade\}/g, '____ anos');
+  res = res.replace(/\{idade\}/g, '____ anos e ____ meses');
   res = res.replace(/\{escola\}/g, '________________________________________________');
   res = res.replace(/\{serie\}/g, '________________');
   res = res.replace(/\{nome_responsavel\}/g, '________________________________________________');
+  res = res.replace(/\{turno\}/g, '________________');
+  res = res.replace(/\{telefone_escola\}/g, '________________________');
+  res = res.replace(/\{endereco_escola\}/g, '________________________________________________');
+  res = res.replace(/\{endereco_paciente\}/g, '________________________________________________');
+  res = res.replace(/\{telefone_responsavel\}/g, '________________________');
+  res = res.replace(/\{indicacao_tratamento\}/g, '________________________________');
+  res = res.replace(/\{queixa_principal\}/g, '________________________________________________');
+  res = res.replace(/\{queixa_principal_detalhada\}/g, '________________________________________________________________________________________________________________________________________________');
+  res = res.replace(/\{historia_queixa\}/g, '________________________________________________________________________________________________________________________________________________');
   res = res.replace(/\{data_atual\}/g, dataAtual);
+  res = res.replace(/\{dia\}/g, dia);
+  res = res.replace(/\{mes\}/g, mes);
+  res = res.replace(/\{ano\}/g, ano);
   res = res.replace(/\{profissional_nome\}/g, profNome);
   res = res.replace(/\{registro_profissional\}/g, profRegistro);
   res = res.replace(/\{clinica_nome\}/g, 'Clínica de Psicopedagogia & Neuroeducação');

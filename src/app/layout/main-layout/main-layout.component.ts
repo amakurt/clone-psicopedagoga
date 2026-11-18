@@ -279,7 +279,7 @@ type NavItem = {
                   (click)="tenantOpen.set(!tenantOpen())" title="Trocar de clínica">
                   <div class="size-5 sm:size-6 rounded-md bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                     @if (auth.tenant()?.logoUrl) {
-                      <img [src]="auth.tenant()?.logoUrl" class="size-full object-cover">
+                      <img [src]="auth.tenant()?.logoUrl" class="size-full object-contain">
                     } @else {
                       <span class="material-icons text-[13px] sm:text-[14px] text-primary">domain</span>
                     }
@@ -301,7 +301,7 @@ type NavItem = {
                         (click)="switchTenant(tenant)">
                         <div class="size-8 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                           @if (tenant.logoUrl) {
-                            <img [src]="tenant.logoUrl" class="size-full object-cover">
+                            <img [src]="tenant.logoUrl" class="size-full object-contain">
                           } @else {
                             <span class="material-icons text-[16px] text-primary">domain</span>
                           }

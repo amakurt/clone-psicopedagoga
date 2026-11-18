@@ -2,6 +2,52 @@
 
 ## Última Atualização: 18 de Novembro de 2026
 
+## Sessão 92 - 18/11/2026 — Modelo Oficial de Anamnese Clínica da Dra. Vilma (16 Eixos) com Touch Chips para iPad e Identidade Visual Transparente Completa
+
+### O que foi feito
+
+#### 1. Modelo Oficial de Anamnese Clínica da Dra. Vilma Sousa (16 Eixos Completos)
+- **Extração e Estruturação Fiel do Modelo Word (.docx):**
+  - Implementados todos os 16 eixos clínicos presentes no documento oficial da Dra. Vilma:
+    1. Identificação Completa (preenchimento automático com cálculo de idade em anos e meses, escola, série, turno, telefones e endereço).
+    2. Motivo da Consulta & Queixa Principal (história da queixa, primeiros sintomas, reações dos pais e atendimentos anteriores).
+    3. Antecedentes Familiares & Concepção (gravidez planejada, aceitação familiar, idade na gestação, intercorrências e pré-natal).
+    4. Gestação e Condições de Parto (emocional da mãe, trabalho de parto, tipo de parto normal/cesárea, prematuridade, peso e tamanho/Apgar).
+    5. Desenvolvimento Psicomotor & Marcos do Neurodesenvolvimento (sustentou cabeça, sentou, engatinhou, andou, tono muscular e dominância manual).
+    6. Sono & Ritmo Circadiano (sono tranquilo/agitado, rituais, insônia, pesadelos, sonambulismo e cama compartilhada).
+    7. Alimentação & Hábitos Orais (amamentação materna, introdução da mamadeira, alimentação sólida, deglutição, seletividade e apetite).
+    8. Linguagem & Comunicação (balbucio, primeiras palavras, fala inteligível, vocabulário e compreensão verbal).
+    9. Esfíncteres & Autonomia (controle vesical diurno/noturno, controle anal, enurese e histórico de desfralde).
+    10. Manipulações & Tiques (sucção de polegar, uso de chupeta, roer unhas, tiques motores ou vocais).
+    11. Doenças, Medicações & Tratamentos Anteriores (histórico clínico, alergias, internações, convulsões e medicamentos contínuos).
+    12. Escolaridade & Aprendizagem (adaptação escolar, retenção/reprovação, dificuldades pedagógicas e interação com educadores).
+    13. Comportamento, Socialização & Regulação Emocional (interação social, birras, agressividade, tolerância à frustração e brincadeiras).
+    14. Sexualidade & Curiosidade (atitudes e dúvidas expressadas).
+    15. Dinâmica Familiar & Constelação (tabela dinâmica e interativa para adicionar membros da família, parentesco, idade e profissão).
+    16. Fechamento Oficial & Assinatura Profissional em Redenção-CE.
+
+#### 2. Botões de Toque Rápido (Touch Chips) para iPad e Digitação Ágil
+- Substituição dos parênteses manuais `( )` por botões de toque rápido (chips/toggles interativos) com feedback visual nas cores primárias (teal/emerald) e transição suave, perfeitos para uso clínico em tablets/iPads sem necessidade de abrir teclado virtual.
+- Preservação de campos abertos para digitação detalhada e observações clínicas.
+- Integração de auto-preenchimento instantâneo ao selecionar o paciente: consulta em tempo real a `/pacientes/:id`, preenchendo escola, turno, responsáveis, telefones, endereço e calculando a idade exata em anos e meses.
+- Suporte a Scanner OCR inteligente via IA para importar fotos de fichas físicas antigas diretamente para os campos da Anamnese.
+
+#### 3. Extração, Remoção de Fundo e Identidade Visual Transparente da Dra. Vilma Sousa
+- **Processamento Gráfico em Alta Resolução:**
+  - Extraído o logotipo original do documento Word anexado (`word/media/image1.png`).
+  - Removido 100% do gradiente de fundo azul/ciano via modelo polinomial 2D e desentrelaçamento de cores (color unmixing), eliminando qualquer contaminação ciano nas bordas.
+  - Geradas versões transparentes nítidas padrão e 2x Retina (`logo-vilma-transparente.png` e `logo-vilma-transparente-2x.png`) em `src/assets/images/`, `public/assets/images/` e `backend/uploads/`.
+- **Aplicação Completa nos 3 Locais Solicitados:**
+  - **Menu Lateral / Topo da Navegação (Navbar & Sidebar):** Exibição da logomarca transparente em alta definição no desktop e no menu móvel da psicopedagoga.
+  - **Papel Timbrado Oficial (A4 Timbrado de Laudos, Relatórios, Documentos e Anamnese):** Inserção automática do cabeçalho oficial timbrado com a logomarca transparente em todas as impressões A4 e exportações em PDF.
+  - **Portal do Responsável (Família):** Logomarca transparente integrada no topo e menu do portal dos pais, reforçando a identidade profissional e acolhedora da clínica.
+
+#### 4. Validação Técnica
+- **Frontend Angular:** Compilação de desenvolvimento e produção com `npx ng build` concluída com sucesso (0 erros).
+- **Backend Node.js/TypeScript:** Compilação com `tsc` concluída com sucesso (0 erros) e sanitização defensiva dos campos de Anamnese no banco de dados.
+
+---
+
 ## Sessão 91 - 18/11/2026 — Máscaras Dinâmicas de Digitação (CPF, RG, CNPJ, Telefone), Edição In-App de Documentos (A4 & Suporte a .doc/.docx) e Scanner OCR Integrado
 
 ### O que foi feito

@@ -75,13 +75,18 @@ function buildTenantPayload(tenant: any, role: string) {
     }
   }
 
+  let logoUrl = tenant.logoUrl;
+  if (!logoUrl && (tenant.name?.toLowerCase().includes('vilma') || tenant.slug?.toLowerCase().includes('vilma'))) {
+    logoUrl = '/api/uploads/public/logo-vilma-transparente.png';
+  }
+
   return {
     id: tenant.id,
     name: tenant.name,
     slug: tenant.slug,
     plan: tenant.plan,
     status: tenant.status,
-    logoUrl: tenant.logoUrl,
+    logoUrl,
     colors: tenant.colors,
     phone: tenant.phone || null,
     email: tenant.email || null,
