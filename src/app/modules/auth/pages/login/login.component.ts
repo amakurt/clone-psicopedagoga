@@ -297,9 +297,20 @@ export class LoginComponent {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: this.email, password: this.password })
     })
-    .then(res => {
-      if (!res.ok) return res.json().then(data => { throw new Error(data.error || 'Erro ao fazer login'); });
-      return res.json();
+    .then(async res => {
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        if (!res.ok) {
+          throw new Error(res.status === 502 || res.status === 503
+            ? 'O servidor backend está reiniciando ou temporariamente indisponível. Tente novamente em instantes.'
+            : `Erro no servidor (${res.status}).`);
+        }
+      }
+      if (!res.ok) throw new Error(data.error || 'Credenciais inválidas ou erro ao fazer login');
+      return data;
     })
     .then(data => {
       this.auth.login(data.token, data.user, data.tenants, data.tenant);
@@ -371,9 +382,20 @@ register() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-    .then(res => {
-      if (!res.ok) return res.json().then(data => { throw new Error(data.error || 'Erro ao cadastrar'); });
-      return res.json();
+    .then(async res => {
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        if (!res.ok) {
+          throw new Error(res.status === 502 || res.status === 503
+            ? 'O servidor backend está reiniciando ou temporariamente indisponível. Tente novamente em instantes.'
+            : `Erro no servidor (${res.status}).`);
+        }
+      }
+      if (!res.ok) throw new Error(data.error || 'Erro ao cadastrar');
+      return data;
     })
     .then(data => {
       this.auth.login(data.token, data.user, data.tenants, data.tenant);

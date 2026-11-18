@@ -35,7 +35,15 @@
   - Extração de texto e estruturação de documentos `.doc` e `.docx` utilizando `mammoth` e parsers binários no backend.
   - Visualização e edição nativa integrada no editor A4 sem necessidade de download externo.
 
-#### 3. Validação Técnica
+#### 3. Resolução do Erro no Login no iPad ("the String did not match the expected pattern") e Auto-Instalação de Dependências no Script VPS
+- **Causa Raiz Identificada:**
+  - Ao rodar `update-vps.sh`, o script baixou as novas dependências do backend (`mammoth` e `word-extractor`), mas não executava `npm install` no backend, causando falha na inicialização do serviço PM2.
+  - Com o backend offline/reiniciando, o Nginx retornava uma página HTML `502 Bad Gateway`. No Safari (iPad/iOS), ao tentar fazer `res.json()` de uma resposta HTML, o WebKit dispara a exceção `SyntaxError: The string did not match the expected pattern`.
+- **Solução Implementada:**
+  - **Script de Atualização VPS (`update-vps.sh`):** Adicionado passo explícito `npm install --omit=dev --no-audit --no-fund` antes do build do backend, garantindo que qualquer dependência npm seja instalada automaticamente sem sobrecarregar a memória da VPS.
+  - **Tratamento Resiliente no Login (`login.component.ts`):** Tratamento seguro de resposta com `res.text()` e bloco `try/catch` para `JSON.parse()`, prevenindo que erros de rede ou 502 disparem exceções de sintaxe no WebKit e exibindo mensagem amigável e clara para o usuário.
+
+#### 4. Validação Técnica
 - **Frontend:** Compilação de produção com `npx ng build` concluída com sucesso (0 erros).
 
 ---

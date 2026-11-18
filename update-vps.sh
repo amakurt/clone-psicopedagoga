@@ -29,8 +29,9 @@ sleep 3
 docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "CREATE SCHEMA IF NOT EXISTS evolution;" 2>/dev/null || true
 
 # 3. Atualizar Banco de Dados (PostgreSQL) e Backend
-echo -e "\n${YELLOW}[3/5] Sincronizando schema do banco de dados (Prisma)...${NC}"
+echo -e "\n${YELLOW}[3/5] Instalando dependências e sincronizando banco (Prisma)...${NC}"
 cd "$ROOT_DIR/backend"
+npm install --omit=dev --no-audit --no-fund
 cp prisma/schema.postgres.prisma prisma/schema.prisma
 npx prisma generate
 npx prisma db push --accept-data-loss
