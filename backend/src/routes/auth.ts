@@ -238,52 +238,62 @@ async function ensureResponsibleForUser(user: any) {
 
 // Local login
 router.post('/login', strictLimiter, async (req, res) => {
-  const { email, password } = req.body;
-  
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
-  }
-
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return res.status(401).json({ error: 'Credenciais inválidas' });
-  }
-
-  if (!user.active) {
-    return res.status(403).json({ error: 'Conta não ativada. Verifique seu email ou reenvie o link de ativação.' });
-  }
-
-  if (!user.password) {
-    return res.status(401).json({ error: 'Conta sem senha definida. Use login social.' });
-  }
-
-  const validPassword = await bcrypt.compare(password, user.password);
-  if (!validPassword) {
-    return res.status(401).json({ error: 'Credenciais inválidas' });
-  }
-
-  const membership = await prisma.membership.findFirst({
-    where: { userId: user.id, active: true },
-    orderBy: { createdAt: 'asc' },
-    include: { tenant: { include: { subscription: true } } },
-  });
-  if (membership) {
-    await enforceTenantStatus(membership.tenant);
-    if (membership.tenant.status === 'BLOQUEADO') {
-      return res.status(403).json({ error: 'Assinatura da clínica vencida ou bloqueada. Entre em contato com o suporte.' });
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    if (!user.active) {
+      return res.status(403).json({ error: 'Conta não ativada. Verifique seu email ou reenvie o link de ativação.' });
+    }
+
+    if (!user.password) {
+      return res.status(401).json({ error: 'Conta sem senha definida. Use login social.' });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    let membership: any = null;
+    try {
+      membership = await prisma.membership.findFirst({
+        where: { userId: user.id, active: true },
+        orderBy: { createdAt: 'asc' },
+        include: { tenant: { include: { subscription: true } } },
+      });
+      if (membership?.tenant) {
+        await enforceTenantStatus(membership.tenant);
+        if (membership.tenant.status === 'BLOQUEADO') {
+          return res.status(403).json({ error: 'Assinatura da clínica vencida ou bloqueada. Entre em contato com o suporte.' });
+        }
+      }
+    } catch (billingErr: any) {
+      console.warn('[AUTH_LOGIN_BILLING_WARN]', billingErr.message);
+    }
+
+    const token = signToken(user);
+    const tenants = await getUserTenants(user.id);
+    const tenant = pickDefaultTenant(tenants);
+
+    res.json({ 
+      token, 
+      user: buildUserPayload(user),
+      tenants,
+      tenant,
+    });
+  } catch (err: any) {
+    console.error('[AUTH_LOGIN_ERROR]', err);
+    return res.status(500).json({ error: 'Erro no servidor ao autenticar: ' + (err?.message || err) });
   }
-
-  const token = signToken(user);
-  const tenants = await getUserTenants(user.id);
-  const tenant = pickDefaultTenant(tenants);
-
-  res.json({ 
-    token, 
-    user: buildUserPayload(user),
-    tenants,
-    tenant,
-  });
 });
 
 // Local register

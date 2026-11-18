@@ -42,6 +42,8 @@
 - **Solução Implementada:**
   - **Script de Atualização VPS (`update-vps.sh`):** Adicionado passo explícito `npm install --omit=dev --no-audit --no-fund` antes do build do backend, garantindo que qualquer dependência npm seja instalada automaticamente sem sobrecarregar a memória da VPS.
   - **Tratamento Resiliente no Login (`login.component.ts`):** Tratamento seguro de resposta com `res.text()` e bloco `try/catch` para `JSON.parse()`, prevenindo que erros de rede ou 502 disparem exceções de sintaxe no WebKit e exibindo mensagem amigável e clara para o usuário.
+  - **Proteção do Endpoint `/auth/login` (`auth.ts`):** Envolvido o fluxo completo de login em bloco `try/catch` seguro com tratamento defensivo em verificações de assinatura/billing, impedindo que falhas secundárias derrubem a rota de autenticação.
+  - **Diagnóstico Explícito no Painel Master (`superadmin.ts`):** Exposição da mensagem real de erro em `/superadmin/tenants` para diagnóstico imediato caso alguma tabela ou relacionamento do banco necessite de sincronização.
 
 #### 4. Validação Técnica
 - **Frontend:** Compilação de produção com `npx ng build` concluída com sucesso (0 erros).

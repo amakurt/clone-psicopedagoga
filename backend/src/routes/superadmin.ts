@@ -226,7 +226,7 @@ router.get('/tenants', async (req, res) => {
     });
   } catch (error: any) {
     console.error('[SUPERADMIN_TENANTS_ERROR]', error);
-    return res.status(500).json({ error: 'Erro ao listar clínicas' });
+    return res.status(500).json({ error: 'Erro ao listar clínicas: ' + (error?.message || error) });
   }
 });
 
