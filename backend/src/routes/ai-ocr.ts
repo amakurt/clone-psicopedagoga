@@ -5,6 +5,7 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate, authorize } from '../middleware';
 import prisma from '../lib/prisma';
+import { parseDocumentBuffer } from '../lib/document-parser';
 
 const router = Router();
 router.use(authenticate);
@@ -21,11 +22,15 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'application/pdf'];
-    if (allowedMimes.includes(file.mimetype.toLowerCase())) {
+    const allowedMimes = [
+      'image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'application/pdf',
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'
+    ];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedMimes.includes(file.mimetype.toLowerCase()) || ['.doc', '.docx', '.pdf', '.jpg', '.jpeg', '.png', '.webp', '.txt'].includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Formato inválido. Envie uma imagem (JPG, PNG, WebP) ou documento PDF.'));
+      cb(new Error('Formato inválido. Envie uma imagem (JPG, PNG, WebP), documento PDF ou Word (.DOC/.DOCX).'));
     }
   },
 });
@@ -571,12 +576,40 @@ router.post('/scan', upload.single('file'), async (req: Request, res: Response) 
       mimeType = req.file.mimetype;
       base64Data = req.file.buffer.toString('base64');
 
-      // Salva arquivo físico para anexo no prontuário
-      const ext = path.extname(req.file.originalname) || (mimeType.includes('pdf') ? '.pdf' : '.jpg');
+      // Salva arquivo físico para anexo no prontuário/documentos
+      const ext = path.extname(req.file.originalname).toLowerCase() || (mimeType.includes('pdf') ? '.pdf' : '.jpg');
       const filename = `scan-${uuidv4()}${ext}`;
       const destPath = path.join(fichasDir, filename);
       fs.writeFileSync(destPath, req.file.buffer);
       fileUrl = `/uploads/fichas/${filename}`;
+
+      // Se for arquivo Word (.doc/.docx) ou texto, processa direto via document parser sem passar pela API de visão do Gemini
+      if (['.doc', '.docx', '.txt', '.csv'].includes(ext)) {
+        try {
+          const parsed = await parseDocumentBuffer(req.file.buffer, ext);
+          return res.json({
+            success: true,
+            fileUrl,
+            data: {
+              tipoIdentificado: tipoFicha,
+              confiancaGeral: 'ALTA',
+              rawText: parsed.rawText,
+              documento: {
+                titulo: path.basename(req.file.originalname, ext),
+                categoria: 'GERAL',
+                resumo: parsed.rawText.substring(0, 250),
+                textoFormatadoHtml: parsed.html
+              },
+              prontuario: {
+                titulo: path.basename(req.file.originalname, ext),
+                conteudo: parsed.rawText
+              }
+            }
+          });
+        } catch (parseErr: any) {
+          console.warn('Erro ao processar arquivo doc com parser nativo:', parseErr);
+        }
+      }
     }
     // 2. Processamento via JSON com Base64 (captura direta de câmera ou canvas)
     else if (req.body.imageBase64) {

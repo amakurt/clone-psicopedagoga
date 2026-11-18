@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate, authorize } from '../middleware';
+import { parseDocumentFile } from '../lib/document-parser';
 
 const uploadsDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -142,7 +143,7 @@ function validateMagicBytes(filePath: string, ext: string): boolean {
 }
 
 // Upload single file
-router.post('/', uploadLimiter, upload.single('file'), (req, res) => {
+router.post('/', uploadLimiter, upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
   }
@@ -156,12 +157,26 @@ router.post('/', uploadLimiter, upload.single('file'), (req, res) => {
 
   const fileUrl = `/api/uploads/${req.file.filename}`;
   
+  let extractedContent = '';
+  let extractedText = '';
+  if (['.doc', '.docx', '.txt', '.csv'].includes(ext)) {
+    try {
+      const parsed = await parseDocumentFile(filePath);
+      extractedContent = parsed.html;
+      extractedText = parsed.rawText;
+    } catch (e) {
+      console.warn('Erro ao pré-extrair conteúdo de upload:', e);
+    }
+  }
+
   res.json({
     filename: req.file.filename,
     originalName: req.file.originalname,
     size: req.file.size,
     mimetype: req.file.mimetype,
-    url: fileUrl
+    url: fileUrl,
+    extractedContent,
+    extractedText
   });
 });
 

@@ -446,17 +446,19 @@ export class DocumentosListComponent implements OnInit {
     this.uploading.set(true);
 
     this.uploadService.uploadFile(file).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.service.create({
           name: file.name,
           category: 'RELATORIO',
           status: 'RASCUNHO',
           fileUrl: res.url,
-          size: res.size.toString()
+          size: res.size ? res.size.toString() : '',
+          content: res.extractedContent || null,
+          description: res.extractedText ? res.extractedText.substring(0, 200) : null
         }).subscribe({
           next: () => {
             this.uploading.set(false);
-            this.showNotification('Documento enviado com sucesso!', 'success');
+            this.showNotification('Documento enviado e processado com sucesso!', 'success');
             this.load();
           },
           error: () => {

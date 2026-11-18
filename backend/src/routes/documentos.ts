@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import path from 'path';
 import prisma from '../lib/prisma';
 import { scoped } from '../lib/tenant';
 import { authenticate, authorize, validate } from '../middleware';
+import { parseDocumentFile, resolveUploadFilePath } from '../lib/document-parser';
 
 const router = Router();
 router.use(authenticate);
@@ -37,15 +39,95 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const document = await db.document.findUnique({ where: { id: req.params.id }, include: { paciente: true, autor: true } });
+  let document = await db.document.findUnique({ where: { id: req.params.id }, include: { paciente: true, autor: true } });
   if (!document) return res.status(404).json({ error: 'Documento não encontrado' });
+
+  // Auto-extração para documentos legados ou arquivos .doc/.docx sem content
+  if (!document.content && document.fileUrl) {
+    const ext = path.extname(document.fileUrl.split('?')[0]).toLowerCase();
+    if (['.doc', '.docx', '.txt', '.csv'].includes(ext)) {
+      try {
+        const filePath = resolveUploadFilePath(document.fileUrl);
+        if (filePath) {
+          const parsed = await parseDocumentFile(filePath);
+          if (parsed.html && parsed.html.trim()) {
+            document = await db.document.update({
+              where: { id: document.id },
+              data: {
+                content: parsed.html,
+                description: document.description || parsed.rawText.substring(0, 250)
+              },
+              include: { paciente: true, autor: true }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao auto-extrair arquivo legados:', err);
+      }
+    }
+  }
+
   res.json(document);
 });
 
 router.post('/', validate(documentSchema), async (req, res) => {
   const db = scoped(prisma, req.user?.tenantId);
-  const document = await db.document.create({ data: req.body });
+  const data = { ...req.body };
+
+  // Se não foi fornecido content mas tem fileUrl de arquivo doc/docx
+  if (!data.content && data.fileUrl) {
+    const ext = path.extname(data.fileUrl.split('?')[0]).toLowerCase();
+    if (['.doc', '.docx', '.txt', '.csv'].includes(ext)) {
+      try {
+        const filePath = resolveUploadFilePath(data.fileUrl);
+        if (filePath) {
+          const parsed = await parseDocumentFile(filePath);
+          if (parsed.html) {
+            data.content = parsed.html;
+            if (!data.description && parsed.rawText) {
+              data.description = parsed.rawText.substring(0, 250);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao auto-extrair arquivo no create:', err);
+      }
+    }
+  }
+
+  const document = await db.document.create({ data });
   res.status(201).json(document);
+});
+
+// Endpoint explícito para forçar extração de conteúdo de arquivo anexado
+router.post('/:id/extract-content', async (req, res) => {
+  const db = scoped(prisma, req.user?.tenantId);
+  let document = await db.document.findUnique({ where: { id: req.params.id } });
+  if (!document) return res.status(404).json({ error: 'Documento não encontrado' });
+  if (!document.fileUrl) return res.status(400).json({ error: 'Documento não possui arquivo anexo' });
+
+  const filePath = resolveUploadFilePath(document.fileUrl);
+  if (!filePath) return res.status(404).json({ error: 'Arquivo físico não encontrado no servidor' });
+
+  try {
+    const parsed = await parseDocumentFile(filePath);
+    if (!parsed.html || !parsed.html.trim()) {
+      return res.status(400).json({ error: 'Não foi possível extrair o texto do arquivo anexado.' });
+    }
+
+    document = await db.document.update({
+      where: { id: document.id },
+      data: {
+        content: parsed.html,
+        description: document.description || parsed.rawText.substring(0, 250)
+      },
+      include: { paciente: true, autor: true }
+    });
+
+    res.json({ success: true, document, content: parsed.html });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Erro ao processar arquivo: ' + err.message });
+  }
 });
 
 router.put('/:id', async (req, res) => {

@@ -4008,3 +4008,19 @@ npm run start
   7. **Validação & Compilação:**
      - Backend TypeScript compilado com 0 erros (`npm --prefix backend run build`).
      - Frontend Angular compilado com 0 erros (`npx ng build`).
+
+#### Suporte Nativo a Arquivos Word (.doc / .docx) e Auto-Extração para Documentos Legados
+- **Problema Reportado:** Arquivos no formato Word (`.doc`) enviados anteriormente ao clicar em editar não mostravam o anexo visual e o editor A4 permanecia em branco.
+- **Causa Raiz:** O backend não possuía parser para converter arquivos `.doc` (Word 97-2003 OLE2) e `.docx` (Office Open XML) em HTML estruturado. Documentos antigos possuíam `fileUrl`, mas o campo `content` estava nulo no banco de dados. No frontend, o componente lateral apenas exibia um ícone genérico para tipos não-imagem.
+- **Soluções Técnicas:**
+  1. **Parser Nativo de Documentos Word (`backend/src/lib/document-parser.ts`):**
+     - Integradas as bibliotecas `mammoth` (para `.docx`) e `word-extractor` (para `.doc` legados).
+     - Conversão robusta de documentos Word diretamente para HTML semântico com títulos (`<h3>`), parágrafos (`<p>`), listas e tabelas.
+  2. **Auto-Extração no Backend (`backend/src/routes/documentos.ts` e `upload.ts`):**
+     - Rota `GET /api/documentos/:id`: Ao abrir qualquer documento existente que possua `fileUrl` (como os 2 arquivos `.doc` já cadastrados) e `content` nulo, o backend auto-extrai o texto/HTML do arquivo em disco, atualiza o banco e devolve o documento já preenchido.
+     - Rota `POST /api/documentos/:id/extract-content`: Endpoint dedicado para sincronizar/forçar re-extração a qualquer momento.
+     - Rota `POST /api/upload`: Auto-extrai e devolve `extractedContent` no retorno do upload para preenchimento instantâneo.
+     - Rota `POST /api/ai-ocr/scan`: Suporte explícito a arquivos `.doc`, `.docx` e `.txt`.
+  3. **Visualização Inteligente do Anexo Word (`documento-form.component.ts` e `documento-detail.component.ts`):**
+     - Card do "Anexo Visual" reestruturado: para arquivos `.doc`, renderiza uma folha visual de documento Word em alta fidelidade com badge "Word .DOC", nome do arquivo, tamanho e prévia real do conteúdo.
+     - Botão de ação direta "Sincronizar .DOC com Editor A4" e link de download do arquivo original preservado.

@@ -113,6 +113,32 @@ import { AuthService } from '@core/services/auth.service';
                 <div class="aspect-[3/4] max-h-[450px] bg-slate-100 dark:bg-slate-700/60 rounded-xl flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600">
                   @if (isImage(item()?.fileUrl)) {
                     <img [src]="resolveFileUrl(item()?.fileUrl)" class="w-full h-full object-contain">
+                  } @else if (isWord(item()?.fileUrl)) {
+                    <div class="w-full h-full p-6 bg-white dark:bg-slate-900 flex flex-col justify-between overflow-hidden shadow-inner">
+                      <div>
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400">
+                          <span class="flex items-center gap-2 text-sm font-bold font-mono">
+                            <span class="material-icons text-xl">description</span>
+                            Documento Word (.DOC)
+                          </span>
+                          <span class="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                            DOC
+                          </span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900 dark:text-white mb-2">{{ item()?.name }}</h4>
+                        @if (item()?.content) {
+                          <div class="text-xs text-slate-600 dark:text-slate-400 line-clamp-[12] leading-relaxed select-none pointer-events-none opacity-80"
+                            [innerHTML]="item()?.content">
+                          </div>
+                        }
+                      </div>
+                      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                        <span>Arquivo Word anexado</span>
+                        <a [routerLink]="['/app/documentos', id, 'editar']" class="text-xs font-bold text-primary hover:underline">
+                          Editar no Editor A4 →
+                        </a>
+                      </div>
+                    </div>
                   } @else {
                     <div class="text-center p-6">
                       <span class="material-icons text-7xl text-slate-300 dark:text-slate-600">{{ getFileIcon(item()?.fileUrl) }}</span>
@@ -270,6 +296,11 @@ export class DocumentoDetailComponent implements OnInit {
 
   isImage(url: string): boolean {
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(url || '');
+  }
+
+  isWord(url: string): boolean {
+    const s = (url || '').toLowerCase();
+    return s.includes('word') || s.includes('document') || s.endsWith('.doc') || s.endsWith('.docx') || s.includes('.doc?') || s.includes('.docx?');
   }
 
   getFileIcon(url: string): string {
