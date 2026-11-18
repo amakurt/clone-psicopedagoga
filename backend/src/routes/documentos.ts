@@ -10,16 +10,18 @@ router.use(authorize('GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO', 'SECRETARIA'));
 
 const documentSchema = z.object({
   name: z.string().min(1),
-  pacienteId: z.string().optional(),
-  size: z.string().optional(),
+  description: z.string().optional().nullable(),
+  content: z.string().optional().nullable(),
+  pacienteId: z.string().optional().nullable(),
+  size: z.string().optional().nullable(),
   status: z.string().optional(),
   category: z.string().optional(),
   uploadedBy: z.string().optional(),
-  fileUrl: z.string().optional(),
+  fileUrl: z.string().optional().nullable(),
   isShared: z.boolean().optional(),
-  signedAt: z.string().optional(),
-  guardianSignedAt: z.string().optional(),
-  autorId: z.string().optional(),
+  signedAt: z.string().optional().nullable(),
+  guardianSignedAt: z.string().optional().nullable(),
+  autorId: z.string().optional().nullable(),
 });
 
 router.get('/', async (req, res) => {

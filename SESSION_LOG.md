@@ -3980,3 +3980,31 @@ npm run start
 - **Soluções:**
   - **Disponibilidade (`availability.ts` e `configuracoes.component.ts`):** Adicionado `z.coerce.number()` e normalização de horários (`startTime`/`endTime`). No frontend, conversão explícita de `dayOfWeek` para número antes do envio e suporte pleno a Domingo (`dayOfWeek: 0`).
   - **Sessões (`sessoes.ts`):** Conversão automática de strings de data para objetos `Date` válidos aceitos pelo Prisma e atribuição dinâmica do ID do usuário autenticado caso venha como `'system'`.
+
+
+### Sessão 91: Edição In-App de Documentos e Scanner Universal com IA OCR (18/11/2026)
+- **Objetivo:** Permitir que arquivos enviados por upload ou digitalizados via câmera sejam editáveis diretamente dentro da aplicação através do Editor Visual Clínico A4 (`ClinicalDocEditorComponent`), adicionando a opção de escaneamento em todos os locais de criação de documentos, laudos e prontuários.
+- **Implementações Técnicas:**
+  1. **Schema Prisma e Banco de Dados (`Document`):**
+     - Adicionados os campos `content String?` e `description String?` no model `Document` em todos os schemas (`schema.prisma`, `schema.sqlite.prisma`, `schema.postgres.prisma`).
+     - Executado `npx prisma db push` e `npx prisma generate` sincronizando a persistência.
+     - Validação atualizada na rota backend `backend/src/routes/documentos.ts` suportando `content` e `description`.
+  2. **IA Multimodal e OCR Expandido (`backend/src/routes/ai-ocr.ts`):**
+     - Rota `/api/ai-ocr/scan` expandida para aceitar `tipoFicha: 'DOCUMENTO' | 'LAUDO' | 'PRONTUARIO'`.
+     - Adicionado prompt estruturado para documentos gerais/laudos com extração semântica em HTML formatado A4 (`textoFormatadoHtml`, `titulo`, `categoria`, `pacienteNome`, `resumo`).
+     - Adicionado prompt especializado para anotações manuscritas de sessões clínicas (`PRONTUARIO`) decifrando caligrafia e estruturando em evolução.
+  3. **Edição In-App de Documentos Gerais (`/app/documentos`):**
+     - **Formulário (`documento-form.component.ts`):** Integrado o `ClinicalDocEditorComponent` nativo para edição visual A4 em tempo real. Adicionado botão "Escanear / Câmera" e botão "Extrair para Editor A4 (OCR)" para arquivos enviados, com preenchimento automático do título, paciente, categoria e conteúdo.
+     - **Detalhes (`documento-detail.component.ts`):** Exibição em folha A4 com tipografia clínica, botão "Imprimir A4" com cabeçalho timbrado limpo e dados do paciente, preservação do arquivo original em anexo como garantia jurídica/comprovação documental e atalho rápido "Editar no Editor A4".
+     - **Listagem (`documentos-list.component.ts`):** Adicionado botão de ação rápida "Escanear Documento" no cabeçalho com transição direta de dados para o formulário.
+  4. **Laudos e Pareceres Clínicos (`/app/laudos`):**
+     - **Listagem (`laudos-list.component.ts`):** Botão "Escanear Laudo / OCR" integrado no header, salvando em cache seguro (`sessionStorage`) e navegando diretamente para a criação.
+     - **Formulário (`laudo-form.component.ts`):** Botão "Escanear Documento / Laudo (OCR)" no cabeçalho e na barra do copiloto inteligente, carregando o texto escaneado diretamente no Editor Visual A4 e vinculando o paciente automaticamente. Substituídas classes violetas por `sky` em conformidade com o Purple Ban.
+  5. **Prontuário e Evolução Clínica (`/app/pacientes/:id/prontuario`):**
+     - Adicionado botão "Escanear Anotação (OCR)" no card de evolução, permitindo fotografar folhas manuscritas da sessão e transcrever automaticamente para os campos de título e evolução do paciente.
+  6. **Modal Universal de Escaneamento (`ficha-scanner-modal.component.ts`):**
+     - Tipagem e outputs unificados (`@Output() scanned`, `@Output() scanComplete`, `@Output() cancelled`, `@Output() closeModal`).
+     - Suporte a `rawText` e `images` na interface `ScanResult`.
+  7. **Validação & Compilação:**
+     - Backend TypeScript compilado com 0 erros (`npm --prefix backend run build`).
+     - Frontend Angular compilado com 0 erros (`npx ng build`).

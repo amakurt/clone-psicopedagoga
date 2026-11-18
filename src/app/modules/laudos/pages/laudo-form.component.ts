@@ -9,11 +9,12 @@ import { SignatureModalComponent } from '@shared/components/signature-modal.comp
 import { ToastService } from '@shared/components/toast.component';
 import { ClinicalDocEditorComponent } from '@shared/components/clinical-doc-editor/clinical-doc-editor.component';
 import { DialogService } from '@shared/services/dialog.service';
+import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
 
 @Component({
   selector: 'app-laudo-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SignatureModalComponent, ClinicalDocEditorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SignatureModalComponent, ClinicalDocEditorComponent, FichaScannerModalComponent],
   template: `
     <div class="max-w-[1050px] mx-auto space-y-6 animate-in">
       <!-- Header -->
@@ -33,6 +34,13 @@ import { DialogService } from '@shared/services/dialog.service';
         </div>
 
         <div class="flex items-center gap-3">
+          <!-- Botão Escanear Laudo / OCR -->
+          <button type="button" (click)="openScanner()"
+            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95">
+            <span class="material-icons text-[16px]">document_scanner</span>
+            Escanear / OCR
+          </button>
+
           <button type="button" (click)="resetForm()" *ngIf="editingId()"
             class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
             Cancelar Edição
@@ -91,15 +99,25 @@ import { DialogService } from '@shared/services/dialog.service';
           </div>
         </div>
 
-        <!-- AI Assistant & LGPD Audit Buttons -->
+        <!-- AI Assistant & Scanner Bar -->
         <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Copiloto Inteligente:</span>
+
+            <!-- Botão Escanear OCR -->
             <button type="button"
-              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-800 text-xs font-bold hover:bg-violet-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95"
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-all shadow-sm active:scale-95"
+              (click)="openScanner()">
+              <span class="material-icons text-[16px]">document_scanner</span>
+              Escanear Documento / Laudo (OCR)
+            </button>
+
+            <!-- Botão IA Rascunho (Sky instead of Violet - Purple Ban) -->
+            <button type="button"
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800 text-xs font-bold hover:bg-sky-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95"
               [disabled]="!form.pacienteId || generating()" (click)="generateDraft()">
               <span class="material-icons text-[16px]">{{ generating() ? 'hourglass_empty' : 'auto_awesome' }}</span>
-              {{ generating() ? 'Gerando rascunho com IA...' : 'Gerar Rascunho Clínico com IA' }}
+              {{ generating() ? 'Gerando rascunho com IA...' : 'Gerar Rascunho com IA' }}
             </button>
 
             <button type="button"
@@ -185,6 +203,16 @@ import { DialogService } from '@shared/services/dialog.service';
         (closed)="showSignatureModal.set(false)">
       </app-signature-modal>
 
+      <!-- Modal de Escaneamento OCR -->
+      @if (showScannerModal()) {
+        <app-ficha-scanner-modal
+          tipoFicha="LAUDO"
+          subtitle="Fotografe laudos médicos anteriores, relatórios de avaliação ou pareceres para digitalização e OCR"
+          (scanComplete)="onScanComplete($event)"
+          (closeModal)="showScannerModal.set(false)">
+        </app-ficha-scanner-modal>
+      }
+
       <!-- Previous Records Section -->
       @if (form.pacienteId) {
         <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mt-8">
@@ -252,6 +280,7 @@ export class LaudoFormComponent implements OnInit {
   saving = signal(false);
   generating = signal(false);
   auditing = signal(false);
+  showScannerModal = signal(false);
   auditResult = signal<any>(null);
   pacientes = signal<any[]>([]);
   records = signal<any[]>([]);
@@ -294,6 +323,7 @@ export class LaudoFormComponent implements OnInit {
       if (this.form.pacienteId) {
         this.updateSelectedPatient();
       }
+      this.checkScannedLaudoCache();
     });
 
     if (this.isEdit) {
@@ -314,6 +344,63 @@ export class LaudoFormComponent implements OnInit {
         sessionStorage.removeItem('template_content');
       }
     }
+  }
+
+  checkScannedLaudoCache() {
+    if (this.isEdit) return;
+    const cached = sessionStorage.getItem('scanned_laudo');
+    if (cached) {
+      try {
+        const result: ScanResult = JSON.parse(cached);
+        this.applyScanResult(result);
+      } catch (err) {
+        console.error('Erro ao ler cache de laudo digitalizado:', err);
+      } finally {
+        sessionStorage.removeItem('scanned_laudo');
+      }
+    }
+  }
+
+  openScanner() {
+    this.showScannerModal.set(true);
+  }
+
+  onScanComplete(result: ScanResult) {
+    this.showScannerModal.set(false);
+    this.applyScanResult(result);
+  }
+
+  applyScanResult(result: ScanResult) {
+    if (result.documento) {
+      if (result.documento.titulo) {
+        this.form.titulo = result.documento.titulo;
+      } else if (!this.form.titulo) {
+        this.form.titulo = 'Laudo Digitalizado ' + new Date().toLocaleDateString('pt-BR');
+      }
+
+      if (result.documento.textoFormatadoHtml) {
+        this.form.content = result.documento.textoFormatadoHtml;
+      } else if (result.rawText) {
+        this.form.content = '<p>' + result.rawText.replace(/\n/g, '<br>') + '</p>';
+      }
+
+      if (result.documento.pacienteNome && this.pacientes().length > 0) {
+        const query = result.documento.pacienteNome.toLowerCase().trim();
+        const matched = this.pacientes().find(p => p.name.toLowerCase().includes(query) || query.includes(p.name.toLowerCase()));
+        if (matched) {
+          this.form.pacienteId = matched.id;
+          this.updateSelectedPatient();
+          this.loadRecords();
+        }
+      }
+    } else if (result.rawText) {
+      this.form.content = '<p>' + result.rawText.replace(/\n/g, '<br>') + '</p>';
+      if (!this.form.titulo) {
+        this.form.titulo = 'Laudo Digitalizado ' + new Date().toLocaleDateString('pt-BR');
+      }
+    }
+
+    this.toast.success('Documento / Laudo processado! Texto carregado no Editor A4.');
   }
 
   onPacienteSelected() {
@@ -337,7 +424,6 @@ export class LaudoFormComponent implements OnInit {
       next: (res: any) => {
         this.generating.set(false);
         this.form.titulo = res.title;
-        // Convert plain text formatting to clean readable HTML if needed
         const formattedContent = res.content.includes('<') 
           ? res.content 
           : res.content.split('\n\n').map((p: string) => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');

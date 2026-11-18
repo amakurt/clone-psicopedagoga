@@ -105,15 +105,15 @@ async function getAvailableGeminiModels(apiKey: string): Promise<string[]> {
 async function extractWithGemini(
   base64Data: string,
   mimeType: string,
-  tipoFicha: 'PACIENTE' | 'ANAMNESE' | 'AUTO',
+  tipoFicha: 'PACIENTE' | 'ANAMNESE' | 'DOCUMENTO' | 'LAUDO' | 'PRONTUARIO' | 'AUTO',
   apiKey: string
 ): Promise<any> {
   const isAnamnese = tipoFicha === 'ANAMNESE';
 
   const systemPrompt = `
-Você é uma Inteligência Artificial especialista em OCR clínico, leitura de caligrafia manuscrita e extração estruturada de fichas de Psicopedagogia, Neuropsicologia e Clínicas Multidisciplinares no Brasil.
+Você é uma Inteligência Artificial especialista em OCR clínico, leitura de caligrafia manuscrita e extração estruturada de fichas e documentos de Psicopedagogia, Neuropsicologia e Clínicas Multidisciplinares no Brasil.
 
-Sua tarefa é analisar a imagem ou documento PDF fornecido (que pode ser uma ficha impressa preenchida à mão, datilografada ou formulário escolar/médico) e extrair com o máximo de precisão todos os campos legíveis.
+Sua tarefa é analisar a imagem ou documento PDF fornecido (que pode ser uma ficha impressa preenchida à mão, datilografada, laudo médico, parecer escolar ou anotações de sessão) e extrair com o máximo de precisão todos os campos legíveis.
 
 Regras de Extração e Normalização:
 1. Nomes próprios: Formatar com Iniciais Maiúsculas (ex: "Gabriel Santos de Oliveira").
@@ -126,7 +126,40 @@ Regras de Extração e Normalização:
 `;
 
   let promptInstrucao = '';
-  if (isAnamnese) {
+  if (tipoFicha === 'DOCUMENTO' || tipoFicha === 'LAUDO') {
+    promptInstrucao = `
+Extraia e transcreva o DOCUMENTO CLÍNICO / LAUDO / PARECER / RELATÓRIO estruturando exatamente no seguinte formato JSON:
+{
+  "tipoIdentificado": "${tipoFicha}",
+  "confiancaGeral": "ALTA" | "MEDIA" | "BAIXA",
+  "documento": {
+    "titulo": "Título identificado do documento (ex: Laudo de Avaliação Neuropsicopedagógica, Parecer Escolar, Relatório de Evolução)",
+    "categoria": "LAUDO" | "RELATORIO" | "PARECER" | "ANAMNESE" | "CONSENTIMENTO" | "GERAL",
+    "pacienteNome": "Nome do paciente se identificado ou null",
+    "dataDocumento": "AAAA-MM-DD ou data por extenso identificada",
+    "profissionalNome": "Nome do profissional emissor se identificado",
+    "resumo": "Breve resumo executivo (2-3 frases) do documento",
+    "textoFormatadoHtml": "Texto completo integral e fiel do documento transcrito e formatado em HTML semântico limpo usando tags <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em> e <table>. Se houver múltiplas páginas, una o texto de forma fluida e contínua."
+  },
+  "camposPreenchidos": ["titulo", "categoria", "textoFormatadoHtml"]
+}
+`;
+  } else if (tipoFicha === 'PRONTUARIO') {
+    promptInstrucao = `
+Extraia a ANOTAÇÃO CLÍNICA / EVOLUÇÃO DE SESSÃO manuscrita ou impressa estruturando exatamente no seguinte formato JSON:
+{
+  "tipoIdentificado": "PRONTUARIO",
+  "confiancaGeral": "ALTA" | "MEDIA" | "BAIXA",
+  "prontuario": {
+    "titulo": "Título sugerido para a anotação (ex: Sessão 04 - Treino de Funções Executivas, Observações de Atendimento)",
+    "pacienteNome": "Nome do paciente se identificado ou null",
+    "data": "AAAA-MM-DD ou null",
+    "conteudo": "Transcrição limpa, completa e organizada de todo o texto manuscrito das notas de sessão, incluindo objetivos, instrumentos utilizados, comportamento do paciente e encaminhamentos."
+  },
+  "camposPreenchidos": ["titulo", "conteudo"]
+}
+`;
+  } else if (isAnamnese) {
     promptInstrucao = `
 Extraia os dados da FICHA DE ANAMNESE estruturando exatamente no seguinte formato JSON:
 {
@@ -531,7 +564,7 @@ router.post('/scan', upload.single('file'), async (req: Request, res: Response) 
     let base64Data = '';
     let mimeType = 'image/jpeg';
     let fileUrl = '';
-    const tipoFicha = (req.body.tipoFicha || req.query.tipoFicha || 'PACIENTE') as 'PACIENTE' | 'ANAMNESE' | 'AUTO';
+    const tipoFicha = (req.body.tipoFicha || req.query.tipoFicha || 'PACIENTE') as 'PACIENTE' | 'ANAMNESE' | 'DOCUMENTO' | 'LAUDO' | 'PRONTUARIO' | 'AUTO';
 
     // 1. Processamento via Upload Multipart (arquivo físico)
     if (req.file) {

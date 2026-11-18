@@ -613,6 +613,8 @@ model Document {
   id               String   @id @default(cuid())
   tenantId String @default("")
   name             String
+  description      String?
+  content          String?
   pacienteId       String?
   size             String?
   status           String   @default("RASCUNHO")

@@ -1,13 +1,14 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LaudoService } from '../services/laudo.service';
+import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
 
 @Component({
   selector: 'app-laudos-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, FichaScannerModalComponent],
   template: `
     <div class="space-y-6 sm:space-y-8 animate-in">
       <!-- Header -->
@@ -16,11 +17,21 @@ import { LaudoService } from '../services/laudo.service';
           <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Laudos e Pareceres</h1>
           <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Documentos diagnósticos e relatórios clínicos emitidos</p>
         </div>
-        <a routerLink="/app/laudos/novo" 
-          class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-5 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95 self-start sm:self-auto">
-          <span class="material-icons text-[18px]">add</span>
-          <span>Novo Laudo</span>
-        </a>
+        <div class="flex items-center gap-3 self-start sm:self-auto">
+          <!-- Botão Escanear Laudo / OCR -->
+          <button (click)="showScannerModal.set(true)"
+            class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-emerald-600/20 transition-all active:scale-95">
+            <span class="material-icons text-[18px]">document_scanner</span>
+            <span>Escanear Laudo / OCR</span>
+          </button>
+
+          <!-- Botão Novo Laudo -->
+          <a routerLink="/app/laudos/novo" 
+            class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-on-primary px-5 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 transition-all active:scale-95">
+            <span class="material-icons text-[18px]">add</span>
+            <span>Novo Laudo</span>
+          </a>
+        </div>
       </div>
 
       <!-- Barra de Busca -->
@@ -108,14 +119,14 @@ import { LaudoService } from '../services/laudo.service';
             </table>
           </div>
 
-          <!-- Mobile Cards (under md / Smartphones) -->
-          <div class="block md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          <!-- Mobile Cards (< md) -->
+          <div class="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
             @for (l of filteredItems(); track l.id) {
               <div class="p-4 space-y-3">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0 flex-1">
-                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">{{ l.titulo || 'Laudo Psicopedagógico' }}</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ l.paciente?.name || 'Sem paciente' }}</p>
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white text-sm">{{ l.paciente?.name || '—' }}</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ l.titulo || 'Laudo Clínico' }}</p>
                   </div>
                   @if (l.status === 'ASSINADO') {
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 shrink-0">
@@ -153,14 +164,27 @@ import { LaudoService } from '../services/laudo.service';
         }
       </div>
     </div>
+
+    <!-- Modal de Escaneamento OCR -->
+    @if (showScannerModal()) {
+      <app-ficha-scanner-modal
+        tipoFicha="LAUDO"
+        subtitle="Fotografe laudos médicos anteriores, relatórios de avaliação ou pareceres para digitalização e OCR"
+        (scanComplete)="onScanComplete($event)"
+        (closeModal)="showScannerModal.set(false)">
+      </app-ficha-scanner-modal>
+    }
   `,
   styles: [`:host { display: block; }`]
 })
 export class LaudosListComponent implements OnInit {
   private service = inject(LaudoService);
+  private router = inject(Router);
+
   items = signal<any[]>([]);
   loading = signal(true);
   searchTerm = '';
+  showScannerModal = signal(false);
 
   ngOnInit() {
     this.service.list().subscribe({
@@ -170,6 +194,12 @@ export class LaudosListComponent implements OnInit {
       },
       error: () => this.loading.set(false)
     });
+  }
+
+  onScanComplete(result: ScanResult) {
+    this.showScannerModal.set(false);
+    sessionStorage.setItem('scanned_laudo', JSON.stringify(result));
+    this.router.navigate(['/app/laudos/novo']);
   }
 
   filteredItems() {

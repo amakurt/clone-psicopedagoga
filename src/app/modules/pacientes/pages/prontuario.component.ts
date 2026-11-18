@@ -5,11 +5,12 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
 import { DialogService } from '@shared/services/dialog.service';
+import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
 
 @Component({
   selector: 'app-prontuario',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, FichaScannerModalComponent],
   template: `
     <div class="page">
       <div class="header">
@@ -17,14 +18,20 @@ import { DialogService } from '@shared/services/dialog.service';
         <a [routerLink]="['/app/pacientes', pacienteId]" class="btn btn-outline"><span class="material-icons">arrow_back</span></a>
       </div>
       <div class="card" style="margin-bottom:16px"><div class="card-body">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h3 style="margin:0">{{ editingId() ? 'Editar Anotação' : 'Nova Anotação' }}</h3>
-          @if (editingId()) {
-            <button class="btn btn-outline" (click)="resetForm()"><span class="material-icons" style="font-size:16px">add</span> Nova anotação</button>
-          }
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <h3 style="margin:0">{{ editingId() ? 'Editar Anotação' : 'Nova Anotação de Evolução' }}</h3>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button type="button" class="btn btn-outline" (click)="showScannerModal.set(true)" title="Digitalizar notas manuscritas ou folhas da sessão com a câmera">
+              <span class="material-icons" style="font-size:16px;color:#059669">document_scanner</span>
+              Escanear Anotação (OCR)
+            </button>
+            @if (editingId()) {
+              <button class="btn btn-outline" (click)="resetForm()"><span class="material-icons" style="font-size:16px">add</span> Nova anotação</button>
+            }
+          </div>
         </div>
-        <input class="form-control" [(ngModel)]="newEntry.titulo" placeholder="Título" style="margin-bottom:8px">
-        <textarea class="form-control" [(ngModel)]="newEntry.conteudo" rows="4" placeholder="Descreva a evolução..." style="margin-bottom:8px"></textarea>
+        <input class="form-control" [(ngModel)]="newEntry.titulo" placeholder="Título da Anotação (ex: Sessão 14 - Treino de Atenção)" style="margin-bottom:8px">
+        <textarea class="form-control" [(ngModel)]="newEntry.conteudo" rows="4" placeholder="Descreva a evolução da sessão ou fotografe suas anotações com o botão 'Escanear Anotação'..." style="margin-bottom:8px"></textarea>
         <button class="btn btn-primary" (click)="saveEntry()">{{ editingId() ? 'Salvar Alteração' : 'Salvar Anotação' }}</button>
       </div></div>
       @for (entry of entries(); track entry.id) {
@@ -36,7 +43,7 @@ import { DialogService } from '@shared/services/dialog.service';
               <button class="btn btn-outline" style="padding:4px 8px;color:#DC2626;border-color:#FECACA" title="Excluir" (click)="deleteEntry(entry)"><span class="material-icons" style="font-size:16px">delete</span></button>
             </div>
           </div>
-          <p style="margin:8px 0 0;color:var(--gray-700)">{{ entry.conteudo }}</p>
+          <p style="margin:8px 0 0;color:var(--gray-700);white-space:pre-wrap">{{ entry.conteudo }}</p>
           <span class="text-muted" style="display:block;margin-top:4px">{{ entry.createdAt | date:'dd/MM/yyyy HH:mm' }} · Por: {{ entry.autor?.name }}</span>
         </div></div>
       }
@@ -47,6 +54,16 @@ import { DialogService } from '@shared/services/dialog.service';
         </div></div>
       }
     </div>
+
+    <!-- Modal Scanner OCR de Anotações -->
+    @if (showScannerModal()) {
+      <app-ficha-scanner-modal
+        tipoFicha="PRONTUARIO"
+        subtitle="Fotografe notas de sessão manuscritas ou impressas para transcrever diretamente para a evolução clínica"
+        (scanComplete)="onScanComplete($event)"
+        (closeModal)="showScannerModal.set(false)">
+      </app-ficha-scanner-modal>
+    }
   `,
   styles: [`.page { max-width: 900px; } .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; } .header h1 { margin: 0; font-size: 24px; } .subtitle { color: var(--gray-500); font-size: 14px; margin: 4px 0 0; } .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); } .card-body { padding: 16px; } .form-control { padding: 8px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; width: 100%; box-sizing: border-box; } textarea.form-control { resize: vertical; } .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; } .btn-primary { background: var(--primary); color: white; } .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); } .text-muted { color: var(--gray-500); font-size: 13px; }`]
 })
@@ -55,9 +72,11 @@ export class ProntuarioComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
   private dialog = inject(DialogService);
+
   pacienteId = '';
   entries = signal<any[]>([]);
   editingId = signal('');
+  showScannerModal = signal(false);
   newEntry = { titulo: '', conteudo: '' };
 
   ngOnInit() {
@@ -67,6 +86,32 @@ export class ProntuarioComponent implements OnInit {
 
   loadEntries() {
     this.api.get('/prontuarios', { pacienteId: this.pacienteId }).subscribe((res: any) => this.entries.set(res.data));
+  }
+
+  onScanComplete(res: ScanResult) {
+    this.showScannerModal.set(false);
+    if (res.prontuario) {
+      if (res.prontuario.titulo) {
+        this.newEntry.titulo = res.prontuario.titulo;
+      }
+      if (res.prontuario.conteudo) {
+        this.newEntry.conteudo = (this.newEntry.conteudo ? this.newEntry.conteudo + '\n\n' : '') + res.prontuario.conteudo;
+      }
+    } else if (res.documento) {
+      if (res.documento.titulo) {
+        this.newEntry.titulo = res.documento.titulo;
+      }
+      const text = res.documento.resumo || res.rawText || '';
+      if (text) {
+        this.newEntry.conteudo = (this.newEntry.conteudo ? this.newEntry.conteudo + '\n\n' : '') + text;
+      }
+    } else if (res.rawText) {
+      this.newEntry.conteudo = (this.newEntry.conteudo ? this.newEntry.conteudo + '\n\n' : '') + res.rawText;
+      if (!this.newEntry.titulo) {
+        this.newEntry.titulo = 'Anotação da Sessão ' + new Date().toLocaleDateString('pt-BR');
+      }
+    }
+    this.toast.success('Anotação digitalizada e transcrita com sucesso!');
   }
 
   resetForm() {

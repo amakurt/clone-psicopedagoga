@@ -5,9 +5,11 @@ import { ApiService } from '@core/services/api.service';
 import { ToastService } from '@shared/components/toast.component';
 
 export interface ScanResult {
-  tipoIdentificado: 'PACIENTE' | 'ANAMNESE';
+  tipoIdentificado: 'PACIENTE' | 'ANAMNESE' | 'DOCUMENTO' | 'LAUDO' | 'PRONTUARIO';
   confiancaGeral: 'ALTA' | 'MEDIA' | 'BAIXA';
   fileUrl?: string;
+  rawText?: string;
+  images?: string[];
   paciente?: {
     name?: string;
     birthDate?: string;
@@ -54,6 +56,21 @@ export interface ScanResult {
     historicoFamiliar?: string;
     observacoesComportamentais?: string;
   };
+  documento?: {
+    titulo?: string;
+    categoria?: string;
+    pacienteNome?: string;
+    dataDocumento?: string;
+    profissionalNome?: string;
+    resumo?: string;
+    textoFormatadoHtml?: string;
+  };
+  prontuario?: {
+    titulo?: string;
+    pacienteNome?: string;
+    data?: string;
+    conteudo?: string;
+  };
   camposPreenchidos?: string[];
 }
 
@@ -78,7 +95,7 @@ export interface ScanResult {
                   IA Multimodal
                 </span>
               </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Tire foto da folha ou envie arquivo para preenchimento automático</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">{{ subtitle || 'Tire foto da folha ou envie arquivo para processamento inteligente' }}</p>
             </div>
           </div>
           <button (click)="cancel()" [disabled]="processing()" class="size-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50">
@@ -313,9 +330,12 @@ export interface ScanResult {
 })
 export class FichaScannerModalComponent implements OnInit {
   @Input() title: string = 'Digitalizar Ficha do Paciente';
-  @Input() tipoFicha: 'PACIENTE' | 'ANAMNESE' = 'PACIENTE';
+  @Input() subtitle: string = '';
+  @Input() tipoFicha: 'PACIENTE' | 'ANAMNESE' | 'DOCUMENTO' | 'LAUDO' | 'PRONTUARIO' = 'PACIENTE';
   @Output() scanned = new EventEmitter<ScanResult>();
+  @Output() scanComplete = new EventEmitter<ScanResult>();
   @Output() cancelled = new EventEmitter<void>();
+  @Output() closeModal = new EventEmitter<void>();
 
   private api = inject(ApiService);
   private toast = inject(ToastService);
@@ -508,6 +528,7 @@ export class FichaScannerModalComponent implements OnInit {
 
   cancel() {
     this.cancelled.emit();
+    this.closeModal.emit();
   }
 
   processarComIA() {
@@ -542,8 +563,12 @@ export class FichaScannerModalComponent implements OnInit {
               ...res.data,
               fileUrl: res.fileUrl
             };
-            this.toast.success('Ficha interpretada com sucesso! Campos preenchidos no formulário.');
+            const msg = this.tipoFicha === 'DOCUMENTO' || this.tipoFicha === 'LAUDO'
+              ? 'Documento interpretado com sucesso! Conteúdo carregado para o editor.'
+              : (this.tipoFicha === 'PRONTUARIO' ? 'Anotação decifrada com sucesso!' : 'Ficha interpretada com sucesso! Campos preenchidos no formulário.');
+            this.toast.success(msg);
             this.scanned.emit(result);
+            this.scanComplete.emit(result);
           } else {
             this.toast.error('Não foi possível identificar os dados da ficha.');
           }

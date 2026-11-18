@@ -1,24 +1,30 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DocumentosService } from '../services/documentos.service';
 import { UploadService } from '@core/services/upload.service';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal.component';
+import { FichaScannerModalComponent, ScanResult } from '@shared/components/ficha-scanner-modal.component';
 
 @Component({
   selector: 'app-documentos-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ConfirmModalComponent],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmModalComponent, FichaScannerModalComponent],
   template: `
     <div class="space-y-8 animate-in">
       <!-- Header -->
       <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
         <div>
           <h1 class="text-2xl font-black text-slate-900 dark:text-white">Documentos</h1>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Documentos dos pacientes</p>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Documentos e laudos dos pacientes com edição integrada e escaneamento</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <button (click)="openScanner()"
+            class="flex items-center gap-2 px-5 py-3 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:hover:bg-teal-900/40 text-teal-700 dark:text-teal-300 rounded-2xl text-sm font-bold ring-1 ring-teal-300 dark:ring-teal-700 transition-all active:scale-95 shadow-sm">
+            <span class="material-icons text-lg">document_scanner</span>
+            <span>Escanear Documento</span>
+          </button>
           <label class="flex items-center gap-2 px-5 py-3 bg-white dark:bg-slate-900 rounded-2xl text-sm font-bold ring-1 ring-slate-200 dark:ring-slate-800 hover:ring-primary/50 transition-all cursor-pointer">
             <span class="material-icons text-lg">upload_file</span> Upload
             <input type="file" class="hidden" (change)="onFileUpload($event)" accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.csv">
@@ -126,7 +132,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                           <button class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="Assinar" (click)="openSignModal(d)">
                             <span class="material-icons text-lg">draw</span>
                           </button>
-                          <button class="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all" title="Compartilhar com pais" (click)="openShareModal(d)">
+                          <button class="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-xl transition-all" title="Compartilhar com pais" (click)="openShareModal(d)">
                             <span class="material-icons text-lg">share</span>
                           </button>
                           <a [routerLink]="['/app/documentos', d.id, 'editar']" class="p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all" title="Editar">
@@ -193,7 +199,7 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
                       <span class="material-icons text-[16px]">draw</span>
                     </button>
                     <button (click)="openShareModal(d)"
-                      class="flex items-center justify-center size-9 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl hover:bg-purple-100 transition-all shrink-0"
+                      class="flex items-center justify-center size-9 bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 rounded-xl hover:bg-sky-100 transition-all shrink-0"
                       title="Compartilhar">
                       <span class="material-icons text-[16px]">share</span>
                     </button>
@@ -275,6 +281,15 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
         <span class="text-sm font-medium">{{ toastMessage() }}</span>
       </div>
     }
+
+    @if (showScannerModal()) {
+      <app-ficha-scanner-modal
+        [title]="'Escanear Documento / Laudo'"
+        [subtitle]="'Fotografe ou envie o documento para extrair texto e editar no sistema'"
+        [tipoFicha]="'DOCUMENTO'"
+        (scanned)="onDocumentScanned($event)"
+        (cancelled)="showScannerModal.set(false)" />
+    }
   `,
   styles: [`
     :host { display: block; }
@@ -283,6 +298,8 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal.componen
 export class DocumentosListComponent implements OnInit {
   private service = inject(DocumentosService);
   private uploadService = inject(UploadService);
+  private router = inject(Router);
+  showScannerModal = signal(false);
   items = signal<any[]>([]);
   loading = signal(true);
   uploading = signal(false);
@@ -312,6 +329,16 @@ export class DocumentosListComponent implements OnInit {
   ];
 
   ngOnInit() { this.load(); }
+
+  openScanner() {
+    this.showScannerModal.set(true);
+  }
+
+  onDocumentScanned(res: ScanResult) {
+    this.showScannerModal.set(false);
+    sessionStorage.setItem('scanned_doc', JSON.stringify(res));
+    this.router.navigate(['/app/documentos/novo']);
+  }
 
   load() {
     this.loading.set(true);
@@ -362,7 +389,7 @@ export class DocumentosListComponent implements OnInit {
       if (ext === 'pdf') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
       if (['doc', 'docx'].includes(ext || '')) return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
       if (['xls', 'xlsx'].includes(ext || '')) return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
-      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) return 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400';
+      if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) return 'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400';
     }
     return this.getCategoryStyle(doc.category);
   }
@@ -380,7 +407,7 @@ export class DocumentosListComponent implements OnInit {
   getCategoryStyle(category: string): string {
     switch (category) {
       case 'RELATORIO': return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'ANAMNESE': return 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400';
+      case 'ANAMNESE': return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400';
       case 'FEEDBACK': return 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
       case 'CONSENTIMENTO': return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
       default: return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
