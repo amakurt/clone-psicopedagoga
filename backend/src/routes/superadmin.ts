@@ -344,11 +344,15 @@ router.patch('/tenants/:id/trial', async (req, res) => {
 router.patch('/tenants/:id/plan', async (req, res) => {
   try {
     const { id } = req.params;
-    const { planCode } = req.body;
+    let { planCode } = req.body;
+
+    if (typeof planCode === 'string') {
+      planCode = planCode.trim().toUpperCase();
+    }
 
     const validPlans = ['MENSAL', 'SEMESTRAL', 'ANUAL', 'VIP', 'TRIAL', 'BASICO', 'PRO'];
     if (!validPlans.includes(planCode)) {
-      return res.status(400).json({ error: 'Plano inválido. Use MENSAL, SEMESTRAL, ANUAL ou VIP.' });
+      return res.status(400).json({ error: 'Plano inválido. Use MENSAL, SEMESTRAL, ANUAL, PRO, VIP, BASICO ou TRIAL.' });
     }
 
     const tenant = await prisma.tenant.findUnique({
@@ -363,13 +367,20 @@ router.patch('/tenants/:id/plan', async (req, res) => {
     const isVip = planCode === 'VIP';
     const futurePeriod = isVip
       ? new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000) // 10 anos
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+      : planCode === 'ANUAL'
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 ano
+      : planCode === 'SEMESTRAL'
+      ? new Date(Date.now() + 180 * 24 * 60 * 60 * 1000) // 6 meses
+      : planCode === 'TRIAL'
+      ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14 dias
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias (MENSAL, BASICO, PRO)
 
     const updatedTenant = await prisma.tenant.update({
       where: { id },
       data: {
         plan: planCode,
         status: 'ATIVO',
+        ...(planCode === 'TRIAL' ? { trialEndsAt: futurePeriod } : {}),
       },
     });
 
@@ -395,7 +406,7 @@ router.patch('/tenants/:id/plan', async (req, res) => {
       });
     }
 
-    // Regra A: Sincroniza / desconecta WhatsApp se rebaixado para Básico ou provisiona se PRO/VIP
+    // Regra A: Sincroniza / desconecta WhatsApp se rebaixado para Básico ou provisiona se PRO/VIP/MENSAL
     syncTenantWhatsAppInstance(id).catch((err) => {
       console.warn(`[SUPERADMIN_PLAN_WHATSAPP_SYNC_WARN] Tenant ${id}:`, err?.message);
     });

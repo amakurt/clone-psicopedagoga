@@ -2,6 +2,45 @@
 
 ## Última Atualização: 19 de Novembro de 2026
 
+## Sessão 94 - 19/11/2026 — Gerenciamento Manual de Planos de Clínicas no Painel Master (SuperAdmin)
+
+### O que foi feito
+
+#### 1. Diagnóstico e Solicitação do Usuário
+- O administrador master necessitava de uma opção rápida e intuitiva no painel `/master` para alterar o plano de qualquer clínica cadastrada (ex.: migração entre TRIAL, BASICO, MENSAL, SEMESTRAL, ANUAL, PRO e VIP Vitalício).
+- Anteriormente, o botão na tabela desktop utilizava um ícone de estrela genérico (`grade`) sem rótulo de texto, e o modal de planos listava apenas 4 opções, ignorando os planos `TRIAL`, `BASICO` e `PRO`. Além disso, a coluna de plano não oferecia atalho de edição direto.
+
+#### 2. Implementação no Frontend (`SuperAdminDashboardComponent`)
+- **Ação Rápida e Clara de Mudar Plano:**
+  - Substituição do botão de estrela por um botão proeminente e autoexplicativo `[ ⇄ Mudar Plano ]` na coluna de ações da tabela desktop e nos cards mobile.
+  - Transformação da badge de plano na coluna "Plano" em um botão interativo com ícone de edição (`edit`), permitindo clicar diretamente no plano atual para abrir o seletor.
+  - Na aba do WhatsApp Gateway, a badge de plano e os avisos de "Upgrade necessário" agora também são clicáveis com ação direta para o modal de troca de plano.
+- **Modal de Alteração de Plano Completo & Responsivo:**
+  - Suporte aos 7 planos oficiais da plataforma: `MENSAL`, `SEMESTRAL`, `ANUAL`, `PRO`, `VIP`, `BASICO` e `TRIAL`.
+  - Exibição de cabeçalho informativo com nome da clínica e plano atual ativo.
+  - Alerta inteligente de compatibilidade com WhatsApp e IA:
+    - Planos com WhatsApp (`MENSAL`, `SEMESTRAL`, `ANUAL`, `PRO`, `VIP`): exibe banner verde destacando liberação imediata de automação WhatsApp (Evolution API) e relatórios/laudos com IA.
+    - Planos sem WhatsApp (`BASICO`, `TRIAL`): exibe alerta informativo de que o robô de WhatsApp não está incluso e eventuais instâncias ativas serão desconectadas.
+  - Feedback visual claro com anel de seleção (`ring-cyan-500`), spinner de carregamento no botão de salvar e notificação de sucesso via Toast.
+- **Filtro de Planos Atualizado:**
+  - Inclusão de todas as opções de planos no dropdown de filtro rápido (`TODOS`, `MENSAL`, `SEMESTRAL`, `ANUAL`, `PRO`, `VIP`, `BASICO`, `TRIAL`).
+
+#### 3. Aperfeiçoamento do Endpoint no Backend (`backend/src/routes/superadmin.ts`)
+- Normalização de `planCode` com `trim().toUpperCase()`.
+- Cálculo dinâmico do período de validade (`currentPeriodEnd`):
+  - `VIP`: 10 anos.
+  - `ANUAL`: 365 dias (1 ano).
+  - `SEMESTRAL`: 180 dias (6 meses).
+  - `TRIAL`: 14 dias (com atualização de `trialEndsAt` no Tenant).
+  - `MENSAL`, `PRO`, `BASICO`: 30 dias.
+- Sincronização automática e assíncrona da instância de WhatsApp (`syncTenantWhatsAppInstance`), desconectando se for rebaixado para plano sem WhatsApp ou provisionando se promovido para plano com WhatsApp.
+
+#### 4. Validação Técnica
+- **Frontend (`npx ng build`):** Compilação de produção com 0 erros.
+- **Backend (`tsc`):** Compilação com 0 erros.
+
+---
+
 ## Sessão 93 - 19/11/2026 — Normalização de Acesso Master (SUPERADMIN), Normalização de E-mail Case-Insensitive & Script de Provisionamento
 
 ### O que foi feito

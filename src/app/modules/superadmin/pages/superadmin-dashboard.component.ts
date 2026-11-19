@@ -237,10 +237,13 @@ import { DialogService } from '../../../shared/services/dialog.service';
                   (change)="loadTenants()"
                   class="bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-cyan-500">
                   <option value="TODOS">Todos os Planos</option>
-                  <option value="TRIAL">Trial</option>
-                  <option value="BASICO">Básico</option>
+                  <option value="MENSAL">Mensal</option>
+                  <option value="SEMESTRAL">Semestral</option>
+                  <option value="ANUAL">Anual</option>
                   <option value="PRO">Profissional (PRO)</option>
                   <option value="VIP">VIP Vitalício</option>
+                  <option value="BASICO">Básico</option>
+                  <option value="TRIAL">Trial</option>
                 </select>
               </div>
 
@@ -293,9 +296,15 @@ import { DialogService } from '../../../shared/services/dialog.service';
 
                           <!-- Plano -->
                           <td class="py-4 px-4">
-                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold" [ngClass]="getPlanBadgeClass(t.plan)">
-                              {{ t.plan }}
-                            </span>
+                            <button
+                              type="button"
+                              (click)="openPlanModal(t)"
+                              class="group px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1.5 transition-all hover:ring-2 hover:ring-cyan-500/50 cursor-pointer text-left"
+                              [ngClass]="getPlanBadgeClass(t.plan)"
+                              title="Clique para alterar o plano desta clínica">
+                              <span>{{ t.plan }}</span>
+                              <span class="material-icons text-[12px] opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all">edit</span>
+                            </button>
                           </td>
 
                           <!-- Status -->
@@ -344,9 +353,10 @@ import { DialogService } from '../../../shared/services/dialog.service';
                               <!-- Mudar Plano -->
                               <button
                                 (click)="openPlanModal(t)"
-                                class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-colors"
-                                title="Alterar plano">
-                                <span class="material-icons text-base">grade</span>
+                                class="px-2.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 hover:text-white border border-cyan-500/30 font-semibold transition-all flex items-center gap-1 text-xs shadow-sm hover:border-cyan-400"
+                                title="Alterar plano desta clínica">
+                                <span class="material-icons text-sm text-cyan-400">swap_horiz</span>
+                                <span>Mudar Plano</span>
                               </button>
 
                               <!-- Exportar Backup JSON -->
@@ -393,9 +403,15 @@ import { DialogService } from '../../../shared/services/dialog.service';
                           <p class="text-slate-500 text-xs">{{ t.owner?.email || t.slug }}</p>
                         </div>
                         <div class="flex items-center gap-1.5">
-                          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="getPlanBadgeClass(t.plan)">
-                            {{ t.plan }}
-                          </span>
+                          <button
+                            type="button"
+                            (click)="openPlanModal(t)"
+                            class="group px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 hover:ring-1 hover:ring-cyan-500 transition-all cursor-pointer"
+                            [ngClass]="getPlanBadgeClass(t.plan)"
+                            title="Clique para alterar o plano desta clínica">
+                            <span>{{ t.plan }}</span>
+                            <span class="material-icons text-[10px] opacity-70 group-hover:opacity-100">edit</span>
+                          </button>
                           <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="getStatusBadgeClass(t.status)">
                             {{ t.status }}
                           </span>
@@ -434,9 +450,9 @@ import { DialogService } from '../../../shared/services/dialog.service';
                         </button>
                         <button
                           (click)="openPlanModal(t)"
-                          class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
-                          <span class="material-icons text-sm text-emerald-400">grade</span>
-                          Plano
+                          class="px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
+                          <span class="material-icons text-sm text-cyan-400">swap_horiz</span>
+                          Mudar Plano
                         </button>
                         <button
                           (click)="toggleStatus(t)"
@@ -658,14 +674,24 @@ import { DialogService } from '../../../shared/services/dialog.service';
                               <div>
                                 <p class="font-bold text-white text-sm">{{ inst.tenantName }}</p>
                                 <div class="flex items-center gap-1.5 mt-0.5">
-                                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="getPlanBadgeClass(inst.plan)">
-                                    {{ inst.plan }}
-                                  </span>
+                                  <button
+                                    type="button"
+                                    (click)="openPlanModalFromWhatsApp(inst)"
+                                    class="group px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 hover:ring-1 hover:ring-cyan-500 transition-all cursor-pointer"
+                                    [ngClass]="getPlanBadgeClass(inst.plan)"
+                                    title="Clique para alterar o plano desta clínica">
+                                    <span>{{ inst.plan }}</span>
+                                    <span class="material-icons text-[10px] opacity-60 group-hover:opacity-100">edit</span>
+                                  </button>
                                   @if (!inst.eligible) {
-                                    <span class="text-[10px] text-amber-400 flex items-center gap-0.5" title="WhatsApp restrito aos planos PRO e VIP">
+                                    <button
+                                      type="button"
+                                      (click)="openPlanModalFromWhatsApp(inst)"
+                                      class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-0.5 hover:underline cursor-pointer"
+                                      title="Clique para fazer upgrade e liberar o WhatsApp">
                                       <span class="material-icons text-xs">lock</span>
                                       Upgrade necessário
-                                    </span>
+                                    </button>
                                   }
                                 </div>
                               </div>
@@ -801,7 +827,15 @@ import { DialogService } from '../../../shared/services/dialog.service';
                       <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                         <div>
                           <span class="text-slate-500 text-[10px] block">Plano</span>
-                          <span class="font-bold" [ngClass]="inst.eligible ? 'text-emerald-400' : 'text-slate-400'">{{ inst.plan }}</span>
+                          <button
+                            type="button"
+                            (click)="openPlanModalFromWhatsApp(inst)"
+                            class="font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                            [ngClass]="inst.eligible ? 'text-emerald-400' : 'text-slate-400'"
+                            title="Clique para alterar o plano desta clínica">
+                            <span>{{ inst.plan }}</span>
+                            <span class="material-icons text-[11px] opacity-70">edit</span>
+                          </button>
                         </div>
                         <div>
                           <span class="text-slate-500 text-[10px] block">Aparelho</span>
@@ -898,55 +932,109 @@ import { DialogService } from '../../../shared/services/dialog.service';
       }
 
       <!-- ============================================================== -->
-      <!-- MODAL 2: MUDAR PLANO                                           -->
+      <!-- MODAL 2: MUDAR PLANO DA CLÍNICA                                -->
       <!-- ============================================================== -->
       @if (planModalOpen()) {
         <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
-            <div class="flex items-center justify-between">
-              <h3 class="text-base font-bold text-white flex items-center gap-2">
-                <span class="material-icons text-cyan-400 text-xl">grade</span>
-                Alterar Plano da Clínica
-              </h3>
-              <button (click)="planModalOpen.set(false)" class="text-slate-400 hover:text-white">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            
+            <!-- Cabeçalho do Modal -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div class="flex items-center gap-3">
+                <div class="size-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                  <span class="material-icons text-xl">swap_horiz</span>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    Alterar Plano da Clínica
+                  </h3>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs text-slate-300 font-semibold truncate max-w-[200px]">{{ selectedTenant()?.name }}</span>
+                    <span class="text-slate-600">·</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="getPlanBadgeClass(selectedTenant()?.plan || '')">
+                      Atual: {{ selectedTenant()?.plan }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button (click)="planModalOpen.set(false)" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
                 <span class="material-icons">close</span>
               </button>
             </div>
 
             <p class="text-xs text-slate-400">
-              Selecione o novo plano para <strong class="text-white">{{ selectedTenant()?.name }}</strong>.
-              (Planos PRO e VIP habilitam automaticamente o módulo WhatsApp integrado).
+              Selecione o plano desejado para a clínica <strong class="text-white">{{ selectedTenant()?.name }}</strong>.
+              A alteração é aplicada imediatamente no banco e os módulos sincronizados.
             </p>
 
-            <div class="space-y-2">
+            <!-- Aviso sobre recursos do plano selecionado -->
+            @if (isPlanWithWhatsApp(newPlanCode())) {
+              <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-2.5 text-xs text-emerald-300">
+                <span class="material-icons text-base text-emerald-400 shrink-0 mt-0.5">check_circle</span>
+                <span><strong>Recursos Completos:</strong> O plano <strong>{{ newPlanCode() }}</strong> libera automação de WhatsApp via Evolution API, assistente IA e anamneses ilimitadas.</span>
+              </div>
+            } @else {
+              <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-xs text-amber-300">
+                <span class="material-icons text-base text-amber-400 shrink-0 mt-0.5">info</span>
+                <span><strong>Atenção:</strong> O plano <strong>{{ newPlanCode() }}</strong> não inclui automação de WhatsApp. Instâncias ativas serão desconectadas.</span>
+              </div>
+            }
+
+            <!-- Seletor de Planos -->
+            <div class="space-y-2 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
               @for (p of availablePlans; track p.code) {
                 <button
+                  type="button"
                   (click)="newPlanCode.set(p.code)"
-                  [ngClass]="newPlanCode() === p.code ? 'border-cyan-500 bg-cyan-500/10' : 'border-slate-800 bg-slate-950/60'"
-                  class="w-full p-3 rounded-xl border hover:border-slate-700 flex items-center justify-between transition-all text-left">
-                  <div>
-                    <p class="text-sm font-bold text-white">{{ p.name }}</p>
-                    <p class="text-[11px] text-slate-400">{{ p.desc }}</p>
+                  [ngClass]="newPlanCode() === p.code ? 'border-cyan-500 bg-cyan-500/10 ring-1 ring-cyan-500/40' : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'"
+                  class="w-full p-3 rounded-xl border flex items-center justify-between transition-all text-left group">
+                  <div class="flex items-start gap-3">
+                    <div class="size-5 rounded-full border mt-0.5 flex items-center justify-center transition-all shrink-0"
+                      [ngClass]="newPlanCode() === p.code ? 'border-cyan-400 bg-cyan-500' : 'border-slate-700 bg-slate-900 group-hover:border-slate-600'">
+                      @if (newPlanCode() === p.code) {
+                        <div class="size-2 rounded-full bg-slate-950"></div>
+                      }
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <p class="text-sm font-bold text-white">{{ p.name }}</p>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold" [ngClass]="p.badgeClass">
+                          {{ p.badge }}
+                        </span>
+                        @if (p.hasWhatsApp) {
+                          <span class="text-[10px] text-emerald-400 flex items-center gap-0.5" title="WhatsApp Incluso">
+                            <span class="material-icons text-xs">chat</span>
+                            WhatsApp
+                          </span>
+                        }
+                      </div>
+                      <p class="text-[11px] text-slate-400 mt-0.5">{{ p.desc }}</p>
+                    </div>
                   </div>
-                  <span class="text-xs font-bold text-cyan-400 font-mono">{{ p.price }}</span>
+                  <span class="text-xs font-bold text-cyan-400 font-mono shrink-0 ml-2">{{ p.price }}</span>
                 </button>
               }
             </div>
 
+            <!-- Botões de Ação -->
             <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
               <button
+                type="button"
                 (click)="planModalOpen.set(false)"
                 class="px-4 py-2 bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-colors">
                 Cancelar
               </button>
               <button
+                type="button"
                 (click)="confirmPlanChange()"
                 [disabled]="actionLoading()"
-                class="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-600/20 flex items-center gap-2">
+                class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-cyan-600/20 flex items-center gap-2 disabled:opacity-50">
                 @if (actionLoading()) {
                   <span class="material-icons text-sm animate-spin">sync</span>
+                } @else {
+                  <span class="material-icons text-sm">check</span>
                 }
-                Salvar Novo Plano
+                Confirmar Alteração para {{ newPlanCode() }}
               </button>
             </div>
           </div>
@@ -2340,11 +2428,76 @@ export class SuperAdminDashboardComponent implements OnInit {
   restoreLoading = signal(false);
 
   availablePlans = [
-    { code: 'MENSAL', name: 'Plano Mensal', desc: 'R$ 127/mês (sem fidelidade)', price: 'R$ 127,00/mês' },
-    { code: 'SEMESTRAL', name: 'Plano Semestral', desc: 'Equivalente a R$ 99/mês (R$ 594 total)', price: 'R$ 594,00/semestre' },
-    { code: 'ANUAL', name: 'Plano Anual', desc: 'Equivalente a R$ 69/mês (R$ 828 total)', price: 'R$ 828,00/ano' },
-    { code: 'VIP', name: 'VIP Vitalício', desc: 'Acesso permanente liberado com WhatsApp', price: 'Cortesia' },
+    {
+      code: 'MENSAL',
+      name: 'Plano Mensal',
+      desc: 'R$ 127/mês (sem fidelidade) · Prontuários, IA e WhatsApp ilimitado',
+      price: 'R$ 127,00/mês',
+      hasWhatsApp: true,
+      badge: 'Popular',
+      badgeClass: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
+    },
+    {
+      code: 'SEMESTRAL',
+      name: 'Plano Semestral',
+      desc: 'R$ 99/mês (R$ 594 faturado a cada 6 meses) · Completo com IA e WhatsApp',
+      price: 'R$ 594,00/sem',
+      hasWhatsApp: true,
+      badge: '22% OFF',
+      badgeClass: 'bg-teal-500/10 text-teal-400 border border-teal-500/20',
+    },
+    {
+      code: 'ANUAL',
+      name: 'Plano Anual',
+      desc: 'R$ 69/mês (R$ 828 faturado por ano) · Super economia com IA e WhatsApp',
+      price: 'R$ 828,00/ano',
+      hasWhatsApp: true,
+      badge: 'Melhor Valor',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    },
+    {
+      code: 'PRO',
+      name: 'Plano Profissional (PRO)',
+      desc: 'Acesso completo com múltiplas salas, assistente IA e robô WhatsApp',
+      price: 'Profissional',
+      hasWhatsApp: true,
+      badge: 'Completo',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    },
+    {
+      code: 'VIP',
+      name: 'VIP Vitalício',
+      desc: 'Acesso liberado permanentemente sem cobranças · Cortesia / Parceria',
+      price: 'Cortesia',
+      hasWhatsApp: true,
+      badge: 'Vitalício',
+      badgeClass: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+    },
+    {
+      code: 'BASICO',
+      name: 'Plano Básico',
+      desc: 'Prontuários e anamneses essenciais (sem automação WhatsApp)',
+      price: 'Básico',
+      hasWhatsApp: false,
+      badge: 'Sem WhatsApp',
+      badgeClass: 'bg-slate-700/50 text-slate-400 border border-slate-600/30',
+    },
+    {
+      code: 'TRIAL',
+      name: 'Período de Testes (Trial)',
+      desc: 'Degustação temporária para novos cadastros (sem automação WhatsApp)',
+      price: 'Gratuito',
+      hasWhatsApp: false,
+      badge: 'Demonstração',
+      badgeClass: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    },
   ];
+
+  isPlanWithWhatsApp(planCode?: string): boolean {
+    if (!planCode) return false;
+    const p = planCode.trim().toUpperCase();
+    return p === 'MENSAL' || p === 'SEMESTRAL' || p === 'ANUAL' || p === 'PRO' || p === 'VIP';
+  }
 
   ngOnInit() {
     this.loadAll();
@@ -2506,8 +2659,32 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   openPlanModal(t: TenantListItem) {
     this.selectedTenant.set(t);
-    this.newPlanCode.set(t.plan);
+    this.newPlanCode.set((t.plan || 'MENSAL').trim().toUpperCase());
     this.planModalOpen.set(true);
+  }
+
+  openPlanModalFromWhatsApp(inst: ClinicWhatsAppInstance) {
+    const t = this.tenants().find((item) => item.id === inst.tenantId);
+    if (t) {
+      this.openPlanModal(t);
+    } else {
+      this.selectedTenant.set({
+        id: inst.tenantId,
+        name: inst.tenantName,
+        slug: inst.tenantSlug,
+        plan: inst.plan,
+        status: 'ATIVO',
+        trialEndsAt: null,
+        logoUrl: null,
+        createdAt: '',
+        updatedAt: '',
+        stats: { pacientes: 0, profissionais: 0, sessoes: 0 },
+        subscription: null,
+        owner: null,
+      } as TenantListItem);
+      this.newPlanCode.set((inst.plan || 'MENSAL').trim().toUpperCase());
+      this.planModalOpen.set(true);
+    }
   }
 
   confirmPlanChange() {
@@ -2515,16 +2692,17 @@ export class SuperAdminDashboardComponent implements OnInit {
     if (!t) return;
 
     this.actionLoading.set(true);
-    this.superAdminService.updatePlan(t.id, this.newPlanCode()).subscribe({
+    const plan = this.newPlanCode();
+    this.superAdminService.updatePlan(t.id, plan).subscribe({
       next: (res) => {
-        this.toast.success(res.message || 'Plano atualizado com sucesso');
+        this.toast.success(res.message || `Plano da clínica alterado para ${plan} com sucesso!`);
         this.planModalOpen.set(false);
         this.actionLoading.set(false);
         this.loadAll();
         if (this.activeTab() === 'whatsapp') this.loadWhatsAppGateway();
       },
-      error: () => {
-        this.toast.error('Erro ao alterar plano');
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao alterar plano da clínica');
         this.actionLoading.set(false);
       },
     });
