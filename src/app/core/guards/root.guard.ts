@@ -23,17 +23,27 @@ export const rootGuard: CanActivateFn = () => {
   const isBrowser = typeof window !== 'undefined';
   if (!isBrowser) return true;
 
-  // 1. Detecta se está em modo PWA Standalone (Tela de Início iOS Safari / Android)
-  const isIosStandalone = Boolean((window.navigator as any)?.standalone);
-  const isDisplayStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-  const isPwa = isIosStandalone || isDisplayStandalone;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hash = window.location.hash || '';
 
-  // 2. Detecta se está no subdomínio da aplicação (app.edupsychpro.tech)
+  // 1. Se tiver parâmetro de preview ou âncora de planos/landing, sempre exibe a Landing Page
+  if (
+    searchParams.has('preview') ||
+    searchParams.has('landing') ||
+    searchParams.has('planos') ||
+    hash.includes('planos') ||
+    hash.includes('sobre') ||
+    hash.includes('recursos')
+  ) {
+    return true;
+  }
+
+  // 2. Detecta se está no subdomínio da aplicação (app.edupsychpro.tech ou sistema.*)
   const host = window.location.hostname.toLowerCase();
   const isAppDomain = host.startsWith('app.') || host.startsWith('sistema.');
 
-  // Se for aplicativo instalado na Tela de Início ou subdomínio do App:
-  if (isPwa || isAppDomain) {
+  // Se estiver explicitamente no subdomínio do App (app.edupsychpro.tech):
+  if (isAppDomain) {
     if (auth.token) {
       if (auth.user()?.role === 'SUPERADMIN') {
         router.navigate(['/master']);
@@ -43,12 +53,11 @@ export const rootGuard: CanActivateFn = () => {
     } else {
       router.navigate(['/login']);
     }
-    return false; // Interrompe o carregamento da Landing Page
+    return false;
   }
 
   // 3. Se for no site principal mas o usuário já estiver logado (e não for preview explícito):
-  const searchParams = new URLSearchParams(window.location.search);
-  if (auth.token && !searchParams.has('preview')) {
+  if (auth.token) {
     if (auth.user()?.role === 'SUPERADMIN') {
       router.navigate(['/master']);
     } else {
@@ -57,7 +66,7 @@ export const rootGuard: CanActivateFn = () => {
     return false;
   }
 
-  // Visitante comum no site institucional: exibe a Landing Page
+  // 4. Visitante no site institucional (edupsychpro.tech / localhost): exibe a Landing Page de Vendas
   return true;
 };
 

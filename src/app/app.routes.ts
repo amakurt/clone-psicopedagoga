@@ -10,6 +10,9 @@ export const routes: Routes = [
     canActivate: [rootGuard],
     loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) 
   },
+  { path: 'landing', loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) },
+  { path: 'planos', loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) },
+  { path: 'inicio', loadComponent: () => import('./modules/landing/landing-page.component').then(m => m.LandingPageComponent) },
   { path: 'login', loadComponent: () => import('./modules/auth/pages/login/login.component').then(m => m.LoginComponent) },
   { path: 'auth/verify', loadComponent: () => import('./modules/auth/pages/verify/verify-account.component').then(m => m.VerifyAccountComponent) },
   { path: 'auth/recuperar-senha', loadComponent: () => import('./modules/auth/pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent) },

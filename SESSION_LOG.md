@@ -19,6 +19,10 @@
 - **Frontend Seguro (`src/app/modules/auth/pages/login/login.component.ts`):**
   - Adicionado `autocapitalize="none"`, `autocorrect="off"` e `autocomplete="email"`.
   - Tratamento com `.trim()` antes do envio para a API de autenticação.
+- **Acesso à Página de Vendas (Landing Page) & Eliminação de Redirecionamento Indevido (`root.guard.ts` & `app.routes.ts`):**
+  - Removido bloqueio do `rootGuard` que forçava redirecionamento para `/login` ao detectar modo standalone/PWA no iPad.
+  - O domínio institucional principal (`edupsychpro.tech`) agora sempre carrega a Landing Page de Vendas para visitantes e suporta âncoras (`#planos`) e parâmetros (`?preview=true`).
+  - Adicionadas rotas diretas dedicadas sem guardas de bloqueio: `/landing`, `/planos` e `/inicio`.
 - **Atualização Automatizada na VPS (`update-vps.sh`):**
   - Adicionadas rotinas no script de deploy para rodar `setup-master-admin.js` e comandos SQL defensivos no PostgreSQL via Docker, garantindo ambos os acessos master permanentemente.
 
