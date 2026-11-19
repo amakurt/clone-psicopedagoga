@@ -1,6 +1,32 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 18 de Novembro de 2026
+## Última Atualização: 19 de Novembro de 2026
+
+## Sessão 93 - 19/11/2026 — Normalização de Acesso Master (SUPERADMIN), Normalização de E-mail Case-Insensitive & Script de Provisionamento
+
+### O que foi feito
+
+#### 1. Diagnóstico do Erro de Credenciais Inválidas no Acesso Master
+- **Causa Raiz 1 (Diferença de Domínio):** O domínio oficial registrado na VPS para a conta SuperAdmin é `admin@edupsychpro.tech` (com o termo **"pro"**), enquanto a tentativa foi realizada com `admin@edupsych.tech`.
+- **Causa Raiz 2 (Sensibilidade de Casing no Teclado Mobile/iPad):** No formulário de login, o input de e-mail não possuía `autocapitalize="none"`, o que em dispositivos móveis e iPads frequentemente capitaliza a primeira letra (`Admin@...`). O PostgreSQL faz comparações estritas `case-sensitive` por padrão em buscas `findUnique`.
+
+#### 2. Solução Definitiva e Compatibilidade Ampla
+- **Script de Provisionamento Master (`backend/scripts/setup-master-admin.js`):**
+  - Script automatizado com `bcrypt` e `Prisma` que garante e sincroniza tanto `admin@edupsychpro.tech` quanto `admin@edupsych.tech` com o papel `SUPERADMIN`, `active: true` e a senha oficial `@Exodo2220mami`.
+- **Blindagem do Endpoint de Login (`backend/src/routes/auth.ts`):**
+  - Implementada limpeza e normalização com `trim()` e `toLowerCase()` na entrada do login.
+  - Implementado fallback de busca case-insensitive antes de rejeitar credenciais.
+- **Frontend Seguro (`src/app/modules/auth/pages/login/login.component.ts`):**
+  - Adicionado `autocapitalize="none"`, `autocorrect="off"` e `autocomplete="email"`.
+  - Tratamento com `.trim()` antes do envio para a API de autenticação.
+- **Atualização Automatizada na VPS (`update-vps.sh`):**
+  - Adicionadas rotinas no script de deploy para rodar `setup-master-admin.js` e comandos SQL defensivos no PostgreSQL via Docker, garantindo ambos os acessos master permanentemente.
+
+#### 3. Validação Técnica
+- **Frontend:** Compilação de produção com `npx ng build` concluída com sucesso (0 erros).
+- **Backend:** Compilação com `tsc` concluída com sucesso (0 erros).
+
+---
 
 ## Sessão 92 - 18/11/2026 — Modelo Oficial de Anamnese Clínica da Dra. Vilma (16 Eixos) com Touch Chips para iPad e Identidade Visual Transparente Completa
 

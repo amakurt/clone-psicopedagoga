@@ -245,12 +245,24 @@ async function ensureResponsibleForUser(user: any) {
 router.post('/login', strictLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
+    const rawEmail = typeof email === 'string' ? email.trim() : '';
+    const cleanEmail = rawEmail.toLowerCase();
     
-    if (!email || !password) {
+    if (!rawEmail || !password) {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (!user && rawEmail !== cleanEmail) {
+      user = await prisma.user.findUnique({ where: { email: rawEmail } });
+    }
+    if (!user) {
+      const allUsers = await prisma.user.findMany({ select: { id: true, email: true } });
+      const found = allUsers.find(u => (u.email || '').trim().toLowerCase() === cleanEmail);
+      if (found) {
+        user = await prisma.user.findUnique({ where: { id: found.id } });
+      }
+    }
     if (!user) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }

@@ -79,7 +79,7 @@ import { environment } from '../../../../../environments/environment';
               <label class="block text-sm font-semibold text-slate-600 mb-2">Email</label>
               <input class="w-full px-4 py-3 border rounded-xl text-sm text-slate-900 bg-white placeholder-slate-400 outline-none transition-all"
                 [class.border-red-300]="emailError()" [class.border-slate-200]="!emailError()"
-                type="email" [(ngModel)]="email" name="email" placeholder="seu@email.com" autocomplete="off">
+                type="email" [(ngModel)]="email" name="email" placeholder="seu@email.com" autocomplete="email" autocapitalize="none" autocorrect="off">
               @if (emailError()) {
                 <p class="text-red-500 text-xs mt-1">{{ emailError() }}</p>
               }
@@ -295,7 +295,7 @@ export class LoginComponent {
     fetch(`${environment.apiUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: this.email, password: this.password })
+      body: JSON.stringify({ email: this.email.trim(), password: this.password })
     })
     .then(async res => {
       const text = await res.text();
