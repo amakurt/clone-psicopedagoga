@@ -20,7 +20,8 @@ ROOT_DIR=$(pwd)
 # 1. Puxar alterações do Git
 echo -e "\n${YELLOW}[1/5] Puxando últimos commits do GitHub...${NC}"
 git checkout -- backend/prisma/schema.prisma 2>/dev/null || true
-git pull origin main
+git fetch origin main
+git reset --hard origin/main
 
 # 2. Garantir containers Docker ativos (PostgreSQL e Evolution API)
 echo -e "\n${YELLOW}[2/5] Garantindo containers Docker ativos (PostgreSQL & Evolution API)...${NC}"
@@ -51,12 +52,26 @@ echo -e "\n${YELLOW}[4/5] Recompilando backend e reiniciando PM2...${NC}"
 npm run build
 pm2 restart edupsych-backend
 
-# 4. Compilar Frontend se solicitado ou necessário
+# 5. Compilar Frontend Angular e Publicar
 echo -e "\n${YELLOW}[5/5] Atualizando Frontend Angular...${NC}"
 cd "$ROOT_DIR"
-npx ng build
-cp -r dist/browser/* /var/www/edupsych/dist/browser/ 2>/dev/null || cp -r dist/* /var/www/edupsych/dist/
-systemctl reload nginx
+export NODE_OPTIONS="--max-old-space-size=2048"
+npm run build || npx ng build
+
+echo -e "${YELLOW}Publicando bundle limpo em /var/www/edupsych/dist/browser/...${NC}"
+mkdir -p /var/www/edupsych/dist/browser
+rm -rf /var/www/edupsych/dist/browser/*
+cp -r dist/browser/* /var/www/edupsych/dist/browser/
+chown -R www-data:www-data /var/www/edupsych
+
+# Configurar Nginx para evitar cache estrito de index.html
+if [ -f "/etc/nginx/sites-available/edupsych" ]; then
+  if ! grep -q "location = /index.html" /etc/nginx/sites-available/edupsych; then
+    sed -i '/location \/ {/i \    location = /index.html {\n        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";\n        expires off;\n    }\n' /etc/nginx/sites-available/edupsych 2>/dev/null || true
+  fi
+fi
+
+nginx -t 2>/dev/null && systemctl reload nginx || systemctl restart nginx || true
 
 echo -e "\n${GREEN}======================================================================${NC}"
 echo -e "${GREEN}      ATUALIZAÇÃO CONCLUÍDA COM SUCESSO E SEM TRAVAMENTO!            ${NC}"
