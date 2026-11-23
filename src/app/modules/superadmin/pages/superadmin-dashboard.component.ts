@@ -1552,6 +1552,14 @@ import { DialogService } from '../../../shared/services/dialog.service';
                               </button>
                             }
 
+                            <!-- Botão Excluir Fatura -->
+                            <button
+                              (click)="deleteInvoice(inv)"
+                              class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors border border-slate-700/60"
+                              title="Excluir fatura">
+                              <span class="material-icons text-sm">delete_outline</span>
+                            </button>
+
                           </div>
                         </td>
 
@@ -2586,12 +2594,12 @@ export class SuperAdminDashboardComponent implements OnInit {
     // Checa status preliminar do gateway para exibir badge
     this.superAdminService.getWhatsAppGatewayStatus().subscribe({
       next: (res) => this.gatewayStatus.set(res),
-      error: () => {},
+      error: () => { },
     });
     // Carrega estatísticas financeiras para pré-alimentar badge da aba
     this.superAdminService.getBillingStats().subscribe({
       next: (res) => this.billingStats.set(res),
-      error: () => {},
+      error: () => { },
     });
     // Carrega arquivos de backup salvos
     this.loadBackups();
@@ -2813,7 +2821,7 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   loadWhatsAppGateway() {
     this.whatsappLoading.set(true);
-    
+
     // 1. Status do Servidor
     this.superAdminService.getWhatsAppGatewayStatus().subscribe({
       next: (res) => this.gatewayStatus.set(res),
@@ -2839,11 +2847,11 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   filteredWhatsappInstances(): ClinicWhatsAppInstance[] {
     let list = this.whatsappInstances();
-    
+
     // Busca
     if (this.whatsappSearch.trim()) {
       const q = this.whatsappSearch.trim().toLowerCase();
-      list = list.filter(i => 
+      list = list.filter(i =>
         i.tenantName.toLowerCase().includes(q) ||
         i.tenantSlug.toLowerCase().includes(q) ||
         i.instanceName.toLowerCase().includes(q) ||
@@ -3131,6 +3139,25 @@ export class SuperAdminDashboardComponent implements OnInit {
     }
     navigator.clipboard?.writeText(url);
     this.toast.success('Link de pagamento InfinitePay copiado!');
+  }
+
+  async deleteInvoice(inv: SubscriptionInvoiceItem) {
+    const confirmed = await this.dialog.confirm(
+      `Deseja realmente excluir a fatura de ${inv.amountFormatted} da clínica "${inv.tenantName}" (${inv.status})? Esta ação não pode ser desfeita.`,
+      'Excluir Fatura',
+      { confirmText: 'Excluir', dangerMode: true }
+    );
+    if (!confirmed) return;
+
+    this.superAdminService.deleteInvoice(inv.id).subscribe({
+      next: () => {
+        this.toast.success('Fatura excluída com sucesso!');
+        this.loadBilling();
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao excluir fatura');
+      },
+    });
   }
 
   loadBillingConfig() {

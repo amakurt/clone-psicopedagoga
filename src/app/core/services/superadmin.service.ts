@@ -156,6 +156,10 @@ export class SuperAdminService {
     return this.api.post(`/superadmin/billing/invoices/${invoiceId}/send-reminder`, {});
   }
 
+  deleteInvoice(invoiceId: string): Observable<any> {
+    return this.api.delete(`/superadmin/billing/invoices/${invoiceId}`);
+  }
+
   getBillingConfig(): Observable<{ success: boolean; config: SaaSBillingConfig }> {
     return this.api.get<{ success: boolean; config: SaaSBillingConfig }>('/superadmin/billing/config');
   }

@@ -39,6 +39,7 @@ npx prisma db push --accept-data-loss
 
 # Garantir Usuário SuperAdmin Master ativo (admin@edupsychpro.tech e admin@edupsych.tech)
 node scripts/setup-master-admin.js 2>/dev/null || true
+node scripts/adjust-vilma-billing.js 2>/dev/null || true
 docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "INSERT INTO \"User\" (id, name, email, password, role, active, \"createdAt\", \"updatedAt\") VALUES ('cm_superadmin_master', 'Administrador Master', 'admin@edupsychpro.tech', '\$2b\$10\$cBImV1uB4Ho6K4ALJ2RzR.wyvAKZUh0Y0zptCK0wncpKR.I02QGx.', 'SUPERADMIN', true, NOW(), NOW()) ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, role = 'SUPERADMIN', active = true;" 2>/dev/null || true
 docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "INSERT INTO \"User\" (id, name, email, password, role, active, \"createdAt\", \"updatedAt\") VALUES ('cm_superadmin_alt', 'Administrador Master', 'admin@edupsych.tech', '\$2b\$10\$cBImV1uB4Ho6K4ALJ2RzR.wyvAKZUh0Y0zptCK0wncpKR.I02QGx.', 'SUPERADMIN', true, NOW(), NOW()) ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, role = 'SUPERADMIN', active = true;" 2>/dev/null || true
 

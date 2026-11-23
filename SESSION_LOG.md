@@ -4225,3 +4225,19 @@ npm run start
   6. **Validação e Compilação:**
      - Backend TypeScript compilado com 0 erros (`npm --prefix backend run build`).
      - Frontend Angular compilado com 0 erros (`npx ng build`).
+
+#### Ajuste de Faturas da Clínica Vilma e Recurso de Exclusão de Faturas no Painel Master
+- **Demanda do Usuário:** No Painel Master (Financeiro & Faturamento SaaS), constavam faturas vencidas e uma paga da clínica da Dra. Vilma. A gestora quitou hoje a mensalidade de R$ 127,00 no Plano Mensal, sendo necessário expurgar as faturas antigas/vencidas e manter apenas esta fatura paga atual de R$ 127,00.
+- **Implementações Técnicas:**
+  1. **Script de Ajuste e Conciliação (`backend/scripts/adjust-vilma-billing.js`):**
+     - Localização defensiva do tenant da Vilma (`Vilma Neuropp` / `vmssredencao2010@hotmail.com`).
+     - Exclusão de todas as faturas anteriores/vencidas da clínica.
+     - Atualização do plano para `MENSAL` e ativação da assinatura com vigência de 30 dias a partir da data atual.
+     - Criação da fatura única de R$ 127,00 com status `PAGA`, forma de pagamento `PIX` e data de liquidação de hoje.
+     - Inclusão da execução automática do script no `update-vps.sh`.
+  2. **Exclusão Manual de Faturas no Painel Master:**
+     - Endpoint `DELETE /api/superadmin/billing/invoices/:id` implementado em `backend/src/routes/superadmin.ts`.
+     - Método `deleteInvoice(invoiceId)` adicionado no `superadmin.service.ts`.
+     - Botão de exclusão (ícone de lixeira com confirmação modal) adicionado na tabela de faturas em `superadmin-dashboard.component.ts`, permitindo ao Administrador Master remover cobranças obsoletas ou de teste a qualquer momento.
+  3. **Validação:**
+     - Backend e Frontend Angular compilados com 0 erros.

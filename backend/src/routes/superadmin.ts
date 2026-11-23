@@ -1273,6 +1273,23 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
   }
 });
 
+// 8.6 Excluir / Cancelar Fatura
+router.delete('/billing/invoices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.subscriptionInvoice.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Fatura não encontrada' });
+    }
+
+    await prisma.subscriptionInvoice.delete({ where: { id } });
+    return res.json({ message: 'Fatura excluída com sucesso', id });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_DELETE_INVOICE_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao excluir fatura' });
+  }
+});
+
 // 8.6 Obter Configurações de Recebimento SaaS
 router.get('/billing/config', async (req, res) => {
   try {
