@@ -32,7 +32,7 @@ docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "CREATE SC
 # 3. Atualizar Banco de Dados (PostgreSQL) e Backend
 echo -e "\n${YELLOW}[3/5] Instalando dependências e sincronizando banco (Prisma)...${NC}"
 cd "$ROOT_DIR/backend"
-npm install --omit=dev --no-audit --no-fund
+npm install --no-audit --no-fund
 cp prisma/schema.postgres.prisma prisma/schema.prisma
 npx prisma generate
 npx prisma db push --accept-data-loss
@@ -62,8 +62,9 @@ if [ -n "$RESEND_KEY" ] && [ -f "$ROOT_DIR/backend/.env" ]; then
 fi
 
 echo -e "\n${YELLOW}[4/5] Recompilando backend e reiniciando PM2...${NC}"
+cd "$ROOT_DIR/backend"
 npm run build
-pm2 restart edupsych-backend
+pm2 restart edupsych-backend --update-env
 
 # 5. Compilar Frontend Angular e Publicar
 echo -e "\n${YELLOW}[5/5] Atualizando Frontend Angular...${NC}"
