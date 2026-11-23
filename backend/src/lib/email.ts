@@ -66,26 +66,39 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   const resendApiKey = process.env.RESEND_API_KEY;
   if (resendApiKey) {
     try {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${resendApiKey}`,
-        },
-        body: JSON.stringify({
-          from,
-          to: [to],
-          subject,
-          html,
-        }),
-      });
+      const sendViaResend = async (fromAddr: string) => {
+        return fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${resendApiKey}`,
+          },
+          body: JSON.stringify({
+            from: fromAddr,
+            to: [to],
+            subject,
+            html,
+          }),
+        });
+      };
 
+      let res = await sendViaResend(from);
       if (res.ok) {
         console.log(`[RESEND EMAIL] E-mail despachado com sucesso para ${to}`);
         return true;
       }
-      const data: any = await res.json().catch(() => ({}));
-      console.warn(`[RESEND WARN] Falha Resend para ${to}:`, data?.message || res.statusText);
+
+      // Se falhou por domínio não verificado no Resend, tenta com onboarding@resend.dev
+      const errData: any = await res.json().catch(() => ({}));
+      if (errData?.message?.includes('not verified') || errData?.message?.includes('domain')) {
+        console.warn(`[RESEND INFO] Domínio não verificado no Resend. Tentando fallback seguro onboarding@resend.dev...`);
+        res = await sendViaResend('EduPsych Pro <onboarding@resend.dev>');
+        if (res.ok) {
+          console.log(`[RESEND EMAIL] E-mail despachado via onboarding@resend.dev para ${to}`);
+          return true;
+        }
+      }
+      console.warn(`[RESEND WARN] Falha Resend para ${to}:`, errData?.message || res.statusText);
     } catch (err: any) {
       console.warn(`[RESEND ERROR] Falha de conexão Resend para ${to}:`, err?.message || err);
     }
@@ -105,4 +118,39 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
     console.warn(`[SMTP WARN] Falha ao despachar e-mail para ${to}:`, err?.message || err);
     return false;
   }
+}
+
+export async function send2FAEmail(to: string, name: string, code: string): Promise<boolean> {
+  const subject = `${code} é seu código de segurança - EduPsych Pro`;
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 12px; background: #007F80; color: #ffffff; font-size: 22px; font-weight: 900;">
+          Ψ
+        </div>
+        <h2 style="color: #0f172a; margin: 12px 0 2px; font-size: 20px; font-weight: 800;">EduPsych Pro</h2>
+        <p style="color: #64748b; font-size: 12px; margin: 0;">Autenticação em Duas Etapas (2FA)</p>
+      </div>
+
+      <p style="color: #334155; font-size: 14px; margin: 0 0 16px;">Olá, <strong>${name || 'Usuário'}</strong>!</p>
+      <p style="color: #475569; font-size: 13px; line-height: 1.5; margin: 0 0 20px;">
+        Recebemos uma solicitação de acesso à sua conta. Para continuar com segurança, use o código de verificação abaixo:
+      </p>
+
+      <div style="text-align: center; margin: 24px 0; padding: 20px; background: #f0fdfa; border: 2px dashed #007F80; border-radius: 16px;">
+        <p style="color: #0f766e; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin: 0 0 8px;">Código de Verificação</p>
+        <span style="font-size: 34px; font-weight: 900; letter-spacing: 6px; color: #007F80; font-family: monospace;">
+          ${code}
+        </span>
+      </div>
+
+      <p style="color: #64748b; font-size: 12px; line-height: 1.5; margin: 0 0 8px;">
+        ⏳ Este código expira em <strong>10 minutos</strong>. Nunca compartilhe este código com ninguém.
+      </p>
+      <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+        Se você não solicitou este acesso, sua senha pode ter sido comprometida. Recomendamos alterá-la imediatamente.
+      </p>
+    </div>
+  `;
+  return sendEmail(to, subject, html);
 }

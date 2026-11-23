@@ -9,10 +9,25 @@ import prisma from '../lib/prisma';
 import { scoped, ensureMembership, createClinicWithAdmin } from '../lib/tenant';
 import { enforceTenantStatus } from '../lib/billing';
 import { authenticate } from '../middleware';
-import { sendEmail, emailConfigured } from '../lib/email';
+import { sendEmail, emailConfigured, send2FAEmail } from '../lib/email';
+import { generateBase32Secret, verifyTOTP, getOtpAuthUrl } from '../lib/totp';
 import { sendWhatsAppMessage } from './whatsapp';
 
 const router = Router();
+
+function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return email || '';
+  const [local, domain] = email.split('@');
+  if (local.length <= 2) return `${local[0]}***@${domain}`;
+  return `${local.slice(0, 2)}***${local.slice(-1)}@${domain}`;
+}
+
+function maskPhone(phone: string): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 4) return digits;
+  return `(***) *****-${digits.slice(-4)}`;
+}
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -61,7 +76,9 @@ function buildUserPayload(user: any) {
     registration: user.registration,
     bio: user.bio,
     hasPassword: !!user.password,
-    emailVerified: !!user.emailVerified
+    emailVerified: !!user.emailVerified,
+    twoFactorEnabled: !!user.twoFactorEnabled,
+    twoFactorMethod: user.twoFactorMethod || 'EMAIL'
   };
 }
 
@@ -297,6 +314,73 @@ router.post('/login', strictLimiter, async (req, res) => {
       console.warn('[AUTH_LOGIN_BILLING_WARN]', billingErr.message);
     }
 
+    // 2FA - Verificação em Duas Etapas (Obrigatório para todos os usuários reais)
+    const isDemo = cleanEmail === 'demo@edupsychpro.tech' || user.email === 'demo@edupsychpro.tech';
+    const enforce2FA = !isDemo && process.env.TWO_FACTOR_DISABLED !== 'true';
+
+    if (enforce2FA) {
+      const tempToken = jwt.sign(
+        { userId: user.id, purpose: '2FA_LOGIN' },
+        getJwtSecret(),
+        { expiresIn: '10m' }
+      );
+
+      // Se usuário configurou Google Authenticator (TOTP) como método ativo
+      if (user.twoFactorEnabled && user.twoFactorSecret && user.twoFactorMethod === 'TOTP') {
+        return res.json({
+          require2FA: true,
+          twoFactorMethod: 'TOTP',
+          tempToken,
+          maskedEmail: maskEmail(user.email),
+          maskedPhone: user.phone ? maskPhone(user.phone) : null,
+          hasWhatsApp: !!user.phone,
+        });
+      }
+
+      // Senão: gerar código de 6 dígitos e enviar por E-mail (e WhatsApp se houver)
+      const code = generateCode();
+      const codeHash = hashValue(code);
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Invalida códigos 2FA anteriores do usuário
+      await prisma.verificationCode.updateMany({
+        where: { userId: user.id, type: 'TWO_FACTOR_LOGIN', usedAt: null },
+        data: { usedAt: new Date() },
+      });
+
+      await prisma.verificationCode.create({
+        data: {
+          userId: user.id,
+          type: 'TWO_FACTOR_LOGIN',
+          channel: 'EMAIL',
+          codeHash,
+          expiresAt,
+        },
+      });
+
+      // Enviar via Resend Email de forma assíncrona
+      send2FAEmail(user.email, user.name, code).catch((err) =>
+        console.warn('[2FA_EMAIL_WARN] Falha ao enviar e-mail:', err)
+      );
+
+      // Se tiver telefone cadastrado, envia também via WhatsApp como cortesia
+      if (user.phone) {
+        sendWhatsAppMessage(
+          user.phone,
+          `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`
+        ).catch(() => {});
+      }
+
+      return res.json({
+        require2FA: true,
+        twoFactorMethod: 'EMAIL',
+        tempToken,
+        maskedEmail: maskEmail(user.email),
+        maskedPhone: user.phone ? maskPhone(user.phone) : null,
+        hasWhatsApp: !!user.phone,
+      });
+    }
+
     const token = signToken(user);
     const tenants = await getUserTenants(user.id);
     const tenant = pickDefaultTenant(tenants);
@@ -310,6 +394,254 @@ router.post('/login', strictLimiter, async (req, res) => {
   } catch (err: any) {
     console.error('[AUTH_LOGIN_ERROR]', err);
     return res.status(500).json({ error: 'Erro no servidor ao autenticar: ' + (err?.message || err) });
+  }
+});
+
+// 2FA: Validar código (Email, WhatsApp ou TOTP) e liberar login
+router.post('/2fa/verify', strictLimiter, async (req, res) => {
+  try {
+    const { tempToken, code } = req.body;
+    if (!tempToken || !code) {
+      return res.status(400).json({ error: 'Token temporário e código de 6 dígitos são obrigatórios' });
+    }
+
+    let payload: any;
+    try {
+      payload = jwt.verify(tempToken, getJwtSecret()) as any;
+      if (payload.purpose !== '2FA_LOGIN') throw new Error('Token inválido');
+    } catch {
+      return res.status(401).json({ error: 'Sessão de verificação expirada. Faça login novamente.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'Usuário não encontrado ou inativo.' });
+    }
+
+    const cleanCode = String(code).trim().replace(/\s/g, '');
+    let verified = false;
+
+    // 1. Tentar validar via TOTP (Google Authenticator) se configurado
+    if (user.twoFactorSecret && verifyTOTP(user.twoFactorSecret, cleanCode)) {
+      verified = true;
+    }
+
+    // 2. Se não validou por TOTP, validar pelo VerificationCode (E-mail / WhatsApp)
+    if (!verified) {
+      const record = await prisma.verificationCode.findFirst({
+        where: {
+          userId: user.id,
+          type: 'TWO_FACTOR_LOGIN',
+          usedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (record && record.codeHash === hashValue(cleanCode)) {
+        verified = true;
+        await prisma.verificationCode.update({
+          where: { id: record.id },
+          data: { usedAt: new Date() },
+        });
+      }
+    }
+
+    if (!verified) {
+      return res.status(400).json({ error: 'Código de verificação incorreto ou expirado.' });
+    }
+
+    // Ao validar o código 2FA, o e-mail do usuário é automaticamente confirmado!
+    let updatedUser = user;
+    if (!user.emailVerified) {
+      updatedUser = await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+      });
+    }
+
+    const token = signToken(updatedUser);
+    const tenants = await getUserTenants(updatedUser.id);
+    const tenant = pickDefaultTenant(tenants);
+
+    return res.json({
+      token,
+      user: buildUserPayload(updatedUser),
+      tenants,
+      tenant,
+      message: 'Autenticado com sucesso!',
+    });
+  } catch (err: any) {
+    console.error('[2FA_VERIFY_ERROR]', err);
+    return res.status(500).json({ error: 'Erro ao validar código: ' + (err?.message || err) });
+  }
+});
+
+// 2FA: Reenviar código (por E-mail ou WhatsApp)
+router.post('/2fa/resend', strictLimiter, async (req, res) => {
+  try {
+    const { tempToken, channel = 'EMAIL' } = req.body;
+    if (!tempToken) {
+      return res.status(400).json({ error: 'Token temporário é obrigatório' });
+    }
+
+    let payload: any;
+    try {
+      payload = jwt.verify(tempToken, getJwtSecret()) as any;
+      if (payload.purpose !== '2FA_LOGIN') throw new Error('Token inválido');
+    } catch {
+      return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const code = generateCode();
+    const codeHash = hashValue(code);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await prisma.verificationCode.updateMany({
+      where: { userId: user.id, type: 'TWO_FACTOR_LOGIN', usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    await prisma.verificationCode.create({
+      data: {
+        userId: user.id,
+        type: 'TWO_FACTOR_LOGIN',
+        channel: channel === 'WHATSAPP' ? 'WHATSAPP' : 'EMAIL',
+        codeHash,
+        expiresAt,
+      },
+    });
+
+    if (channel === 'WHATSAPP') {
+      if (!user.phone) {
+        return res.status(400).json({ error: 'Usuário não possui telefone cadastrado para WhatsApp' });
+      }
+      try {
+        await sendWhatsAppMessage(
+          user.phone,
+          `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`
+        );
+        return res.json({ message: 'Código reenviado via WhatsApp com sucesso!', channel: 'WHATSAPP' });
+      } catch (e: any) {
+        console.warn('[2FA_WHATSAPP_WARN]', e.message);
+        return res.status(500).json({ error: 'Falha ao enviar WhatsApp. Tente por e-mail.' });
+      }
+    }
+
+    // Enviar via e-mail Resend
+    await send2FAEmail(user.email, user.name, code);
+    return res.json({ message: 'Código reenviado para seu e-mail com sucesso!', channel: 'EMAIL' });
+  } catch (err: any) {
+    console.error('[2FA_RESEND_ERROR]', err);
+    return res.status(500).json({ error: 'Erro ao reenviar código' });
+  }
+});
+
+// 2FA: Iniciar configuração do Google Authenticator (TOTP)
+router.post('/2fa/setup', authenticate, async (req: any, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const secret = generateBase32Secret(20);
+    const otpAuthUrl = getOtpAuthUrl(secret, user.email, 'EduPsych Pro');
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(otpAuthUrl)}`;
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { twoFactorTempSecret: secret },
+    });
+
+    return res.json({
+      secret,
+      otpAuthUrl,
+      qrCodeUrl,
+      message: 'Escaneie o QR Code no Google Authenticator ou insira a chave secreta.',
+    });
+  } catch (err: any) {
+    console.error('[2FA_SETUP_ERROR]', err);
+    return res.status(500).json({ error: 'Erro ao iniciar configuração do 2FA' });
+  }
+});
+
+// 2FA: Confirmar ativação do Google Authenticator
+router.post('/2fa/confirm-setup', authenticate, async (req: any, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ error: 'Código de 6 dígitos é obrigatório' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || !user.twoFactorTempSecret) {
+      return res.status(400).json({ error: 'Nenhuma configuração de 2FA em andamento. Inicie novamente.' });
+    }
+
+    const valid = verifyTOTP(user.twoFactorTempSecret, String(code).trim());
+    if (!valid) {
+      return res.status(400).json({ error: 'Código inválido. Verifique o horário do celular e tente novamente.' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        twoFactorSecret: user.twoFactorTempSecret,
+        twoFactorTempSecret: null,
+        twoFactorEnabled: true,
+        twoFactorMethod: 'TOTP',
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: 'Google Authenticator ativado com sucesso! Use o app para gerar seus códigos de login.',
+      user: buildUserPayload(updated),
+    });
+  } catch (err: any) {
+    console.error('[2FA_CONFIRM_SETUP_ERROR]', err);
+    return res.status(500).json({ error: 'Erro ao confirmar ativação do 2FA' });
+  }
+});
+
+// 2FA: Desativar Google Authenticator (retorna para 2FA via E-mail)
+router.post('/2fa/disable', authenticate, async (req: any, res) => {
+  try {
+    const { password } = req.body;
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || !user.password) {
+      return res.status(400).json({ error: 'Usuário não encontrado' });
+    }
+
+    const validPassword = await bcrypt.compare(password || '', user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Senha incorreta para confirmar desativação' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        twoFactorSecret: null,
+        twoFactorTempSecret: null,
+        twoFactorEnabled: false,
+        twoFactorMethod: 'EMAIL',
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: 'Google Authenticator desativado. Suas verificações serão enviadas por e-mail.',
+      user: buildUserPayload(updated),
+    });
+  } catch (err: any) {
+    console.error('[2FA_DISABLE_ERROR]', err);
+    return res.status(500).json({ error: 'Erro ao desativar autenticador' });
   }
 });
 

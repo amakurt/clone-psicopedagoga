@@ -113,6 +113,22 @@ async function main() {
   });
   console.log(`[ADJUST_VILMA_BILLING] Status da clínica atualizado: Plano MENSAL, Status ATIVO.`);
 
+  // 6. Confirmar e-mail e ativar a conta da Dra. Vilma
+  const updatedUsers = await prisma.user.updateMany({
+    where: {
+      OR: [
+        { email: { contains: 'vmssredencao' } },
+        { email: { contains: 'vilma' } },
+        { name: { contains: 'vilma' } },
+      ],
+    },
+    data: {
+      emailVerified: true,
+      active: true,
+    },
+  });
+  console.log(`[ADJUST_VILMA_BILLING] ${updatedUsers.count} usuário(s) da Dra. Vilma atualizado(s) com emailVerified=true e active=true.`);
+
   console.log('[ADJUST_VILMA_BILLING] Ajuste concluído com sucesso!');
 }
 

@@ -235,6 +235,187 @@ import { formatCNPJ } from '@core/utils/masks';
             </button>
           </div>
         </div>
+
+        <!-- 2FA Card -->
+        <div class="mt-8 bg-white dark:bg-slate-900 rounded-3xl shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden">
+          <div class="p-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div class="flex items-center gap-3">
+                <div class="size-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                  <span class="material-icons text-2xl">verified_user</span>
+                </div>
+                <div>
+                  <h3 class="text-base font-black text-slate-900 dark:text-white">Autenticação em Duas Etapas (2FA)</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Proteja o acesso ao prontuário dos pacientes e dados da clínica</p>
+                </div>
+              </div>
+
+              <!-- Status Badge -->
+              <div>
+                @if (auth.user()?.twoFactorEnabled && auth.user()?.twoFactorMethod === 'TOTP') {
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                    <span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Google Authenticator Ativo
+                  </span>
+                } @else {
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800">
+                    <span class="size-2 rounded-full bg-teal-500"></span>
+                    2FA Ativo via E-mail / WhatsApp
+                  </span>
+                }
+              </div>
+            </div>
+
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+              Sua conta já possui proteção em duas etapas ativa. A cada login, um código de verificação é enviado para o seu e-mail (e WhatsApp se cadastrado). 
+              Você também pode vincular o aplicativo <strong>Google Authenticator</strong> ou <strong>Microsoft Authenticator</strong> para gerar seus códigos de segurança no próprio celular.
+            </p>
+
+            @if (auth.user()?.twoFactorEnabled && auth.user()?.twoFactorMethod === 'TOTP') {
+              <!-- Modo Ativo: Google Authenticator -->
+              <div class="p-6 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-start gap-4">
+                  <span class="material-icons text-emerald-600 text-2xl shrink-0">check_circle</span>
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Aplicativo Autenticador Conectado</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      No momento de entrar na sua conta, informe o código de 6 dígitos gerado pelo Google Authenticator.
+                    </p>
+                  </div>
+                </div>
+
+                @if (showDisable2FAForm()) {
+                  <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Para desativar o Google Authenticator e voltar ao 2FA padrão via E-mail, digite sua senha:</p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                      <input
+                        type="password"
+                        [(ngModel)]="disable2FAPassword"
+                        placeholder="Sua senha atual"
+                        class="flex-1 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-primary"
+                      />
+                      <button
+                        type="button"
+                        (click)="confirmDisable2FA()"
+                        [disabled]="disabling2FA() || !disable2FAPassword"
+                        class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50">
+                        {{ disabling2FA() ? 'Desativando...' : 'Confirmar Desativação' }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="showDisable2FAForm.set(false); disable2FAPassword = ''"
+                        class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold">
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      (click)="showDisable2FAForm.set(true)"
+                      class="px-4 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-900/40 transition-all">
+                      Desativar Google Authenticator
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <!-- Modo Setup: Configurar Google Authenticator -->
+              @if (!setup2FAData()) {
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-teal-50/50 dark:bg-teal-950/20 rounded-2xl border border-teal-100 dark:border-teal-900/40">
+                  <div class="flex items-center gap-3">
+                    <span class="material-icons text-teal-600 dark:text-teal-400 text-2xl shrink-0">qr_code_scanner</span>
+                    <div>
+                      <p class="text-sm font-bold text-slate-900 dark:text-white">Vincular Google Authenticator</p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Gere códigos instantâneos direto no celular, mesmo sem conexão de dados.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="start2FASetup()"
+                    [disabled]="loading2FASetup()"
+                    class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-xs font-bold shadow-md shadow-primary/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shrink-0">
+                    @if (loading2FASetup()) {
+                      <span class="material-icons text-sm animate-spin">refresh</span>
+                      <span>Gerando QR Code...</span>
+                    } @else {
+                      <span class="material-icons text-sm">add_moderator</span>
+                      <span>Configurar Google Authenticator</span>
+                    }
+                  </button>
+                </div>
+              } @else {
+                <!-- Wizard de Configuração com QR Code -->
+                <div class="p-6 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 animate-in">
+                  <div class="flex flex-col md:flex-row gap-6 items-center">
+                    <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 shrink-0">
+                      <img [src]="setup2FAData()?.qrCodeUrl" alt="QR Code Google Authenticator" class="size-48 object-contain">
+                    </div>
+
+                    <div class="flex-1 space-y-4">
+                      <div class="space-y-1">
+                        <h4 class="text-sm font-black text-slate-900 dark:text-white">Passo 1: Escaneie o QR Code</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          Abra o <strong>Google Authenticator</strong> (ou Microsoft Authenticator) no seu smartphone, clique no botão <strong>+</strong> e selecione <strong>Escanear código QR</strong>.
+                        </p>
+                      </div>
+
+                      <div class="space-y-1">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ou adicione pela chave secreta:</span>
+                        <div class="flex items-center gap-2">
+                          <code class="px-3 py-1.5 bg-white dark:bg-slate-900 rounded-lg text-xs font-mono font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 select-all">
+                            {{ setup2FAData()?.secret }}
+                          </code>
+                          <button
+                            type="button"
+                            (click)="copy2FASecret()"
+                            class="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all">
+                            <span class="material-icons text-sm">content_copy</span>
+                            <span>Copiar</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="pt-3 space-y-2 border-t border-slate-200 dark:border-slate-700">
+                        <h4 class="text-sm font-black text-slate-900 dark:text-white">Passo 2: Digite o código de 6 dígitos gerado</h4>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                          <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="6"
+                            [(ngModel)]="confirm2FACode"
+                            placeholder="000000"
+                            class="w-44 px-4 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-center font-mono font-black text-lg tracking-widest outline-none focus:border-primary"
+                          />
+                          <button
+                            type="button"
+                            (click)="confirm2FASetup()"
+                            [disabled]="confirming2FA() || !confirm2FACode || confirm2FACode.length < 6"
+                            class="px-6 py-2.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-xs font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2">
+                            @if (confirming2FA()) {
+                              <span class="material-icons text-sm animate-spin">refresh</span>
+                              <span>Ativando...</span>
+                            } @else {
+                              <span class="material-icons text-sm">check</span>
+                              <span>Ativar Google Authenticator</span>
+                            }
+                          </button>
+                          <button
+                            type="button"
+                            (click)="setup2FAData.set(null); confirm2FACode = ''"
+                            class="px-4 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
       }
 
       <!-- Clinic Tab (White-Label) -->
@@ -705,6 +886,15 @@ export class ConfiguracoesComponent implements OnInit {
   showAiPassword = signal(false);
   savingAiKey = signal(false);
 
+  // 2FA Management State
+  loading2FASetup = signal(false);
+  setup2FAData = signal<any>(null);
+  confirm2FACode = '';
+  confirming2FA = signal(false);
+  showDisable2FAForm = signal(false);
+  disable2FAPassword = '';
+  disabling2FA = signal(false);
+
   showToast = signal(false);
   toastMessage = signal('');
   hasPassword = signal(true);
@@ -929,6 +1119,77 @@ export class ConfiguracoesComponent implements OnInit {
         this.hasPassword.set(true);
       },
       error: () => this.toast.error('Erro ao alterar senha')
+    });
+  }
+
+  start2FASetup() {
+    this.loading2FASetup.set(true);
+    this.api.post('/auth/2fa/setup', {}).subscribe({
+      next: (res: any) => {
+        this.setup2FAData.set(res);
+        this.loading2FASetup.set(false);
+      },
+      error: (err: any) => {
+        this.toast.error(err?.error?.error || 'Erro ao iniciar configuração do 2FA');
+        this.loading2FASetup.set(false);
+      }
+    });
+  }
+
+  copy2FASecret() {
+    const secret = this.setup2FAData()?.secret;
+    if (secret) {
+      navigator.clipboard?.writeText(secret);
+      this.toast.success('Chave secreta copiada para a área de transferência!');
+    }
+  }
+
+  confirm2FASetup() {
+    const code = String(this.confirm2FACode).trim();
+    if (!code || code.length < 6) {
+      this.toast.warning('Digite o código de 6 dígitos gerado pelo app');
+      return;
+    }
+
+    this.confirming2FA.set(true);
+    this.api.post('/auth/2fa/confirm-setup', { code }).subscribe({
+      next: (res: any) => {
+        if (res?.user) {
+          this.auth.updateUser(res.user);
+        }
+        this.toast.success('Google Authenticator ativado com sucesso!');
+        this.setup2FAData.set(null);
+        this.confirm2FACode = '';
+        this.confirming2FA.set(false);
+      },
+      error: (err: any) => {
+        this.toast.error(err?.error?.error || 'Código incorreto. Tente novamente.');
+        this.confirming2FA.set(false);
+      }
+    });
+  }
+
+  confirmDisable2FA() {
+    if (!this.disable2FAPassword) {
+      this.toast.warning('Digite sua senha para confirmar a desativação');
+      return;
+    }
+
+    this.disabling2FA.set(true);
+    this.api.post('/auth/2fa/disable', { password: this.disable2FAPassword }).subscribe({
+      next: (res: any) => {
+        if (res?.user) {
+          this.auth.updateUser(res.user);
+        }
+        this.toast.success('Google Authenticator desativado. 2FA revertido para E-mail.');
+        this.showDisable2FAForm.set(false);
+        this.disable2FAPassword = '';
+        this.disabling2FA.set(false);
+      },
+      error: (err: any) => {
+        this.toast.error(err?.error?.error || 'Senha incorreta.');
+        this.disabling2FA.set(false);
+      }
     });
   }
 

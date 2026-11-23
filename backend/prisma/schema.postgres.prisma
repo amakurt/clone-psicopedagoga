@@ -90,6 +90,10 @@ model User {
   role          String   @default("SECRETARIA")
   active        Boolean  @default(true)
   emailVerified Boolean  @default(false)
+  twoFactorEnabled    Boolean  @default(false)
+  twoFactorSecret     String?
+  twoFactorMethod     String?  @default("EMAIL")
+  twoFactorTempSecret String?
   avatarUrl     String?
   phone         String?
   phoneIsWhatsApp Boolean @default(false)

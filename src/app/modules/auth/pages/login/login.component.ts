@@ -1,22 +1,28 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1E1B4B] to-primary p-5">
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-teal-950 p-5">
       <div class="bg-white rounded-[20px] shadow-2xl w-full max-w-[420px] overflow-hidden legacy-card">
         <!-- Header -->
-        <div class="p-10 pb-8 text-center">
+        <div class="p-10 pb-6 text-center">
           <img src="/web-app-manifest-192x192.png" alt="EduPsych Pro" class="size-16 mx-auto rounded-2xl shadow-lg shadow-primary/20 object-contain">
           <h1 class="mt-3 text-[26px] font-black text-slate-900">EduPsych Pro</h1>
-          <p class="text-sm text-slate-500 mt-1">{{ isRegister() ? 'Crie sua conta' : 'Acesse sua conta' }}</p>
+          <p class="text-sm text-slate-500 mt-1">
+            @if (step2FA()) {
+              Verificação de Segurança em Duas Etapas
+            } @else {
+              {{ isRegister() ? 'Crie sua conta' : 'Acesse sua conta' }}
+            }
+          </p>
         </div>
 
         <!-- Error/Success -->
@@ -24,7 +30,7 @@ import { environment } from '../../../../../environments/environment';
           <div class="mx-10 mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
             <span class="material-icons text-lg">error</span> {{ error() }}
           </div>
-          @if (needsVerification()) {
+          @if (!step2FA() && needsVerification()) {
             <button class="mx-10 mb-4 w-[calc(100%-80px)] py-2 text-sm text-primary font-bold hover:underline"
               (click)="resendVerification()" [disabled]="resending()">
               {{ resending() ? 'Reenviando...' : 'Reenviar link de ativação' }}
@@ -37,8 +43,107 @@ import { environment } from '../../../../../environments/environment';
           </div>
         }
 
-        <!-- Form -->
-        <div class="px-10 pb-10">
+        <!-- 2FA Verification Screen -->
+        @if (step2FA()) {
+          <div class="px-10 pb-10">
+            <div class="p-4 bg-teal-50/80 border border-teal-100 rounded-2xl text-center mb-6">
+              <div class="size-12 mx-auto rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 mb-2">
+                <span class="material-icons text-2xl">
+                  {{ twoFactorMethod() === 'TOTP' ? 'smartphone' : (twoFactorMethod() === 'WHATSAPP' ? 'chat' : 'mark_email_read') }}
+                </span>
+              </div>
+              <h3 class="text-sm font-black text-slate-900">
+                {{ twoFactorMethod() === 'TOTP' ? 'Google Authenticator' : (twoFactorMethod() === 'WHATSAPP' ? 'Código via WhatsApp' : 'Código via E-mail') }}
+              </h3>
+              <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                @if (twoFactorMethod() === 'TOTP') {
+                  Abra o aplicativo <strong>Google Authenticator</strong> no seu celular e digite o código de 6 dígitos.
+                } @else if (twoFactorMethod() === 'WHATSAPP') {
+                  Enviamos o código para seu WhatsApp <strong>{{ twoFactorMaskedPhone() }}</strong>.
+                } @else {
+                  Enviamos o código para seu e-mail <strong>{{ twoFactorMaskedEmail() }}</strong>.
+                }
+              </p>
+            </div>
+
+            <form (ngSubmit)="verify2FA()">
+              <div class="mb-5">
+                <label class="block text-xs font-bold text-slate-600 text-center uppercase tracking-wider mb-2">
+                  Código de 6 Dígitos
+                </label>
+                <input
+                  class="w-full py-3.5 px-4 text-center text-3xl font-mono font-black tracking-[0.4em] bg-slate-50 border-2 border-slate-200 rounded-2xl text-slate-900 outline-none focus:border-primary focus:bg-white transition-all shadow-inner placeholder-slate-300"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="6"
+                  [(ngModel)]="twoFactorCode"
+                  name="twoFactorCode"
+                  placeholder="000000"
+                  autocomplete="one-time-code"
+                  autofocus
+                  (input)="on2FACodeInput($event)"
+                />
+                <p class="text-[11px] text-slate-400 text-center mt-2">
+                  ⏳ O código expira em 10 minutos.
+                </p>
+              </div>
+
+              <button
+                class="w-full py-3.5 bg-primary hover:bg-primary-dark text-on-primary rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/25 disabled:opacity-50 flex items-center justify-center gap-2"
+                type="submit"
+                [disabled]="loading() || !twoFactorCode || twoFactorCode.length < 6">
+                @if (loading()) {
+                  <span class="material-icons text-base animate-spin">refresh</span>
+                  <span>Validando código...</span>
+                } @else {
+                  <span class="material-icons text-base">verified_user</span>
+                  <span>Confirmar e Entrar</span>
+                }
+              </button>
+            </form>
+
+            <!-- Reenvio e Canais Alternativos -->
+            <div class="mt-6 pt-5 border-t border-slate-100 space-y-2.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-500">Não recebeu o código?</span>
+                <button
+                  type="button"
+                  class="font-bold text-primary hover:underline disabled:opacity-50"
+                  (click)="resend2FA('EMAIL')"
+                  [disabled]="resending2FA()">
+                  {{ resending2FA() ? 'Reenviando...' : 'Reenviar por E-mail' }}
+                </button>
+              </div>
+
+              @if (hasWhatsApp()) {
+                <div class="flex items-center justify-between text-xs pt-1">
+                  <span class="text-slate-500">Prefere pelo WhatsApp?</span>
+                  <button
+                    type="button"
+                    class="font-bold text-emerald-600 hover:underline disabled:opacity-50 flex items-center gap-1"
+                    (click)="resend2FA('WHATSAPP')"
+                    [disabled]="resending2FA()">
+                    <span class="material-icons text-sm">chat</span>
+                    <span>Receber no WhatsApp</span>
+                  </button>
+                </div>
+              }
+
+              <div class="text-center pt-3">
+                <button
+                  type="button"
+                  class="text-xs text-slate-400 hover:text-slate-600 font-semibold flex items-center justify-center gap-1 mx-auto"
+                  (click)="cancel2FA()">
+                  <span class="material-icons text-sm">arrow_back</span>
+                  <span>Voltar e usar outra conta</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- Form Normal de Login / Cadastro -->
+          <div class="px-10 pb-10">
           @if (isRegister() && selectedRole() !== 'RESPONSAVEL') {
             <div class="mb-5 p-3.5 bg-primary/5 border border-primary/20 rounded-xl text-sm text-slate-700 flex items-center justify-between gap-3">
               <div class="flex items-center gap-2.5">
@@ -171,6 +276,7 @@ import { environment } from '../../../../../environments/environment';
             </button>
           </div>
         </div>
+        }
       </div>
     </div>
   `,
@@ -195,6 +301,16 @@ export class LoginComponent {
   contracting = signal(false);
   needsVerification = signal(false);
   resending = signal(false);
+
+  // 2FA Signals & State
+  step2FA = signal(false);
+  temp2FAToken = signal('');
+  twoFactorMethod = signal<'EMAIL' | 'WHATSAPP' | 'TOTP'>('EMAIL');
+  twoFactorMaskedEmail = signal('');
+  twoFactorMaskedPhone = signal('');
+  hasWhatsApp = signal(false);
+  twoFactorCode = '';
+  resending2FA = signal(false);
 
   emailError = signal('');
   passwordError = signal('');
@@ -230,6 +346,7 @@ export class LoginComponent {
     this.error.set('');
     this.success.set('');
     this.needsVerification.set(false);
+    this.step2FA.set(false);
     this.clearErrors();
   }
 
@@ -313,29 +430,130 @@ export class LoginComponent {
       return data;
     })
     .then(data => {
-      this.auth.login(data.token, data.user, data.tenants, data.tenant);
-      if (data.user?.role === 'SUPERADMIN') {
-        this.router.navigate(['/master']);
+      if (data.require2FA) {
+        this.step2FA.set(true);
+        this.temp2FAToken.set(data.tempToken);
+        this.twoFactorMethod.set(data.twoFactorMethod || 'EMAIL');
+        this.twoFactorMaskedEmail.set(data.maskedEmail || '');
+        this.twoFactorMaskedPhone.set(data.maskedPhone || '');
+        this.hasWhatsApp.set(!!data.hasWhatsApp);
+        this.twoFactorCode = '';
+        this.loading.set(false);
         return;
       }
-      const tenants = this.auth.tenants();
-      if (!tenants.length) {
-        throw new Error('Sua conta não está vinculada a nenhuma clínica');
-      }
-      if (tenants.length > 1) {
-        this.router.navigate(['/auth/select-clinic']);
-        return;
-      }
-      const redirectPath = data.user?.role === 'RESPONSAVEL'
-        ? '/guardian'
-        : this.selectedPlan() ? '/app/plano' : '/app/dashboard';
-      this.router.navigate([redirectPath]);
+      this.finishLogin(data);
     })
     .catch(err => {
       this.error.set(err.message || 'Erro ao conectar com o servidor');
       this.needsVerification.set(err.message?.includes('não ativada') || false);
       this.loading.set(false);
     });
+  }
+
+  finishLogin(data: any) {
+    this.auth.login(data.token, data.user, data.tenants, data.tenant);
+    if (data.user?.role === 'SUPERADMIN') {
+      this.router.navigate(['/master']);
+      return;
+    }
+    const tenants = this.auth.tenants();
+    if (!tenants || !tenants.length) {
+      throw new Error('Sua conta não está vinculada a nenhuma clínica');
+    }
+    if (tenants.length > 1) {
+      this.router.navigate(['/auth/select-clinic']);
+      return;
+    }
+    const redirectPath = data.user?.role === 'RESPONSAVEL'
+      ? '/guardian'
+      : this.selectedPlan() ? '/app/plano' : '/app/dashboard';
+    this.router.navigate([redirectPath]);
+  }
+
+  on2FACodeInput(event: any) {
+    const val = event?.target?.value || this.twoFactorCode;
+    const digits = String(val).replace(/\D/g, '').slice(0, 6);
+    this.twoFactorCode = digits;
+    if (digits.length === 6 && !this.loading()) {
+      this.verify2FA();
+    }
+  }
+
+  verify2FA() {
+    const code = String(this.twoFactorCode).trim().replace(/\D/g, '');
+    if (!code || code.length < 6) {
+      this.error.set('Por favor, digite o código de 6 dígitos.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set('');
+    this.success.set('');
+
+    fetch(`${environment.apiUrl}/auth/2fa/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tempToken: this.temp2FAToken(),
+        code: code
+      })
+    })
+    .then(async res => {
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        if (!res.ok) throw new Error(`Erro no servidor (${res.status})`);
+      }
+      if (!res.ok) throw new Error(data.error || 'Código incorreto ou expirado.');
+      return data;
+    })
+    .then(data => {
+      this.finishLogin(data);
+    })
+    .catch(err => {
+      this.error.set(err.message || 'Código inválido. Tente novamente.');
+      this.loading.set(false);
+    });
+  }
+
+  resend2FA(channel: 'EMAIL' | 'WHATSAPP') {
+    this.resending2FA.set(true);
+    this.error.set('');
+    this.success.set('');
+
+    fetch(`${environment.apiUrl}/auth/2fa/resend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tempToken: this.temp2FAToken(),
+        channel
+      })
+    })
+    .then(async res => {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Falha ao reenviar código');
+      return data;
+    })
+    .then(data => {
+      this.twoFactorMethod.set(channel);
+      this.success.set(data.message || (channel === 'WHATSAPP' ? 'Código reenviado via WhatsApp!' : 'Código reenviado para seu e-mail!'));
+      this.resending2FA.set(false);
+    })
+    .catch(err => {
+      this.error.set(err.message || 'Erro ao reenviar');
+      this.resending2FA.set(false);
+    });
+  }
+
+  cancel2FA() {
+    this.step2FA.set(false);
+    this.temp2FAToken.set('');
+    this.twoFactorCode = '';
+    this.error.set('');
+    this.success.set('');
+    this.loading.set(false);
   }
 
   resendVerification() {

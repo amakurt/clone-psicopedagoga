@@ -1,6 +1,57 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 19 de Novembro de 2026
+## Última Atualização: 23 de Novembro de 2026
+
+## Sessão 95 - 23/11/2026 — Autenticação em Duas Etapas (2FA) Multi-Canal (Resend, WhatsApp & TOTP), Auto-Confirmação de E-mail & Isolamento do Faturamento SaaS
+
+### O que foi feito
+
+#### 1. Diagnóstico e Solicitação do Usuário
+- **Confirmação de E-mail Pendente (Caso Dra. Vilma):** O aviso de ativação de e-mail continuava aparecendo na plataforma para usuários reais, além de faturas antigas e testes de faturamento constando no painel master.
+- **Autenticação em Duas Etapas (2FA):** O usuário solicitou a implantação de 2FA obrigatório para proteger o acesso a dados de pacientes e clínicas, abrangendo todas as opções:
+  - Envio de código OTP via e-mail real utilizando a API da **Resend** (gratuito e sem risco de cair em spam).
+  - Envio de código OTP via **WhatsApp** (integração via Evolution API da VPS).
+  - Aplicativo autenticador RFC 6238 TOTP (**Google Authenticator / Microsoft Authenticator**) com leitura de QR Code.
+- **Auto-confirmação de E-mail:** Ao validar com sucesso o código 2FA de 6 dígitos no login, o e-mail do usuário é automaticamente marcado como confirmado (`emailVerified = true`), eliminando faixas pendentes.
+- **Faturamento SaaS & Clínicas Modelo:** Clínicas modelo/demo foram isoladas de cobranças e faturas antigas da Dra. Vilma foram regularizadas para refletir a mensalidade quitada de R$ 127,00 (Plano Mensal).
+
+#### 2. Backend & Banco de Dados (Prisma, TOTP & Resend)
+- **Modelagem de Dados (`backend/prisma/schema.prisma`):**
+  - Adicionados campos em `User`: `twoFactorEnabled`, `twoFactorSecret`, `twoFactorMethod`, `twoFactorTempSecret`.
+  - Sincronização executada via `prisma db push` e geração do cliente com `prisma generate`.
+- **Módulo TOTP Nativo (`backend/src/lib/totp.ts`):**
+  - Implementação RFC 6238 nativa em Node.js (sem dependências pesadas): geração de segredo Base32, geração e validação de tokens TOTP com tolerância temporal de +/- 30s e formatação da URI `otpauth://` para Google Authenticator.
+- **Serviço de E-mail com Resend API (`backend/src/lib/email.ts`):**
+  - Integração via HTTPS (`https://api.resend.com/emails`) com fallback inteligente para `EduPsych Pro <onboarding@resend.dev>` caso o domínio customizado ainda não tenha registros DKIM/SPF validados no painel da Resend.
+  - Template HTML médico profissional (`send2FAEmail`) com código destacado e visual em teal/slate (respeitando o Purple Ban).
+- **Rotas de Autenticação (`backend/src/routes/auth.ts`):**
+  - `POST /login`: Intercepta usuários reais para 2FA (`require2FA: true`), emite `tempToken` JWT (10 min) e envia código de 6 dígitos via Resend (e WhatsApp se houver telefone).
+  - `POST /2fa/verify`: Valida código OTP (ou TOTP do Google Authenticator), atualiza automaticamente `emailVerified = true` e gera a sessão autenticada completa.
+  - `POST /2fa/resend`: Reenvia o código OTP para e-mail ou WhatsApp.
+  - `POST /2fa/setup`: Gera chave Base32 e URL de QR Code para escaneamento no celular.
+  - `POST /2fa/confirm-setup`: Valida primeiro código TOTP e ativa o Google Authenticator na conta.
+  - `POST /2fa/disable`: Desativa o Google Authenticator mediante confirmação de senha atual, revertendo o 2FA para E-mail.
+
+#### 3. Frontend Angular (Login & Configurações)
+- **Tela de Login (`LoginComponent`):**
+  - Adicionado fluxo de 2FA embutido com transição elegante: input de 6 dígitos formatado com fonte mono, detecção automática ao digitar os 6 dígitos, botões de reenvio por e-mail e WhatsApp, e opção de cancelar/voltar.
+  - Remoção de resquícios de tons violetas no fundo, adotando gradiente slate/teal profundo.
+- **Aba de Segurança (`ConfiguracoesComponent`):**
+  - Adicionado card completo de "Autenticação em Duas Etapas (2FA)":
+    - Badge indicativa do status atual (2FA via E-mail ou Google Authenticator Ativo).
+    - Assistente de configuração do Google Authenticator com exibição do QR Code e chave secreta com botão de cópia.
+    - Validação e ativação em tempo real com o app no smartphone.
+    - Modal/formulário de desativação protegida por senha.
+
+#### 4. Automação na VPS (`update-vps.sh` & `adjust-vilma-billing.js`)
+- Inclusão do comando direto para marcar `emailVerified = true` e `active = true` para a Dra. Vilma.
+- Ajuste das faturas SaaS e exclusão de faturas fictícias de clínicas modelo.
+
+#### 5. Validação Técnica
+- **Backend (`tsc`):** Compilado com sucesso (0 erros).
+- **Frontend (`npx ng build`):** Compilação de produção com 0 erros.
+
+---
 
 ## Sessão 94 - 19/11/2026 — Gerenciamento Manual de Planos de Clínicas no Painel Master (SuperAdmin)
 
