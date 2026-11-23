@@ -73,7 +73,16 @@ router.get('/stats', async (req, res) => {
       prisma.user.count({ where: { role: { in: ['GESTOR', 'PROFISSIONAL', 'PSICOPEDAGOGO'] } } }),
       prisma.sessao.count(),
       prisma.tenant.findMany({
-        where: { status: 'ATIVO' },
+        where: {
+          status: 'ATIVO',
+          slug: { notIn: ['clinica-demo', 'edupsychpro'] },
+          NOT: [
+            { name: { contains: 'Modelo' } },
+            { name: { contains: 'Demo' } },
+            { slug: { contains: 'demo' } },
+            { slug: { contains: 'modelo' } },
+          ],
+        },
         select: { plan: true },
       }),
       prisma.plan.findMany(),
@@ -723,73 +732,30 @@ router.post('/whatsapp/instances/:tenantId/disconnect', async (req, res) => {
 // 8. GESTÃO FINANCEIRA E FATURAMENTO DE CLÍNICAS (SAAS MASTER)
 // =========================================================================
 
+const realTenantFilter = {
+  slug: { notIn: ['clinica-demo', 'edupsychpro'] },
+  NOT: [
+    { name: { contains: 'Modelo' } },
+    { name: { contains: 'Demo' } },
+    { slug: { contains: 'demo' } },
+    { slug: { contains: 'modelo' } },
+  ],
+};
+
 async function ensureSampleInvoices() {
-  try {
-    const count = await prisma.subscriptionInvoice.count();
-    if (count > 0) return;
-
-    const tenants = await prisma.tenant.findMany({
-      include: {
-        subscription: true,
-        memberships: {
-          where: { role: 'GESTOR' },
-          include: { user: true },
-        },
-      },
-      take: 10,
-    });
-
-    const now = new Date();
-    for (const t of tenants) {
-      const plan = (t.plan || 'MENSAL').toUpperCase();
-      const amountCents = plan === 'MENSAL' ? 12700 : plan === 'SEMESTRAL' ? 59400 : plan === 'ANUAL' ? 82800 : plan === 'PRO' ? 14700 : plan === 'BASICO' ? 7900 : plan === 'VIP' ? 29700 : 0;
-      if (amountCents === 0) continue;
-
-      // Fatura anterior PAGA
-      await prisma.subscriptionInvoice.create({
-        data: {
-          tenantId: t.id,
-          subscriptionId: t.subscription?.id,
-          planCode: plan,
-          amountCents,
-          status: 'PAGA',
-          dueDate: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
-          paidAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
-          paymentMethod: 'PIX',
-          provider: 'manual',
-          pixCopiaECola: '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4',
-          notes: 'Pagamento inicial confirmado via PIX',
-        },
-      });
-
-      // Fatura do ciclo atual (PENDENTE)
-      await prisma.subscriptionInvoice.create({
-        data: {
-          tenantId: t.id,
-          subscriptionId: t.subscription?.id,
-          planCode: plan,
-          amountCents,
-          status: 'PENDENTE',
-          dueDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000),
-          paymentMethod: 'PIX',
-          provider: 'manual',
-          pixCopiaECola: '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4',
-          notes: 'Ciclo mensal vigente',
-        },
-      });
-    }
-  } catch (err) {
-    console.warn('[ENSURE_SAMPLE_INVOICES_WARN]', err);
-  }
+  // Desativado permanentemente: faturas agora são reais e clínicas modelo não geram cobrança
+  return;
 }
 
 // 8.1 Estatísticas Financeiras SaaS Globais
 router.get('/billing/stats', async (req, res) => {
   try {
-    await ensureSampleInvoices();
-
     const now = new Date();
-    const invoices = await prisma.subscriptionInvoice.findMany();
+    const invoices = await prisma.subscriptionInvoice.findMany({
+      where: {
+        tenant: realTenantFilter,
+      },
+    });
 
     let totalReceivedCents = 0;
     let totalPendingCents = 0;
@@ -813,9 +779,12 @@ router.get('/billing/stats', async (req, res) => {
 
     const totalCount = invoices.length;
 
-    // Calcular MRR a partir das clínicas ativas em planos pagos
+    // Calcular MRR a partir exclusivamente de clínicas reais ativas
     const activeTenants = await prisma.tenant.findMany({
-      where: { status: 'ATIVO' },
+      where: {
+        status: 'ATIVO',
+        ...realTenantFilter,
+      },
       select: { plan: true },
     });
     const plans = await prisma.plan.findMany();
@@ -854,8 +823,6 @@ router.get('/billing/stats', async (req, res) => {
 // 8.2 Listagem Paginada de Faturas com Filtros e Busca
 router.get('/billing/invoices', async (req, res) => {
   try {
-    await ensureSampleInvoices();
-
     const { search, status, tenantId, page = '1', limit = '50' } = req.query;
     const p = Math.max(1, parseInt(String(page), 10) || 1);
     const l = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 50));
@@ -866,6 +833,8 @@ router.get('/billing/invoices', async (req, res) => {
 
     if (tenantId) {
       where.tenantId = String(tenantId);
+    } else {
+      where.tenant = { ...realTenantFilter };
     }
 
     if (status && status !== 'TODAS') {
@@ -886,6 +855,7 @@ router.get('/billing/invoices', async (req, res) => {
     if (search) {
       const query = String(search).trim();
       where.tenant = {
+        ...(where.tenant || {}),
         OR: [
           { name: { contains: query } },
           { slug: { contains: query } },

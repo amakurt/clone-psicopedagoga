@@ -4241,3 +4241,14 @@ npm run start
      - Botão de exclusão (ícone de lixeira com confirmação modal) adicionado na tabela de faturas em `superadmin-dashboard.component.ts`, permitindo ao Administrador Master remover cobranças obsoletas ou de teste a qualquer momento.
   3. **Validação:**
      - Backend e Frontend Angular compilados com 0 erros.
+
+#### Desativação de Cobranças e Isolamento de Clínicas Modelo/Demo no Financeiro SaaS
+- **Demanda do Usuário:** As clínicas modelo (ex: `Clínica Modelo EduPsych Pro`) estavam aparecendo na tabela de cobranças com faturas vencidas e quitadas, inflando indevidamente as métricas financeiras (Receita Recebida, Inadimplência e MRR) do SaaS.
+- **Implementações Técnicas:**
+  1. **Desativação Permanente de Faturas Fictícias (`superadmin.ts`):**
+     - Função `ensureSampleInvoices` convertida em no-op definitivo, impedindo a criação automática de novas cobranças de amostra.
+  2. **Isolamento de Clínicas Modelo nas Consultas (`realTenantFilter`):**
+     - Endpoints `GET /billing/stats`, `GET /billing/invoices` e `GET /stats` agora filtram estritamente clínicas reais, excluindo `clinica-demo`, `edupsychpro` e quaisquer tenants contendo "modelo" ou "demo" no slug ou no nome.
+     - As métricas de **Receita Recebida**, **Inadimplência** e **MRR** passam a contabilizar exclusivamente clínicas parceiras pagantes reais.
+  3. **Expurgo no Banco de Dados (`adjust-vilma-billing.js` e `update-vps.sh`):**
+     - Adicionado comando de expurgo para deletar todas as faturas vinculadas às clínicas modelo/demo e resetar seus planos para `TRIAL` sem cobrança.

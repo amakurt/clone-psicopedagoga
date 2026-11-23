@@ -13,6 +13,25 @@ async function main() {
     },
   });
 
+  // 1.1 Apagar todas as faturas de clínicas demo ou modelo para não constarem no faturamento SaaS
+  const demoTenants = allTenants.filter((t) =>
+    (t.slug && (t.slug === 'clinica-demo' || t.slug === 'edupsychpro' || t.slug.includes('demo') || t.slug.includes('modelo'))) ||
+    (t.name && (t.name.toLowerCase().includes('modelo') || t.name.toLowerCase().includes('demo')))
+  );
+
+  for (const dt of demoTenants) {
+    const del = await prisma.subscriptionInvoice.deleteMany({
+      where: { tenantId: dt.id },
+    });
+    console.log(`[ADJUST_BILLING] ${del.count} fatura(s) removida(s) da clínica demo/modelo: ${dt.name} (${dt.slug})`);
+
+    // Resetar plano da demo para TRIAL sem gerar cobrança
+    await prisma.tenant.update({
+      where: { id: dt.id },
+      data: { plan: 'TRIAL' },
+    });
+  }
+
   const vilma = allTenants.find((t) =>
     (t.name && t.name.toLowerCase().includes('vilma')) ||
     (t.slug && t.slug.toLowerCase().includes('vilma')) ||
