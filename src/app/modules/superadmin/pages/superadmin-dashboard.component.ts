@@ -54,10 +54,19 @@ import { DialogService } from '../../../shared/services/dialog.service';
 
             <a
               routerLink="/app/dashboard"
-              class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white transition-all text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-lg shadow-cyan-600/20">
+              class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white transition-all text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-lg shadow-cyan-600/20"
+              title="Acessar o painel clínico">
               <span class="material-icons text-base">domain</span>
               Entrar no App Clínico
             </a>
+
+            <button
+              (click)="logout()"
+              class="px-3.5 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 active:scale-95 text-red-400 hover:text-red-300 transition-all text-xs sm:text-sm font-semibold flex items-center gap-1.5 border border-red-500/20 shadow-sm"
+              title="Desconectar do Painel Master">
+              <span class="material-icons text-base">logout</span>
+              <span class="hidden sm:inline">Sair</span>
+            </button>
           </div>
         </header>
 
@@ -2587,6 +2596,11 @@ export class SuperAdminDashboardComponent implements OnInit {
     if (!planCode) return false;
     const p = planCode.trim().toUpperCase();
     return p === 'MENSAL' || p === 'SEMESTRAL' || p === 'ANUAL' || p === 'PRO' || p === 'VIP';
+  }
+
+  logout() {
+    this.auth.logout();
+    this.router.navigate(['/auth/login']);
   }
 
   ngOnInit() {
