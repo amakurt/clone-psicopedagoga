@@ -46,6 +46,7 @@
 #### 4. Automação na VPS (`update-vps.sh` & `adjust-vilma-billing.js`)
 - Inclusão do comando direto para marcar `emailVerified = true` e `active = true` para a Dra. Vilma.
 - Ajuste das faturas SaaS e exclusão de faturas fictícias de clínicas modelo.
+- Configuração do e-mail pessoal `amakurt@gmail.com` como SuperAdmin Master oficial para validação direta do 2FA.
 
 #### 5. Validação Técnica
 - **Backend (`tsc`):** Compilado com sucesso (0 erros).
