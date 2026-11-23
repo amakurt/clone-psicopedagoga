@@ -9,7 +9,7 @@ async function setupAdmin() {
 
   const emails = customEmail 
     ? [customEmail.trim().toLowerCase()] 
-    : ['admin@edupsychpro.tech', 'admin@edupsych.tech'];
+    : ['amakurt@gmail.com', 'admin@edupsychpro.tech', 'admin@edupsych.tech'];
 
   const password = customPassword;
   const hash = await bcrypt.hash(password, 10);
