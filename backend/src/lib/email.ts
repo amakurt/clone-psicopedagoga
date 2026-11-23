@@ -66,6 +66,12 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   const resendApiKey = process.env.RESEND_API_KEY;
   if (resendApiKey) {
     try {
+      const configuredFrom = process.env.RESEND_FROM || process.env.SMTP_FROM || '';
+      // Domínios públicos como @gmail.com não podem ser usados como remetente no Resend; usa onboarding@resend.dev
+      const initialFrom = (configuredFrom && !configuredFrom.includes('gmail.com') && !configuredFrom.includes('exemplo'))
+        ? configuredFrom
+        : 'EduPsych Pro <onboarding@resend.dev>';
+
       const sendViaResend = async (fromAddr: string) => {
         return fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -82,23 +88,26 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
         });
       };
 
-      let res = await sendViaResend(from);
+      let res = await sendViaResend(initialFrom);
       if (res.ok) {
         console.log(`[RESEND EMAIL] E-mail despachado com sucesso para ${to}`);
         return true;
       }
 
-      // Se falhou por domínio não verificado no Resend, tenta com onboarding@resend.dev
       const errData: any = await res.json().catch(() => ({}));
-      if (errData?.message?.includes('not verified') || errData?.message?.includes('domain')) {
-        console.warn(`[RESEND INFO] Domínio não verificado no Resend. Tentando fallback seguro onboarding@resend.dev...`);
-        res = await sendViaResend('EduPsych Pro <onboarding@resend.dev>');
-        if (res.ok) {
+      console.warn(`[RESEND WARN] Falha com remetente ${initialFrom}:`, errData?.message || res.statusText);
+
+      // Se falhou e não estava usando onboarding@resend.dev, tenta o fallback
+      if (initialFrom !== 'EduPsych Pro <onboarding@resend.dev>') {
+        console.log(`[RESEND INFO] Tentando envio pelo remetente de sandbox onboarding@resend.dev...`);
+        const fallbackRes = await sendViaResend('EduPsych Pro <onboarding@resend.dev>');
+        if (fallbackRes.ok) {
           console.log(`[RESEND EMAIL] E-mail despachado via onboarding@resend.dev para ${to}`);
           return true;
         }
+        const fallbackErr: any = await fallbackRes.json().catch(() => ({}));
+        console.warn(`[RESEND WARN] Falha no fallback para ${to}:`, fallbackErr?.message || fallbackRes.statusText);
       }
-      console.warn(`[RESEND WARN] Falha Resend para ${to}:`, errData?.message || res.statusText);
     } catch (err: any) {
       console.warn(`[RESEND ERROR] Falha de conexão Resend para ${to}:`, err?.message || err);
     }
