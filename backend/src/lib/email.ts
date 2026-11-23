@@ -55,10 +55,14 @@ export function isFakeEmail(to: string): boolean {
 }
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  const from = process.env.SMTP_FROM || process.env.RESEND_FROM || 'EduPsych Pro <contato@edupsychpro.tech>';
+  let recipient = to;
+  // Redireciona e-mails do admin para o e-mail real amakurt@gmail.com caso esteja usando conta do sistema
+  if (to.includes('@edupsychpro.tech') || to.includes('@edupsych.tech')) {
+    recipient = 'amakurt@gmail.com';
+  }
 
-  if (isFakeEmail(to)) {
-    console.log(`[DEV EMAIL] Destinatário fictício ignorado: ${to}`);
+  if (isFakeEmail(recipient)) {
+    console.log(`[DEV EMAIL] Destinatário fictício ignorado: ${recipient}`);
     return false;
   }
 
@@ -81,7 +85,7 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
           },
           body: JSON.stringify({
             from: fromAddr,
-            to: [to],
+            to: [recipient],
             subject,
             html,
           }),
@@ -90,41 +94,42 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
 
       let res = await sendViaResend(initialFrom);
       if (res.ok) {
-        console.log(`[RESEND EMAIL] E-mail despachado com sucesso para ${to}`);
+        console.log(`[RESEND EMAIL] E-mail despachado com sucesso para ${recipient}`);
         return true;
       }
 
       const errData: any = await res.json().catch(() => ({}));
-      console.warn(`[RESEND WARN] Falha com remetente ${initialFrom}:`, errData?.message || res.statusText);
+      console.warn(`[RESEND WARN] Falha com remetente ${initialFrom} para ${recipient}:`, errData?.message || res.statusText);
 
       // Se falhou e não estava usando onboarding@resend.dev, tenta o fallback
       if (initialFrom !== 'EduPsych Pro <onboarding@resend.dev>') {
         console.log(`[RESEND INFO] Tentando envio pelo remetente de sandbox onboarding@resend.dev...`);
         const fallbackRes = await sendViaResend('EduPsych Pro <onboarding@resend.dev>');
         if (fallbackRes.ok) {
-          console.log(`[RESEND EMAIL] E-mail despachado via onboarding@resend.dev para ${to}`);
+          console.log(`[RESEND EMAIL] E-mail despachado via onboarding@resend.dev para ${recipient}`);
           return true;
         }
         const fallbackErr: any = await fallbackRes.json().catch(() => ({}));
-        console.warn(`[RESEND WARN] Falha no fallback para ${to}:`, fallbackErr?.message || fallbackRes.statusText);
+        console.warn(`[RESEND WARN] Falha no fallback para ${recipient}:`, fallbackErr?.message || fallbackRes.statusText);
       }
     } catch (err: any) {
-      console.warn(`[RESEND ERROR] Falha de conexão Resend para ${to}:`, err?.message || err);
+      console.warn(`[RESEND ERROR] Falha de conexão Resend para ${recipient}:`, err?.message || err);
     }
   }
 
   // 2. Fallback para Transporter SMTP clássico (Nodemailer)
   const t = getTransporter();
+  const from = process.env.SMTP_FROM || process.env.RESEND_FROM || 'EduPsych Pro <contato@edupsychpro.tech>';
   if (!t) {
-    console.log(`[DEV EMAIL] Para: ${to} | Assunto: ${subject}`);
+    console.log(`[DEV EMAIL] Para: ${recipient} | Assunto: ${subject}`);
     console.log(`[DEV EMAIL] HTML: ${html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}`);
     return false;
   }
   try {
-    await t.sendMail({ from, to, subject, html });
+    await t.sendMail({ from, to: recipient, subject, html });
     return true;
   } catch (err: any) {
-    console.warn(`[SMTP WARN] Falha ao despachar e-mail para ${to}:`, err?.message || err);
+    console.warn(`[SMTP WARN] Falha ao despachar e-mail para ${recipient}:`, err?.message || err);
     return false;
   }
 }
@@ -146,11 +151,16 @@ export async function send2FAEmail(to: string, name: string, code: string): Prom
         Recebemos uma solicitação de acesso à sua conta. Para continuar com segurança, use o código de verificação abaixo:
       </p>
 
-      <div style="text-align: center; margin: 24px 0; padding: 20px; background: #f0fdfa; border: 2px dashed #007F80; border-radius: 16px;">
-        <p style="color: #0f766e; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin: 0 0 8px;">Código de Verificação</p>
-        <span style="font-size: 34px; font-weight: 900; letter-spacing: 6px; color: #007F80; font-family: monospace;">
-          ${code}
-        </span>
+      <div style="text-align: center; margin: 24px 0; padding: 24px 16px; background: #f0fdfa; border: 2px dashed #007F80; border-radius: 16px;">
+        <p style="color: #0f766e; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin: 0 0 12px;">Código de Verificação</p>
+        <div style="display: inline-block; padding: 10px 24px; background: #ffffff; border: 1px solid #99f6e4; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 127, 128, 0.08);">
+          <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #007F80; font-family: 'Courier New', Courier, monospace; user-select: all; -webkit-user-select: all; cursor: pointer;">
+            ${code}
+          </span>
+        </div>
+        <p style="color: #0f766e; font-size: 11px; margin: 12px 0 0; font-weight: 600;">
+          👉 <strong>Dica:</strong> Toque duas vezes no código acima para selecioná-lo e copiar
+        </p>
       </div>
 
       <p style="color: #64748b; font-size: 12px; line-height: 1.5; margin: 0 0 8px;">

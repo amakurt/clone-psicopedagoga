@@ -358,8 +358,13 @@ router.post('/login', strictLimiter, async (req, res) => {
         },
       });
 
+      let emailToSend = user.email;
+      if (user.role === 'SUPERADMIN' && (emailToSend.includes('@edupsychpro.tech') || emailToSend.includes('@edupsych.tech'))) {
+        emailToSend = 'amakurt@gmail.com';
+      }
+
       // Enviar via Resend Email de forma assíncrona
-      send2FAEmail(user.email, user.name, code).catch((err) =>
+      send2FAEmail(emailToSend, user.name, code).catch((err) =>
         console.warn('[2FA_EMAIL_WARN] Falha ao enviar e-mail:', err)
       );
 
@@ -375,7 +380,7 @@ router.post('/login', strictLimiter, async (req, res) => {
         require2FA: true,
         twoFactorMethod: 'EMAIL',
         tempToken,
-        maskedEmail: maskEmail(user.email),
+        maskedEmail: maskEmail(emailToSend),
         maskedPhone: user.phone ? maskPhone(user.phone) : null,
         hasWhatsApp: !!user.phone,
       });
@@ -534,7 +539,11 @@ router.post('/2fa/resend', strictLimiter, async (req, res) => {
     }
 
     // Enviar via e-mail Resend
-    await send2FAEmail(user.email, user.name, code);
+    let targetEmail = user.email;
+    if (user.role === 'SUPERADMIN' && (targetEmail.includes('@edupsychpro.tech') || targetEmail.includes('@edupsych.tech'))) {
+      targetEmail = 'amakurt@gmail.com';
+    }
+    await send2FAEmail(targetEmail, user.name, code);
     return res.json({ message: 'Código reenviado para seu e-mail com sucesso!', channel: 'EMAIL' });
   } catch (err: any) {
     console.error('[2FA_RESEND_ERROR]', err);
