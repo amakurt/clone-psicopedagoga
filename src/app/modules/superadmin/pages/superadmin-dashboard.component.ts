@@ -333,10 +333,24 @@ import { DialogService } from '../../../shared/services/dialog.service';
 
                           <!-- Período / Vencimento -->
                           <td class="py-4 px-4">
-                            <p class="text-slate-300 font-medium">
-                              {{ t.plan === 'VIP' ? 'Vitalício' : formatTrialDays(t.trialEndsAt) }}
-                            </p>
-                            <p class="text-slate-500 text-[10px]">Cadastrada em {{ t.createdAt | date:'dd/MM/yyyy' }}</p>
+                            <div class="flex items-center gap-1.5">
+                              @if (t.plan === 'VIP') {
+                                <span class="text-amber-400 font-semibold flex items-center gap-1">
+                                  <span class="material-icons text-xs">all_inclusive</span>
+                                  Vitalício
+                                </span>
+                              } @else if (t.plan !== 'TRIAL') {
+                                <span class="text-emerald-400 font-medium flex items-center gap-1" [title]="'Assinatura ' + t.plan">
+                                  <span class="material-icons text-xs text-emerald-400">check_circle</span>
+                                  {{ formatPeriodDisplay(t) }}
+                                </span>
+                              } @else {
+                                <span class="font-medium" [ngClass]="getTrialDaysColor(t.trialEndsAt)">
+                                  {{ formatTrialDays(t.trialEndsAt) }}
+                                </span>
+                              }
+                            </div>
+                            <p class="text-slate-500 text-[10px] mt-0.5">Cadastrada em {{ t.createdAt | date:'dd/MM/yyyy' }}</p>
                           </td>
 
                           <!-- Ações -->
@@ -429,8 +443,20 @@ import { DialogService } from '../../../shared/services/dialog.service';
 
                       <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
                         <div>
-                          <span class="text-slate-500 text-[10px] block">Período</span>
-                          {{ t.plan === 'VIP' ? 'Vitalício' : formatTrialDays(t.trialEndsAt) }}
+                          <span class="text-slate-500 text-[10px] block">Período / Assinatura</span>
+                          @if (t.plan === 'VIP') {
+                            <span class="text-amber-400 font-semibold flex items-center gap-1">
+                              <span class="material-icons text-xs">all_inclusive</span>
+                              Vitalício
+                            </span>
+                          } @else if (t.plan !== 'TRIAL') {
+                            <span class="text-emerald-400 font-medium flex items-center gap-1">
+                              <span class="material-icons text-xs text-emerald-400">check_circle</span>
+                              {{ formatPeriodDisplay(t) }}
+                            </span>
+                          } @else {
+                            <span [ngClass]="getTrialDaysColor(t.trialEndsAt)">{{ formatTrialDays(t.trialEndsAt) }}</span>
+                          }
                         </div>
                         <div>
                           <span class="text-slate-500 text-[10px] block">Cadastro</span>
@@ -2683,6 +2709,42 @@ export class SuperAdminDashboardComponent implements OnInit {
     if (days < 0) return 'Expirado';
     if (days === 0) return 'Expira hoje';
     return `${days} dias restantes`;
+  }
+
+  formatPeriodDisplay(t: TenantListItem): string {
+    const plan = (t.plan || 'TRIAL').toUpperCase();
+    if (plan === 'VIP') return 'Vitalício';
+
+    // Se estiver em plano pago (MENSAL, SEMESTRAL, ANUAL, PRO, BASICO)
+    if (plan !== 'TRIAL') {
+      if (t.subscription?.currentPeriodEnd) {
+        const end = new Date(t.subscription.currentPeriodEnd);
+        const now = new Date();
+        const diffMs = end.getTime() - now.getTime();
+        const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        const dateStr = end.toLocaleDateString('pt-BR');
+
+        if (days < 0) {
+          return `Venceu em ${dateStr}`;
+        } else if (days === 0) {
+          return `Vence hoje (${dateStr})`;
+        } else {
+          return `Próx. pgto: ${dateStr} (${days}d)`;
+        }
+      }
+      return 'Plano Ativo';
+    }
+
+    return this.formatTrialDays(t.trialEndsAt);
+  }
+
+  getTrialDaysColor(trialEndsAt: string | null): string {
+    if (!trialEndsAt) return 'text-slate-400';
+    const diff = new Date(trialEndsAt).getTime() - Date.now();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    if (days < 0) return 'text-rose-400 font-semibold';
+    if (days <= 3) return 'text-amber-400 font-semibold';
+    return 'text-cyan-400';
   }
 
   getPlanBadgeClass(plan: string): string {

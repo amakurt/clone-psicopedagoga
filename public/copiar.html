@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Código de Verificação | EduPsych Pro</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: radial-gradient(circle at 50% 20%, #0f172a 0%, #020617 100%);
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 24px;
+      padding: 36px 28px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 127, 128, 0.15);
+      position: relative;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #2dd4bf;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+    }
+    .icon-box {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, rgba(13, 148, 136, 0.2), rgba(20, 184, 166, 0.3));
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      color: #2dd4bf;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+    .desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .code-box {
+      background: #020617;
+      border: 2px dashed #0d9488;
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .code-digit {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #2dd4bf;
+    }
+    .status-toast {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-copy {
+      width: 100%;
+      background: #007F80;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0, 127, 128, 0.35);
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+    .btn-copy:hover {
+      background: #0d9488;
+      transform: translateY(-1px);
+    }
+    .btn-login {
+      width: 100%;
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(51, 65, 85, 0.8);
+      border-radius: 14px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-login:hover {
+      background: rgba(51, 65, 85, 0.8);
+      color: #ffffff;
+    }
+    .footer-note {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 18px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <span class="material-icons" style="font-size: 20px;">psychology</span>
+      <span>EduPsych Pro</span>
+    </div>
+
+    <div class="icon-box">
+      <span class="material-icons" style="font-size: 32px;">check_circle</span>
+    </div>
+
+    <h1 class="title">Código Copiado!</h1>
+    <p class="desc">
+      O código de autenticação de dois fatores foi copiado com sucesso para a área de transferência.
+    </p>
+
+    <div class="code-box">
+      <span class="code-digit" id="codeDisplay">------</span>
+    </div>
+
+    <div class="status-toast" id="statusToast">
+      <span class="material-icons" style="font-size: 16px;">verified</span>
+      <span id="statusText">Pronto para colar na tela de login</span>
+    </div>
+
+    <button type="button" class="btn-copy" id="btnCopy" onclick="doCopy()">
+      <span class="material-icons" style="font-size: 18px;">content_copy</span>
+      <span id="btnCopyText">Copiar Código Novamente</span>
+    </button>
+
+    <a href="/login" class="btn-login">
+      <span class="material-icons" style="font-size: 16px;">login</span>
+      <span>Voltar para a Tela de Login</span>
+    </a>
+
+    <p class="footer-note">
+      💡 Se a tela de login já estiver aberta no mesmo navegador, ela foi preenchida e autenticada automaticamente!
+    </p>
+  </div>
+
+  <textarea id="tempTextArea" style="position: absolute; left: -9999px;"></textarea>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = (params.get('c') || params.get('code') || '').trim();
+
+    function doCopy() {
+      if (!code) return;
+
+      // 1. Tentar Clipboard API moderna
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(showCopiedSuccess).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+
+      // 2. Transmitir via BroadcastChannel para a aba de Login que estiver aberta
+      try {
+        const bc = new BroadcastChannel('edupsych_2fa');
+        bc.postMessage({ code: code });
+      } catch (e) {}
+
+      // 3. Fallback via LocalStorage para navegadores sem BroadcastChannel
+      try {
+        localStorage.setItem('edupsych_2fa_code', code);
+      } catch (e) {}
+    }
+
+    function fallbackCopy() {
+      try {
+        const ta = document.getElementById('tempTextArea');
+        ta.value = code;
+        ta.select();
+        document.execCommand('copy');
+        showCopiedSuccess();
+      } catch (e) {
+        console.warn('Erro ao copiar código:', e);
+      }
+    }
+
+    function showCopiedSuccess() {
+      const toast = document.getElementById('statusToast');
+      const text = document.getElementById('statusText');
+      const btnText = document.getElementById('btnCopyText');
+      
+      if (text) text.innerText = 'Código copiado para a área de transferência!';
+      if (btnText) btnText.innerText = 'Copiado com Sucesso!';
+      
+      setTimeout(() => {
+        if (btnText) btnText.innerText = 'Copiar Código Novamente';
+      }, 3000);
+    }
+
+    // Executar imediatamente ao carregar
+    window.addEventListener('DOMContentLoaded', () => {
+      const display = document.getElementById('codeDisplay');
+      if (code) {
+        display.innerText = code;
+        doCopy();
+      } else {
+        display.innerText = 'N/A';
+        const text = document.getElementById('statusText');
+        if (text) text.innerText = 'Nenhum código informado na URL.';
+      }
+    });
+  </script>
+</body>
+</html>

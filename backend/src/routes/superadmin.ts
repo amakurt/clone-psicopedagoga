@@ -404,7 +404,7 @@ router.patch('/tenants/:id/plan', async (req, res) => {
       data: {
         plan: planCode,
         status: 'ATIVO',
-        ...(planCode === 'TRIAL' ? { trialEndsAt: futurePeriod } : {}),
+        ...(planCode === 'TRIAL' ? { trialEndsAt: futurePeriod } : { trialEndsAt: null }),
       },
     });
 

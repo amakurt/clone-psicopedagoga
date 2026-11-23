@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -84,9 +84,19 @@ import { environment } from '../../../../../environments/environment';
                   autofocus
                   (input)="on2FACodeInput($event)"
                 />
-                <p class="text-[11px] text-slate-400 text-center mt-2">
-                  ⏳ O código expira em 10 minutos.
-                </p>
+                <div class="flex items-center justify-between mt-2.5 px-1">
+                  <p class="text-[11px] text-slate-400">
+                    ⏳ Expira em 10 min
+                  </p>
+                  <button
+                    type="button"
+                    (click)="pasteCodeFromClipboard()"
+                    class="text-[11px] font-bold text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 active:scale-95 shadow-sm"
+                    title="Colar código copiado">
+                    <span class="material-icons text-xs">content_paste</span>
+                    <span>Colar Código</span>
+                  </button>
+                </div>
               </div>
 
               <button
@@ -284,9 +294,10 @@ import { environment } from '../../../../../environments/environment';
     :host { display: block; }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   email = '';
   password = '';
@@ -317,7 +328,16 @@ export class LoginComponent {
   nameError = signal('');
   clinicNameError = signal('');
 
-  private route = inject(ActivatedRoute);
+  private bc?: BroadcastChannel;
+  private storageHandler = (ev: StorageEvent) => {
+    if (ev.key === 'edupsych_2fa_code' && ev.newValue) {
+      const digits = String(ev.newValue).replace(/\D/g, '').slice(0, 6);
+      if (digits.length === 6 && this.step2FA() && !this.loading()) {
+        this.twoFactorCode = digits;
+        this.verify2FA();
+      }
+    }
+  };
 
   constructor() {
     if (this.auth.token) {
@@ -339,6 +359,68 @@ export class LoginComponent {
     }
     this.contracting.set(!!plan || type === 'professional');
     if (this.contracting()) this.selectedRole.set('PSICOPEDAGOGO');
+  }
+
+  ngOnInit() {
+    // 1. Preenchimento automático caso abra a página com ?c= ou ?code=
+    this.route.queryParams.subscribe((params) => {
+      const c = params['code'] || params['c'];
+      if (c) {
+        const digits = String(c).replace(/\D/g, '').slice(0, 6);
+        if (digits.length === 6) {
+          this.twoFactorCode = digits;
+          if (this.step2FA() && !this.loading()) {
+            this.verify2FA();
+          }
+        }
+      }
+    });
+
+    // 2. Ouvir BroadcastChannel transmitido pela tela de cópia em 1 clique (/copiar.html)
+    if (typeof window !== 'undefined') {
+      try {
+        if ('BroadcastChannel' in window) {
+          this.bc = new BroadcastChannel('edupsych_2fa');
+          this.bc.onmessage = (ev) => {
+            if (ev?.data?.code) {
+              const digits = String(ev.data.code).replace(/\D/g, '').slice(0, 6);
+              if (digits.length === 6 && this.step2FA() && !this.loading()) {
+                this.twoFactorCode = digits;
+                this.verify2FA();
+              }
+            }
+          };
+        }
+      } catch (e) {}
+
+      window.addEventListener('storage', this.storageHandler);
+    }
+  }
+
+  ngOnDestroy() {
+    this.bc?.close();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', this.storageHandler);
+    }
+  }
+
+  async pasteCodeFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      const digits = String(text || '').replace(/\D/g, '').slice(0, 6);
+      if (digits.length === 6) {
+        this.twoFactorCode = digits;
+        if (!this.loading()) {
+          this.verify2FA();
+        }
+      } else if (digits.length > 0) {
+        this.twoFactorCode = digits;
+      } else {
+        this.error.set('Nenhum código de 6 dígitos encontrado na área de transferência.');
+      }
+    } catch (err) {
+      this.error.set('Cole o código usando Ctrl+V ou Cmd+V.');
+    }
   }
 
   toggleMode() {

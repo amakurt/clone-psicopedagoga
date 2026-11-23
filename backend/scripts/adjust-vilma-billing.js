@@ -56,9 +56,9 @@ async function main() {
   });
   console.log(`[ADJUST_VILMA_BILLING] ${deleted.count} fatura(s) anterior(es) removida(s).`);
 
-  // 3. Garantir / Atualizar assinatura no plano MENSAL (R$ 127,00) com período de 30 dias a partir de hoje
-  const now = new Date();
-  const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  // 3. Garantir / Atualizar assinatura no plano MENSAL (R$ 127,00) com próximo vencimento em 20/12/2026
+  const periodStart = new Date('2026-11-20T00:00:00.000Z');
+  const periodEnd = new Date('2026-12-20T23:59:59.999Z');
 
   let sub = await prisma.subscription.findUnique({ where: { tenantId: vilma.id } });
   if (sub) {
@@ -67,8 +67,8 @@ async function main() {
       data: {
         planCode: 'MENSAL',
         status: 'ATIVA',
-        currentPeriodStart: now,
-        currentPeriodEnd: nextMonth,
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
         provider: 'manual',
       },
     });
@@ -78,15 +78,15 @@ async function main() {
         tenantId: vilma.id,
         planCode: 'MENSAL',
         status: 'ATIVA',
-        currentPeriodStart: now,
-        currentPeriodEnd: nextMonth,
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
         provider: 'manual',
       },
     });
   }
-  console.log(`[ADJUST_VILMA_BILLING] Assinatura atualizada para MENSAL (ATIVA até ${nextMonth.toISOString().split('T')[0]}).`);
+  console.log(`[ADJUST_VILMA_BILLING] Assinatura atualizada para MENSAL (ATIVA até ${periodEnd.toISOString().split('T')[0]}).`);
 
-  // 4. Criar a nova fatura única PAGA referente à mensalidade de R$ 127,00 paga hoje
+  // 4. Criar a nova fatura única PAGA referente à mensalidade de R$ 127,00 paga em 20/11
   const newInvoice = await prisma.subscriptionInvoice.create({
     data: {
       tenantId: vilma.id,
@@ -94,24 +94,25 @@ async function main() {
       planCode: 'MENSAL',
       amountCents: 12700, // R$ 127,00
       status: 'PAGA',
-      dueDate: now,
-      paidAt: now,
+      dueDate: periodStart,
+      paidAt: periodStart,
       paymentMethod: 'PIX',
       provider: 'manual',
-      notes: 'Mensalidade Plano Mensal (R$ 127,00) paga diretamente via PIX',
+      notes: 'Mensalidade Plano Mensal (R$ 127,00) paga diretamente via PIX - Próximo vencimento em 20/12/2026',
     },
   });
   console.log(`[ADJUST_VILMA_BILLING] Nova fatura criada com sucesso: ID ${newInvoice.id} - R$ 127,00 - PAGA.`);
 
-  // 5. Atualizar o tenant para plano MENSAL e ATIVO
+  // 5. Atualizar o tenant para plano MENSAL, ATIVO e trialEndsAt = null
   await prisma.tenant.update({
     where: { id: vilma.id },
     data: {
       plan: 'MENSAL',
       status: 'ATIVO',
+      trialEndsAt: null,
     },
   });
-  console.log(`[ADJUST_VILMA_BILLING] Status da clínica atualizado: Plano MENSAL, Status ATIVO.`);
+  console.log(`[ADJUST_VILMA_BILLING] Status da clínica atualizado: Plano MENSAL, Status ATIVO, trialEndsAt: null.`);
 
   // 6. Confirmar e-mail e ativar a conta da Dra. Vilma
   const updatedUsers = await prisma.user.updateMany({

@@ -151,15 +151,22 @@ export async function send2FAEmail(to: string, name: string, code: string): Prom
         Recebemos uma solicitação de acesso à sua conta. Para continuar com segurança, use o código de verificação abaixo:
       </p>
 
-      <div style="text-align: center; margin: 24px 0; padding: 24px 16px; background: #f0fdfa; border: 2px dashed #007F80; border-radius: 16px;">
-        <p style="color: #0f766e; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin: 0 0 12px;">Código de Verificação</p>
-        <div style="display: inline-block; padding: 10px 24px; background: #ffffff; border: 1px solid #99f6e4; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 127, 128, 0.08);">
-          <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #007F80; font-family: 'Courier New', Courier, monospace; user-select: all; -webkit-user-select: all; cursor: pointer;">
+      <div style="text-align: center; margin: 24px 0; padding: 26px 16px; background: #f0fdfa; border: 2px dashed #007F80; border-radius: 16px;">
+        <p style="color: #0f766e; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px; margin: 0 0 12px;">Código de Verificação 2FA</p>
+        <div style="display: inline-block; padding: 12px 28px; background: #ffffff; border: 1px solid #99f6e4; border-radius: 14px; box-shadow: 0 2px 10px rgba(0, 127, 128, 0.08); margin-bottom: 18px;">
+          <span style="font-size: 38px; font-weight: 900; letter-spacing: 8px; color: #007F80; font-family: 'Courier New', Courier, monospace; user-select: all; -webkit-user-select: all; cursor: pointer;">
             ${code}
           </span>
         </div>
-        <p style="color: #0f766e; font-size: 11px; margin: 12px 0 0; font-weight: 600;">
-          👉 <strong>Dica:</strong> Toque duas vezes no código acima para selecioná-lo e copiar
+
+        <div style="margin: 6px 0 14px;">
+          <a href="https://edupsychpro.tech/copiar.html?c=${code}" target="_blank" style="display: inline-block; background-color: #007F80; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 26px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 127, 128, 0.35);">
+            📋 Clique Aqui para Copiar o Código
+          </a>
+        </div>
+
+        <p style="color: #0f766e; font-size: 11px; margin: 6px 0 0; font-weight: 500; line-height: 1.4;">
+          ✨ O botão acima copia o código e preenche automaticamente na sua tela de login aberta!
         </p>
       </div>
 

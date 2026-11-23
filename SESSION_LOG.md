@@ -2,6 +2,39 @@
 
 ## Última Atualização: 23 de Novembro de 2026
 
+## Sessão 96 - 23/11/2026 — Botão de Cópia em 1 Clique para 2FA, Sincronização entre Abas e Correção do Período/Vencimento da Dra. Vilma no Painel Master
+
+### O que foi feito
+
+#### 1. Diagnóstico e Solicitações do Usuário
+- **Cópia em 1 Clique do Código 2FA:** Em vez de exigir seleção manual do código no e-mail (duplo clique / Ctrl+C), o usuário solicitou um botão direto para copiar ou entrar no sistema com 1 clique.
+- **Correção da Linha da Dra. Vilma no Painel Master:** No Painel Master (`/master`), a clínica **Vilma Neuropp** (Plano Mensal quitado via PIX, R$ 127,00) ainda exibia na coluna `PERÍODO / TRIAL`: `"2 dias restantes - Cadastrada em 23/10/2026"`, quando deveria refletir a assinatura paga com próximo vencimento para **20 de dezembro de 2026**.
+
+#### 2. Implementação do Fluxo de Cópia e Autenticação em 1 Clique (2FA)
+- **Template de E-mail (`backend/src/lib/email.ts`):**
+  - Adicionado botão de destaque em teal: **`[ 📋 Clique Aqui para Copiar o Código ]`** com link para `https://edupsychpro.tech/copiar.html?c=${code}`.
+- **Página de Cópia Ultrarrápida (`public/copiar.html`):**
+  - Página estática de carregamento instantâneo que copia automaticamente o código de 6 dígitos para o clipboard do sistema via `navigator.clipboard.writeText` (com fallback robusto via `textarea`).
+  - Transmissão inter-abas via `BroadcastChannel('edupsych_2fa')` e `localStorage`: se a tela de login estiver aberta no mesmo navegador, ela detecta o código em tempo real e autentica o usuário sem que ele precise digitar nada.
+  - Interface moderna com botão de recópia e atalho para o login.
+- **Frontend de Login (`LoginComponent`):**
+  - Adicionado listener de `BroadcastChannel` e evento `storage` para preenchimento e submissão automática do 2FA.
+  - Adicionado botão **`[ 📋 Colar Código ]`** abaixo do input de 6 dígitos que lê a área de transferência com 1 toque.
+  - Suporte a query params `?code=` e `?c=` para preenchimento direto via URL.
+
+#### 3. Correção do Período e Vencimento da Assinatura no Painel Master
+- **Lógica de Período do Frontend (`superadmin-dashboard.component.ts`):**
+  - Criado o método `formatPeriodDisplay(t: TenantListItem)` que diferencia planos pagos (`MENSAL`, `SEMESTRAL`, `ANUAL`, `PRO`, `BASICO`), `VIP` (Vitalício) e `TRIAL`.
+  - Para planos pagos com assinatura ativa, calcula e exibe em destaque verde (`text-emerald-400` com ícone `check_circle`): `Próx. pgto: 20/12/2026 (27d)` em vez de dias de trial.
+  - Ajuste implementado tanto na tabela Desktop quanto nos cards Mobile do Painel Master.
+- **Backend & Script de Dados (`backend/src/routes/superadmin.ts`, `backend/scripts/adjust-vilma-billing.js` & `update-vps.sh`):**
+  - Garantido que `trialEndsAt = null` seja persistido para a clínica da Dra. Vilma.
+  - Definido `currentPeriodStart = 2026-11-20` e `currentPeriodEnd = 2026-12-20` na `Subscription`.
+  - Fatura única paga registrada com vencimento de referência em 20/11/2026 e nota informando o próximo vencimento em 20/12/2026.
+  - No endpoint `PATCH /tenants/:id/plan`, ao alterar qualquer clínica para um plano pago, `trialEndsAt` é automaticamente resetado para `null`.
+
+---
+
 ## Sessão 95 - 23/11/2026 — Autenticação em Duas Etapas (2FA) Multi-Canal (Resend, WhatsApp & TOTP), Auto-Confirmação de E-mail & Isolamento do Faturamento SaaS
 
 ### O que foi feito
