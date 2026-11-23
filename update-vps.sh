@@ -52,6 +52,15 @@ cp -n "$ROOT_DIR/src/assets/images/logo-vilma-transparente"* "$ROOT_DIR/backend/
 cp -n "$ROOT_DIR/src/assets/images/clinica-vilma-logo"* "$ROOT_DIR/backend/uploads/" 2>/dev/null || true
 docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "UPDATE \"Tenant\" SET \"logoUrl\" = '/api/uploads/public/logo-vilma-transparente.png' WHERE (LOWER(name) LIKE '%vilma%' OR LOWER(slug) LIKE '%vilma%' OR id IN (SELECT \"tenantId\" FROM \"Membership\" m JOIN \"User\" u ON m.\"userId\" = u.id WHERE LOWER(u.name) LIKE '%vilma%' OR LOWER(u.email) LIKE '%vilma%') OR id IN (SELECT \"tenantId\" FROM \"Paciente\" WHERE LOWER(name) LIKE '%will%'));" 2>/dev/null || true
 
+# Se RESEND_KEY for fornecido via linha de comando ou ambiente
+if [ -n "$RESEND_KEY" ] && [ -f "$ROOT_DIR/backend/.env" ]; then
+  if ! grep -q "RESEND_API_KEY" "$ROOT_DIR/backend/.env"; then
+    echo -e "\nRESEND_API_KEY=\"$RESEND_KEY\"" >> "$ROOT_DIR/backend/.env"
+  else
+    sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=\"$RESEND_KEY\"|" "$ROOT_DIR/backend/.env"
+  fi
+fi
+
 echo -e "\n${YELLOW}[4/5] Recompilando backend e reiniciando PM2...${NC}"
 npm run build
 pm2 restart edupsych-backend
