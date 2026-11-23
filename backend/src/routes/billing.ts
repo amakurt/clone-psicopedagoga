@@ -100,4 +100,16 @@ router.post('/webhook', async (req: any, res) => {
   return res.json(result);
 });
 
+// Webhook da InfinitePay (Notificação de Pagamento Pix ou Cartão)
+router.post('/webhook/infinitepay', async (req: any, res) => {
+  try {
+    const { processInfinitePayWebhook } = await import('../services/infinitepay.service');
+    const result = await processInfinitePayWebhook(req.body);
+    return res.status(200).json(result);
+  } catch (err: any) {
+    console.error('[INFINITEPAY_BILLING_WEBHOOK_ERROR]', err);
+    return res.status(200).json({ error: err?.message || 'Erro ao processar' });
+  }
+});
+
 export default router;

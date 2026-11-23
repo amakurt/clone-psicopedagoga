@@ -205,7 +205,8 @@ export interface SaaSBillingConfig {
   bankAgency: string;
   bankAccount: string;
   bankAccountType: 'CORRENTE' | 'POUPANCA' | string;
-  gatewayProvider: 'none' | 'asaas' | 'mercadopago' | string;
+  gatewayProvider: 'none' | 'infinitepay' | 'asaas' | 'mercadopago' | string;
+  infiniteTag?: string;
   gatewayApiKey?: string;
   gatewayWebhookSecret?: string;
   autoReminderMessage?: string;
@@ -242,6 +243,7 @@ export interface SubscriptionInvoiceItem {
   paymentMethod: string;
   provider: string;
   providerPaymentId: string | null;
+  paymentUrl?: string | null;
   pixCopiaECola: string | null;
   pixQrImage: string | null;
   notes: string | null;

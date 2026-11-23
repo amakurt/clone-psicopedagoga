@@ -144,12 +144,62 @@ export async function checkoutPlan(tenantId: string, planCode: string) {
     throw err;
   }
 
-  const provider = providerName();
+  const saasConfig = await prisma.saaSBillingConfig.findUnique({
+    where: { id: 'saas_default_config' },
+  });
+
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    include: {
+      memberships: {
+        where: { role: 'GESTOR' },
+        include: { user: true },
+        take: 1,
+      },
+    },
+  });
+
+  let provider = providerName();
+  if (saasConfig?.gatewayProvider === 'infinitepay' && saasConfig.infiniteTag) {
+    provider = 'infinitepay';
+  }
+
   const now = new Date();
   const durationDays = getPlanDurationDays(planCode);
-  let providerData: any = { providerId: null, providerCustomerId: null, providerPaymentId: null, pixCopiaECola: null, pixQrImage: null, pixExpiresAt: null };
+  let providerData: any = {
+    providerId: null,
+    providerCustomerId: null,
+    providerPaymentId: null,
+    paymentUrl: null,
+    pixCopiaECola: null,
+    pixQrImage: null,
+    pixExpiresAt: null,
+  };
 
-  if (provider === 'mock') {
+  if (provider === 'infinitepay' && saasConfig?.infiniteTag) {
+    const { createInfinitePayCheckoutLink } = await import('../services/infinitepay.service');
+    const gestor = tenant?.memberships?.[0]?.user;
+    const linkRes = await createInfinitePayCheckoutLink({
+      handle: saasConfig.infiniteTag,
+      apiKey: saasConfig.gatewayApiKey || undefined,
+      description: `Assinatura Plano ${plan.name} - ${tenant?.name || 'Clínica'}`,
+      amountCents: plan.priceCents,
+      orderNsu: tenantId,
+      customer: {
+        name: gestor?.name || tenant?.name,
+        email: gestor?.email || undefined,
+        phone: gestor?.phone || undefined,
+      },
+    });
+
+    providerData = {
+      providerId: linkRes.providerPaymentId || `inf_${Date.now()}`,
+      providerPaymentId: linkRes.providerPaymentId || null,
+      paymentUrl: linkRes.paymentUrl,
+      pixCopiaECola: saasConfig.pixKey ? `PIX: ${saasConfig.pixKey} (${saasConfig.beneficiaryName || 'EduPsych Pro'})` : null,
+      pixExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
+  } else if (provider === 'mock') {
     providerData = {
       providerId: `mock_${Date.now()}`,
       pixCopiaECola: `00020126580014BR.GOV.BCB.PIX0136edupsych-${plan.code.toLowerCase()}-${Date.now()}520400005303986540${plan.priceCents / 100}5802BR5913EduPsych Pro6009SAO PAULO62070503***6304ABCD`,
@@ -184,7 +234,14 @@ export async function checkoutPlan(tenantId: string, planCode: string) {
     },
   });
 
-  return { subscription: sub, plan, provider, pixCopiaECola: providerData.pixCopiaECola, pixQrImage: providerData.pixQrImage };
+  return {
+    subscription: sub,
+    plan,
+    provider,
+    paymentUrl: providerData.paymentUrl,
+    pixCopiaECola: providerData.pixCopiaECola,
+    pixQrImage: providerData.pixQrImage,
+  };
 }
 
 export async function activateSubscription(tenantId: string, planCode?: string) {

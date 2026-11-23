@@ -20,12 +20,27 @@ import {
   listSavedBackups,
   generateDatabaseDump,
 } from '../services/backup.service';
+import {
+  createInfinitePayCheckoutLink,
+  processInfinitePayWebhook,
+} from '../services/infinitepay.service';
 import path from 'path';
 import fs from 'fs';
 
 const router = Router();
 
-// Todas as rotas deste router exigem SUPERADMIN
+// Webhook público da InfinitePay para conciliação automática (Pix / Cartão)
+router.post('/billing/webhook/infinitepay', async (req, res) => {
+  try {
+    const result = await processInfinitePayWebhook(req.body);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error('[INFINITEPAY_WEBHOOK_ROUTE_ERROR]', error);
+    return res.status(200).json({ error: error?.message || 'Erro ao processar webhook' });
+  }
+});
+
+// Todas as rotas administrativas exigem SUPERADMIN
 router.use(authorizeSuperAdmin);
 
 function getJwtSecret(): string {
@@ -942,6 +957,7 @@ router.get('/billing/invoices', async (req, res) => {
         paymentMethod: inv.paymentMethod || 'PIX',
         provider: inv.provider || 'manual',
         providerPaymentId: inv.providerPaymentId,
+        paymentUrl: inv.paymentUrl,
         pixCopiaECola: inv.pixCopiaECola,
         pixQrImage: inv.pixQrImage,
         notes: inv.notes,
@@ -1055,7 +1071,14 @@ router.post('/billing/invoices/create-manual', async (req, res) => {
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
-      include: { subscription: true },
+      include: {
+        subscription: true,
+        memberships: {
+          where: { role: 'GESTOR' },
+          include: { user: true },
+          take: 1,
+        },
+      },
     });
 
     if (!tenant) {
@@ -1079,6 +1102,32 @@ router.post('/billing/invoices/create-manual', async (req, res) => {
       ? `PIX: ${saasConfig.pixKey} (${saasConfig.beneficiaryName || 'EduPsych Pro'})`
       : '00020126580014br.gov.bcb.pix0136edupsych-fatura-saas-pagamento5204000053039865802BR5920EDUPSYCH PRO SAAS6009SAO PAULO62070503***6304E1F4';
 
+    let paymentUrl: string | null = null;
+    let providerName = 'manual';
+    let providerPaymentId: string | null = null;
+
+    if (saasConfig?.gatewayProvider === 'infinitepay' && saasConfig.infiniteTag) {
+      const gestor = tenant.memberships?.[0]?.user;
+      const linkRes = await createInfinitePayCheckoutLink({
+        handle: saasConfig.infiniteTag,
+        apiKey: saasConfig.gatewayApiKey || undefined,
+        description: `Assinatura Plano ${planCode} - ${tenant.name}`,
+        amountCents: cents,
+        orderNsu: `inv_${Date.now()}_${tenant.id.slice(-6)}`,
+        customer: {
+          name: gestor?.name || tenant.name,
+          email: gestor?.email || undefined,
+          phone: gestor?.phone || undefined,
+        },
+      });
+
+      if (linkRes.success && linkRes.paymentUrl) {
+        paymentUrl = linkRes.paymentUrl;
+        providerName = 'infinitepay';
+        providerPaymentId = linkRes.providerPaymentId || null;
+      }
+    }
+
     const invoice = await prisma.subscriptionInvoice.create({
       data: {
         tenantId,
@@ -1088,7 +1137,9 @@ router.post('/billing/invoices/create-manual', async (req, res) => {
         status: 'PENDENTE',
         dueDate: due,
         paymentMethod,
-        provider: 'manual',
+        provider: providerName,
+        providerPaymentId,
+        paymentUrl,
         pixCopiaECola: defaultPix,
         notes: notes || 'Fatura gerada manualmente pelo Superadmin',
       },
@@ -1149,15 +1200,18 @@ router.post('/billing/invoices/:id/send-reminder', async (req, res) => {
 
     // Montar detalhes da conta de recebimento configurada
     const dadosRecebimento: string[] = [];
+    if (invoice.paymentUrl) {
+      dadosRecebimento.push(`💳 *Link Seguro de Pagamento (Cartão ou Pix):*\n${invoice.paymentUrl}`);
+    }
     if (saasConfig?.pixKey) {
-      dadosRecebimento.push(`🔑 *Chave PIX (${saasConfig.pixKeyType || 'PIX'}):* \`${saasConfig.pixKey}\``);
+      dadosRecebimento.push(`🔑 *Chave PIX Direta (${saasConfig.pixKeyType || 'PIX'}):* \`${saasConfig.pixKey}\``);
       if (saasConfig.beneficiaryName) {
         dadosRecebimento.push(`👤 *Favorecido:* ${saasConfig.beneficiaryName}${saasConfig.beneficiaryDoc ? ` (${saasConfig.beneficiaryDoc})` : ''}`);
       }
       if (saasConfig.bankName) {
         dadosRecebimento.push(`🏦 *Banco:* ${saasConfig.bankName} | Ag: ${saasConfig.bankAgency || '-'} | Conta: ${saasConfig.bankAccount || '-'}`);
       }
-    } else if (invoice.pixCopiaECola) {
+    } else if (invoice.pixCopiaECola && !invoice.paymentUrl) {
       dadosRecebimento.push(`🔑 *PIX Copia e Cola para pagamento:*\n\`${invoice.pixCopiaECola}\``);
     }
 
@@ -1267,10 +1321,13 @@ router.put('/billing/config', async (req, res) => {
       bankAccount,
       bankAccountType,
       gatewayProvider,
+      infiniteTag,
       gatewayApiKey,
       gatewayWebhookSecret,
       autoReminderMessage,
     } = req.body;
+
+    const cleanInfiniteTag = infiniteTag ? infiniteTag.trim().replace(/^[$]/, '') : null;
 
     const updated = await prisma.saaSBillingConfig.upsert({
       where: { id: 'saas_default_config' },
@@ -1284,6 +1341,7 @@ router.put('/billing/config', async (req, res) => {
         bankAccount: bankAccount || null,
         bankAccountType: bankAccountType || 'CORRENTE',
         gatewayProvider: gatewayProvider || 'none',
+        infiniteTag: cleanInfiniteTag,
         gatewayApiKey: gatewayApiKey || null,
         gatewayWebhookSecret: gatewayWebhookSecret || null,
         autoReminderMessage: autoReminderMessage || null,
@@ -1299,6 +1357,7 @@ router.put('/billing/config', async (req, res) => {
         bankAccount: bankAccount || null,
         bankAccountType: bankAccountType || 'CORRENTE',
         gatewayProvider: gatewayProvider || 'none',
+        infiniteTag: cleanInfiniteTag,
         gatewayApiKey: gatewayApiKey || null,
         gatewayWebhookSecret: gatewayWebhookSecret || null,
         autoReminderMessage: autoReminderMessage || null,

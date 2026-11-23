@@ -122,37 +122,77 @@ import { AuthService } from '../../../../core/services/auth.service';
         }
       </div>
 
-      <!-- PIX gerado -->
-      @if (pix()) {
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-          <div class="flex items-center gap-3 mb-4">
-            <span class="material-icons text-primary text-3xl">qr_code_2</span>
+      <!-- Pagamento / PIX gerado -->
+      @if (paymentUrl() || pix()) {
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-primary text-3xl">payments</span>
             <div>
-              <p class="font-bold text-slate-900 dark:text-white">Pix Gerado — {{ selectedPlan()?.name }}</p>
-              <p class="text-xs text-slate-500">Pagamento pendente. Ao confirmar, sua assinatura é ativada na hora.</p>
+              <p class="font-bold text-slate-900 dark:text-white">Pagamento da Assinatura — {{ selectedPlan()?.name || currentPlan()?.name }}</p>
+              <p class="text-xs text-slate-500">Ao confirmar seu pagamento, sua assinatura é renovada na hora.</p>
             </div>
           </div>
-          @if (pixImage()) {
-            <div class="flex items-center gap-6 flex-wrap">
-              <img [src]="'data:image/png;base64,' + pixImage()" alt="QR Code Pix"
-                class="w-44 h-44 rounded-xl border border-slate-200 dark:border-slate-700" />
-              <div class="flex-1 min-w-[240px] flex flex-col gap-3">
-                <input [value]="pix()" readonly
-                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono" />
-                <button (click)="copyPix()" class="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold">Copiar código</button>
+
+          <!-- Checkout Oficial InfinitePay (Cartão de Crédito até 12x ou Pix) -->
+          @if (paymentUrl()) {
+            <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30">
+                    Oficial
+                  </span>
+                  <p class="font-bold text-slate-900 dark:text-white text-base">Pagar com Cartão (até 12x) ou Pix</p>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-slate-300">
+                  Checkout seguro InfinitePay com ativação imediata após a confirmação.
+                </p>
               </div>
+              <a [href]="paymentUrl()" target="_blank" rel="noopener noreferrer"
+                class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all hover:scale-[1.02] shrink-0">
+                <span class="material-icons text-base">credit_card</span>
+                <span>Pagar Agora</span>
+                <span class="material-icons text-sm">open_in_new</span>
+              </a>
             </div>
-          } @else {
-            <div class="flex flex-col sm:flex-row gap-3">
-              <input [value]="pix()" readonly
-                class="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono" />
-              <button (click)="copyPix()" class="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold">Copiar</button>
-              @if (isMock()) {
-                <button (click)="mockPay()" class="px-5 py-3 bg-emerald-500 text-white rounded-xl text-sm font-bold">Simular pagamento</button>
+          }
+
+          <!-- Chave PIX Copia e Cola / QR Code (Se houver) -->
+          @if (pix()) {
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60">
+              <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Ou pague via Pix direto:</p>
+              @if (pixImage()) {
+                <div class="flex items-center gap-6 flex-wrap">
+                  <img [src]="'data:image/png;base64,' + pixImage()" alt="QR Code Pix"
+                    class="w-44 h-44 rounded-xl border border-slate-200 dark:border-slate-700" />
+                  <div class="flex-1 min-w-[240px] flex flex-col gap-3">
+                    <input [value]="pix()" readonly
+                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono" />
+                    <button (click)="copyPix()" class="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                      <span class="material-icons text-sm">content_copy</span>
+                      Copiar código Pix
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div class="flex flex-col sm:flex-row gap-3">
+                  <input [value]="pix()" readonly
+                    class="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono" />
+                  <button (click)="copyPix()" class="px-5 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                    <span class="material-icons text-sm">content_copy</span>
+                    Copiar
+                  </button>
+                  @if (isMock()) {
+                    <button (click)="mockPay()" class="px-5 py-3 bg-emerald-500 text-white rounded-xl text-sm font-bold">Simular pagamento</button>
+                  }
+                </div>
               }
             </div>
           }
-          <p class="text-xs text-slate-500 mt-3">Aguardando confirmação do pagamento<span class="animate-pulse">…</span></p>
+
+          <p class="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+            <span class="size-2 rounded-full bg-amber-400 animate-pulse"></span>
+            Aguardando confirmação do pagamento<span class="animate-pulse">…</span>
+          </p>
         </div>
       }
     </div>
@@ -174,6 +214,7 @@ export class PlanoComponent implements OnInit, OnDestroy {
   periodEnd = signal('');
   status = signal('ATIVO');
   provider = signal('');
+  paymentUrl = signal('');
   pix = signal('');
   pixImage = signal('');
   selectedPlan = signal<any>(null);
@@ -205,7 +246,15 @@ export class PlanoComponent implements OnInit, OnDestroy {
         if (res.subscription.status === 'ATIVA') {
           this.pix.set('');
           this.pixImage.set('');
+          this.paymentUrl.set('');
           this.stopPolling();
+        } else {
+          if (res.subscription?.paymentUrl) {
+            this.paymentUrl.set(res.subscription.paymentUrl);
+          }
+          if (res.subscription?.pixCopiaECola) {
+            this.pix.set(res.subscription.pixCopiaECola);
+          }
         }
       },
       error: () => this.error.set('Erro ao carregar informações do plano'),
@@ -224,6 +273,7 @@ export class PlanoComponent implements OnInit, OnDestroy {
     this.billing.checkout(plan.code).subscribe({
       next: (res: any) => {
         this.selectedPlan.set(plan);
+        this.paymentUrl.set(res.paymentUrl || '');
         this.pix.set(res.pixCopiaECola || '');
         this.pixImage.set(res.pixQrImage || '');
         this.loading.set(false);
@@ -254,6 +304,7 @@ export class PlanoComponent implements OnInit, OnDestroy {
       next: () => {
         this.pix.set('');
         this.pixImage.set('');
+        this.paymentUrl.set('');
         this.selectedPlan.set(null);
         this.loading.set(false);
         this.success.set('Pagamento confirmado! Assinatura ativada.');

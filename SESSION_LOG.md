@@ -4189,3 +4189,39 @@ npm run start
   3. **Visualização Inteligente do Anexo Word (`documento-form.component.ts` e `documento-detail.component.ts`):**
      - Card do "Anexo Visual" reestruturado: para arquivos `.doc`, renderiza uma folha visual de documento Word em alta fidelidade com badge "Word .DOC", nome do arquivo, tamanho e prévia real do conteúdo.
      - Botão de ação direta "Sincronizar .DOC com Editor A4" e link de download do arquivo original preservado.
+
+---
+
+### Sessão 92: Integração Oficial InfinitePay (Pix Taxa Zero + Cartão até 12x para Lojista CPF) e Gestão Dinâmica de Planos no Painel Master (23/11/2026)
+
+- **Objetivo da Sessão:**
+  1. Habilitar a **InfinitePay** como gateway oficial de cobrança SaaS do EduPsych Pro, permitindo recebimento via **Pix com 100% Taxa Zero (0%)** e **Cartão de Crédito em até 12x com repasse automático de tarifas** para conta de **Lojista Pessoa Física (CPF)** ou CNPJ através da **InfiniteTag** (`$handle`).
+  2. Implementar a criação automática e manual de links de pagamento, tratamento de Webhooks públicos para conciliação automática imediata de faturas, prorrogação de assinatura e reativação de clínicas.
+  3. Disponibilizar os novos botões e badges de pagamento no portal da clínica (`/app/billing`) e no cockpit financeiro do SuperAdmin Master (`/master`), além de garantir a ação de "Mudar Plano" diretamente na listagem de clínicas.
+
+- **Implementações Técnicas:**
+  1. **Prisma Schema e Migrações de Dados:**
+     - `SubscriptionInvoice`: Adicionado campo `paymentUrl String?` para armazenar a URL oficial do checkout InfinitePay.
+     - `Subscription`: Adicionado campo `paymentUrl String?` para pagamentos pendentes da clínica.
+     - `SaaSBillingConfig`: Adicionado campo `infiniteTag String?` para armazenar a tag de lojista cadastrada no aplicativo InfinitePay.
+     - Executados `npx prisma db push` e `npx prisma generate` nos esquemas SQLite e PostgreSQL.
+  2. **Serviço de Integração InfinitePay (`backend/src/services/infinitepay.service.ts`):**
+     - `getInfinitePayConfig()`: Recupera configurações salvas pelo SuperAdmin Master.
+     - `createInfinitePayCheckoutLink()`: Gera link dinâmico oficial com base na InfiniteTag e nos dados do plano/cliente, com suporte opcional à Checkout API (`inchk_...`).
+     - `processInfinitePayWebhook()`: Recebe eventos de transação paga (`transaction_paid`, `checkout_paid`), localiza a fatura por ID/provedor, atualiza status para `PAGA`, chama `activateSubscription` (renovando a assinatura da clínica pelo ciclo contratado) e despacha lembrete de confirmação via Evolution API no WhatsApp.
+  3. **Rotas Backend (`superadmin.ts` e `billing.ts`):**
+     - Criadas rotas públicas de webhook: `POST /api/billing/webhook/infinitepay` e `POST /api/superadmin/billing/webhook/infinitepay`.
+     - Atualizada rota `POST /billing/invoices/create-manual`: gera automaticamente o link InfinitePay quando configurado e associa à nova fatura.
+     - Atualizada rota `PUT /billing/config`: recebe e persiste `infiniteTag`.
+     - Atualizada biblioteca `backend/src/lib/billing.ts`: método `checkoutPlan` gera o link InfinitePay e retorna para o checkout do portal da clínica.
+  4. **Frontend Painel Master (`superadmin-dashboard.component.ts`):**
+     - Adicionado campo `InfiniteTag / Handle` e badge verde explicativo no modal de Configuração da Conta de Recebimento (`Modo Lojista CPF / CNPJ`).
+     - Exibição de badge com a InfiniteTag ativa no banner da aba Financeiro.
+     - Na tabela de faturas, adicionados botões de ação rápida `[ 💳 Link ]` (abre o checkout InfinitePay) e cópia direta do link.
+     - Atualizado modal de fatura manual com planos atualizados (`MENSAL`, `SEMESTRAL`, `ANUAL`, `PRO`, `BASICO`, `VIP`).
+     - Garantidos botões "Mudar Plano" com ícone `swap_horiz` e badges clicáveis para alteração imediata de plano e sincronização dos módulos.
+  5. **Frontend Faturamento da Clínica (`plano.component.ts`):**
+     - Adicionado card oficial de destaque para checkout InfinitePay (`[ 💳 Pagar com Cartão (até 12x) ou Pix ]`), abrindo a URL oficial segura com confirmação instantânea.
+  6. **Validação e Compilação:**
+     - Backend TypeScript compilado com 0 erros (`npm --prefix backend run build`).
+     - Frontend Angular compilado com 0 erros (`npx ng build`).

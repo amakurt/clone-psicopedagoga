@@ -1047,6 +1047,7 @@ model Subscription {
   providerId        String?  // id da assinatura/cobrança no provedor
   providerCustomerId String? // id do customer no provedor (asaas)
   providerPaymentId String?  // id da cobrança atual no provedor
+  paymentUrl        String?  // Link de pagamento (InfinitePay / Checkout)
   pixCopiaECola     String?
   pixQrImage        String?  // QR code em base64 (imagem png)
   pixExpiresAt      DateTime?
@@ -1067,8 +1068,9 @@ model SubscriptionInvoice {
   dueDate           DateTime
   paidAt            DateTime?
   paymentMethod     String?       @default("PIX") // PIX | CARTAO | BOLETO | MANUAL
-  provider          String?       @default("manual") // asaas | mercadopago | manual | mock
+  provider          String?       @default("manual") // infinitepay | asaas | mercadopago | manual | mock
   providerPaymentId String?
+  paymentUrl        String?       // Link de pagamento oficial (InfinitePay / Checkout)
   pixCopiaECola     String?
   pixQrImage        String?
   notes             String?
@@ -1089,8 +1091,9 @@ model SaaSBillingConfig {
   bankAgency            String?
   bankAccount           String?
   bankAccountType       String?  @default("CORRENTE") // CORRENTE | POUPANCA
-  gatewayProvider       String?  @default("none") // none | asaas | mercadopago
-  gatewayApiKey         String?
+  gatewayProvider       String?  @default("none") // none | infinitepay | asaas | mercadopago
+  infiniteTag           String?  // InfiniteTag do lojista CPF/CNPJ (ex: amauri)
+  gatewayApiKey         String?  // Chave de API opcional (X-Api-Key)
   gatewayWebhookSecret  String?
   autoReminderMessage   String?
   createdAt             DateTime @default(now())

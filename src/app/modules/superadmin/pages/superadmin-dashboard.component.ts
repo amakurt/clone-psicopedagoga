@@ -1169,7 +1169,12 @@ import { DialogService } from '../../../shared/services/dialog.service';
                       Chave PIX Pendente
                     </span>
                   }
-                  @if (billingConfig()?.gatewayProvider && billingConfig()?.gatewayProvider !== 'none') {
+                  @if (billingConfig()?.gatewayProvider === 'infinitepay' && billingConfig()?.infiniteTag) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <span class="material-icons text-xs">verified</span>
+                      InfinitePay: &#36;{{ billingConfig()?.infiniteTag }} (Pix 0% + Cartão 12x)
+                    </span>
+                  } @else if (billingConfig()?.gatewayProvider && billingConfig()?.gatewayProvider !== 'none') {
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 uppercase">
                       <span class="material-icons text-xs">bolt</span>
                       Gateway {{ billingConfig()?.gatewayProvider }}
@@ -1493,6 +1498,25 @@ import { DialogService } from '../../../shared/services/dialog.service';
                         <td class="py-3 px-4 text-right whitespace-nowrap">
                           <div class="inline-flex items-center gap-1.5 justify-end">
                             
+                            <!-- Botão Link de Pagamento (se gerado via InfinitePay / Gateway) -->
+                            @if (inv.paymentUrl) {
+                              <a
+                                [href]="inv.paymentUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-white border border-cyan-500/30 transition-all text-xs font-bold flex items-center gap-1 shadow-sm"
+                                title="Abrir link oficial de pagamento InfinitePay (Cartão até 12x ou Pix)">
+                                <span class="material-icons text-sm">open_in_new</span>
+                                Link
+                              </a>
+                              <button
+                                (click)="copyPaymentUrl(inv.paymentUrl)"
+                                class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white transition-colors border border-slate-700/60"
+                                title="Copiar link de pagamento">
+                                <span class="material-icons text-sm">link</span>
+                              </button>
+                            }
+
                             <!-- Botão Baixa Manual -->
                             @if (inv.status !== 'PAGA') {
                               <button
@@ -1947,9 +1971,12 @@ import { DialogService } from '../../../shared/services/dialog.service';
                     [(ngModel)]="newInvoicePlan"
                     (ngModelChange)="onNewInvoicePlanChange()"
                     class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50">
-                    <option value="BASICO">Básico (R$ 79/mês)</option>
-                    <option value="PRO">Profissional (R$ 147/mês)</option>
-                    <option value="VIP">VIP (R$ 297/mês)</option>
+                    <option value="MENSAL">Mensal (R$ 127/mês)</option>
+                    <option value="SEMESTRAL">Semestral (R$ 594 - R$ 99/mês)</option>
+                    <option value="ANUAL">Anual (R$ 828 - R$ 69/mês)</option>
+                    <option value="PRO">Profissional Legado (R$ 147/mês)</option>
+                    <option value="BASICO">Básico Legado (R$ 79/mês)</option>
+                    <option value="VIP">VIP Vitalício (R$ 297)</option>
                   </select>
                 </div>
 
@@ -2148,12 +2175,12 @@ import { DialogService } from '../../../shared/services/dialog.service';
                 </div>
               </div>
 
-              <!-- SEÇÃO 3: GATEWAY DE PAGAMENTO (AUTOMAÇÃO FUTURA) -->
+              <!-- SEÇÃO 3: GATEWAY DE PAGAMENTO (INFINITEPAY / ASAAS / MERCADO PAGO) -->
               <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-3.5">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
                     <span class="material-icons text-base">bolt</span>
-                    3. Gateway Automatizado (Asaas / Mercado Pago)
+                    3. Gateway Automatizado (InfinitePay / Asaas / Mercado Pago)
                   </div>
                   <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
                     Opcional
@@ -2167,23 +2194,77 @@ import { DialogService } from '../../../shared/services/dialog.service';
                       [(ngModel)]="configGatewayProvider"
                       class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-amber-500/50">
                       <option value="none">Nenhum (PIX Manual Direto)</option>
+                      <option value="infinitepay">InfinitePay (Pix 0% + Cartão até 12x)</option>
                       <option value="asaas">Asaas API</option>
                       <option value="mercadopago">Mercado Pago</option>
                     </select>
                   </div>
 
-                  <div class="sm:col-span-2">
-                    <label class="block text-slate-400 font-semibold mb-1">Chave de API / Access Token</label>
+                  @if (configGatewayProvider() === 'infinitepay') {
+                    <div class="sm:col-span-2">
+                      <label class="block text-slate-400 font-semibold mb-1">
+                        InfiniteTag / Handle
+                        <span class="text-amber-400">*</span>
+                      </label>
+                      <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-500 font-bold">$</span>
+                        <input
+                          type="text"
+                          [(ngModel)]="configInfiniteTag"
+                          placeholder="seu_usuario (sem o $)"
+                          class="w-full pl-7 pr-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono text-sm focus:outline-none focus:border-amber-500/50"
+                        />
+                      </div>
+                      <p class="text-[10px] text-slate-500 mt-1">Sua tag de Lojista no app InfinitePay (Pessoa Física CPF ou CNPJ)</p>
+                    </div>
+                  } @else {
+                    <div class="sm:col-span-2">
+                      <label class="block text-slate-400 font-semibold mb-1">Chave de API / Access Token</label>
+                      <input
+                        type="password"
+                        [(ngModel)]="configGatewayApiKey"
+                        placeholder="Token de produção ou sandbox do gateway"
+                        class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                  }
+                </div>
+
+                @if (configGatewayProvider() === 'infinitepay') {
+                  <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 space-y-1.5">
+                    <div class="flex items-center gap-1.5 font-bold text-emerald-400">
+                      <span class="material-icons text-sm">verified</span>
+                      Modo Lojista CPF / CNPJ — InfinitePay Integrado
+                    </div>
+                    <p class="text-slate-300 text-[11px] leading-relaxed">
+                      • <strong>Pix 100% Taxa Zero:</strong> Você recebe o valor integral sem qualquer desconto ou comissão de transação.<br/>
+                      • <strong>Cartão em até 12x:</strong> Repasse de tarifas para a clínica cliente (você recebe líquido integralmente).<br/>
+                      • <strong>Compatibilidade:</strong> Funciona perfeitamente em conta Lojista CPF ou CNPJ.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">
+                      Chave de API / Checkout API Key (Opcional)
+                    </label>
                     <input
                       type="password"
                       [(ngModel)]="configGatewayApiKey"
-                      placeholder="Token de produção ou sandbox do gateway"
-                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono focus:outline-none focus:border-amber-500/50"
+                      placeholder="inchk_... (opcional para webhook integrado)"
+                      class="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 font-mono text-sm focus:outline-none focus:border-amber-500/50"
                     />
+                    <p class="text-[10px] text-slate-500 mt-1">
+                      Opcional. Se não informada, o sistema gera links oficiais dinâmicos via InfiniteTag ($handle) automaticamente.
+                    </p>
                   </div>
-                </div>
 
-                @if (configGatewayProvider() !== 'none') {
+                  <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                    <p class="text-slate-300 font-semibold">URL de Webhook InfinitePay (Notificação automática de pagamento):</p>
+                    <p class="text-cyan-400 font-mono select-all break-all text-[11px]">https://edupsychpro.tech/api/billing/webhook/infinitepay</p>
+                  </div>
+                }
+
+                @if (configGatewayProvider() !== 'none' && configGatewayProvider() !== 'infinitepay') {
                   <div>
                     <label class="block text-slate-400 font-semibold mb-1">Webhook Secret (Opcional)</label>
                     <input
@@ -2394,9 +2475,10 @@ export class SuperAdminDashboardComponent implements OnInit {
   configBankAgency = signal('');
   configBankAccount = signal('');
   configBankAccountType = signal<'CORRENTE' | 'POUPANCA' | string>('CORRENTE');
-  configGatewayProvider = signal<'none' | 'asaas' | 'mercadopago' | string>('none');
+  configGatewayProvider = signal<'none' | 'infinitepay' | 'asaas' | 'mercadopago' | string>('none');
   configGatewayApiKey = signal('');
   configGatewayWebhookSecret = signal('');
+  configInfiniteTag = signal('');
 
   // Modais de Faturamento
   confirmPaymentModalOpen = signal(false);
@@ -3042,6 +3124,15 @@ export class SuperAdminDashboardComponent implements OnInit {
     this.toast.success('Código PIX Copia e Cola copiado para a área de transferência!');
   }
 
+  copyPaymentUrl(url: string | null | undefined) {
+    if (!url) {
+      this.toast.error('Esta fatura não possui link de pagamento registrado');
+      return;
+    }
+    navigator.clipboard?.writeText(url);
+    this.toast.success('Link de pagamento InfinitePay copiado!');
+  }
+
   loadBillingConfig() {
     this.superAdminService.getBillingConfig().subscribe({
       next: (res) => {
@@ -3067,6 +3158,7 @@ export class SuperAdminDashboardComponent implements OnInit {
       this.configGatewayProvider.set(cfg.gatewayProvider || 'none');
       this.configGatewayApiKey.set(cfg.gatewayApiKey || '');
       this.configGatewayWebhookSecret.set(cfg.gatewayWebhookSecret || '');
+      this.configInfiniteTag.set(cfg.infiniteTag || '');
     }
     this.configModalOpen.set(true);
   }
@@ -3078,6 +3170,11 @@ export class SuperAdminDashboardComponent implements OnInit {
     }
     if (!this.configBeneficiaryName().trim()) {
       this.toast.error('Informe o nome do Favorecido / Razão Social');
+      return;
+    }
+
+    if (this.configGatewayProvider() === 'infinitepay' && !this.configInfiniteTag().trim()) {
+      this.toast.error('Informe sua InfiniteTag (handle sem $) para usar a InfinitePay');
       return;
     }
 
@@ -3094,6 +3191,7 @@ export class SuperAdminDashboardComponent implements OnInit {
       gatewayProvider: this.configGatewayProvider(),
       gatewayApiKey: this.configGatewayApiKey().trim(),
       gatewayWebhookSecret: this.configGatewayWebhookSecret().trim(),
+      infiniteTag: this.configInfiniteTag().trim(),
     }).subscribe({
       next: (res) => {
         this.toast.success(res.message || 'Configurações de recebimento salvas com sucesso!');
