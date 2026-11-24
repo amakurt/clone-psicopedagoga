@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApiService } from '../../../core/services/api.service';
 import {
   SuperAdminService,
   SuperAdminStats,
@@ -117,6 +118,14 @@ import { DialogService } from '../../../shared/services/dialog.service';
                 {{ savedBackups().length }}
               </span>
             }
+          </button>
+
+          <button
+            (click)="setTab('profile')"
+            [ngClass]="activeTab() === 'profile' ? 'bg-teal-500/10 text-teal-400 border-teal-500/30 shadow-lg shadow-teal-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
+            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            <span class="material-icons text-base">manage_accounts</span>
+            Meu Perfil & Segurança
           </button>
         </div>
 
@@ -1868,6 +1877,230 @@ import { DialogService } from '../../../shared/services/dialog.service';
       }
 
       <!-- ============================================================== -->
+      <!-- ABA 5: MEU PERFIL & SEGURANÇA (SUPERADMIN MASTER)             -->
+      <!-- ============================================================== -->
+      @if (activeTab() === 'profile') {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+          
+          <!-- Card 1: Dados Cadastrais e WhatsApp para 2FA -->
+          <div class="rounded-3xl bg-slate-900/70 border border-slate-800 p-6 shadow-xl space-y-5">
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-800">
+              <div class="size-10 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center border border-teal-500/20">
+                <span class="material-icons text-xl">person</span>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-white">Dados do Administrador Master</h3>
+                <p class="text-xs text-slate-400">Gerencie suas informações sem precisar de uma clínica vinculada.</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nome Completo</label>
+                <input
+                  type="text"
+                  [(ngModel)]="profileName"
+                  placeholder="Seu nome completo"
+                  class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-teal-500 outline-none transition-colors" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">E-mail de Acesso</label>
+                <input
+                  type="email"
+                  [(ngModel)]="profileEmail"
+                  placeholder="seu@email.com"
+                  class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-teal-500 outline-none transition-colors" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Celular / WhatsApp (para 2FA)
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="profilePhone"
+                  placeholder="Ex: 5511999999999"
+                  class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white font-mono focus:border-teal-500 outline-none transition-colors" />
+                <p class="text-[11px] text-slate-500 mt-1.5">
+                  💡 Informe com DDD (ex: 5594999999999) para receber códigos de verificação 2FA diretamente no seu WhatsApp.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                (click)="saveMasterProfile()"
+                [disabled]="savingProfile()"
+                class="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-sm font-bold transition-all shadow-lg shadow-teal-600/20 flex items-center justify-center gap-2">
+                @if (savingProfile()) {
+                  <span class="material-icons text-base animate-spin">refresh</span>
+                  <span>Salvando...</span>
+                } @else {
+                  <span class="material-icons text-base">save</span>
+                  <span>Salvar Dados do Perfil</span>
+                }
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 2: Alterar Senha & Autenticação em Duas Etapas (2FA) -->
+          <div class="space-y-6">
+            
+            <!-- Alterar Senha -->
+            <div class="rounded-3xl bg-slate-900/70 border border-slate-800 p-6 shadow-xl space-y-4">
+              <div class="flex items-center gap-3 pb-3 border-b border-slate-800">
+                <div class="size-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                  <span class="material-icons text-xl">lock_reset</span>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-white">Alterar Senha de Acesso</h3>
+                  <p class="text-xs text-slate-400">Atualize sua senha master periodicamente.</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Senha Atual</label>
+                  <input
+                    type="password"
+                    [(ngModel)]="profileCurrentPassword"
+                    placeholder="••••••••"
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-amber-500 outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nova Senha</label>
+                  <input
+                    type="password"
+                    [(ngModel)]="profileNewPassword"
+                    placeholder="Mínimo 6 caracteres"
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-amber-500 outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Confirmar Nova Senha</label>
+                  <input
+                    type="password"
+                    [(ngModel)]="profileConfirmPassword"
+                    placeholder="Repita a nova senha"
+                    class="w-full px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:border-amber-500 outline-none" />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                (click)="saveMasterPassword()"
+                [disabled]="savingPassword()"
+                class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-50 text-white text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2">
+                <span class="material-icons text-base text-amber-400">key</span>
+                <span>{{ savingPassword() ? 'Atualizando senha...' : 'Atualizar Senha' }}</span>
+              </button>
+            </div>
+
+            <!-- 2FA Google Authenticator -->
+            <div class="rounded-3xl bg-slate-900/70 border border-slate-800 p-6 shadow-xl space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                  <div class="size-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                    <span class="material-icons text-xl">verified_user</span>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-bold text-white">Autenticação em Duas Etapas (2FA)</h3>
+                    <p class="text-xs text-slate-400">Configure o Google Authenticator ou use E-mail/WhatsApp.</p>
+                  </div>
+                </div>
+                @if (auth.user()?.twoFactorEnabled && auth.user()?.twoFactorMethod === 'TOTP') {
+                  <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    App TOTP Ativo
+                  </span>
+                } @else {
+                  <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    E-mail / WhatsApp
+                  </span>
+                }
+              </div>
+
+              @if (auth.user()?.twoFactorEnabled && auth.user()?.twoFactorMethod === 'TOTP') {
+                <p class="text-xs text-slate-300">
+                  Sua conta Master está protegida com o <strong>Google Authenticator</strong>.
+                </p>
+                @if (showDisable2FAForm()) {
+                  <div class="space-y-3 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                    <label class="block text-xs font-bold text-slate-400">Digite sua senha atual para desativar o Google Authenticator:</label>
+                    <input
+                      type="password"
+                      [(ngModel)]="disable2FAPassword"
+                      placeholder="Sua senha atual"
+                      class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white outline-none" />
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        (click)="confirmDisableMaster2FA()"
+                        [disabled]="disabling2FA() || !disable2FAPassword"
+                        class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold disabled:opacity-50">
+                        {{ disabling2FA() ? 'Desativando...' : 'Confirmar' }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="showDisable2FAForm.set(false); disable2FAPassword = ''"
+                        class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="showDisable2FAForm.set(true)"
+                    class="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold">
+                    Desativar Google Authenticator
+                  </button>
+                }
+              } @else {
+                @if (!setup2FAData()) {
+                  <button
+                    type="button"
+                    (click)="startMaster2FASetup()"
+                    [disabled]="loading2FASetup()"
+                    class="w-full py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all">
+                    <span class="material-icons text-base">qr_code_2</span>
+                    <span>{{ loading2FASetup() ? 'Gerando QR Code...' : 'Ativar Google Authenticator (App)' }}</span>
+                  </button>
+                } @else {
+                  <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 text-center">
+                    <p class="text-xs text-slate-300">Escaneie o QR Code no aplicativo <strong>Google Authenticator</strong>:</p>
+                    <img [src]="setup2FAData()?.qrCodeUrl" alt="QR Code 2FA" class="size-40 mx-auto rounded-xl bg-white p-2 object-contain" />
+                    <p class="text-[11px] text-slate-400 font-mono break-all">Chave: {{ setup2FAData()?.secret }}</p>
+                    <div class="flex gap-2">
+                      <input
+                        type="text"
+                        maxlength="6"
+                        [(ngModel)]="confirm2FACode"
+                        placeholder="Código 6 dígitos"
+                        class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm text-center font-mono text-white outline-none" />
+                      <button
+                        type="button"
+                        (click)="confirmMaster2FASetup()"
+                        [disabled]="confirming2FA() || !confirm2FACode || confirm2FACode.length < 6"
+                        class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50">
+                        {{ confirming2FA() ? 'Validando...' : 'Ativar' }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="setup2FAData.set(null); confirm2FACode = ''"
+                        class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+
+          </div>
+
+        </div>
+      }
+
+      <!-- ============================================================== -->
       <!-- MODAL: DAR BAIXA MANUAL / CONFIRMAR PAGAMENTO                 -->
       <!-- ============================================================== -->
       @if (confirmPaymentModalOpen()) {
@@ -2463,13 +2696,31 @@ import { DialogService } from '../../../shared/services/dialog.service';
 })
 export class SuperAdminDashboardComponent implements OnInit {
   private superAdminService = inject(SuperAdminService);
+  private api = inject(ApiService);
   private toast = inject(ToastService);
   private dialog = inject(DialogService);
   private router = inject(Router);
   auth = inject(AuthService);
 
   // Navegação de Abas
-  activeTab = signal<'tenants' | 'whatsapp' | 'billing' | 'backup'>('tenants');
+  activeTab = signal<'tenants' | 'whatsapp' | 'billing' | 'backup' | 'profile'>('tenants');
+
+  // Estado da Aba 5 (Meu Perfil & Segurança Master)
+  profileName = '';
+  profileEmail = '';
+  profilePhone = '';
+  savingProfile = signal(false);
+  profileCurrentPassword = '';
+  profileNewPassword = '';
+  profileConfirmPassword = '';
+  savingPassword = signal(false);
+  loading2FASetup = signal(false);
+  setup2FAData = signal<any>(null);
+  confirm2FACode = '';
+  confirming2FA = signal(false);
+  showDisable2FAForm = signal(false);
+  disable2FAPassword = '';
+  disabling2FA = signal(false);
 
   // Estado da Aba 1 (Clínicas & SaaS)
   loading = signal(false);
@@ -2631,6 +2882,7 @@ export class SuperAdminDashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadAll();
+    this.loadMasterProfile();
     // Checa status preliminar do gateway para exibir badge
     this.superAdminService.getWhatsAppGatewayStatus().subscribe({
       next: (res) => this.gatewayStatus.set(res),
@@ -2645,7 +2897,7 @@ export class SuperAdminDashboardComponent implements OnInit {
     this.loadBackups();
   }
 
-  setTab(tab: 'tenants' | 'whatsapp' | 'billing' | 'backup') {
+  setTab(tab: 'tenants' | 'whatsapp' | 'billing' | 'backup' | 'profile') {
     this.activeTab.set(tab);
     if (tab === 'whatsapp') {
       this.loadWhatsAppGateway();
@@ -2653,7 +2905,127 @@ export class SuperAdminDashboardComponent implements OnInit {
       this.loadBilling();
     } else if (tab === 'backup') {
       this.loadBackups();
+    } else if (tab === 'profile') {
+      this.loadMasterProfile();
     }
+  }
+
+  loadMasterProfile() {
+    const u = this.auth.user();
+    if (u) {
+      this.profileName = u.name || '';
+      this.profileEmail = u.email || '';
+      this.profilePhone = u.phone || '';
+    }
+  }
+
+  saveMasterProfile() {
+    if (!this.profileName.trim() || !this.profileEmail.trim()) {
+      this.toast.error('Nome e e-mail são obrigatórios.');
+      return;
+    }
+    this.savingProfile.set(true);
+    this.api.put<{ user: any }>('/auth/profile', {
+      name: this.profileName.trim(),
+      email: this.profileEmail.trim(),
+      phone: this.profilePhone.trim() || null,
+      phoneIsWhatsApp: !!this.profilePhone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res?.user) {
+          this.auth.updateUser(res.user);
+        }
+        this.toast.success('Dados do seu perfil Master atualizados com sucesso!');
+        this.savingProfile.set(false);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao atualizar perfil.');
+        this.savingProfile.set(false);
+      },
+    });
+  }
+
+  saveMasterPassword() {
+    if (!this.profileCurrentPassword) {
+      this.toast.error('Informe sua senha atual.');
+      return;
+    }
+    if (!this.profileNewPassword || this.profileNewPassword.length < 6) {
+      this.toast.error('A nova senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    if (this.profileNewPassword !== this.profileConfirmPassword) {
+      this.toast.error('As novas senhas não conferem.');
+      return;
+    }
+    this.savingPassword.set(true);
+    this.api.put('/auth/password', {
+      currentPassword: this.profileCurrentPassword,
+      newPassword: this.profileNewPassword,
+    }).subscribe({
+      next: () => {
+        this.toast.success('Senha alterada com sucesso!');
+        this.profileCurrentPassword = '';
+        this.profileNewPassword = '';
+        this.profileConfirmPassword = '';
+        this.savingPassword.set(false);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao alterar senha.');
+        this.savingPassword.set(false);
+      },
+    });
+  }
+
+  startMaster2FASetup() {
+    this.loading2FASetup.set(true);
+    this.api.post('/auth/2fa/setup', {}).subscribe({
+      next: (res) => {
+        this.setup2FAData.set(res);
+        this.loading2FASetup.set(false);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Erro ao gerar QR Code 2FA.');
+        this.loading2FASetup.set(false);
+      },
+    });
+  }
+
+  confirmMaster2FASetup() {
+    const code = String(this.confirm2FACode).trim();
+    if (code.length < 6) return;
+    this.confirming2FA.set(true);
+    this.api.post('/auth/2fa/confirm-setup', { code }).subscribe({
+      next: () => {
+        this.auth.updateUser({ twoFactorEnabled: true, twoFactorMethod: 'TOTP' });
+        this.setup2FAData.set(null);
+        this.confirm2FACode = '';
+        this.confirming2FA.set(false);
+        this.toast.success('Google Authenticator ativado com sucesso!');
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Código inválido.');
+        this.confirming2FA.set(false);
+      },
+    });
+  }
+
+  confirmDisableMaster2FA() {
+    if (!this.disable2FAPassword) return;
+    this.disabling2FA.set(true);
+    this.api.post('/auth/2fa/disable', { password: this.disable2FAPassword }).subscribe({
+      next: () => {
+        this.auth.updateUser({ twoFactorEnabled: false, twoFactorMethod: 'EMAIL' });
+        this.showDisable2FAForm.set(false);
+        this.disable2FAPassword = '';
+        this.disabling2FA.set(false);
+        this.toast.success('Google Authenticator desativado.');
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.error || 'Senha incorreta.');
+        this.disabling2FA.set(false);
+      },
+    });
   }
 
   refreshCurrentTab() {

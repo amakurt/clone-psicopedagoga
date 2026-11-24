@@ -32,6 +32,13 @@
   - Adicionado seletor visual com dois botões claros na tela de 2FA (**`E-mail`** e **`WhatsApp`**) para o usuário escolher livremente onde deseja receber o código de 6 dígitos.
   - Quando a conta não possui celular cadastrado no perfil nem na clínica, o botão `WhatsApp` permanece visível (desabilitado) com orientação explicativa.
 
+#### 4. Aba "Meu Perfil & Segurança" no Painel Master
+- **Painel Master (`src/app/modules/superadmin/pages/superadmin-dashboard.component.ts`):**
+  - Adicionada a 5ª aba **`Meu Perfil & Segurança`** diretamente no Painel Master (`/master`), permitindo que o administrador SaaS gerencie seus dados sem depender de nenhuma clínica vinculada:
+    - Edição de Nome, E-mail de Acesso e Celular/WhatsApp (para recebimento de 2FA via WhatsApp).
+    - Alteração de senha de acesso com validação de senha atual.
+    - Configuração e ativação/desativação de 2FA via Google Authenticator (QR Code + TOTP).
+
 ---
 
 ## Sessão 96 - 23/11/2026 — Botão de Cópia em 1 Clique para 2FA, Sincronização entre Abas e Correção do Período/Vencimento da Dra. Vilma no Painel Master
