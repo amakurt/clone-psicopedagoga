@@ -521,3 +521,75 @@ export async function syncTenantWhatsAppInstance(tenantId: string): Promise<{
     message: 'Instância ativa e vinculada ao plano PRO/VIP',
   };
 }
+
+/**
+ * Envia código 2FA via WhatsApp buscando a instância conectada da clínica ou qualquer instância ativa na Evolution API
+ */
+export async function sendSystemWhatsApp2FA(
+  phone: string,
+  message: string,
+  preferredTenantId?: string
+) {
+  const apiUrl = normalizeApiUrl(process.env.EVOLUTION_API_URL || 'http://localhost:8080');
+  const apiKey = (process.env.EVOLUTION_API_KEY || '34aa2d83eef4cf4e74691e0ef22b8ac4e3c8c343f9b66822').trim();
+
+  // 1. Tentar a instância da clínica do usuário caso esteja conectada ('open')
+  if (preferredTenantId) {
+    const cfg = await prisma.whatsAppConfig.findFirst({ where: { tenantId: preferredTenantId } });
+    if (cfg?.phoneNumberId) {
+      const targetUrl = normalizeApiUrl(cfg.apiUrl || apiUrl);
+      const targetKey = (cfg.token || apiKey).trim();
+      try {
+        const stateRes = await fetch(`${targetUrl}/instance/connectionState/${cfg.phoneNumberId}`, {
+          headers: { apikey: targetKey },
+          signal: AbortSignal.timeout(3000),
+        });
+        if (stateRes.ok) {
+          const st: any = await stateRes.json().catch(() => ({}));
+          if (st?.instance?.state === 'open') {
+            return await sendWhatsAppMessage(phone, message, preferredTenantId, {
+              apiUrl: targetUrl,
+              token: targetKey,
+              phoneNumberId: cfg.phoneNumberId,
+            });
+          }
+        }
+      } catch {}
+    }
+  }
+
+  // 2. Buscar qualquer instância conectada ('open') na Evolution API global da VPS
+  let openInstanceName: string | null = null;
+  try {
+    const listRes = await fetch(`${apiUrl}/instance/fetchInstances`, {
+      headers: { apikey: apiKey },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (listRes.ok) {
+      const instances: any = await listRes.json().catch(() => []);
+      if (Array.isArray(instances)) {
+        const openInst = instances.find(
+          (i: any) =>
+            i?.connectionStatus === 'open' ||
+            i?.instance?.state === 'open' ||
+            i?.state === 'open'
+        );
+        if (openInst) {
+          openInstanceName = openInst.name || openInst.instance?.instanceName || openInst.instanceName || null;
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn('[2FA_WA_FETCH_INSTANCES_WARN]', err?.message);
+  }
+
+  if (!openInstanceName) {
+    throw new Error('Nenhuma instância de WhatsApp conectada no servidor (Evolution API). Use o código por E-mail.');
+  }
+
+  return await sendWhatsAppMessage(phone, message, undefined, {
+    apiUrl,
+    token: apiKey,
+    phoneNumberId: openInstanceName,
+  });
+}

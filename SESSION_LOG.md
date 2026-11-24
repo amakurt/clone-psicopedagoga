@@ -25,8 +25,9 @@
   - Garantido `RESEND_FROM="EduPsych Pro <seguranca@edupsychpro.tech>"` nas variáveis de ambiente da VPS.
 
 #### 3. Seletor Visual de Canal 2FA (E-mail vs WhatsApp) & Fallback de Telefone
-- **Backend (`backend/src/routes/auth.ts`):**
+- **Backend (`backend/src/routes/auth.ts` e `backend/src/services/whatsapp-client.service.ts`):**
   - Implementado fallback automático de telefone (`resolvedPhone = user.phone || membership?.tenant?.phone`): caso o usuário não tenha o celular cadastrado diretamente no perfil `User`, o sistema utiliza o telefone cadastrado na clínica (`Tenant`) para habilitar e enviar códigos via WhatsApp.
+  - Criado o método `sendSystemWhatsApp2FA` no serviço de WhatsApp: verifica primeiro a instância da clínica do usuário; caso seja SuperAdmin ou a clínica não possua WhatsApp conectado, consulta automaticamente `fetchInstances` na Evolution API global da VPS e utiliza qualquer instância conectada (`open`) para disparar o código 2FA, retornando mensagens de erro precisas caso nenhuma instância esteja pareada.
 - **Frontend (`src/app/modules/auth/pages/login/login.component.ts`):**
   - Adicionado seletor visual com dois botões claros na tela de 2FA (**`E-mail`** e **`WhatsApp`**) para o usuário escolher livremente onde deseja receber o código de 6 dígitos.
   - Quando a conta não possui celular cadastrado no perfil nem na clínica, o botão `WhatsApp` permanece visível (desabilitado) com orientação explicativa.

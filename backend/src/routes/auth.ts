@@ -12,6 +12,7 @@ import { authenticate } from '../middleware';
 import { sendEmail, emailConfigured, send2FAEmail } from '../lib/email';
 import { generateBase32Secret, verifyTOTP, getOtpAuthUrl } from '../lib/totp';
 import { sendWhatsAppMessage } from './whatsapp';
+import { sendSystemWhatsApp2FA } from '../services/whatsapp-client.service';
 
 const router = Router();
 
@@ -371,9 +372,10 @@ router.post('/login', strictLimiter, async (req, res) => {
 
       // Se tiver telefone cadastrado (usuário ou clínica), envia também via WhatsApp
       if (resolvedPhone) {
-        sendWhatsAppMessage(
+        sendSystemWhatsApp2FA(
           resolvedPhone,
-          `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`
+          `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`,
+          membership?.tenantId
         ).catch(() => {});
       }
 
@@ -538,14 +540,15 @@ router.post('/2fa/resend', strictLimiter, async (req, res) => {
         return res.status(400).json({ error: 'Usuário não possui telefone/WhatsApp cadastrado.' });
       }
       try {
-        await sendWhatsAppMessage(
+        await sendSystemWhatsApp2FA(
           resolvedPhone,
-          `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`
+          `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`,
+          user.memberships?.[0]?.tenantId
         );
         return res.json({ message: 'Código enviado via WhatsApp com sucesso!', channel: 'WHATSAPP' });
       } catch (e: any) {
         console.warn('[2FA_WHATSAPP_WARN]', e.message);
-        return res.status(500).json({ error: 'Falha ao enviar WhatsApp. Tente por e-mail.' });
+        return res.status(500).json({ error: e.message || 'Falha ao enviar WhatsApp. Tente por e-mail.' });
       }
     }
 
