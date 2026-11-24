@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
@@ -115,11 +116,13 @@ async function main() {
   });
   console.log(`[ADJUST_VILMA_BILLING] Status da clínica atualizado: Plano MENSAL, Status ATIVO, trialEndsAt: null, email: vilmaneuropp@gmail.com.`);
 
-  // 6. Atualizar o e-mail da Dra. Vilma para vilmaneuropp@gmail.com, mantendo a mesma senha, confirmando e ativando
+  // 6. Atualizar o e-mail da Dra. Vilma para vilmaneuropp@gmail.com, atualizar senha para @vilmaneuropp21, confirmando e ativando
+  const newPasswordHash = await bcrypt.hash('@vilmaneuropp21', 10);
   const updatedUsers = await prisma.user.updateMany({
     where: {
       OR: [
         { email: { contains: 'vmssredencao' } },
+        { email: { contains: 'vilmaneuropp' } },
         { email: { contains: 'vilma' } },
         { name: { contains: 'vilma' } },
       ],
@@ -127,11 +130,12 @@ async function main() {
     },
     data: {
       email: 'vilmaneuropp@gmail.com',
+      password: newPasswordHash,
       emailVerified: true,
       active: true,
     },
   });
-  console.log(`[ADJUST_VILMA_BILLING] ${updatedUsers.count} usuário(s) da Dra. Vilma atualizado(s) com e-mail vilmaneuropp@gmail.com, emailVerified=true e active=true.`);
+  console.log(`[ADJUST_VILMA_BILLING] ${updatedUsers.count} usuário(s) da Dra. Vilma atualizado(s) com e-mail vilmaneuropp@gmail.com, nova senha @vilmaneuropp21, emailVerified=true e active=true.`);
 
   console.log('[ADJUST_VILMA_BILLING] Ajuste concluído com sucesso!');
 }

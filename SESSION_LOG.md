@@ -2,25 +2,26 @@
 
 ## Última Atualização: 24 de Novembro de 2026
 
-## Sessão 97 - 24/11/2026 — Alteração de E-mail de Acesso da Dra. Vilma para vilmaneuropp@gmail.com & Configuração do Remetente Oficial edupsychpro.tech no Resend
+## Sessão 97 - 24/11/2026 — Alteração de E-mail de Acesso da Dra. Vilma para vilmaneuropp@gmail.com, Nova Senha (@vilmaneuropp21) & Remetente Oficial edupsychpro.tech
 
 ### O que foi feito
 
 #### 1. Diagnóstico e Solicitação do Usuário
-- **Alteração do E-mail de Login da Dra. Vilma:** A gestora utilizava o e-mail `vmssredencao2010@hotmail.com` e solicitou a troca para `vilmaneuropp@gmail.com`, mantendo a mesma senha de acesso.
+- **Alteração de Credenciais da Dra. Vilma:**
+  - **Novo E-mail:** `vilmaneuropp@gmail.com` (substituindo `vmssredencao2010@hotmail.com`).
+  - **Nova Senha:** `@vilmaneuropp21` (criptografada com bcrypt salt 10: `$2b$10$DTWvBOV4bPsmI.nJm1foD.wL1QQDqIwgz1o2uBcKS8zm1onY6f0Tu`).
 - **Auditoria do Envio de E-mails Resend:**
   - Foi identificado que o domínio corporativo `edupsychpro.tech` já está verificado no painel da Resend.
-  - O backend estava caindo em `onboarding@resend.dev` (sandbox), que rejeita envios para destinatários que não sejam o dono da conta.
-  - Ao configurar o remetente oficial `EduPsych Pro <seguranca@edupsychpro.tech>`, os e-mails e códigos de 2FA agora chegam com 100% de sucesso diretamente para qualquer conta (como `vilmaneuropp@gmail.com`), testado e validado.
+  - Ao configurar o remetente oficial `EduPsych Pro <seguranca@edupsychpro.tech>`, os e-mails e códigos de 2FA agora chegam com 100% de sucesso diretamente para qualquer conta (como `vilmaneuropp@gmail.com`), testado e validado via API.
 
 #### 2. Atualizações no Banco e Scripts de Deploy
 - **Script de Ajuste (`backend/scripts/adjust-vilma-billing.js`):**
-  - Atualiza o registro do usuário para `email: 'vilmaneuropp@gmail.com'`, mantendo a senha intacta e garantindo `emailVerified = true` e `active = true`.
+  - Atualiza o registro do usuário para `email: 'vilmaneuropp@gmail.com'`, define a nova senha criptografada `@vilmaneuropp21` e garante `emailVerified = true` e `active = true`.
   - Atualiza o e-mail de contato da clínica no `Tenant`.
 - **Serviço de E-mail (`backend/src/lib/email.ts`):**
   - Configurado o remetente padrão como `EduPsych Pro <seguranca@edupsychpro.tech>`, permitindo entrega direta e irrestrita com SPF/DKIM válidos.
 - **Script da VPS (`update-vps.sh`):**
-  - Comandos no PostgreSQL para atualizar o usuário e o tenant para `vilmaneuropp@gmail.com`.
+  - Comandos no PostgreSQL para atualizar o usuário para o novo e-mail e nova senha `@vilmaneuropp21`.
   - Garantido `RESEND_FROM="EduPsych Pro <seguranca@edupsychpro.tech>"` nas variáveis de ambiente da VPS.
 
 ---
