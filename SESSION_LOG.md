@@ -24,6 +24,13 @@
   - Comandos no PostgreSQL para atualizar o usuário para o novo e-mail e nova senha `@vilmaneuropp21`.
   - Garantido `RESEND_FROM="EduPsych Pro <seguranca@edupsychpro.tech>"` nas variáveis de ambiente da VPS.
 
+#### 3. Seletor Visual de Canal 2FA (E-mail vs WhatsApp) & Fallback de Telefone
+- **Backend (`backend/src/routes/auth.ts`):**
+  - Implementado fallback automático de telefone (`resolvedPhone = user.phone || membership?.tenant?.phone`): caso o usuário não tenha o celular cadastrado diretamente no perfil `User`, o sistema utiliza o telefone cadastrado na clínica (`Tenant`) para habilitar e enviar códigos via WhatsApp.
+- **Frontend (`src/app/modules/auth/pages/login/login.component.ts`):**
+  - Adicionado seletor visual com dois botões claros na tela de 2FA (**`E-mail`** e **`WhatsApp`**) para o usuário escolher livremente onde deseja receber o código de 6 dígitos.
+  - Quando a conta não possui celular cadastrado no perfil nem na clínica, o botão `WhatsApp` permanece visível (desabilitado) com orientação explicativa.
+
 ---
 
 ## Sessão 96 - 23/11/2026 — Botão de Cópia em 1 Clique para 2FA, Sincronização entre Abas e Correção do Período/Vencimento da Dra. Vilma no Painel Master

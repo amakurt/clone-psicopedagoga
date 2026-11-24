@@ -319,6 +319,7 @@ router.post('/login', strictLimiter, async (req, res) => {
     const enforce2FA = !isDemo && process.env.TWO_FACTOR_DISABLED !== 'true';
 
     if (enforce2FA) {
+      const resolvedPhone = user.phone || membership?.tenant?.phone || null;
       const tempToken = jwt.sign(
         { userId: user.id, purpose: '2FA_LOGIN' },
         getJwtSecret(),
@@ -332,8 +333,8 @@ router.post('/login', strictLimiter, async (req, res) => {
           twoFactorMethod: 'TOTP',
           tempToken,
           maskedEmail: maskEmail(user.email),
-          maskedPhone: user.phone ? maskPhone(user.phone) : null,
-          hasWhatsApp: !!user.phone,
+          maskedPhone: resolvedPhone ? maskPhone(resolvedPhone) : null,
+          hasWhatsApp: !!resolvedPhone,
         });
       }
 
@@ -368,10 +369,10 @@ router.post('/login', strictLimiter, async (req, res) => {
         console.warn('[2FA_EMAIL_WARN] Falha ao enviar e-mail:', err)
       );
 
-      // Se tiver telefone cadastrado, envia também via WhatsApp como cortesia
-      if (user.phone) {
+      // Se tiver telefone cadastrado (usuário ou clínica), envia também via WhatsApp
+      if (resolvedPhone) {
         sendWhatsAppMessage(
-          user.phone,
+          resolvedPhone,
           `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`
         ).catch(() => {});
       }
@@ -381,8 +382,8 @@ router.post('/login', strictLimiter, async (req, res) => {
         twoFactorMethod: 'EMAIL',
         tempToken,
         maskedEmail: maskEmail(emailToSend),
-        maskedPhone: user.phone ? maskPhone(user.phone) : null,
-        hasWhatsApp: !!user.phone,
+        maskedPhone: resolvedPhone ? maskPhone(resolvedPhone) : null,
+        hasWhatsApp: !!resolvedPhone,
       });
     }
 
@@ -498,10 +499,20 @@ router.post('/2fa/resend', strictLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      include: {
+        memberships: {
+          where: { active: true },
+          take: 1,
+          include: { tenant: { select: { phone: true } } },
+        },
+      },
+    });
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
+    const resolvedPhone = user.phone || user.memberships?.[0]?.tenant?.phone || null;
 
     const code = generateCode();
     const codeHash = hashValue(code);
@@ -523,15 +534,15 @@ router.post('/2fa/resend', strictLimiter, async (req, res) => {
     });
 
     if (channel === 'WHATSAPP') {
-      if (!user.phone) {
-        return res.status(400).json({ error: 'Usuário não possui telefone cadastrado para WhatsApp' });
+      if (!resolvedPhone) {
+        return res.status(400).json({ error: 'Usuário não possui telefone/WhatsApp cadastrado.' });
       }
       try {
         await sendWhatsAppMessage(
-          user.phone,
+          resolvedPhone,
           `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`
         );
-        return res.json({ message: 'Código reenviado via WhatsApp com sucesso!', channel: 'WHATSAPP' });
+        return res.json({ message: 'Código enviado via WhatsApp com sucesso!', channel: 'WHATSAPP' });
       } catch (e: any) {
         console.warn('[2FA_WHATSAPP_WARN]', e.message);
         return res.status(500).json({ error: 'Falha ao enviar WhatsApp. Tente por e-mail.' });

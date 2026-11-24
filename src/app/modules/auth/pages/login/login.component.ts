@@ -66,6 +66,48 @@ import { environment } from '../../../../../environments/environment';
               </p>
             </div>
 
+            <!-- Seletor de Canal (E-mail ou WhatsApp) -->
+            @if (twoFactorMethod() !== 'TOTP') {
+              <div class="mb-5">
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center mb-2">
+                  Escolha onde receber o código
+                </p>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    (click)="resend2FA('EMAIL')"
+                    [disabled]="resending2FA()"
+                    class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                    [ngClass]="twoFactorMethod() === 'EMAIL'
+                      ? 'bg-teal-50 border-teal-500 text-teal-800 shadow-sm'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
+                    <span class="material-icons text-sm">mark_email_read</span>
+                    <span>E-mail</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="hasWhatsApp() ? resend2FA('WHATSAPP') : null"
+                    [disabled]="resending2FA() || !hasWhatsApp()"
+                    class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                    [ngClass]="!hasWhatsApp()
+                      ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
+                      : (twoFactorMethod() === 'WHATSAPP'
+                          ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-emerald-50/60 hover:border-emerald-300 hover:text-emerald-700')"
+                    [title]="hasWhatsApp() ? 'Receber código via WhatsApp' : 'Cadastre seu telefone para habilitar o WhatsApp'">
+                    <span class="material-icons text-sm">chat</span>
+                    <span>WhatsApp</span>
+                  </button>
+                </div>
+                @if (!hasWhatsApp()) {
+                  <p class="text-[10px] text-slate-400 text-center mt-1.5">
+                    WhatsApp disponível após cadastrar um celular no perfil ou clínica.
+                  </p>
+                }
+              </div>
+            }
+
             <form (ngSubmit)="verify2FA()">
               <div class="mb-5">
                 <label class="block text-xs font-bold text-slate-600 text-center uppercase tracking-wider mb-2">
