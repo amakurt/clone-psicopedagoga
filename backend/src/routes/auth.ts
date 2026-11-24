@@ -339,7 +339,25 @@ router.post('/login', strictLimiter, async (req, res) => {
         });
       }
 
-      // Senão: gerar código de 6 dígitos e enviar por E-mail (e WhatsApp se houver)
+      let emailToSend = user.email;
+      if (user.role === 'SUPERADMIN' && (emailToSend.includes('@edupsychpro.tech') || emailToSend.includes('@edupsych.tech'))) {
+        emailToSend = 'amakurt@gmail.com';
+      }
+
+      // Se o usuário tiver WhatsApp disponível, aguarda a escolha dele na tela antes de enviar qualquer código
+      if (resolvedPhone) {
+        return res.json({
+          require2FA: true,
+          twoFactorMethod: 'CHOOSE',
+          codeSent: false,
+          tempToken,
+          maskedEmail: maskEmail(emailToSend),
+          maskedPhone: maskPhone(resolvedPhone),
+          hasWhatsApp: true,
+        });
+      }
+
+      // Se só tiver e-mail, envia o código único por e-mail imediatamente
       const code = generateCode();
       const codeHash = hashValue(code);
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -360,32 +378,18 @@ router.post('/login', strictLimiter, async (req, res) => {
         },
       });
 
-      let emailToSend = user.email;
-      if (user.role === 'SUPERADMIN' && (emailToSend.includes('@edupsychpro.tech') || emailToSend.includes('@edupsych.tech'))) {
-        emailToSend = 'amakurt@gmail.com';
-      }
-
-      // Enviar via Resend Email de forma assíncrona
       send2FAEmail(emailToSend, user.name, code).catch((err) =>
         console.warn('[2FA_EMAIL_WARN] Falha ao enviar e-mail:', err)
       );
 
-      // Se tiver telefone cadastrado (usuário ou clínica), envia também via WhatsApp
-      if (resolvedPhone) {
-        sendSystemWhatsApp2FA(
-          resolvedPhone,
-          `EduPsych Pro: Seu código de segurança em duas etapas é ${code}. Válido por 10 minutos.`,
-          membership?.tenantId
-        ).catch(() => {});
-      }
-
       return res.json({
         require2FA: true,
         twoFactorMethod: 'EMAIL',
+        codeSent: true,
         tempToken,
         maskedEmail: maskEmail(emailToSend),
-        maskedPhone: resolvedPhone ? maskPhone(resolvedPhone) : null,
-        hasWhatsApp: !!resolvedPhone,
+        maskedPhone: null,
+        hasWhatsApp: false,
       });
     }
 

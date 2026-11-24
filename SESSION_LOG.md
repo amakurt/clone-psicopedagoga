@@ -47,6 +47,14 @@
   - Adicionados os endpoints `/whatsapp/master/status`, `/whatsapp/master/qrcode`, `/whatsapp/master/restart` e `/whatsapp/master/disconnect`.
   - Na aba **WhatsApp Multi-Clínica (Evolution API)**, incluído o card de destaque **"WhatsApp Oficial da Plataforma (Master / 2FA)"** para parear via QR Code o número exclusivo do sistema.
 
+#### 6. Escolha Explícita do Canal 2FA Antes do Disparo (Eliminação de Envio Duplo)
+- **Backend (`backend/src/routes/auth.ts`):**
+  - Ao autenticar e-mail e senha de contas com WhatsApp disponível, o sistema não dispara mais código automático nem envia pelos dois canais simultaneamente.
+  - Retorna `twoFactorMethod: 'CHOOSE'` com `codeSent: false`, aguardando a escolha explícita do usuário na tela de login.
+- **Frontend (`src/app/modules/auth/pages/login/login.component.ts`):**
+  - Quando `twoFactorMethod() === 'CHOOSE'`, exibe os botões de escolha (**`E-mail`** ou **`WhatsApp`** com os dados mascarados) antes de abrir o campo de 6 dígitos.
+  - Apenas após o usuário clicar no canal desejado é gerado e enviado 1 código único para aquele canal.
+
 ---
 
 ## Sessão 96 - 23/11/2026 — Botão de Cópia em 1 Clique para 2FA, Sincronização entre Abas e Correção do Período/Vencimento da Dra. Vilma no Painel Master

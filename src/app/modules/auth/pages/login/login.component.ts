@@ -49,15 +49,17 @@ import { environment } from '../../../../../environments/environment';
             <div class="p-4 bg-teal-50/80 border border-teal-100 rounded-2xl text-center mb-6">
               <div class="size-12 mx-auto rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-md shadow-teal-600/20 mb-2">
                 <span class="material-icons text-2xl">
-                  {{ twoFactorMethod() === 'TOTP' ? 'smartphone' : (twoFactorMethod() === 'WHATSAPP' ? 'chat' : 'mark_email_read') }}
+                  {{ twoFactorMethod() === 'TOTP' ? 'smartphone' : (twoFactorMethod() === 'WHATSAPP' ? 'chat' : (twoFactorMethod() === 'CHOOSE' ? 'verified_user' : 'mark_email_read')) }}
                 </span>
               </div>
               <h3 class="text-sm font-black text-slate-900">
-                {{ twoFactorMethod() === 'TOTP' ? 'Google Authenticator' : (twoFactorMethod() === 'WHATSAPP' ? 'Código via WhatsApp' : 'Código via E-mail') }}
+                {{ twoFactorMethod() === 'TOTP' ? 'Google Authenticator' : (twoFactorMethod() === 'WHATSAPP' ? 'Código via WhatsApp' : (twoFactorMethod() === 'CHOOSE' ? 'Escolha onde receber o código' : 'Código via E-mail')) }}
               </h3>
               <p class="text-xs text-slate-600 mt-1 leading-relaxed">
                 @if (twoFactorMethod() === 'TOTP') {
                   Abra o aplicativo <strong>Google Authenticator</strong> no seu celular e digite o código de 6 dígitos.
+                } @else if (twoFactorMethod() === 'CHOOSE') {
+                  Selecione abaixo se deseja receber o código de verificação no seu <strong>e-mail</strong> ou <strong>WhatsApp</strong>.
                 } @else if (twoFactorMethod() === 'WHATSAPP') {
                   Enviamos o código para seu WhatsApp <strong>{{ twoFactorMaskedPhone() }}</strong>.
                 } @else {
@@ -69,35 +71,43 @@ import { environment } from '../../../../../environments/environment';
             <!-- Seletor de Canal (E-mail ou WhatsApp) -->
             @if (twoFactorMethod() !== 'TOTP') {
               <div class="mb-5">
-                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center mb-2">
-                  Escolha onde receber o código
-                </p>
-                <div class="grid grid-cols-2 gap-2">
+                @if (twoFactorMethod() !== 'CHOOSE') {
+                  <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center mb-2">
+                    Trocar canal de recebimento
+                  </p>
+                }
+                <div class="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     (click)="resend2FA('EMAIL')"
                     [disabled]="resending2FA()"
-                    class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                    class="py-3 px-3 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all"
                     [ngClass]="twoFactorMethod() === 'EMAIL'
                       ? 'bg-teal-50 border-teal-500 text-teal-800 shadow-sm'
-                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'">
-                    <span class="material-icons text-sm">mark_email_read</span>
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-teal-50/50 hover:border-teal-300'">
+                    <span class="material-icons text-lg text-teal-600">mark_email_read</span>
                     <span>E-mail</span>
+                    @if (twoFactorMethod() === 'CHOOSE') {
+                      <span class="text-[10px] font-normal text-slate-500 truncate max-w-full">{{ twoFactorMaskedEmail() }}</span>
+                    }
                   </button>
 
                   <button
                     type="button"
                     (click)="hasWhatsApp() ? resend2FA('WHATSAPP') : null"
                     [disabled]="resending2FA() || !hasWhatsApp()"
-                    class="py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                    class="py-3 px-3 rounded-xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all"
                     [ngClass]="!hasWhatsApp()
                       ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
                       : (twoFactorMethod() === 'WHATSAPP'
                           ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-emerald-50/60 hover:border-emerald-300 hover:text-emerald-700')"
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-emerald-50/60 hover:border-emerald-300 hover:text-emerald-700')"
                     [title]="hasWhatsApp() ? 'Receber código via WhatsApp' : 'Cadastre seu telefone para habilitar o WhatsApp'">
-                    <span class="material-icons text-sm">chat</span>
+                    <span class="material-icons text-lg" [ngClass]="hasWhatsApp() ? 'text-emerald-600' : 'text-slate-400'">chat</span>
                     <span>WhatsApp</span>
+                    @if (twoFactorMethod() === 'CHOOSE' && hasWhatsApp()) {
+                      <span class="text-[10px] font-normal text-slate-500 truncate max-w-full">{{ twoFactorMaskedPhone() }}</span>
+                    }
                   </button>
                 </div>
                 @if (!hasWhatsApp()) {
@@ -108,6 +118,7 @@ import { environment } from '../../../../../environments/environment';
               </div>
             }
 
+            @if (twoFactorMethod() !== 'CHOOSE') {
             <form (ngSubmit)="verify2FA()">
               <div class="mb-5">
                 <label class="block text-xs font-bold text-slate-600 text-center uppercase tracking-wider mb-2">
@@ -154,30 +165,19 @@ import { environment } from '../../../../../environments/environment';
                 }
               </button>
             </form>
+            }
 
             <!-- Reenvio e Canais Alternativos -->
             <div class="mt-6 pt-5 border-t border-slate-100 space-y-2.5">
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-slate-500">Não recebeu o código?</span>
-                <button
-                  type="button"
-                  class="font-bold text-primary hover:underline disabled:opacity-50"
-                  (click)="resend2FA('EMAIL')"
-                  [disabled]="resending2FA()">
-                  {{ resending2FA() ? 'Reenviando...' : 'Reenviar por E-mail' }}
-                </button>
-              </div>
-
-              @if (hasWhatsApp()) {
-                <div class="flex items-center justify-between text-xs pt-1">
-                  <span class="text-slate-500">Prefere pelo WhatsApp?</span>
+              @if (twoFactorMethod() !== 'CHOOSE') {
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-500">Não recebeu o código?</span>
                   <button
                     type="button"
-                    class="font-bold text-emerald-600 hover:underline disabled:opacity-50 flex items-center gap-1"
-                    (click)="resend2FA('WHATSAPP')"
+                    class="font-bold text-primary hover:underline disabled:opacity-50"
+                    (click)="resend2FA(twoFactorMethod() === 'WHATSAPP' ? 'WHATSAPP' : 'EMAIL')"
                     [disabled]="resending2FA()">
-                    <span class="material-icons text-sm">chat</span>
-                    <span>Receber no WhatsApp</span>
+                    {{ resending2FA() ? 'Reenviando...' : (twoFactorMethod() === 'WHATSAPP' ? 'Reenviar no WhatsApp' : 'Reenviar por E-mail') }}
                   </button>
                 </div>
               }
@@ -358,7 +358,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   // 2FA Signals & State
   step2FA = signal(false);
   temp2FAToken = signal('');
-  twoFactorMethod = signal<'EMAIL' | 'WHATSAPP' | 'TOTP'>('EMAIL');
+  twoFactorMethod = signal<'CHOOSE' | 'EMAIL' | 'WHATSAPP' | 'TOTP'>('EMAIL');
   twoFactorMaskedEmail = signal('');
   twoFactorMaskedPhone = signal('');
   hasWhatsApp = signal(false);
