@@ -103,18 +103,19 @@ async function main() {
   });
   console.log(`[ADJUST_VILMA_BILLING] Nova fatura criada com sucesso: ID ${newInvoice.id} - R$ 127,00 - PAGA.`);
 
-  // 5. Atualizar o tenant para plano MENSAL, ATIVO e trialEndsAt = null
+  // 5. Atualizar o tenant para plano MENSAL, ATIVO, trialEndsAt = null e e-mail atualizado
   await prisma.tenant.update({
     where: { id: vilma.id },
     data: {
+      email: 'vilmaneuropp@gmail.com',
       plan: 'MENSAL',
       status: 'ATIVO',
       trialEndsAt: null,
     },
   });
-  console.log(`[ADJUST_VILMA_BILLING] Status da clínica atualizado: Plano MENSAL, Status ATIVO, trialEndsAt: null.`);
+  console.log(`[ADJUST_VILMA_BILLING] Status da clínica atualizado: Plano MENSAL, Status ATIVO, trialEndsAt: null, email: vilmaneuropp@gmail.com.`);
 
-  // 6. Confirmar e-mail e ativar a conta da Dra. Vilma
+  // 6. Atualizar o e-mail da Dra. Vilma para vilmaneuropp@gmail.com, mantendo a mesma senha, confirmando e ativando
   const updatedUsers = await prisma.user.updateMany({
     where: {
       OR: [
@@ -122,13 +123,15 @@ async function main() {
         { email: { contains: 'vilma' } },
         { name: { contains: 'vilma' } },
       ],
+      role: { not: 'SUPERADMIN' },
     },
     data: {
+      email: 'vilmaneuropp@gmail.com',
       emailVerified: true,
       active: true,
     },
   });
-  console.log(`[ADJUST_VILMA_BILLING] ${updatedUsers.count} usuário(s) da Dra. Vilma atualizado(s) com emailVerified=true e active=true.`);
+  console.log(`[ADJUST_VILMA_BILLING] ${updatedUsers.count} usuário(s) da Dra. Vilma atualizado(s) com e-mail vilmaneuropp@gmail.com, emailVerified=true e active=true.`);
 
   console.log('[ADJUST_VILMA_BILLING] Ajuste concluído com sucesso!');
 }

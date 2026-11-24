@@ -40,7 +40,9 @@ npx prisma db push --accept-data-loss
 # Garantir Usuário SuperAdmin Master ativo (admin@edupsychpro.tech e admin@edupsych.tech)
 node scripts/setup-master-admin.js 2>/dev/null || true
 node scripts/adjust-vilma-billing.js 2>/dev/null || true
-docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "UPDATE \"User\" SET \"emailVerified\" = true, active = true WHERE LOWER(email) LIKE '%vmssredencao%' OR LOWER(email) LIKE '%vilma%';" 2>/dev/null || true
+# Atualizar email da Dra. Vilma para vilmaneuropp@gmail.com, confirmar e ativar mantendo a mesma senha
+docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "UPDATE \"User\" SET email = 'vilmaneuropp@gmail.com', \"emailVerified\" = true, active = true WHERE (LOWER(email) LIKE '%vmssredencao%' OR (LOWER(name) LIKE '%vilma%' AND role != 'SUPERADMIN'));" 2>/dev/null || true
+docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "UPDATE \"Tenant\" SET email = 'vilmaneuropp@gmail.com' WHERE LOWER(name) LIKE '%vilma%' OR LOWER(slug) LIKE '%vilma%';" 2>/dev/null || true
 docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "DELETE FROM \"SubscriptionInvoice\" WHERE \"tenantId\" IN (SELECT id FROM \"Tenant\" WHERE LOWER(slug) IN ('clinica-demo', 'edupsychpro') OR LOWER(slug) LIKE '%demo%' OR LOWER(slug) LIKE '%modelo%' OR LOWER(name) LIKE '%modelo%' OR LOWER(name) LIKE '%demo%'); UPDATE \"Tenant\" SET plan = 'TRIAL' WHERE LOWER(slug) IN ('clinica-demo', 'edupsychpro') OR LOWER(slug) LIKE '%demo%' OR LOWER(slug) LIKE '%modelo%' OR LOWER(name) LIKE '%modelo%';" 2>/dev/null || true
 docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "DELETE FROM \"SubscriptionInvoice\" WHERE \"tenantId\" IN (SELECT id FROM \"Tenant\" WHERE LOWER(name) LIKE '%vilma%' OR LOWER(slug) LIKE '%vilma%'); UPDATE \"Tenant\" SET plan = 'MENSAL', status = 'ATIVO', \"trialEndsAt\" = NULL WHERE LOWER(name) LIKE '%vilma%' OR LOWER(slug) LIKE '%vilma%'; UPDATE \"Subscription\" SET \"planCode\" = 'MENSAL', status = 'ATIVA', \"currentPeriodStart\" = '2026-11-20 00:00:00', \"currentPeriodEnd\" = '2026-12-20 23:59:59', provider = 'manual' WHERE \"tenantId\" IN (SELECT id FROM \"Tenant\" WHERE LOWER(name) LIKE '%vilma%' OR LOWER(slug) LIKE '%vilma%'); INSERT INTO \"SubscriptionInvoice\" (id, \"tenantId\", \"subscriptionId\", \"planCode\", \"amountCents\", status, \"dueDate\", \"paidAt\", \"paymentMethod\", provider, notes, \"createdAt\", \"updatedAt\") SELECT 'inv_vilma_' || to_char(NOW(), 'YYYYMMDD_HH24MISS'), t.id, s.id, 'MENSAL', 12700, 'PAGA', '2026-11-20 00:00:00', '2026-11-20 12:00:00', 'PIX', 'manual', 'Mensalidade Plano Mensal (R$ 127,00) paga diretamente via PIX - Próximo vencimento em 20/12/2026', NOW(), NOW() FROM \"Tenant\" t LEFT JOIN \"Subscription\" s ON s.\"tenantId\" = t.id WHERE LOWER(t.name) LIKE '%vilma%' OR LOWER(t.slug) LIKE '%vilma%' LIMIT 1;" 2>/dev/null || true
 docker exec -i edupsych-postgres psql -U edupsych -d edupsych_prod -c "INSERT INTO \"User\" (id, name, email, password, role, active, \"createdAt\", \"updatedAt\") VALUES ('cm_superadmin_master', 'Administrador Master', 'admin@edupsychpro.tech', '\$2b\$10\$cBImV1uB4Ho6K4ALJ2RzR.wyvAKZUh0Y0zptCK0wncpKR.I02QGx.', 'SUPERADMIN', true, NOW(), NOW()) ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, role = 'SUPERADMIN', active = true;" 2>/dev/null || true
@@ -63,6 +65,11 @@ if [ -f "$ROOT_DIR/backend/.env" ]; then
     echo -e "\nRESEND_API_KEY=\"$CURRENT_RESEND\"" >> "$ROOT_DIR/backend/.env"
   else
     sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=\"$CURRENT_RESEND\"|" "$ROOT_DIR/backend/.env"
+  fi
+  if ! grep -q "RESEND_FROM" "$ROOT_DIR/backend/.env"; then
+    echo -e "RESEND_FROM=\"EduPsych Pro <seguranca@edupsychpro.tech>\"" >> "$ROOT_DIR/backend/.env"
+  else
+    sed -i "s|^RESEND_FROM=.*|RESEND_FROM=\"EduPsych Pro <seguranca@edupsychpro.tech>\"|" "$ROOT_DIR/backend/.env"
   fi
 fi
 

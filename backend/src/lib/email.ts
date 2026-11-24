@@ -71,10 +71,10 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   if (resendApiKey) {
     try {
       const configuredFrom = process.env.RESEND_FROM || process.env.SMTP_FROM || '';
-      // Domínios públicos como @gmail.com não podem ser usados como remetente no Resend; usa onboarding@resend.dev
+      // Utiliza o domínio corporativo oficial verificado no Resend (edupsychpro.tech)
       const initialFrom = (configuredFrom && !configuredFrom.includes('gmail.com') && !configuredFrom.includes('exemplo'))
         ? configuredFrom
-        : 'EduPsych Pro <onboarding@resend.dev>';
+        : 'EduPsych Pro <seguranca@edupsychpro.tech>';
 
       const sendViaResend = async (fromAddr: string) => {
         return fetch('https://api.resend.com/emails', {
