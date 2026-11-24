@@ -13,6 +13,7 @@ import {
   syncTenantWhatsAppInstance,
   isPlanWhatsAppEligible,
   sendWhatsAppMessage,
+  MASTER_WHATSAPP_INSTANCE,
 } from '../services/whatsapp-client.service';
 import {
   exportTenantBackup,
@@ -561,6 +562,64 @@ router.get('/whatsapp/status', async (req, res) => {
   } catch (error: any) {
     console.error('[SUPERADMIN_WHATSAPP_STATUS_ERROR]', error);
     return res.status(500).json({ error: 'Erro ao obter status da Evolution API' });
+  }
+});
+
+// 7.1b WhatsApp Oficial da Plataforma Master (Sistema / 2FA)
+router.get('/whatsapp/master/status', async (req, res) => {
+  try {
+    const rawInstances = await fetchEvolutionInstances();
+    const masterInst = rawInstances.find(
+      (i) => (i.name || i.instance?.instanceName || i.instanceName) === MASTER_WHATSAPP_INSTANCE
+    );
+    const status = await getEvolutionInstanceStatus(MASTER_WHATSAPP_INSTANCE);
+    return res.json({
+      instanceName: MASTER_WHATSAPP_INSTANCE,
+      state: masterInst?.connectionStatus || masterInst?.state || status.state || 'not_provisioned',
+      ownerPhone: masterInst?.ownerJid ? String(masterInst.ownerJid).split('@')[0] : null,
+      profileName: masterInst?.profileName || null,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_MASTER_WA_STATUS_ERROR]', error);
+    return res.status(500).json({ error: 'Erro ao obter status do WhatsApp Master' });
+  }
+});
+
+router.get('/whatsapp/master/qrcode', async (req, res) => {
+  try {
+    await createEvolutionInstance(MASTER_WHATSAPP_INSTANCE);
+    const qr = await getEvolutionQrCode(MASTER_WHATSAPP_INSTANCE);
+    return res.json({
+      instanceName: MASTER_WHATSAPP_INSTANCE,
+      ...qr,
+    });
+  } catch (error: any) {
+    console.error('[SUPERADMIN_MASTER_WA_QR_ERROR]', error);
+    return res.status(500).json({ error: error?.message || 'Erro ao gerar QR Code do WhatsApp Master' });
+  }
+});
+
+router.post('/whatsapp/master/restart', async (req, res) => {
+  try {
+    const result = await restartEvolutionInstance(MASTER_WHATSAPP_INSTANCE);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error || 'Falha ao reiniciar instância Master' });
+    }
+    return res.json({ message: 'WhatsApp Oficial Master reiniciado com sucesso' });
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Erro ao reiniciar WhatsApp Master' });
+  }
+});
+
+router.post('/whatsapp/master/disconnect', async (req, res) => {
+  try {
+    const result = await logoutEvolutionInstance(MASTER_WHATSAPP_INSTANCE);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error || 'Falha ao desconectar instância Master' });
+    }
+    return res.json({ message: 'WhatsApp Oficial Master desconectado com sucesso' });
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Erro ao desconectar WhatsApp Master' });
   }
 });
 

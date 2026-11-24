@@ -522,8 +522,11 @@ export async function syncTenantWhatsAppInstance(tenantId: string): Promise<{
   };
 }
 
+export const MASTER_WHATSAPP_INSTANCE = 'edupsych_master';
+
 /**
- * Envia código 2FA via WhatsApp buscando a instância conectada da clínica ou qualquer instância ativa na Evolution API
+ * Envia código 2FA via WhatsApp usando a instância oficial da plataforma (edupsych_master)
+ * ou, em último caso, a instância da própria clínica do usuário — nunca usando o WhatsApp de outro cliente.
  */
 export async function sendSystemWhatsApp2FA(
   phone: string,
@@ -533,7 +536,19 @@ export async function sendSystemWhatsApp2FA(
   const apiUrl = normalizeApiUrl(process.env.EVOLUTION_API_URL || 'http://localhost:8080');
   const apiKey = (process.env.EVOLUTION_API_KEY || '34aa2d83eef4cf4e74691e0ef22b8ac4e3c8c343f9b66822').trim();
 
-  // 1. Tentar a instância da clínica do usuário caso esteja conectada ('open')
+  // 1. Prioridade máxima: Instância oficial da plataforma SaaS (edupsych_master)
+  try {
+    const masterStatus = await getEvolutionInstanceStatus(MASTER_WHATSAPP_INSTANCE);
+    if (masterStatus.state === 'open') {
+      return await sendWhatsAppMessage(phone, message, undefined, {
+        apiUrl,
+        token: apiKey,
+        phoneNumberId: MASTER_WHATSAPP_INSTANCE,
+      });
+    }
+  } catch {}
+
+  // 2. Fallback isolado: Instância da PRÓPRIA clínica do usuário (jamais de outro cliente)
   if (preferredTenantId) {
     const cfg = await prisma.whatsAppConfig.findFirst({ where: { tenantId: preferredTenantId } });
     if (cfg?.phoneNumberId) {
@@ -558,38 +573,5 @@ export async function sendSystemWhatsApp2FA(
     }
   }
 
-  // 2. Buscar qualquer instância conectada ('open') na Evolution API global da VPS
-  let openInstanceName: string | null = null;
-  try {
-    const listRes = await fetch(`${apiUrl}/instance/fetchInstances`, {
-      headers: { apikey: apiKey },
-      signal: AbortSignal.timeout(4000),
-    });
-    if (listRes.ok) {
-      const instances: any = await listRes.json().catch(() => []);
-      if (Array.isArray(instances)) {
-        const openInst = instances.find(
-          (i: any) =>
-            i?.connectionStatus === 'open' ||
-            i?.instance?.state === 'open' ||
-            i?.state === 'open'
-        );
-        if (openInst) {
-          openInstanceName = openInst.name || openInst.instance?.instanceName || openInst.instanceName || null;
-        }
-      }
-    }
-  } catch (err: any) {
-    console.warn('[2FA_WA_FETCH_INSTANCES_WARN]', err?.message);
-  }
-
-  if (!openInstanceName) {
-    throw new Error('Nenhuma instância de WhatsApp conectada no servidor (Evolution API). Use o código por E-mail.');
-  }
-
-  return await sendWhatsAppMessage(phone, message, undefined, {
-    apiUrl,
-    token: apiKey,
-    phoneNumberId: openInstanceName,
-  });
+  throw new Error('O WhatsApp oficial da plataforma (Master) não está conectado. Conecte-o na aba WhatsApp do Painel Master ou use o código por E-mail.');
 }

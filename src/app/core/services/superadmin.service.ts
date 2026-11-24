@@ -121,6 +121,22 @@ export class SuperAdminService {
     return this.api.post(`/superadmin/whatsapp/instances/${tenantId}/disconnect`, {});
   }
 
+  getMasterWhatsAppStatus(): Observable<{ instanceName: string; state: string; ownerPhone: string | null; profileName: string | null }> {
+    return this.api.get('/superadmin/whatsapp/master/status');
+  }
+
+  getMasterWhatsAppQrCode(): Observable<WhatsAppQrCodeResponse> {
+    return this.api.get<WhatsAppQrCodeResponse>('/superadmin/whatsapp/master/qrcode');
+  }
+
+  restartMasterWhatsApp(): Observable<any> {
+    return this.api.post('/superadmin/whatsapp/master/restart', {});
+  }
+
+  disconnectMasterWhatsApp(): Observable<any> {
+    return this.api.post('/superadmin/whatsapp/master/disconnect', {});
+  }
+
   // --- Gestão Financeira & Faturamento SaaS ---
 
   getBillingStats(): Observable<BillingStats> {

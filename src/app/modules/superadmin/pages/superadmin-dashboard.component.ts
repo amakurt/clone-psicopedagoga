@@ -534,6 +534,68 @@ import { DialogService } from '../../../shared/services/dialog.service';
         <!-- ============================================================== -->
         @if (activeTab() === 'whatsapp') {
           <div class="space-y-6 animate-fadeIn">
+
+            <!-- Card Destaque: WhatsApp Oficial da Plataforma (Master / Sistema / 2FA) -->
+            <div class="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/40 border border-teal-500/30 p-5 sm:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="flex items-start sm:items-center gap-4">
+                <div class="size-12 rounded-2xl bg-teal-500/15 text-teal-400 border border-teal-500/30 flex items-center justify-center shrink-0">
+                  <span class="material-icons text-2xl">verified_user</span>
+                </div>
+                <div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="text-base font-bold text-white">WhatsApp Oficial da Plataforma (Master / 2FA)</h3>
+                    @if (masterWhatsAppStatus()?.state === 'open') {
+                      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <span class="size-1.5 rounded-full bg-emerald-400"></span>
+                        Conectado
+                      </span>
+                    } @else if (masterWhatsAppStatus()?.state === 'connecting') {
+                      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                        Aguardando QR Code
+                      </span>
+                    } @else {
+                      <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                        Desconectado
+                      </span>
+                    }
+                  </div>
+                  <p class="text-xs text-slate-400 mt-1">
+                    Número exclusivo do sistema (<strong>edupsych_master</strong>) usado para enviar códigos 2FA e avisos SaaS — totalmente isolado das clínicas dos clientes.
+                  </p>
+                  @if (masterWhatsAppStatus()?.ownerPhone) {
+                    <p class="text-xs text-teal-300 font-mono mt-1">
+                      📱 Aparelho pareado: +{{ masterWhatsAppStatus()?.ownerPhone }}
+                    </p>
+                  }
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  (click)="openMasterQrModal()"
+                  class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-teal-600/20 transition-all">
+                  <span class="material-icons text-sm">qr_code_scanner</span>
+                  <span>{{ masterWhatsAppStatus()?.state === 'open' ? 'Ver QR / Reconectar' : 'Conectar WhatsApp Master' }}</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="restartMasterWhatsApp()"
+                  class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 border border-slate-700 transition-colors"
+                  title="Reiniciar instância Master">
+                  <span class="material-icons text-base">restart_alt</span>
+                </button>
+                @if (masterWhatsAppStatus()?.state === 'open') {
+                  <button
+                    type="button"
+                    (click)="disconnectMasterWhatsApp()"
+                    class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors"
+                    title="Desconectar WhatsApp Master">
+                    <span class="material-icons text-base">logout</span>
+                  </button>
+                }
+              </div>
+            </div>
             
             <!-- Cockpit da Evolution API (4 Cards) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -2740,6 +2802,7 @@ export class SuperAdminDashboardComponent implements OnInit {
   // Estado da Aba 2 (WhatsApp Gateway Multi-Clínica)
   whatsappLoading = signal(false);
   gatewayStatus = signal<EvolutionGatewayStatus | null>(null);
+  masterWhatsAppStatus = signal<{ instanceName: string; state: string; ownerPhone: string | null; profileName: string | null } | null>(null);
   whatsappInstances = signal<ClinicWhatsAppInstance[]>([]);
   whatsappSearch = '';
   whatsappPlanFilter = 'TODOS';
@@ -3276,6 +3339,12 @@ export class SuperAdminDashboardComponent implements OnInit {
       error: () => this.toast.error('Falha ao checar status da Evolution API'),
     });
 
+    // 1b. Status da Instância Oficial Master (edupsych_master)
+    this.superAdminService.getMasterWhatsAppStatus().subscribe({
+      next: (res) => this.masterWhatsAppStatus.set(res),
+      error: () => {},
+    });
+
     // 2. Instâncias das Clínicas
     this.superAdminService.getWhatsAppInstances().subscribe({
       next: (res) => {
@@ -3343,12 +3412,34 @@ export class SuperAdminDashboardComponent implements OnInit {
     this.refreshQrCode();
   }
 
+  openMasterQrModal() {
+    const m = this.masterWhatsAppStatus();
+    this.selectedInstanceForQr.set({
+      tenantId: '__MASTER__',
+      tenantName: 'EduPsych Pro (Master Oficial)',
+      tenantSlug: 'master',
+      plan: 'VIP',
+      eligible: true,
+      isProvisioned: true,
+      instanceName: 'edupsych_master',
+      state: m?.state || 'not_provisioned',
+      ownerPhone: m?.ownerPhone || null,
+      profileName: m?.profileName || null,
+    } as ClinicWhatsAppInstance);
+    this.qrModalOpen.set(true);
+    this.refreshQrCode();
+  }
+
   refreshQrCode() {
     const inst = this.selectedInstanceForQr();
     if (!inst) return;
 
     this.qrLoading.set(true);
-    this.superAdminService.getWhatsAppQrCode(inst.tenantId).subscribe({
+    const req$ = inst.tenantId === '__MASTER__'
+      ? this.superAdminService.getMasterWhatsAppQrCode()
+      : this.superAdminService.getWhatsAppQrCode(inst.tenantId);
+
+    req$.subscribe({
       next: (res) => {
         this.qrData.set(res);
         this.qrLoading.set(false);
@@ -3357,6 +3448,40 @@ export class SuperAdminDashboardComponent implements OnInit {
         this.toast.error(err?.error?.error || 'Erro ao carregar QR Code');
         this.qrLoading.set(false);
       },
+    });
+  }
+
+  async restartMasterWhatsApp() {
+    const confirmed = await this.dialog.confirm(
+      'Deseja reiniciar a instância oficial da plataforma (edupsych_master)?',
+      'Reiniciar WhatsApp Master',
+      { confirmText: 'Reiniciar', dangerMode: false }
+    );
+    if (!confirmed) return;
+
+    this.superAdminService.restartMasterWhatsApp().subscribe({
+      next: () => {
+        this.toast.success('WhatsApp Oficial Master reiniciado com sucesso!');
+        this.loadWhatsAppGateway();
+      },
+      error: (err) => this.toast.error(err?.error?.error || 'Erro ao reiniciar WhatsApp Master'),
+    });
+  }
+
+  async disconnectMasterWhatsApp() {
+    const confirmed = await this.dialog.confirm(
+      'Tem certeza que deseja desconectar o WhatsApp Oficial Master? Códigos 2FA por WhatsApp ficarão indisponíveis até reconectar.',
+      'Desconectar WhatsApp Master',
+      { confirmText: 'Desconectar', dangerMode: true }
+    );
+    if (!confirmed) return;
+
+    this.superAdminService.disconnectMasterWhatsApp().subscribe({
+      next: () => {
+        this.toast.success('WhatsApp Oficial Master desconectado.');
+        this.loadWhatsAppGateway();
+      },
+      error: (err) => this.toast.error(err?.error?.error || 'Erro ao desconectar WhatsApp Master'),
     });
   }
 

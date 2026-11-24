@@ -39,6 +39,14 @@
     - Alteração de senha de acesso com validação de senha atual.
     - Configuração e ativação/desativação de 2FA via Google Authenticator (QR Code + TOTP).
 
+#### 5. Instância Exclusiva do WhatsApp Oficial da Plataforma (`edupsych_master`)
+- **Isolamento de Clientes (`backend/src/services/whatsapp-client.service.ts`):**
+  - Substituída a busca genérica por qualquer instância aberta pela constante dedicada `MASTER_WHATSAPP_INSTANCE = 'edupsych_master'`.
+  - O sistema agora nunca utiliza o WhatsApp de uma clínica cliente (ex: Dra. Vilma) para enviar códigos 2FA do administrador ou de outros usuários.
+- **Rotas & Gestão no Painel Master (`backend/src/routes/superadmin.ts`, `superadmin.service.ts` & `superadmin-dashboard.component.ts`):**
+  - Adicionados os endpoints `/whatsapp/master/status`, `/whatsapp/master/qrcode`, `/whatsapp/master/restart` e `/whatsapp/master/disconnect`.
+  - Na aba **WhatsApp Multi-Clínica (Evolution API)**, incluído o card de destaque **"WhatsApp Oficial da Plataforma (Master / 2FA)"** para parear via QR Code o número exclusivo do sistema.
+
 ---
 
 ## Sessão 96 - 23/11/2026 — Botão de Cópia em 1 Clique para 2FA, Sincronização entre Abas e Correção do Período/Vencimento da Dra. Vilma no Painel Master
