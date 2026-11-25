@@ -2,7 +2,7 @@
 
 ## Última Atualização: 25 de Novembro de 2026
 
-## Sessão 98 - 25/11/2026 — Modal "Confiar neste Dispositivo por 7 Dias" (Trusted Device 2FA)
+## Sessão 98 - 25/11/2026 — Modal "Confiar neste Dispositivo por 7 Dias" & Responsividade das Abas Master
 
 ### O que foi feito
 - **Backend (`backend/src/routes/auth.ts`):**
@@ -10,6 +10,8 @@
   - Atualizada a rota `POST /api/auth/login` para validar o `trustedDeviceToken` enviado pelo navegador; se válido e pertencente ao usuário, dispensa o desafio 2FA pelos próximos 7 dias naquele dispositivo.
 - **Frontend (`src/app/modules/auth/pages/login/login.component.ts`):**
   - Após a validação do código 2FA, é exibido um modal elegante perguntando: **"Confiar neste dispositivo?"** com as opções **"Sim, confiar por 7 dias"** (salva o token seguro no `localStorage`) ou **"Não, pedir código ao entrar"** (remove tokens de confiança).
+- **Painel Master (`src/app/modules/superadmin/pages/superadmin-dashboard.component.ts`):**
+  - Adicionado `flex-wrap` e títulos concisos nas 5 abas superiores (`Clínicas & Planos`, `WhatsApp (Evolution)`, `Financeiro SaaS`, `Backups`, `Meu Perfil & Segurança`) para caberem perfeitamente na tela sem cortar o último botão.
 
 ---
 

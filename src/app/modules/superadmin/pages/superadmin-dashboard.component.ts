@@ -72,21 +72,21 @@ import { DialogService } from '../../../shared/services/dialog.service';
         </header>
 
         <!-- Seletor de Abas Master -->
-        <div class="flex items-center gap-2 border-b border-slate-800/80 pb-3 overflow-x-auto custom-scrollbar">
+        <div class="flex flex-wrap items-center gap-2 border-b border-slate-800/80 pb-3">
           <button
             (click)="setTab('tenants')"
             [ngClass]="activeTab() === 'tenants' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-lg shadow-cyan-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
-            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
             <span class="material-icons text-base">domain</span>
-            Clínicas & Assinaturas
+            Clínicas & Planos
           </button>
 
           <button
             (click)="setTab('whatsapp')"
             [ngClass]="activeTab() === 'whatsapp' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-lg shadow-emerald-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
-            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
             <span class="material-icons text-base">chat</span>
-            WhatsApp Multi-Clínica (Evolution API)
+            WhatsApp (Evolution)
             @if (gatewayStatus()?.health?.online) {
               <span class="size-2 rounded-full bg-emerald-400 animate-pulse" title="Gateway Online"></span>
             } @else if (gatewayStatus()) {
@@ -97,9 +97,9 @@ import { DialogService } from '../../../shared/services/dialog.service';
           <button
             (click)="setTab('billing')"
             [ngClass]="activeTab() === 'billing' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-lg shadow-amber-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
-            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
             <span class="material-icons text-base">payments</span>
-            Financeiro & Faturamento SaaS
+            Financeiro SaaS
             @if (billingStats()?.overdueCount) {
               <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40">
                 {{ billingStats()?.overdueCount }} atrasada(s)
@@ -110,9 +110,9 @@ import { DialogService } from '../../../shared/services/dialog.service';
           <button
             (click)="setTab('backup')"
             [ngClass]="activeTab() === 'backup' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 shadow-lg shadow-rose-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
-            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
             <span class="material-icons text-base">security</span>
-            Backups & Recuperação
+            Backups
             @if (savedBackups().length) {
               <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                 {{ savedBackups().length }}
@@ -123,7 +123,7 @@ import { DialogService } from '../../../shared/services/dialog.service';
           <button
             (click)="setTab('profile')"
             [ngClass]="activeTab() === 'profile' ? 'bg-teal-500/10 text-teal-400 border-teal-500/30 shadow-lg shadow-teal-500/10' : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'"
-            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
+            class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-2 whitespace-nowrap">
             <span class="material-icons text-base">manage_accounts</span>
             Meu Perfil & Segurança
           </button>
