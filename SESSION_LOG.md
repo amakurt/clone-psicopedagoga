@@ -1,6 +1,17 @@
 # Registro de Sessões - Projeto EduPsych Pro Clone
 
-## Última Atualização: 24 de Novembro de 2026
+## Última Atualização: 25 de Novembro de 2026
+
+## Sessão 98 - 25/11/2026 — Modal "Confiar neste Dispositivo por 7 Dias" (Trusted Device 2FA)
+
+### O que foi feito
+- **Backend (`backend/src/routes/auth.ts`):**
+  - Criado o endpoint autenticado `POST /api/auth/2fa/trust-device` que emite um JWT dedicado de confiança (`purpose: 'TRUSTED_DEVICE'`, validade de **7 dias**) vinculado ao `userId`.
+  - Atualizada a rota `POST /api/auth/login` para validar o `trustedDeviceToken` enviado pelo navegador; se válido e pertencente ao usuário, dispensa o desafio 2FA pelos próximos 7 dias naquele dispositivo.
+- **Frontend (`src/app/modules/auth/pages/login/login.component.ts`):**
+  - Após a validação do código 2FA, é exibido um modal elegante perguntando: **"Confiar neste dispositivo?"** com as opções **"Sim, confiar por 7 dias"** (salva o token seguro no `localStorage`) ou **"Não, pedir código ao entrar"** (remove tokens de confiança).
+
+---
 
 ## Sessão 97 - 24/11/2026 — Alteração de E-mail de Acesso da Dra. Vilma para vilmaneuropp@gmail.com, Nova Senha (@vilmaneuropp21) & Remetente Oficial edupsychpro.tech
 

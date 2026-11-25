@@ -330,6 +330,49 @@ import { environment } from '../../../../../environments/environment';
         </div>
         }
       </div>
+
+      <!-- Modal: Confiar neste dispositivo por 7 dias -->
+      @if (showTrustDeviceModal()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-fadeIn">
+          <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full p-7 text-center space-y-5">
+            <div class="size-14 mx-auto rounded-2xl bg-teal-50 text-teal-600 border border-teal-200 flex items-center justify-center shadow-sm">
+              <span class="material-icons text-3xl">devices</span>
+            </div>
+
+            <div class="space-y-2">
+              <h3 class="text-lg font-black text-slate-900">Confiar neste dispositivo?</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Deseja ficar conectado e <strong>não pedir o código de verificação (2FA)</strong> neste navegador pelos próximos <strong>7 dias</strong>?
+              </p>
+            </div>
+
+            <div class="space-y-2.5 pt-1">
+              <button
+                type="button"
+                (click)="confirmTrustDevice(true)"
+                [disabled]="trustingDevice()"
+                class="w-full py-3.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold shadow-lg shadow-teal-600/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                @if (trustingDevice()) {
+                  <span class="material-icons text-base animate-spin">refresh</span>
+                  <span>Salvando preferência...</span>
+                } @else {
+                  <span class="material-icons text-base">check_circle</span>
+                  <span>Sim, confiar por 7 dias</span>
+                }
+              </button>
+
+              <button
+                type="button"
+                (click)="confirmTrustDevice(false)"
+                [disabled]="trustingDevice()"
+                class="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50">
+                <span class="material-icons text-sm text-slate-500">lock</span>
+                <span>Não, pedir código ao entrar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -364,6 +407,11 @@ export class LoginComponent implements OnInit, OnDestroy {
   hasWhatsApp = signal(false);
   twoFactorCode = '';
   resending2FA = signal(false);
+
+  // Trusted Device (7 days) Modal State
+  showTrustDeviceModal = signal(false);
+  trustingDevice = signal(false);
+  pendingLoginData = signal<any>(null);
 
   emailError = signal('');
   passwordError = signal('');
@@ -533,10 +581,15 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   login() {
+    const cleanEmail = this.email.trim().toLowerCase();
+    const trustedDeviceToken = typeof window !== 'undefined'
+      ? (localStorage.getItem(`edupsych_trusted_${cleanEmail}`) || localStorage.getItem('edupsych_trusted_device') || undefined)
+      : undefined;
+
     fetch(`${environment.apiUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: this.email.trim(), password: this.password })
+      body: JSON.stringify({ email: this.email.trim(), password: this.password, trustedDeviceToken })
     })
     .then(async res => {
       const text = await res.text();
@@ -634,12 +687,53 @@ export class LoginComponent implements OnInit, OnDestroy {
       return data;
     })
     .then(data => {
-      this.finishLogin(data);
+      this.loading.set(false);
+      this.pendingLoginData.set(data);
+      this.showTrustDeviceModal.set(true);
     })
     .catch(err => {
       this.error.set(err.message || 'Código inválido. Tente novamente.');
       this.loading.set(false);
     });
+  }
+
+  async confirmTrustDevice(trust: boolean) {
+    const data = this.pendingLoginData();
+    if (!data) return;
+
+    const cleanEmail = (data.user?.email || this.email || '').trim().toLowerCase();
+
+    if (!trust) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(`edupsych_trusted_${cleanEmail}`);
+        localStorage.removeItem('edupsych_trusted_device');
+      }
+      this.showTrustDeviceModal.set(false);
+      this.finishLogin(data);
+      return;
+    }
+
+    this.trustingDevice.set(true);
+    try {
+      const res = await fetch(`${environment.apiUrl}/auth/2fa/trust-device`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${data.token}`,
+        },
+      });
+      const trustData = await res.json().catch(() => ({}));
+      if (res.ok && trustData.trustedDeviceToken && typeof window !== 'undefined') {
+        if (cleanEmail) {
+          localStorage.setItem(`edupsych_trusted_${cleanEmail}`, trustData.trustedDeviceToken);
+        }
+        localStorage.setItem('edupsych_trusted_device', trustData.trustedDeviceToken);
+      }
+    } catch {}
+
+    this.trustingDevice.set(false);
+    this.showTrustDeviceModal.set(false);
+    this.finishLogin(data);
   }
 
   resend2FA(channel: 'EMAIL' | 'WHATSAPP') {

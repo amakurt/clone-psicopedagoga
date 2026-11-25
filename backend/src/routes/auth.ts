@@ -262,7 +262,7 @@ async function ensureResponsibleForUser(user: any) {
 // Local login
 router.post('/login', strictLimiter, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, trustedDeviceToken } = req.body;
     const rawEmail = typeof email === 'string' ? email.trim() : '';
     const cleanEmail = rawEmail.toLowerCase();
     
@@ -315,9 +315,20 @@ router.post('/login', strictLimiter, async (req, res) => {
       console.warn('[AUTH_LOGIN_BILLING_WARN]', billingErr.message);
     }
 
-    // 2FA - Verificação em Duas Etapas (Obrigatório para todos os usuários reais)
+    // Verificar se este dispositivo possui um token de confiança válido (7 dias)
+    let isTrustedDevice = false;
+    if (trustedDeviceToken && typeof trustedDeviceToken === 'string') {
+      try {
+        const devPayload = jwt.verify(trustedDeviceToken, getJwtSecret()) as any;
+        if (devPayload?.purpose === 'TRUSTED_DEVICE' && devPayload?.userId === user.id) {
+          isTrustedDevice = true;
+        }
+      } catch {}
+    }
+
+    // 2FA - Verificação em Duas Etapas (Obrigatório para todos os usuários reais, exceto dispositivos confiáveis)
     const isDemo = cleanEmail === 'demo@edupsychpro.tech' || user.email === 'demo@edupsychpro.tech';
-    const enforce2FA = !isDemo && process.env.TWO_FACTOR_DISABLED !== 'true';
+    const enforce2FA = !isDemo && !isTrustedDevice && process.env.TWO_FACTOR_DISABLED !== 'true';
 
     if (enforce2FA) {
       const resolvedPhone = user.phone || membership?.tenant?.phone || null;
@@ -566,6 +577,25 @@ router.post('/2fa/resend', strictLimiter, async (req, res) => {
   } catch (err: any) {
     console.error('[2FA_RESEND_ERROR]', err);
     return res.status(500).json({ error: 'Erro ao reenviar código' });
+  }
+});
+
+// 2FA: Emitir token de dispositivo confiável válido por 7 dias
+router.post('/2fa/trust-device', authenticate, async (req: any, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Não autenticado' });
+    }
+    const trustedDeviceToken = jwt.sign(
+      { userId, purpose: 'TRUSTED_DEVICE' },
+      getJwtSecret(),
+      { expiresIn: '7d' }
+    );
+    return res.json({ trustedDeviceToken, expiresInDays: 7 });
+  } catch (err: any) {
+    console.error('[2FA_TRUST_DEVICE_ERROR]', err);
+    return res.status(500).json({ error: 'Erro ao registrar dispositivo confiável' });
   }
 });
 
